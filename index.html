@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fletes Marítimos · Contrato BID</title>
+<meta name="description" content="Sistema de consulta de fletes marítimos y schedule de buques - DOW/PBB Polisur">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2044;--blue:#1a6bf5;--blue-lt:#e8f0fe;--teal:#00c9a7;
+  --bg:#eef1f6;--white:#fff;--border:#d8dfe9;--text:#1a2540;--muted:#6b7a99;--faint:#f0f3f8;
+  --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
+  --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
+  --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
+  --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
+  --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
+  --changed:#fffbe6;--changed-bd:#f0c050;
+  --font:'Inter',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+}
+/* ── DARK MODE ── */
+body.dark{
+  --navy:#1a2744;--blue:#5b9bf5;--blue-lt:#1d2f4f;--teal:#00c9a7;
+  --bg:#1a1f2e;--white:#242b3d;--border:#353d52;--text:#dce4f0;--muted:#8d97ae;--faint:#1e2436;
+  --green:#4ac26b;--green-bg:#0f2a1a;--green-bd:#1e5c33;
+  --amber:#e8b84b;--amber-bg:#2a2010;--amber-bd:#6b4e00;
+  --red:#f87171;--red-bg:#2e1515;--red-bd:#5a2020;
+  --purple:#b48ef5;--purple-bg:#221640;--purple-bd:#4d2e8a;
+  --orange:#f09a5a;--orange-bg:#2a1e0e;--orange-bd:#6b3e12;
+  --changed:#2e2800;--changed-bd:#7a6800;
+  --shadow:0 1px 4px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+}
+/* Topbar & tabs */
+body.dark .topbar{background:#111624;border-bottom:1px solid var(--border)}
+body.dark .tab-bar{background:var(--white);border-bottom:1px solid var(--border)}
+body.dark .tab-btn{color:var(--muted)}
+body.dark .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* Filter bar */
+body.dark .filter-bar,body.dark .sched-filter-bar{background:var(--white);border-color:var(--border)}
+body.dark .estado-sel,body.dark .ac-in,body.dark .date-in,body.dark .qty-in{background:var(--faint);border-color:var(--border);color:var(--text)}
+body.dark .estado-sel:focus,body.dark .ac-in:focus,body.dark .date-in:focus,body.dark .qty-in:focus{background:#2a3248;border-color:var(--blue)}
+body.dark .tog,body.dark .eq-tog,body.dark .btn-clear{background:var(--faint);border-color:var(--border);color:var(--muted)}
+body.dark .tog.on,body.dark .eq-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
+/* Cards */
+body.dark .card{background:#3d4f6e;border-color:#4a5e80;color:var(--text)}
+body.dark .card:hover{border-color:#5b9bf5;box-shadow:0 2px 8px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3)}
+body.dark .card.has-efa{border-left-color:#7c5cbf}
+body.dark .card.no-serv{border-left-color:#5a2020}
+body.dark .card.expiring{border-top-color:var(--orange)}
+body.dark .cell{border-right-color:#4a5e80}
+body.dark .route-main{color:var(--text)}
+body.dark .cval{color:#dce4f0}
+body.dark .clbl{color:var(--muted)}
+body.dark .tag-carrier{background:#1a2744;color:#90b8f8}
+body.dark .tag-equipo{background:#1d2f4f;color:#5b9bf5}
+body.dark .comment-row{background:#2a2010;border-top-color:#6b4e00;color:#e8c97a}
+/* Total cell */
+body.dark .total-cell{background:#111624}
+body.dark .filter-banner{background:#111624}
+/* Schedule table */
+body.dark .sched-table-wrap{background:var(--white);border-color:var(--border)}
+body.dark .sched-table-head{background:#1e2436;border-color:var(--border)}
+body.dark .sth{color:var(--muted)}
+body.dark .sched-row-wrap{border-color:rgba(53,61,82,.5)}
+body.dark .sched-row-wrap:hover{background:#3d4f6e}
+body.dark .sched-obs-row{background:var(--faint);border-color:var(--border);color:var(--muted)}
+body.dark .sr{color:var(--text)}
+body.dark .sr.muted{color:var(--muted)}
+/* Misc */
+body.dark .results-title{color:var(--text)}
+body.dark .section-sep{color:var(--muted)}
+body.dark .alert-bar{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+body.dark .empty{background:var(--white)}
+body.dark .empty-ttl{color:var(--muted)}
+body.dark .naviera-badge{border:1px solid var(--border)}
+body.dark .bell-panel{background:var(--white);border-color:var(--border)}
+body.dark .bell-item{border-color:var(--border)}
+body.dark .ac-drop{background:var(--white);border-color:var(--blue)}
+body.dark .ac-opt:hover,.dark .ac-opt.hi{background:var(--faint);color:var(--blue)}
+body.dark [data-tip]:hover::after{background:#0d1117}
+body.dark .sched-module{background:var(--bg)}
+body.dark .main{background:var(--bg)}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--navy);color:#fff;padding:0 2rem;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200}
+.logo-wrap{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-.3px}
+.logo-ico{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.sync-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.45);font-family:var(--mono)}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
+.dot.ok{background:var(--teal);box-shadow:0 0 6px var(--teal)}
+.dot.err{background:#ff6b6b}
+.dot.spin{background:#f4a723;animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.btn-top{font-family:var(--font);font-size:12px;font-weight:500;padding:7px 15px;border-radius:7px;cursor:pointer;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);background:rgba(255,255,255,.09);transition:all .15s}
+.btn-top:hover{background:rgba(255,255,255,.18)}
+.btn-top:disabled{opacity:.4;cursor:not-allowed}
+.btn-upload{border-color:rgba(0,201,167,.4);color:rgba(0,201,167,.9)}
+.btn-upload:hover{background:rgba(0,201,167,.12)}
+
+/* ── BELL ── */
+.bell-wrap{position:relative;cursor:pointer}
+.bell-ico{font-size:20px;opacity:.7;transition:opacity .15s;user-select:none}
+.bell-ico:hover{opacity:1}
+.bell-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#f4a723;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;display:none}
+.bell-badge.show{display:flex}
+
+/* Bell panel */
+.bell-panel{position:absolute;top:calc(100% + 10px);right:0;width:420px;background:var(--white);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:500;border:1px solid var(--border);overflow:hidden;display:none}
+.bell-panel.open{display:block}
+.bell-panel-head{padding:12px 16px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.bell-panel-title{font-size:13px;font-weight:600}
+.bell-close{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;line-height:1}
+.bell-list{max-height:340px;overflow-y:auto}
+.bell-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.bell-item:last-child{border-bottom:none}
+.bell-item-route{font-weight:600;color:var(--text);margin-bottom:3px}
+.bell-item-change{color:var(--muted);line-height:1.5}
+.bell-item-change .old-val{color:var(--red);text-decoration:line-through;margin-right:4px}
+.bell-item-change .new-val{color:var(--green);font-weight:600}
+.bell-item-ts{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.bell-empty{padding:2rem;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── TABS ── */
+.tab-bar{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0;flex-shrink:0}
+.tab-btn{padding:12px 20px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+
+/* ── FILTER BAR ── */
+.filter-bar{background:var(--white);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.filter-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:nowrap}
+.filter-left{display:flex;align-items:flex-end;gap:12px;flex:1;flex-wrap:wrap}
+.flbl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;display:block}
+
+/* Estado select */
+.estado-sel{padding:8px 26px 8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--text);background:var(--faint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7a99' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 8px center;appearance:none;cursor:pointer;width:145px;transition:border-color .15s}
+.estado-sel:focus{outline:none;border-color:var(--blue);background-color:var(--white)}
+
+/* Autocomplete */
+.ac-wrap{position:relative}
+.ac-in{padding:8px 26px 8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--faint);transition:border-color .15s,background .15s}
+.ac-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.ac-in.sel{border-color:var(--blue);background:var(--white);font-weight:500}
+.ac-in.w165{width:165px}.ac-in.w140{width:140px}
+.ac-x{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;display:none}
+.ac-x.show{display:block}
+.ac-x:hover{color:var(--red)}
+.ac-drop{position:absolute;top:calc(100% + 4px);left:0;background:var(--white);border:1.5px solid var(--blue);border-radius:9px;box-shadow:0 6px 24px rgba(0,0,0,.12);z-index:500;display:none;max-height:200px;overflow-y:auto;min-width:165px}
+.ac-drop.open{display:block}
+.ac-opt{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;white-space:nowrap}
+.ac-opt:last-child{border-bottom:none}
+.ac-opt:hover,.ac-opt.hi{background:var(--blue-lt);color:var(--blue)}
+.ac-opt mark{background:none;color:var(--blue);font-weight:700}
+.ac-none{padding:8px 12px;font-size:12px;color:var(--muted);font-style:italic}
+
+/* Toggle buttons */
+.btn-grp{display:flex;gap:5px}
+.tog{padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;background:var(--faint);color:var(--muted);transition:all .15s;user-select:none}
+.tog:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.eq-tog{padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;background:var(--faint);color:var(--muted);transition:all .15s;user-select:none}
+.eq-tog:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.eq-tog.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+/* Equipo+qty */
+.eq-blk{display:flex;flex-direction:column;gap:5px}
+.eq-row{display:flex;align-items:center;gap:6px}
+.sep{width:1px;height:28px;background:var(--border)}
+.qty-wrap{display:flex;gap:5px}
+.qty-unit{display:flex;flex-direction:column;align-items:center;gap:2px}
+.qty-lbl{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.qty-in{width:58px;padding:7px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);background:var(--faint);text-align:center;transition:border-color .15s}
+.qty-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.qty-in.active{border-color:var(--blue);background:var(--white);font-weight:600}
+
+/* Date + generic input */
+.date-in,.gen-in{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--faint);transition:border-color .15s}
+.date-in{width:148px}.gen-in{width:145px}
+.date-in:focus,.gen-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+
+/* Clear + filter banner */
+.btn-clear{padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;background:var(--faint);color:var(--muted);transition:all .15s;align-self:flex-end;white-space:nowrap}
+.btn-clear:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.filter-banner{display:none;align-self:stretch;margin-left:auto;background:var(--navy);border-radius:10px;padding:8px 16px;min-width:220px;max-width:340px;flex-direction:column;justify-content:center;gap:2px}
+.filter-banner.show{display:flex}
+.banner-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em}
+.banner-amt{font-family:var(--mono);font-weight:700;font-size:20px;color:#fff;letter-spacing:-.4px;line-height:1.1}
+.banner-bk{font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.45);line-height:1.6}
+.banner-efa{color:#c4b5fd}
+
+/* ── MAIN ── */
+.main{flex:1;padding:1.1rem 2rem;overflow-y:auto;display:flex;flex-direction:column}
+.results-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.results-title{font-size:13px;font-weight:600;color:var(--text)}
+.results-ct{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.section-sep{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:12px 0 7px;padding-left:2px}
+.alert-bar{padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:10px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+
+/* ── TARIFA CARD ── */
+.card{background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden;border:1px solid var(--border);transition:box-shadow .2s,border-color .2s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.09),0 8px 24px rgba(0,0,0,.07);border-color:#c0ccdf}
+.card.no-serv{opacity:.65;border-left:4px solid var(--red-bd)}
+.card.has-efa{border-left:4px solid var(--purple-bd)}
+.card.expiring{border-top:2px solid var(--orange)}
+.card-grid{display:grid;grid-template-columns:2.1fr 1fr 1.5fr .85fr 1.4fr 1.85fr;align-items:stretch}
+.cell{padding:12px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.cell:last-child{border-right:none;padding:0}
+.route-main{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
+.route-arr{font-weight:400;color:var(--muted);font-size:14px}
+.route-tags{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--mono)}
+.tag-carrier{background:var(--navy);color:rgba(255,255,255,.88)}
+.tag-equipo{background:var(--blue-lt);color:var(--blue)}
+.clbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.cval{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--text)}
+.cval.soft{font-family:var(--font);font-weight:400;font-size:12px;color:var(--amber)}
+.cval.noserv{font-family:var(--font);font-weight:500;font-size:12px;color:var(--red)}
+.vig-row{display:flex;align-items:center;gap:4px;margin-top:2px}
+.vig-date{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+.vig-arr{font-size:10px;color:var(--muted)}
+.vig-warn{font-size:10px;font-weight:700;color:var(--orange);background:var(--orange-bg);border:1px solid var(--orange-bd);padding:1px 6px;border-radius:4px;margin-top:3px;display:inline-block}
+.vig-aconf{font-size:10px;font-weight:600;color:var(--amber);font-family:var(--mono)}
+.sbadge{display:inline-flex;align-items:center;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+.sbadge.conf{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.sbadge.pend{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.sbadge.nodsp{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.sbadge.nd{background:var(--faint);color:var(--muted);border:1px solid var(--border)}
+.efa-amt{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--purple)}
+.efa-pending{font-size:11px;color:var(--amber);font-style:italic;margin-top:2px}
+.total-cell{background:var(--navy);display:flex;flex-direction:column;justify-content:center;padding:12px 16px;gap:3px;border-radius:0 11px 11px 0}
+.total-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em}
+.total-amt{font-family:var(--mono);font-weight:700;font-size:21px;color:#fff;letter-spacing:-.5px;line-height:1.1}
+.total-bk{font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.5);line-height:1.7;margin-top:3px}
+.total-efa{color:#c4b5fd;font-weight:600}
+.total-sum{color:rgba(255,255,255,.8);font-weight:700;font-size:11px;border-top:1px solid rgba(255,255,255,.15);padding-top:3px;margin-top:2px}
+.total-hint{font-size:11px;color:rgba(255,255,255,.4);font-style:italic}
+.total-warn{font-size:10px;color:#fbbf24;margin-top:3px}
+.comment-row{padding:7px 14px;background:var(--amber-bg);border-top:1px solid var(--amber-bd);font-size:12px;color:#7a5200;line-height:1.5;display:flex;gap:7px}
+
+/* ── SCHEDULE SECTION (inside tarifa view) ── */
+.schedule-section{margin-top:1rem;border-top:2px solid var(--border);padding-top:1rem}
+.schedule-section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.schedule-cards{display:flex;flex-direction:column;gap:6px}
+.sched-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:border-color .15s}
+.sched-card:hover{border-color:#b8cef9}
+.sched-card.direct{border-left:3px solid var(--green)}
+.sched-card.transbordo{border-left:3px solid var(--amber)}
+.sched-row{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 1fr 1fr 1fr 0.9fr;align-items:center;padding:10px 14px;gap:8px}
+.sc{display:flex;flex-direction:column;gap:2px}
+.sc-lbl{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sc-val{font-size:12px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.sc-val.vessel-name{font-family:var(--font);font-weight:600;font-size:13px}
+.sc-val.green{color:var(--green)}
+.sc-val.amber{color:var(--amber)}
+.sc-obs{padding:5px 14px 7px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);background:var(--faint);line-height:1.4}
+.days-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.days-badge.direct{background:var(--green-bg);color:var(--green)}
+.days-badge.via{background:var(--amber-bg);color:var(--amber)}
+
+/* ── SCHEDULE MODULE ── */
+.sched-module{padding:1.1rem 2rem;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem}
+.sched-filter-bar{background:var(--white);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.sched-filter-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+
+/* Schedule table */
+.sched-table-wrap{background:var(--white);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
+.sched-table-head{display:grid;grid-template-columns:1.4fr 1fr 1.1fr 1.2fr 1fr 1fr 1fr 1fr 1fr;background:var(--faint);border-bottom:1px solid var(--border);padding:8px 14px;gap:8px}
+.sth{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.sched-row-wrap{border-bottom:1px solid rgba(216,223,233,.5);transition:background .12s}
+.sched-row-wrap:last-child{border-bottom:none}
+.sched-row-wrap:hover{background:#f5f7fb}
+.sched-main-row{display:grid;grid-template-columns:1.4fr 1fr 1.1fr 1.2fr 1fr 1fr 1fr 1fr 1fr;padding:10px 14px;gap:8px;align-items:center}
+.sr{font-size:12px;color:var(--text)}
+.sr.mono{font-family:var(--mono);font-size:11px}
+.sr.vessel{font-weight:600;font-size:13px}
+.sr.muted{color:var(--muted)}
+/* changed cell highlight */
+.changed-cell{background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd);cursor:help}
+.sched-obs-row{padding:5px 14px 8px;font-size:11px;color:var(--muted);background:var(--faint);border-top:1px solid var(--border);line-height:1.5}
+.tras-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:var(--mono)}
+.tras-badge.dir{background:var(--green-bg);color:var(--green)}
+.tras-badge.one{background:var(--amber-bg);color:var(--amber)}
+.tras-badge.multi{background:var(--red-bg);color:var(--red)}
+.naviera-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--mono);background:var(--navy);color:rgba(255,255,255,.85)}
+
+/* Upload button */
+.upload-area{display:flex;align-items:center;gap:10px}
+.upload-lbl{font-size:12px;color:var(--muted)}
+.upload-count{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600}
+
+/* Empty / loading */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;text-align:center;background:var(--white);border-radius:12px;box-shadow:var(--shadow);gap:10px}
+.empty-ico{font-size:36px;opacity:.18}
+.empty-ttl{font-size:15px;font-weight:600;color:var(--muted)}
+.empty-sub{font-size:13px;color:var(--muted);opacity:.7}
+
+/* Tab panels */
+.tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.tab-panel.active{display:flex}
+
+/* Tooltip */
+[data-tip]{position:relative;cursor:help}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1a2540;color:#fff;font-size:11px;font-family:var(--font);padding:7px 11px;border-radius:7px;white-space:normal;max-width:320px;min-width:160px;line-height:1.55;z-index:9999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+[data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a2540;z-index:9999;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo-wrap"><div class="logo-ico">⚓</div>Fletes Marítimos · Contrato BID</div>
+  <div class="topbar-right">
+    <!-- Dark mode toggle -->
+    <button class="btn-top" id="btn-dark" onclick="toggleDark()" title="Modo oscuro" style="font-size:16px;padding:6px 10px">🌙</button>
+    <!-- Bell -->
+    <div class="bell-wrap" id="bell-wrap">
+      <div class="bell-ico" onclick="toggleBell()">🔔</div>
+      <div class="bell-badge" id="bell-badge">0</div>
+      <div class="bell-panel" id="bell-panel">
+        <div class="bell-panel-head">
+          <span class="bell-panel-title">Cambios recientes en Schedule</span>
+          <button class="bell-close" onclick="toggleBell()">✕</button>
+        </div>
+        <div class="bell-list" id="bell-list"><div class="bell-empty">Sin cambios recientes</div></div>
+      </div>
+    </div>
+    <!-- Upload tarifas BID -->
+    <label class="btn-top" style="cursor:pointer;border-color:rgba(0,201,167,.4);color:rgba(255,255,255,.8)" title="Subir Excel de Tarifas BID">
+      📊 Subir Tarifas
+      <input type="file" id="file-tarifas" accept=".xlsx,.xls" style="display:none" onchange="handleTarifasUpload(this)">
+    </label>
+    <!-- Upload schedule -->
+    <label class="btn-top btn-upload" style="cursor:pointer" title="Subir Excel de Schedule">
+      📁 Subir Schedule
+      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(this)">
+    </label>
+    <!-- Sync -->
+    <div class="sync-pill"><div class="dot" id="dot"></div><span id="sync-lbl">Cargando...</span></div>
+    <div id="sched-indicator" style="display:none;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.5);background:rgba(255,255,255,.06);padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);">
+      <span>📁</span><span id="sched-ind-name" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span id="sched-ind-age"></span>
+    </div>
+    <button class="btn-top" id="btn-sync" onclick="syncSheet()">↻ Sincronizar</button>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')">📋 Tarifas BID</button>
+  <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')">🚢 Schedule</button>
+</div>
+
+<!-- ═══════════ TAB: TARIFAS ═══════════ -->
+<div class="tab-panel active" id="panel-tarifas">
+
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-left">
+        <div>
+          <span class="flbl">Estado</span>
+          <select class="estado-sel" id="f-estado" onchange="applyFilter()">
+            <option value="confirmada">✓ Confirmadas</option>
+            <option value="pendiente">⏳ Pendientes</option>
+            <option value="no-disponible">✕ No disponibles</option>
+            <option value="todas">Todas</option>
+          </select>
+        </div>
+        <div>
+          <span class="flbl">Quarter</span>
+          <select class="estado-sel" id="f-quarter" onchange="applyFilter()" style="width:130px">
+            <option value="">— Todos —</option>
+            <option value="1stQ">1st Q</option>
+            <option value="2ndQ">2nd Q</option>
+            <option value="3rdQ">3rd Q</option>
+            <option value="4thQ">4th Q</option>
+          </select>
+        </div>
+        <div>
+          <span class="flbl">Puerto de embarque</span>
+          <div class="ac-wrap" id="wrap-t-origen">
+            <input class="ac-in w165" id="f-t-origen" type="text" placeholder="Buscar..." autocomplete="off"
+              oninput="onAcIn('t-origen')" onkeydown="onAcKey(event,'t-origen')" onfocus="onAcFocus('t-origen')">
+            <button class="ac-x" id="x-t-origen" onclick="clearAc('t-origen')">×</button>
+            <div class="ac-drop" id="drop-t-origen"></div>
+          </div>
+        </div>
+        <div>
+          <span class="flbl">Puerto de destino</span>
+          <div class="ac-wrap" id="wrap-t-destino">
+            <input class="ac-in w165" id="f-t-destino" type="text" placeholder="Buscar..." autocomplete="off"
+              oninput="onAcIn('t-destino')" onkeydown="onAcKey(event,'t-destino')" onfocus="onAcFocus('t-destino')">
+            <button class="ac-x" id="x-t-destino" onclick="clearAc('t-destino')">×</button>
+            <div class="ac-drop" id="drop-t-destino"></div>
+          </div>
+        </div>
+        <div>
+          <span class="flbl">Carrier</span>
+          <div class="btn-grp" id="carrier-grp"></div>
+        </div>
+        <div class="eq-blk">
+          <span class="flbl">Equipo / Cantidad</span>
+          <div class="eq-row">
+            <div class="btn-grp" id="equipo-grp"></div>
+            <div class="sep"></div>
+            <div class="qty-wrap">
+              <div class="qty-unit"><span class="qty-lbl">20'</span><input class="qty-in" type="number" id="f-20" min="0" placeholder="—" oninput="onQty()"></div>
+              <div class="qty-unit"><span class="qty-lbl">40'</span><input class="qty-in" type="number" id="f-40" min="0" placeholder="—" oninput="onQty()"></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <span class="flbl">Fecha ETD</span>
+          <div style="position:relative;display:flex;gap:6px;align-items:center">
+            <input class="date-in" type="text" id="f-etd-text" placeholder="DD/MM/AAAA"
+              maxlength="10" style="width:120px;ime-mode:disabled"
+              oninput="onEtdText(this.value)"
+              onblur="onEtdText(this.value)">
+            <input type="date" id="f-etd" style="display:none" oninput="applyFilter()">
+          </div>
+        </div>
+        <button class="btn-clear" onclick="clearTarifaFilters()">✕ Limpiar</button>
+      </div>
+      <div class="filter-banner" id="filter-banner">
+        <span class="banner-lbl">Total a declarar</span>
+        <span class="banner-amt" id="banner-amt">—</span>
+        <span class="banner-bk" id="banner-bk"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main" id="main-tarifas">
+    <div class="results-bar">
+      <span class="results-title">Resultados</span>
+      <span class="results-ct" id="res-ct"></span>
+      <div style="display:flex;gap:6px">
+        <button onclick="exportTarifasPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📄 PDF</button>
+        <button onclick="exportTarifasExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📊 Excel</button>
+      </div>
+    </div>
+    <div id="alert-area"></div>
+    <div id="list"></div>
+    <!-- Schedule section inside tarifas -->
+    <div class="schedule-section" id="sched-in-tarifa" style="display:none">
+      <div class="schedule-section-title">🚢 Próximas salidas disponibles</div>
+      <div class="schedule-cards" id="sched-tarifa-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB: SCHEDULE ═══════════ -->
+<div class="tab-panel" id="panel-schedule">
+
+  <div class="sched-filter-bar">
+    <div class="sched-filter-row">
+      <div>
+        <span class="flbl">Origen</span>
+        <div class="ac-wrap" id="wrap-s-origen">
+          <input class="ac-in w140" id="f-s-origen" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('s-origen')" onkeydown="onAcKey(event,'s-origen')" onfocus="onAcFocus('s-origen')">
+          <button class="ac-x" id="x-s-origen" onclick="clearAc('s-origen')">×</button>
+          <div class="ac-drop" id="drop-s-origen"></div>
+        </div>
+      </div>
+      <div>
+        <span class="flbl">Destino</span>
+        <div class="ac-wrap" id="wrap-s-destino">
+          <input class="ac-in w140" id="f-s-destino" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('s-destino')" onkeydown="onAcKey(event,'s-destino')" onfocus="onAcFocus('s-destino')">
+          <button class="ac-x" id="x-s-destino" onclick="clearAc('s-destino')">×</button>
+          <div class="ac-drop" id="drop-s-destino"></div>
+        </div>
+      </div>
+      <div>
+        <span class="flbl">Carrier</span>
+        <div class="ac-wrap" id="wrap-s-carrier">
+          <input class="ac-in w140" id="f-s-carrier" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('s-carrier')" onkeydown="onAcKey(event,'s-carrier')" onfocus="onAcFocus('s-carrier')">
+          <button class="ac-x" id="x-s-carrier" onclick="clearAc('s-carrier')">×</button>
+          <div class="ac-drop" id="drop-s-carrier"></div>
+        </div>
+      </div>
+      <div>
+        <span class="flbl">Buque</span>
+        <div class="ac-wrap" id="wrap-s-vessel">
+          <input class="ac-in w140" id="f-s-vessel" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('s-vessel')" onkeydown="onAcKey(event,'s-vessel')" onfocus="onAcFocus('s-vessel')">
+          <button class="ac-x" id="x-s-vessel" onclick="clearAc('s-vessel')">×</button>
+          <div class="ac-drop" id="drop-s-vessel"></div>
+        </div>
+      </div>
+      <div>
+        <span class="flbl">Cut Off Físico desde</span>
+        <input class="date-in" type="date" id="f-s-cutoff" oninput="applySchedFilter()">
+      </div>
+      <div>
+        <span class="flbl">ETA hasta</span>
+        <input class="date-in" type="date" id="f-s-eta" oninput="applySchedFilter()">
+      </div>
+      <div>
+        <span class="flbl">Período</span>
+        <select class="estado-sel" id="f-s-periodo" onchange="applySchedFilter()" style="width:160px">
+          <option value="futuro">Mes actual + futuros</option>
+          <option value="historico">Todo el historial</option>
+        </select>
+      </div>
+      <div>
+        <span class="flbl">Línea marítima</span>
+        <div class="btn-grp" id="sched-carrier-grp"></div>
+      </div>
+      <button class="btn-clear" onclick="clearSchedFilters()">✕ Limpiar</button>
+    </div>
+  </div>
+
+  <div class="sched-module" id="sched-module">
+    <div class="results-bar">
+      <span class="results-title">Schedule de buques</span>
+      <span class="results-ct" id="sched-ct"></span>
+      <div style="display:flex;gap:6px">
+        <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📄 PDF</button>
+        <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📊 Excel</button>
+      </div>
+    </div>
+    <div id="sched-list">
+      <div class="empty"><div class="empty-ico">🚢</div><div class="empty-ttl">Subí el archivo de Schedule</div><div class="empty-sub">Usá el botón 📁 Subir Schedule en la barra superior</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for xlsx -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi3VyU-KiobStqXJ6T9iNkGN2vXISb-6OGZYqMd3mXbzvjfhhHWORnfYlipKGRjdQi/exec';
+const CHANGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+let rates = [];
+let schedule = [];
+let scheduleChanges = [];
+let scheduleFileName = '';
+let scheduleFileDate = '';
+let selC = new Set(), selE = new Set(), selSC = new Set();
+const acs = {};
+
+// ── INIT ──
+document.addEventListener('click', e => {
+  // Close bell
+  if (!document.getElementById('bell-wrap').contains(e.target)) {
+    document.getElementById('bell-panel').classList.remove('open');
+  }
+  // Close dropdowns
+  Object.keys(acs).forEach(f => {
+    const w = document.getElementById('wrap-'+f);
+    if (w && !w.contains(e.target)) closeDrop(f);
+  });
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  syncSheet();
+  loadChangesFromStorage();
+});
+
+// ── TABS ──
+function switchTab(name) {
+  ['tarifas','schedule'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.getElementById('panel-'+t).classList.toggle('active', t===name);
+  });
+}
+
+// ── BELL ──
+function toggleBell() {
+  document.getElementById('bell-panel').classList.toggle('open');
+}
+
+function loadChangesFromStorage() {
+  try {
+    const raw = localStorage.getItem('schedule_changes');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    const now = Date.now();
+    // Keep only changes within 7 days
+    scheduleChanges = data.filter(c => now - c.ts < CHANGE_TTL);
+    localStorage.setItem('schedule_changes', JSON.stringify(scheduleChanges));
+    renderBell();
+  } catch(e) {}
+}
+
+function saveChangesToStorage() {
+  localStorage.setItem('schedule_changes', JSON.stringify(scheduleChanges));
+}
+
+function renderBell() {
+  const badge = document.getElementById('bell-badge');
+  const list  = document.getElementById('bell-list');
+  if (!scheduleChanges.length) {
+    badge.classList.remove('show');
+    list.innerHTML = '<div class="bell-empty">Sin cambios recientes (últimos 7 días)</div>';
+    return;
+  }
+  badge.textContent = scheduleChanges.length;
+  badge.classList.add('show');
+  list.innerHTML = scheduleChanges.map(c => `
+    <div class="bell-item">
+      <div class="bell-item-route">${c.naviera} · ${c.vessel} · ${c.origen} → ${c.destino}</div>
+      <div class="bell-item-change">
+        <strong>${c.campo}:</strong>
+        <span class="old-val">${c.valorAnterior}</span>
+        <span>→</span>
+        <span class="new-val">${c.valorNuevo}</span>
+      </div>
+      <div class="bell-item-ts">${new Date(c.ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+  `).join('');
+}
+
+// ── STATUS ──
+const setDot = (t,txt) => { document.getElementById('dot').className='dot '+t; document.getElementById('sync-lbl').textContent=txt; };
+
+// ── SYNC TARIFAS ──
+async function syncSheet() {
+  setDot('spin','Sincronizando...');
+  document.getElementById('btn-sync').disabled = true;
+  try {
+    const res = await fetch(SCRIPT_URL+'?action=getAll', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'}});
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const raw = await res.json();
+
+    // Load tarifas
+    const tarifasData = raw.tarifas || raw.data || raw;
+    if (Array.isArray(tarifasData)) loadTarifas(tarifasData);
+    else if (Array.isArray(raw)) loadTarifas(raw);
+
+    // Load schedule from Drive
+    if (raw.schedule && Array.isArray(raw.schedule) && raw.schedule.length > 0) {
+      schedule = raw.schedule;
+      scheduleFileName = raw.scheduleFile || '';
+      scheduleFileDate = raw.scheduleDate || '';
+      buildSchedCarrierBtns();
+      applySchedFilter();
+      updateSchedIndicator();
+    }
+
+    const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    setDot('ok','Actualizado '+t);
+  } catch(e) {
+    // Fallback: try tarifas-only if getAll fails
+    try {
+      const res2 = await fetch(SCRIPT_URL+'?action=getTarifas', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'}});
+      const raw2 = await res2.json();
+      const data2 = raw2.data || raw2;
+      if(Array.isArray(data2)) {
+        loadTarifas(data2);
+        setDot('ok','Tarifas OK · Schedule: subí el Excel');
+      } else throw new Error('invalid');
+    } catch(e2) {
+      setDot('err','Error de conexión');
+      document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico">⚠</div><div class="empty-ttl">No se pudo conectar</div><div class="empty-sub">Verificá tu conexión y presioná ↻ Sincronizar.</div></div>`;
+    }
+  }
+  document.getElementById('btn-sync').disabled = false;
+}
+
+// ── UPLOAD TARIFAS BID ──
+function handleTarifasUpload(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      // Find the BID sheet — look for name containing BID or FLETE, fallback to first
+      const sheetName = wb.SheetNames.find(n =>
+        n.toUpperCase().includes('BID') || n.toUpperCase().includes('FLETE')
+      ) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(ws, {raw:false, dateNF:'YYYY-MM-DD'});
+      if(!data.length){ alert('No se encontraron datos en el archivo.'); return; }
+      loadTarifas(data);
+      setDot('ok', `Tarifas: ${data.length} registros · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
+      input.value = '';
+    } catch(err) {
+      alert('Error al leer el archivo de tarifas: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── LOAD TARIFAS ──
+function loadTarifas(data) {
+  if (!data.length) return;
+  const s = data[0];
+  const keys = Object.keys(s);
+  const fk = (...kws) => {
+    for(const kw of kws){
+      // Try exact match first
+      let k = keys.find(k=>k.toUpperCase()===kw.toUpperCase());
+      if(k) return k;
+      // Then partial match
+      k = keys.find(k=>k.toUpperCase().includes(kw.toUpperCase()));
+      if(k) return k;
+    }
+    return null;
+  };
+
+  const kA  = fk('EMBARQUE','ORIGEN');
+  const kB  = fk('DESTINO');
+  const kC  = fk('CARRIER','NAVIERA');
+  const kD  = fk('EQUIPO','CONTAINER');
+  const kE  = fk('TARIFA');
+  const kF  = fk('CONTRATO');
+  const kG  = keys.find(k=>k.toUpperCase().includes('INICIO VIGENCIA')||k.toUpperCase().includes('INICIO VIGENCIA'));
+  const kH  = keys.find(k=>k.toUpperCase().includes('FIN VIGENCIA'));
+  const kI  = fk('ESTADO');
+  const kJ  = fk('COMENTARIO');
+  const kQT = fk('QUARTER');
+  // EFA columns: L=monto, M=inicio vigencia, N=fin vigencia
+  // Match by exact name first, then positional fallback
+  const efaKeys = keys.filter(k=>k.toUpperCase().includes('EFA'));
+  // kK = EFA monto (col L): "EFA (Emergency Surcharge) por contenedor"
+  const kK = keys.find(k=>k.toUpperCase().includes('EFA')&&k.toUpperCase().includes('CONTENEDOR'))
+           || keys.find(k=>k.toUpperCase().includes('EFA')&&!k.toUpperCase().includes('INICIO')&&!k.toUpperCase().includes('FIN')&&!k.toUpperCase().includes('USD')&&!k.toUpperCase().includes('DESGLOSE'))
+           || null;
+  // kL = INICIO EFA (col M): fecha inicio vigencia EFA
+  const kL = keys.find(k=>k.toUpperCase()==='INICIO EFA')
+           || keys.find(k=>k.toUpperCase().includes('INICIO')&&k.toUpperCase().includes('EFA'))
+           || null;
+  // kM = FIN EFA (col N): fecha fin vigencia EFA
+  const kM = keys.find(k=>k.toUpperCase()==='FIN EFA')
+           || keys.find(k=>k.toUpperCase().includes('FIN')&&k.toUpperCase().includes('EFA'))
+           || null;
+
+  const g  = (row,k) => k&&row[k]!=null ? row[k].toString().trim() : '';
+  const gn = (row,k) => { const v=row[k]; return(v!==null&&v!==undefined&&!isNaN(Number(v))&&v!=='') ? Number(v) : null; };
+
+  rates = data
+    .filter(row=>Object.values(row).some(v=>v!==''&&v!==null&&v!==undefined))
+    .map(row=>({
+      origen:g(row,kA), destino:g(row,kB), carrier:g(row,kC), equipo:g(row,kD),
+      tarifa:gn(row,kE)??(g(row,kE)||null),
+      contrato:g(row,kF), desde:g(row,kG), hasta:g(row,kH),
+      estado:g(row,kI), comentario:g(row,kJ), quarter:g(row,kQT),
+      efaNum:gn(row,kK),
+      efaDesde:g(row,kL), efaHasta:g(row,kM),
+    }));
+
+  buildCarrierBtns();
+  buildEquipoBtns();
+  applyFilter();
+}
+
+// ── CARRIER / EQUIPO BUTTONS ──
+function buildCarrierBtns() {
+  const vals=[...new Set(rates.map(r=>r.carrier).filter(Boolean))].sort();
+  document.getElementById('carrier-grp').innerHTML=vals.map(c=>`<button class="tog${selC.has(c)?' on':''}" onclick="togC('${c}')">${c}</button>`).join('');
+}
+function togC(c){selC.has(c)?selC.delete(c):selC.add(c);buildCarrierBtns();applyFilter();}
+
+function buildEquipoBtns(){
+  const vals=[...new Set(rates.map(r=>r.equipo).filter(Boolean))].sort();
+  document.getElementById('equipo-grp').innerHTML=vals.map(e=>`<button class="eq-tog${selE.has(e)?' on':''}" onclick="togE('${e}')">${e}</button>`).join('');
+}
+function togE(e){selE.has(e)?selE.delete(e):selE.add(e);buildEquipoBtns();applyFilter();}
+function togSC(b){selSC.has(b)?selSC.delete(b):selSC.add(b);buildSchedCarrierBtns();applySchedFilter();}
+
+function onQty(){
+  const v20=parseInt(document.getElementById('f-20').value)||0;
+  const v40=parseInt(document.getElementById('f-40').value)||0;
+  document.getElementById('f-20').classList.toggle('active',v20>0);
+  document.getElementById('f-40').classList.toggle('active',v40>0);
+  if(v20>0&&v40===0){selE.clear();selE.add("20'STD");buildEquipoBtns();}
+  else if(v40>0&&v20===0){selE.clear();selE.add("40'HC");buildEquipoBtns();}
+  else if(v20===0&&v40===0){selE.clear();buildEquipoBtns();}
+  applyFilter();
+}
+
+// ── ETD TEXT INPUT HANDLER ──
+// Accepts DD/MM/AAAA and converts to YYYY-MM-DD for the hidden date input
+function onEtdText(val) {
+  const clean = val.replace(/[^0-9/]/g,'');
+  document.getElementById('f-etd-text').value = clean;
+
+  // Auto-insert slashes
+  if(clean.length === 2 && !clean.includes('/')) {
+    document.getElementById('f-etd-text').value = clean + '/';
+  } else if(clean.length === 5 && clean.split('/').length === 2) {
+    document.getElementById('f-etd-text').value = clean + '/';
+  }
+
+  // Try to parse DD/MM/YYYY
+  const parts = clean.split('/');
+  if(parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+    const [dd, mm, yyyy] = parts;
+    const iso = `${yyyy}-${mm}-${dd}`;
+    // Validate date
+    const dt = new Date(iso);
+    if(!isNaN(dt.getTime())) {
+      document.getElementById('f-etd').value = iso;
+      document.getElementById('f-etd-text').style.borderColor = 'var(--green)';
+      applyFilter();
+      return;
+    }
+  }
+  // Invalid or incomplete — clear hidden input
+  document.getElementById('f-etd').value = '';
+  document.getElementById('f-etd-text').style.borderColor = clean.length > 0 ? 'var(--border)' : 'var(--border)';
+  if(clean.length === 0) applyFilter();
+}
+
+function clearTarifaFilters(){
+  clearAc('t-origen');clearAc('t-destino');
+  selC.clear();selE.clear();
+  buildCarrierBtns();buildEquipoBtns();
+  ['f-20','f-40'].forEach(id=>{document.getElementById(id).value='';document.getElementById(id).classList.remove('active');});
+  document.getElementById('f-etd').value='';
+  document.getElementById('f-etd-text').value='';
+  document.getElementById('f-etd-text').style.borderColor='';
+  document.getElementById('f-estado').value='confirmada';
+  document.getElementById('f-quarter').value='';
+  applyFilter();
+}
+
+function clearSchedFilters(){
+  ['s-origen','s-destino','s-carrier','s-vessel'].forEach(f=>clearAc(f));
+  document.getElementById('f-s-cutoff').value='';
+  document.getElementById('f-s-eta').value='';
+  document.getElementById('f-s-periodo').value='futuro';
+  selSC.clear();
+  buildSchedCarrierBtns();
+  applySchedFilter();
+}
+
+// ── AUTOCOMPLETE ──
+function opts(f){
+  if(f.startsWith('t-')){
+    const field=f.replace('t-','');
+    const map={origen:'origen',destino:'destino'};
+    return[...new Set(rates.map(r=>r[map[field]]).filter(Boolean))].sort();
+  }
+  if(f.startsWith('s-')){
+    // Cascading: filter available options based on current selections
+    const vO=document.getElementById('f-s-origen').value.trim();
+    const vD=document.getElementById('f-s-destino').value.trim();
+    let src=schedule;
+    if(f==='s-destino'&&vO){src=src.filter(r=>normalizeOrigen(r.ORIGEN)===normalizeOrigen(vO));}
+    if(f==='s-vessel'){
+      if(vO)src=src.filter(r=>normalizeOrigen(r.ORIGEN)===normalizeOrigen(vO));
+      if(vD)src=src.filter(r=>(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()));
+    }
+    const map={origen:'ORIGEN',destino:'DESTINO',carrier:'NAVIERA',vessel:'VESSEL'};
+    const field=f.replace('s-','');
+    return[...new Set(src.map(r=>r[map[field]]).filter(Boolean))].sort();
+  }
+  return[];
+}
+function hl(t,q){if(!q)return t;const i=t.toUpperCase().indexOf(q.toUpperCase());if(i<0)return t;return t.slice(0,i)+'<mark>'+t.slice(i,i+q.length)+'</mark>'+t.slice(i+q.length);}
+function openDrop(f,items,q){
+  if(!acs[f])acs[f]={i:-1};
+  const d=document.getElementById('drop-'+f);
+  if(!d)return;
+  d.innerHTML=items.length?items.map(v=>`<div class="ac-opt" data-v="${v}" onmousedown="pickAc('${f}','${v}')">${hl(v,q)}</div>`).join(''):`<div class="ac-none">Sin coincidencias</div>`;
+  d.classList.add('open');acs[f].i=-1;
+}
+function closeDrop(f){const d=document.getElementById('drop-'+f);if(d)d.classList.remove('open');if(acs[f])acs[f].i=-1;}
+function onAcIn(f){
+  if(!acs[f])acs[f]={i:-1};
+  const v=document.getElementById('f-'+f).value;
+  document.getElementById('x-'+f).classList.toggle('show',v.length>0);
+  document.getElementById('f-'+f).classList.remove('sel');
+  const o=opts(f);
+  openDrop(f,v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o,v);
+  if(f.startsWith('t-'))applyFilter();else applySchedFilter();
+}
+function onAcFocus(f){
+  if(!acs[f])acs[f]={i:-1};
+  const v=document.getElementById('f-'+f).value;
+  const o=opts(f);
+  openDrop(f,v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o,v);
+}
+function onAcKey(e,f){
+  if(!acs[f])acs[f]={i:-1};
+  const d=document.getElementById('drop-'+f);
+  const items=d?d.querySelectorAll('.ac-opt'):[];
+  if(!d||!d.classList.contains('open'))return;
+  if(e.key==='ArrowDown'){e.preventDefault();acs[f].i=Math.min(acs[f].i+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('hi',i===acs[f].i));}
+  else if(e.key==='ArrowUp'){e.preventDefault();acs[f].i=Math.max(acs[f].i-1,0);items.forEach((el,i)=>el.classList.toggle('hi',i===acs[f].i));}
+  else if(e.key==='Enter'){e.preventDefault();if(acs[f].i>=0&&items[acs[f].i])pickAc(f,items[acs[f].i].dataset.v);else closeDrop(f);}
+  else if(e.key==='Escape')closeDrop(f);
+}
+function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classList.add('sel');document.getElementById('x-'+f).classList.add('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else applySchedFilter();}
+function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else applySchedFilter();}
+
+// ── HELPERS ──
+const usd = v=>'USD '+Math.round(v).toLocaleString('es-AR');
+const isNum = v=>typeof v==='number';
+const tr = (s,n=24)=>s&&s.length>n?s.slice(0,n)+'…':(s||'');
+function fDate(d){if(!d)return'—';if(d instanceof Date){return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}if(!isNaN(Date.parse(d))){const dt=new Date(d);return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}return d.toString().slice(0,14);}
+function toISO(d){if(!d)return'';if(d instanceof Date)return d.toISOString().split('T')[0];if(!isNaN(Date.parse(d)))return new Date(d).toISOString().split('T')[0];return'';}
+function daysUntil(d){if(!d||isNaN(Date.parse(d)))return null;return Math.ceil((new Date(d)-new Date())/86400000);}
+const noServ = r=>[r.tarifa,r.comentario,r.estado].some(v=>v&&v.toString().toUpperCase().match(/NO TIENE SERV|NO OFRE|NO DISPONIBLE/));
+const stCls  = s=>{if(!s)return'nd';const u=s.toUpperCase();if(u.includes('CONFIRM'))return'conf';if(u.includes('PEND'))return'pend';if(u.includes('NO DISP'))return'nodsp';return'nd';};
+function sortOrder(r){const e=(r.estado||'').toUpperCase();if(e.includes('CONFIRM'))return 0;if(e.includes('PEND'))return 1;return 2;}
+
+// EFA logic
+function efaApplies(r,etd){
+  if(!r.efaNum)return'none';
+  if(!r.efaDesde||isNaN(Date.parse(r.efaDesde)))return'none';
+  if(!etd)return'unverified';
+  // Normalize both to YYYY-MM-DD to avoid ISO timezone string comparison issues
+  const etdDate  = toISO(etd);
+  const efaDesde = toISO(r.efaDesde);
+  if(!etdDate||!efaDesde)return'none';
+  return etdDate >= efaDesde ? 'yes' : 'no';
+}
+
+// ── NAVIERA MATCHING (schedule ↔ tarifa) ──
+// HAPAG filter → show HAPAG + HAPAG-MAERSK
+// MAERSK filter → show MAERSK + HAPAG-MAERSK
+// LOGIN filter → show LOG IN + LOGIN
+function schedNavieraMatch(schedNaviera, filterCarriers){
+  if(!filterCarriers||filterCarriers.size===0)return true;
+  const sn=(schedNaviera||'').toUpperCase();
+  for(const fc of filterCarriers){
+    const fn=fc.toUpperCase();
+    if(fn==='HAPAG'&&(sn.includes('HAPAG')))return true;
+    if(fn==='MAERSK'&&(sn.includes('MAERSK')))return true;
+    if((fn==='LOGIN'||fn==='LOG IN')&&(sn.includes('LOGIN')||sn.includes('LOG IN')))return true;
+    if(sn.includes(fn))return true;
+  }
+  return false;
+}
+
+// Normalize origen: BUE ↔ BUENOS AIRES, BAHIA ↔ BAHIA BLANCA
+function normalizeOrigen(s){
+  if(!s)return'';
+  const u=s.toUpperCase().trim();
+  if(u==='BUE'||u.includes('BUENOS AIRES'))return'BUE';
+  if(u==='BAHIA'||u.includes('BAHIA BLANCA'))return'BAHIA';
+  return u;
+}
+
+// ── TARIFA FILTER & RENDER ──
+function applyFilter(){
+  if(!rates.length)return;
+  const vO  = document.getElementById('f-t-origen').value.trim();
+  const vD  = document.getElementById('f-t-destino').value.trim();
+  const etd = document.getElementById('f-etd').value;
+  const q20 = parseInt(document.getElementById('f-20').value)||0;
+  const q40 = parseInt(document.getElementById('f-40').value)||0;
+  const est = document.getElementById('f-estado').value;
+
+  let filtered=rates.filter(r=>{
+    if(!r.origen&&!r.destino&&!r.carrier)return false;
+    if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
+    if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selC.size>0&&!selC.has(r.carrier))return false;
+    if(selE.size>0&&!selE.has(r.equipo))return false;
+    const qf=document.getElementById('f-quarter').value;
+    if(qf&&(r.quarter||'').toUpperCase()!==qf.toUpperCase())return false;
+    const u=(r.estado||'').toUpperCase();
+    if(est==='confirmada'&&!u.includes('CONFIRM'))return false;
+    if(est==='pendiente'&&!u.includes('PEND'))return false;
+    if(est==='no-disponible'&&!u.includes('NO DISP'))return false;
+    return true;
+  });
+
+  const today=etd||new Date().toISOString().split('T')[0];
+  const vig=filtered.filter(r=>{
+    const d=r.desde&&!isNaN(Date.parse(r.desde))?r.desde:null;
+    const h=r.hasta&&!isNaN(Date.parse(r.hasta))?r.hasta:null;
+    return(!d||d<=today)&&(!h||h>=today);
+  });
+  const noVig=!!etd&&vig.length===0&&filtered.length>0;
+  const usar=etd&&vig.length>0?vig:filtered;
+  usar.sort((a,b)=>sortOrder(a)-sortOrder(b));
+
+  updateBanner(usar,etd,q20,q40);
+  renderTarifas(usar,etd,q20,q40,noVig);
+
+  // Schedule section: only show if at least one filter is active
+  const hasFilter = vO||vD||selC.size>0||selE.size>0;
+  renderSchedInTarifa(etd, vO, vD, hasFilter);
+}
+
+function updateBanner(rates,etd,q20,q40){
+  const banner=document.getElementById('filter-banner');
+  if(q20===0&&q40===0){banner.classList.remove('show');return;}
+  const activas=rates.filter(r=>!noServ(r)&&isNum(r.tarifa)&&(r.estado||'').toUpperCase().includes('CONFIRM'));
+  if(!activas.length){banner.classList.remove('show');return;}
+  const r=activas[0];
+  const eq=(r.equipo||'').toUpperCase();
+  const only20=eq.includes('20')&&!eq.includes('40');
+  const only40=eq.includes('40')&&!eq.includes('20');
+  const qty=only20?q20:only40?q40:(q20+q40);
+  if(!qty){banner.classList.remove('show');return;}
+  const base=r.tarifa;
+  const efaSt=efaApplies(r,etd);
+  const efaVal=efaSt==='yes'?r.efaNum:0;
+  const total=(base+efaVal)*qty;
+  document.getElementById('banner-amt').textContent=usd(total);
+  let bk=`${usd(base)} × ${qty}`;
+  if(efaSt==='yes')bk+=` <span class="banner-efa">+ EFA ${usd(r.efaNum)} × ${qty}</span>`;
+  if(efaSt==='unverified')bk+=` · ⚠ EFA pendiente de ETD`;
+  document.getElementById('banner-bk').innerHTML=bk;
+  banner.classList.add('show');
+}
+
+function renderTarifas(rates,etd,q20,q40,noVig){
+  document.getElementById('alert-area').innerHTML=noVig?`<div class="alert-bar">⚠ Sin tarifas vigentes para la fecha ETD. Mostrando todas las disponibles.</div>`:'';
+  document.getElementById('res-ct').textContent=rates.length+' tarifa'+(rates.length!==1?'s':'')+' encontrada'+(rates.length!==1?'s':'');
+  if(!rates.length){document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico">🚢</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros para ver tarifas</div></div>`;return;}
+  const conf=rates.filter(r=>sortOrder(r)===0);
+  const pend=rates.filter(r=>sortOrder(r)===1);
+  const nodsp=rates.filter(r=>sortOrder(r)===2);
+  let html='';
+  if(conf.length){html+=`<div class="section-sep">✓ Confirmadas (${conf.length})</div>`;conf.forEach(r=>{html+=buildCard(r,etd,q20,q40);});}
+  if(pend.length){html+=`<div class="section-sep">⏳ Pendientes (${pend.length})</div>`;pend.forEach(r=>{html+=buildCard(r,etd,q20,q40);});}
+  if(nodsp.length){html+=`<div class="section-sep">✕ No disponibles (${nodsp.length})</div>`;nodsp.forEach(r=>{html+=buildCard(r,etd,q20,q40);});}
+  document.getElementById('list').innerHTML=html;
+}
+
+function buildCard(r,etd,q20,q40){
+  const ns=noServ(r);
+  const eq=(r.equipo||'').toUpperCase();
+  const only20=eq.includes('20')&&!eq.includes('40');
+  const only40=eq.includes('40')&&!eq.includes('20');
+  const qty=only20?q20:only40?q40:(q20+q40);
+  const base=isNum(r.tarifa)?r.tarifa:null;
+  const efaSt=efaApplies(r,etd);
+  const efaVal=efaSt==='yes'?r.efaNum:0;
+  const totalPorCont=base!==null?(base+efaVal):null;
+  const totalEmb=totalPorCont!==null&&qty>0?totalPorCont*qty:null;
+  const diasHasta=daysUntil(r.hasta);
+  const expiring=diasHasta!==null&&diasHasta>=0&&diasHasta<=30;
+  const expired=diasHasta!==null&&diasHasta<0;
+  const tarifaDisp=ns?`<span class="cval noserv">Sin servicio</span>`:base===null?`<span class="cval soft">${r.tarifa?tr(r.tarifa.toString(),16):'Pendiente'}</span>`:`<span class="cval">${usd(base)}</span>`;
+  const contratoDisp=r.contrato?`<span class="cval" style="font-size:13px;" data-tip="Contrato: ${r.contrato}">${tr(r.contrato,22)}</span>`:`<span style="color:var(--muted);font-size:12px;">—</span>`;
+  const vigHtml=`<div class="vig-row"><span class="vig-date">${fDate(r.desde)}</span><span class="vig-arr">→</span><span class="vig-date">${fDate(r.hasta)}</span></div>
+  ${expiring?`<span class="vig-warn">⚠ Vence en ${diasHasta}d</span>`:''}${expired?`<span class="vig-warn" style="color:var(--red);background:var(--red-bg);border-color:var(--red-bd);">Vencida</span>`:''}`;
+  let efaDisp='<span style="color:var(--muted);font-size:12px;">—</span>';
+  if(r.efaNum&&r.efaDesde&&!isNaN(Date.parse(r.efaDesde))){
+    const efaHastaStr=(r.efaHasta&&!isNaN(Date.parse(r.efaHasta)))?fDate(r.efaHasta):`<span class="vig-aconf">A CONF</span>`;
+    efaDisp=`<span class="efa-amt">+ ${usd(r.efaNum)}</span><div class="vig-row" style="margin-top:3px;"><span class="vig-date">${fDate(r.efaDesde)}</span><span class="vig-arr">→</span><span>${efaHastaStr}</span></div>${efaSt==='no'?`<span class="efa-pending">No aplica para esta ETD</span>`:''}${efaSt==='unverified'?`<span class="efa-pending">Ingresá ETD para verificar</span>`:''}`;
+  } else if(r.efaNum&&(!r.efaDesde||isNaN(Date.parse(r.efaDesde)))){
+    efaDisp=`<span class="cval soft">Sin inicio — no aplica</span>`;
+  }
+  let totalContent='';
+  if(qty>0&&base!==null){
+    if(efaSt==='yes'){totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(totalEmb)}</span><span class="total-bk">${usd(base)} × ${qty} = ${usd(base*qty)}<br><span class="total-efa">⚡ EFA ${usd(r.efaNum)} × ${qty} = +${usd(r.efaNum*qty)}</span><span class="total-sum">TOTAL = ${usd(totalEmb)}</span></span>`;}
+    else if(efaSt==='unverified'){totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(base*qty)}</span><span class="total-bk">${qty} × ${usd(base)}</span><span class="total-warn">⚠ EFA no confirmado — ingresá ETD</span>`;}
+    else{totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(totalEmb)}</span><span class="total-bk">${qty} × ${usd(base)}</span>`;}
+  } else {
+    totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-hint">${qty===0?'Ingresá cantidad':'—'}</span>`;
+  }
+  const cmTip=r.comentario?`data-tip="${r.comentario.replace(/"/g,"'")}"` :'';
+  const destFlag = portFlag(r.destino);
+
+  // Naviera color — same as schedule module
+  const carrierColor = n => {
+    const u=(n||'').toUpperCase();
+    if(u.includes('HAPAG')&&u.includes('MAERSK'))return{bg:'#1d2f4f',color:'#90b8f8',bgL:'#dbeafe',colorL:'#1e40af'};
+    if(u.includes('HAPAG'))  return{bg:'#2a2010',color:'#e8c97a',bgL:'#fef3c7',colorL:'#92400e'};
+    if(u.includes('MAERSK')) return{bg:'#1d2f4f',color:'#90b8f8',bgL:'#dbeafe',colorL:'#1e40af'};
+    if(u.includes('LOGIN')||u.includes('LOG IN')) return{bg:'#0f2a1a',color:'#4ac26b',bgL:'#d1fae5',colorL:'#065f46'};
+    if(u.includes('MSC'))    return{bg:'#221640',color:'#b48ef5',bgL:'#ede9fe',colorL:'#4c1d95'};
+    if(u.includes('CMA')||u.includes('MERCOSUL')) return{bg:'#2e1515',color:'#f87171',bgL:'#fee2e2',colorL:'#991b1b'};
+    return{bg:'var(--navy)',color:'rgba(255,255,255,.88)',bgL:'#0f2044',colorL:'rgba(255,255,255,.88)'};
+  };
+  const cc = carrierColor(r.carrier);
+  const isDark = document.body.classList.contains('dark');
+  const ccBg = isDark ? cc.bg : cc.bgL;
+  const ccColor = isDark ? cc.color : cc.colorL;
+  return `<div class="card${ns?' no-serv':''}${(r.efaNum&&r.efaDesde&&!isNaN(Date.parse(r.efaDesde)))?' has-efa':''}${expiring?' expiring':''}">
+    <div class="card-grid">
+      <div class="cell">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <span class="route-main">${r.origen||'—'} <span class="route-arr">→</span> ${destFlag} ${r.destino||'—'}</span>
+          </div>
+          <div style="width:1px;height:32px;background:var(--border);flex-shrink:0"></div>
+          <span class="tag" style="background:${ccBg};color:${ccColor}">${r.carrier||'—'}</span>
+          <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
+          ${r.equipo?`<span class="tag tag-equipo">${r.equipo}</span>`:''}
+        </div>
+      </div>
+      <div class="cell">
+        <span class="clbl">Tarifa All In</span>
+        ${tarifaDisp}
+        ${r.quarter?`<span style="margin-top:4px;display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#e0f2fe;color:#0369a1;font-family:var(--mono)">${r.quarter}</span>`:''}
+      </div>
+      <div class="cell" ${cmTip}>
+        <span class="clbl">Contrato / Vigencia</span>
+        ${contratoDisp}
+        ${vigHtml}
+        ${r.quarter?`<span style="margin-top:4px;display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:#e0f2fe;color:#0369a1;font-family:var(--mono)">${r.quarter}</span>`:''}
+      </div>
+      <div class="cell"><span class="clbl">Estado</span><span class="sbadge ${stCls(r.estado)}">${r.estado||'—'}</span>
+        <span style="margin-top:5px;display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;${efaSt==='yes'?'background:#f3f0ff;color:#6d28d9;border:1px solid #c4b5fd':efaSt==='none'?'background:#f0f3f8;color:#6b7a99;border:1px solid #d8dfe9':'background:#f0f3f8;color:#6b7a99;border:1px solid #d8dfe9'}">${efaSt==='yes'?'⚡ EFA aplica':efaSt==='no'?'No aplica':efaSt==='none'?'Sin EFA':'⚠ Verificar ETD'}</span>
+      </div>
+      <div class="cell"><span class="clbl">⚡ EFA / Vigencia</span>${efaDisp}</div>
+      <div class="total-cell">${totalContent}</div>
+    </div>
+    ${r.comentario?`<div class="comment-row"><span>⚠</span><span>${r.comentario}</span></div>`:''}
+  </div>`;
+}
+
+// ── SCHEDULE IN TARIFA VIEW ──
+function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
+  const sec = document.getElementById('sched-in-tarifa');
+  const lst = document.getElementById('sched-tarifa-list');
+  if(!hasFilter||!schedule.length){sec.style.display='none';return;}
+
+  const today = etd || new Date().toISOString().split('T')[0];
+  let rows = schedule.filter(r=>{
+    const etdISO = toISO(r.ETD);
+    if(!etdISO||etdISO<today)return false;
+    if(vDestino&&!(r.DESTINO||'').toUpperCase().includes(vDestino.toUpperCase()))return false;
+    if(vOrigen){
+      const no=normalizeOrigen(vOrigen), nr=normalizeOrigen(r.ORIGEN);
+      if(no&&nr&&no!==nr)return false;
+    }
+    if(selC.size>0&&!schedNavieraMatch(r.NAVIERA,selC))return false;
+    return true;
+  });
+  rows.sort((a,b)=>toISO(a.ETD).localeCompare(toISO(b.ETD)));
+
+  if(!rows.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  const isDirect = r=>(r.TRASBORDOS||'').toUpperCase().includes('DIRECTO');
+  lst.innerHTML = rows.map(r=>`
+    <div class="sched-card ${isDirect(r)?'direct':'transbordo'}">
+      <div class="sched-row">
+        <div class="sc"><span class="sc-lbl">Buque</span><span class="sc-val vessel-name">${r.VESSEL||'—'}</span><span class="sc-val" style="font-size:10px;color:var(--muted)">${r.NAVIERA||''}</span></div>
+        <div class="sc"><span class="sc-lbl">Cut Off Doc</span><span class="sc-val">${fDate(r['CUT OFF DOC'])}</span></div>
+        <div class="sc"><span class="sc-lbl">Cut Off Físico</span><span class="sc-val amber">${fDate(r['CUT OFF FISICO'])}</span></div>
+        <div class="sc"><span class="sc-lbl">ETD</span><span class="sc-val green">${fDate(r.ETD)}</span></div>
+        <div class="sc"><span class="sc-lbl">ETA</span><span class="sc-val">${fDate(r['ETA ']||r.ETA)}</span></div>
+        <div class="sc"><span class="sc-lbl">Tránsito</span><span class="sc-val">${r.TRANSITO||'—'}</span></div>
+        <div class="sc"><span class="sc-lbl">Tipo</span><span class="days-badge ${isDirect(r)?'direct':'via'}">${r.TRASBORDOS||'—'}</span></div>
+        <div class="sc"><span class="sc-lbl">EFA</span>${(()=>{
+          const etdRow=toISO(r.ETD||r['ETD']||'');
+          // Match naviera from schedule to carrier in tarifas
+          // Schedule: "LOG IN", "HAPAG-MAERSK" etc → Tarifa: "LOGIN", "HAPAG" etc
+          const naviNorm = n => {
+            const u=(n||'').toUpperCase();
+            if(u.includes('HAPAG')&&u.includes('MAERSK'))return['HAPAG','MAERSK'];
+            if(u.includes('HAPAG'))return['HAPAG'];
+            if(u.includes('MAERSK'))return['MAERSK'];
+            if(u.includes('LOG IN')||u.includes('LOGIN'))return['LOGIN'];
+            if(u.includes('MSC'))return['MSC'];
+            if(u.includes('CMA')||u.includes('MERCOSUL'))return['CMA CGM','CMA','MERCOSUL'];
+            return[u];
+          };
+          const schedBrands = naviNorm(r.NAVIERA);
+          const tm=rates.find(t=>{
+            const tCarrier=(t.carrier||'').toUpperCase();
+            const tOrigen=normalizeOrigen(t.origen);
+            const sOrigen=normalizeOrigen(r.ORIGEN);
+            const tDest=(t.destino||'').toUpperCase();
+            const sDest=(r.DESTINO||'').toUpperCase();
+            return tOrigen===sOrigen && tDest===sDest && schedBrands.some(b=>tCarrier.includes(b)||b.includes(tCarrier));
+          });
+          if(!tm||!tm.efaNum) return '<span class="sc-val" style="color:var(--muted);font-size:10px">Sin EFA</span>';
+          const st=efaApplies(tm,etdRow);
+          if(st==='yes') return '<span style="font-size:10px;font-weight:700;color:#6d28d9;background:#f3f0ff;padding:2px 7px;border-radius:4px;border:1px solid #c4b5fd">⚡ Aplica</span>';
+          if(st==='no')  return '<span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--faint);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">No aplica</span>';
+          return '<span style="font-size:10px;color:var(--muted)">—</span>';
+        })()}</div>
+      </div>
+      ${(r.OBSERVACIONES)?`<div class="sc-obs">📝 ${r.OBSERVACIONES}</div>`:''}
+    </div>`).join('');
+}
+
+// ── SCHEDULE MODULE FILTER ──
+function applySchedFilter(){
+  if(!schedule.length)return;
+  const vO  = document.getElementById('f-s-origen').value.trim();
+  const vD  = document.getElementById('f-s-destino').value.trim();
+  const vV  = document.getElementById('f-s-vessel').value.trim();
+  const co  = document.getElementById('f-s-cutoff').value;
+  const eta = document.getElementById('f-s-eta').value;
+  const per = document.getElementById('f-s-periodo').value;
+
+  const today = new Date().toISOString().split('T')[0];
+  const thisMonthStart = today.slice(0,7)+'-01';
+
+  // Brand map for schedule carriers
+  const brandOf = n => {
+    const u=(n||'').toUpperCase();
+    if(u.includes('HAPAG'))return'HAPAG';
+    if(u.includes('MAERSK'))return'MAERSK';
+    if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';
+    if(u.includes('MSC'))return'MSC';
+    if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';
+    return n;
+  };
+
+  let rows = schedule.filter(r=>{
+    if(per==='futuro'){
+      const etdISO=toISO(r.ETD||r['ETD']);
+      if(!etdISO||etdISO<thisMonthStart)return false;
+    }
+    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
+    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
+    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
+    if(co){const c=toISO(r['CUT OFF FISICO']);if(c&&c<co)return false;}
+    if(eta){const e=toISO(r['ETA ']||r.ETA||r['ETA']);if(e&&e>eta)return false;}
+    return true;
+  });
+  rows.sort((a,b)=>(toISO(a.ETD||a['ETD'])||'').localeCompare(toISO(b.ETD||b['ETD'])||''));
+
+  // Cascading filter: update autocomplete options based on current filtered set
+  updateCascadeOpts(rows, vO, vD);
+  renderSchedModule(rows);
+}
+
+function updateCascadeOpts(rows, vO, vD) {
+  // Destinations available from selected origin
+  if(vO) {
+    const dests=[...new Set(rows.map(r=>r.DESTINO).filter(Boolean))].sort();
+    const dEl=document.getElementById('f-s-destino');
+    if(dEl&&document.activeElement===dEl) onAcFocus('s-destino');
+  }
+  // Vessels available for selected origin+dest
+  if(vO||vD) {
+    const vEl=document.getElementById('f-s-vessel');
+    if(vEl&&document.activeElement===vEl) onAcFocus('s-vessel');
+  }
+}
+
+// Country flags
+// Country code map for flag images (ISO 3166-1 alpha-2)
+const FLAGS = {
+  'ARGENTINA':'ar','BRASIL':'br','PERU':'pe','CHILE':'cl','COLOMBIA':'co',
+  'MEXICO':'mx','URUGUAY':'uy','PARAGUAY':'py','VENEZUELA':'ve','ECUADOR':'ec',
+  'BOLIVIA':'bo','PANAMA':'pa','COSTA RICA':'cr','GUATEMALA':'gt','HONDURAS':'hn',
+  'CUBA':'cu','ESTADOS UNIDOS':'us','USA':'us',
+  'CHINA':'cn','JAPON':'jp','INDIA':'in','VIETNAM':'vn','TAILANDIA':'th',
+  'SINGAPUR':'sg','MALASIA':'my','TAIWAN':'tw','COREA':'kr',
+  'ESPAÑA':'es','PORTUGAL':'pt','ITALIA':'it','FRANCIA':'fr','ALEMANIA':'de',
+  'BELGICA':'be','HOLANDA':'nl','REINO UNIDO':'gb','GRECIA':'gr','TURQUIA':'tr',
+  'MARRUECOS':'ma','SUDAFRICA':'za','AUSTRALIA':'au',
+};
+const PORT_COUNTRY = {
+  'BUENOS AIRES':'ARGENTINA','BAHIA BLANCA':'ARGENTINA','ZARATE':'ARGENTINA','ROSARIO':'ARGENTINA',
+  'SANTOS':'BRASIL','RIO DE JANEIRO':'BRASIL','MANAUS':'BRASIL','MANAOS':'BRASIL',
+  'SALVADOR':'BRASIL','SUAPE':'BRASIL','PARANAGUA':'BRASIL','NAVEGANTES':'BRASIL',
+  'ITAPOA':'BRASIL','RIO GRANDE':'BRASIL','ITAJAI':'BRASIL',
+  'CALLAO':'PERU','PAITA':'PERU',
+  'ARICA':'CHILE','SAN ANTONIO':'CHILE','ANTOFAGASTA':'CHILE',
+  'CARTAGENA':'COLOMBIA','BUENAVENTURA':'COLOMBIA',
+  'VERACRUZ':'MEXICO','ALTAMIRA':'MEXICO','MANZANILLO':'MEXICO',
+  'QINGDAO':'CHINA','SHANGHAI':'CHINA','DALIAN':'CHINA','NINGBO':'CHINA','TIANJIN':'CHINA',
+  'HAIPHONG':'VIETNAM','HO CHI MING':'VIETNAM','HO CHI MINH':'VIETNAM',
+  'HALDIA':'INDIA','NHAVA SHEVA':'INDIA','MUNDRA':'INDIA',
+  'BARCELONA':'ESPAÑA','VALENCIA':'ESPAÑA',
+  'MONTEVIDEO':'URUGUAY','ASUNCION':'PARAGUAY',
+};
+function portFlag(port) {
+  if(!port) return '';
+  const u = port.toUpperCase();
+  for(const [p,c] of Object.entries(PORT_COUNTRY)){
+    if(u.includes(p)){
+      const code = FLAGS[c];
+      if(!code) return '';
+      return `<img src="https://flagcdn.com/16x12/${code}.png" width="16" height="12" alt="${c}" title="${c}" style="display:inline;vertical-align:middle;margin-right:3px;border-radius:2px">`;
+    }
+  }
+  return '';
+}
+
+function renderSchedModule(rows){
+  const el=document.getElementById('sched-list');
+  const ct=document.getElementById('sched-ct');
+  ct.textContent=rows.length+' salida'+(rows.length!==1?'s':'')+' encontrada'+(rows.length!==1?'s':'');
+
+  if(!rows.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ico">🔍</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros o cambiá el período de búsqueda</div></div>`;
+    return;
+  }
+
+  const trasCls = r=>{
+    const t=(r.TRASBORDOS||'').toUpperCase();
+    const s=(r.SERVICIO||'').toUpperCase();
+    if(t.includes('DIRECTO')||s.includes('DIRECTO'))return'dir';
+    if(t.includes('2')||t.includes('4')||t.includes('MULTI'))return'multi';
+    return'one';
+  };
+  const trasLabel = r => {
+    const t=(r.TRASBORDOS||'').trim();
+    const s=(r.SERVICIO||'').trim();
+    return t || s || '—';
+  };
+  const isChanged=(r,field)=>r._changes&&r._changes[field];
+  const oldVal=(r,field)=>r._changes&&r._changes[field]?r._changes[field].old:'';
+
+  // Naviera color map
+  const navColor = n => {
+    const u=(n||'').toUpperCase();
+    if(u.includes('HAPAG')&&u.includes('MAERSK'))return{bg:'#dbeafe',color:'#1e40af'};
+    if(u.includes('HAPAG'))return{bg:'#fef3c7',color:'#92400e'};
+    if(u.includes('MAERSK'))return{bg:'#dbeafe',color:'#1e40af'};
+    if(u.includes('LOG IN')||u.includes('LOGIN'))return{bg:'#d1fae5',color:'#065f46'};
+    if(u.includes('MSC'))return{bg:'#ede9fe',color:'#4c1d95'};
+    if(u.includes('CMA')||u.includes('MERCOSUL'))return{bg:'#fee2e2',color:'#991b1b'};
+    return{bg:'#f3f4f6',color:'#374151'};
+  };
+
+  // Days until / elapsed
+  const daysTo = d => {
+    const iso=toISO(d); if(!iso)return null;
+    return Math.ceil((new Date(iso)-new Date())/86400000);
+  };
+
+  // Transit days calc from ETD→ETA
+  const transitDays = r => {
+    const etdISO = toISO(r.ETD||r['ETD']||'');
+    const etaISO = toISO(r['ETA ']||r.ETA||r['ETA']||'');
+    if(!etdISO||!etaISO)return'';
+    const diff = Math.round((new Date(etaISO)-new Date(etdISO))/86400000);
+    return diff>0?`${diff}d tránsito`:'';
+  };
+
+  // Cut off urgency color
+  const cutOffStyle = d => {
+    const n=daysTo(d); if(n===null)return'';
+    if(n<=0)return'color:var(--red);font-weight:700';
+    if(n<=2)return'color:var(--red);font-weight:600';
+    if(n<=5)return'color:var(--orange);font-weight:600';
+    return'';
+  };
+
+  // Date cell — simple display
+  const copyCell = (val, extraStyle='') => {
+    if(!val||val==='—')return`<div class="sr mono" style="${extraStyle}">—</div>`;
+    return`<div class="sr mono" style="${extraStyle}">${fDate(val)}</div>`;
+  };
+
+  // Grid: Buque | Naviera | Origen→Destino | CutOff Doc | CutOff Físico | ETD | ETA | Transito+Tipo | Comentario
+  const COLS = '1.5fr 1fr 1.4fr 1fr 1fr 1fr 1fr 1fr 1.6fr';
+
+  // All comments at bottom
+  const allComments = rows.filter(r=>r.OBSERVACIONES||r.COMENTARIOS).map(r=>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.4">
+      <strong style="color:var(--text)">${r.VESSEL||'—'} · ${r.ORIGEN||''} → ${r.DESTINO||''}</strong><br>
+      📝 ${r.OBSERVACIONES||r.COMENTARIOS}
+    </div>`
+  ).join('');
+
+  el.innerHTML = `<div class="sched-table-wrap">
+    <div class="sched-table-head" style="grid-template-columns:${COLS}">
+      <span class="sth">Buque</span>
+      <span class="sth">Naviera</span>
+      <span class="sth">Origen → Destino</span>
+      <span class="sth">Cut Off Doc</span>
+      <span class="sth">Cut Off Físico</span>
+      <span class="sth">ETD</span>
+      <span class="sth">ETA</span>
+      <span class="sth">Tránsito / Tipo</span>
+      <span class="sth">Observaciones</span>
+    </div>
+    ${rows.map(r=>{
+      const chEtd=isChanged(r,'ETD'),chEta=isChanged(r,'ETA'),chCof=isChanged(r,'CUT OFF FISICO'),chDoc=isChanged(r,'CUT OFF DOC');
+      const etdField=r.ETD||r['ETD']||'';
+      const etaField=r['ETA ']||r.ETA||r['ETA']||'';
+      const nc=navColor(r.NAVIERA);
+      const flag=portFlag(r.DESTINO);
+      const obs=r.OBSERVACIONES||r.COMENTARIOS||'';
+      const transit=transitDays(r);
+      const cofDoc=r['CUT OFF DOC']||'';
+      const cofFis=r['CUT OFF FISICO']||'';
+
+      return `<div class="sched-row-wrap">
+        <div class="sched-main-row" style="grid-template-columns:${COLS}">
+          <div class="sr vessel">${r.VESSEL||'—'}</div>
+          <div>
+            <span class="naviera-badge" style="background:${nc.bg};color:${nc.color}">${r.NAVIERA||'—'}</span>
+          </div>
+          <div>
+            <div class="sr">${r.ORIGEN||'—'} → ${flag} ${r.DESTINO||'—'}</div>
+            ${transit?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${transit}</div>`:''}
+          </div>
+          <div ${chDoc?`data-tip="Anterior: ${oldVal(r,'CUT OFF DOC')}"`:''}>
+            ${copyCell(cofDoc, (chDoc?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')+';'+cutOffStyle(cofDoc))}
+          </div>
+          <div ${chCof?`data-tip="Anterior: ${oldVal(r,'CUT OFF FISICO')}"`:''}>
+            ${copyCell(cofFis, (chCof?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')+';'+cutOffStyle(cofFis))}
+          </div>
+          <div ${chEtd?`data-tip="Anterior: ${oldVal(r,'ETD')}"`:''}>
+            ${copyCell(etdField, chEtd?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')}
+          </div>
+          <div ${chEta?`data-tip="Anterior: ${oldVal(r,'ETA')}"`:''}>
+            ${copyCell(etaField, chEta?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')}
+          </div>
+          <div>
+            <span class="tras-badge ${trasCls(r)}">${trasLabel(r)}</span>
+          </div>
+          <div class="sr muted" style="font-size:11px;line-height:1.4">${obs||'—'}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  ${allComments?`<div style="background:var(--white);border-radius:10px;padding:1rem 1.25rem;margin-top:10px;border:1px solid var(--border)">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">📝 Observaciones completas</div>
+    ${allComments}
+  </div>`:''}`;
+}
+
+// ── FILE UPLOAD ──
+function handleFileUpload(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(ws, {raw:false, dateNF:'YYYY-MM-DD'});
+
+      // Compare with existing schedule to detect changes
+      const changes = detectChanges(schedule, data);
+
+      // Merge changes into records
+      const newSched = data.map(row=>{
+        const key=`${row.NAVIERA||''}|${row.VESSEL||''}|${row.ORIGEN||''}|${row.DESTINO||''}|${row.ETD||''}`;
+        const chg={};
+        changes.forEach(c=>{
+          const ck=`${c.naviera}|${c.vessel}|${c.origen}|${c.destino}|${c.etdNuevo||c.etdAnterior||''}`;
+          if(ck===key) chg[c.campo]={old:c.valorAnterior,new:c.valorNuevo};
+        });
+        return Object.keys(chg).length?{...row,_changes:chg}:row;
+      });
+
+      schedule = newSched;
+
+      // Save changes to local storage + push to Google Sheets
+      if(changes.length){
+        const now=Date.now();
+        const newChanges=changes.map(c=>({...c,ts:now}));
+        scheduleChanges=[...newChanges,...scheduleChanges].filter(c=>now-c.ts<CHANGE_TTL);
+        saveChangesToStorage();
+        pushChangesToSheet(newChanges, file.name);
+        renderBell();
+      }
+
+      // Rebuild schedule autocomplete options
+      buildSchedOpts();
+      applySchedFilter();
+      applyFilter(); // refresh schedule in tarifa view
+
+      // Update upload count label
+      setDot('ok',`Schedule: ${data.length} registros · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
+      input.value='';
+    } catch(err) {
+      alert('Error al leer el archivo: '+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function detectChanges(oldSched, newSched){
+  if(!oldSched||!oldSched.length) return [];
+  const changes=[];
+  const KEY=r=>`${r.NAVIERA||''}|${r.VESSEL||''}|${r.ORIGEN||''}|${r.DESTINO||''}`;
+  const oldMap=new Map(oldSched.map(r=>[KEY(r),r]));
+  const WATCH=['ETD','ETA ','ETA','CUT OFF FISICO','CUT OFF DOC','TRASBORDOS'];
+
+  newSched.forEach(nr=>{
+    const or=oldMap.get(KEY(nr));
+    if(!or)return; // new record, not a change
+    WATCH.forEach(field=>{
+      const ov=toISO(or[field])||String(or[field]||'');
+      const nv=toISO(nr[field])||String(nr[field]||'');
+      if(ov&&nv&&ov!==nv){
+        changes.push({
+          naviera:nr.NAVIERA||'',vessel:nr.VESSEL||'',
+          origen:nr.ORIGEN||'',destino:nr.DESTINO||'',
+          campo:field,valorAnterior:fDate(or[field]),valorNuevo:fDate(nr[field]),
+          tipo:'modificado',etdNuevo:toISO(nr.ETD)
+        });
+      }
+    });
+  });
+  return changes;
+}
+
+async function pushChangesToSheet(changes, fileName){
+  try{
+    await fetch(SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({timestamp:Date.now(), archivo:fileName, cambios:changes})
+    });
+  }catch(e){console.warn('No se pudo enviar log al Sheet:',e);}
+}
+
+function buildSchedCarrierBtns() {
+  // Map raw naviera names to commercial brands
+  const brandMap = n => {
+    const u = (n||'').toUpperCase();
+    if(u.includes('HAPAG')) return 'HAPAG';
+    if(u.includes('MAERSK')) return 'MAERSK';
+    if(u.includes('LOG IN')||u.includes('LOGIN')) return 'LOGIN';
+    if(u.includes('MSC')) return 'MSC';
+    if(u.includes('CMA')||u.includes('MERCOSUL')) return 'CMA CGM';
+    return n;
+  };
+  const brands = [...new Set(schedule.map(r=>brandMap(r.NAVIERA)).filter(Boolean))].sort();
+  const grp = document.getElementById('sched-carrier-grp');
+  if(grp) grp.innerHTML = brands.map(b=>`<button class="tog${selSC.has(b)?' on':''}" onclick="togSC('${b}')">${b}</button>`).join('');
+}
+
+function updateSchedIndicator() {
+  const ind = document.getElementById('sched-indicator');
+  if(!scheduleFileName){ind.style.display='none';return;}
+  ind.style.display='flex';
+  document.getElementById('sched-ind-name').textContent = scheduleFileName;
+  if(scheduleFileDate){
+    const days = Math.floor((Date.now()-new Date(scheduleFileDate))/(1000*60*60*24));
+    const ageEl = document.getElementById('sched-ind-age');
+    if(days>7){
+      ageEl.textContent = '⚠ '+days+'d';
+      ageEl.style.color='#f4a723';
+      ind.style.borderColor='rgba(244,167,35,.3)';
+    } else {
+      ageEl.textContent = days===0?'hoy':days+'d atrás';
+      ageEl.style.color='rgba(255,255,255,.4)';
+      ind.style.borderColor='rgba(255,255,255,.1)';
+    }
+  }
+}
+
+function buildSchedOpts(){
+  buildSchedCarrierBtns();
+}
+
+// Initial empty schedule filter render
+window.addEventListener('load', ()=>{
+  if(schedule.length) applySchedFilter();
+  // Restore dark mode preference
+  if(localStorage.getItem('darkMode')==='1') enableDark();
+});
+
+// ── DARK MODE ──
+function toggleDark(){
+  document.body.classList.contains('dark') ? disableDark() : enableDark();
+}
+function enableDark(){
+  document.body.classList.add('dark');
+  document.getElementById('btn-dark').textContent='☀️';
+  localStorage.setItem('darkMode','1');
+}
+function disableDark(){
+  document.body.classList.remove('dark');
+  document.getElementById('btn-dark').textContent='🌙';
+  localStorage.setItem('darkMode','0');
+}
+
+// ── EXPORT HELPERS ──
+function getActiveFiltersLabel(){
+  const origen = document.getElementById('f-t-origen').value;
+  const destino = document.getElementById('f-t-destino').value;
+  const estado = document.getElementById('f-estado').value;
+  const quarter = document.getElementById('f-quarter').value;
+  const etd = document.getElementById('f-etd').value;
+  const parts = [];
+  if(origen) parts.push('Origen: '+origen);
+  if(destino) parts.push('Destino: '+destino);
+  if(estado && estado!=='todas') parts.push('Estado: '+estado);
+  if(quarter) parts.push('Quarter: '+quarter);
+  if(etd) parts.push('ETD: '+fDate(etd));
+  if(selC.size>0) parts.push('Carrier: '+[...selC].join(', '));
+  return parts.length ? parts.join(' · ') : 'Todos los resultados';
+}
+
+// ── EXPORT TARIFAS PDF ──
+function exportTarifasPDF(){
+  const cards = document.querySelectorAll('#list .card');
+  if(!cards.length){ alert('No hay tarifas para exportar.'); return; }
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const filtros = getActiveFiltersLabel();
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11px;color:#1a2540;margin:20px}
+    h1{font-size:16px;color:#0f2044;margin-bottom:4px}
+    .sub{font-size:10px;color:#6b7a99;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px}
+    th{background:#0f2044;color:#fff;padding:6px 8px;text-align:left;font-size:10px}
+    td{padding:5px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+    tr:nth-child(even) td{background:#f8fafc}
+    .conf{color:#0d9e80;font-weight:700} .pend{color:#c87a00;font-weight:700} .nodsp{color:#c0392b;font-weight:700}
+    .q{display:inline-block;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
+    .efa{color:#6d28d9;font-weight:700}
+    @media print{body{margin:10px}}
+  </style></head><body>
+  <h1>⚓ Fletes Marítimos · Contrato BID</h1>
+  <div class="sub">Exportado: ${fecha} · ${filtros}</div>
+  <table>
+    <tr>
+      <th>Origen → Destino</th><th>Carrier / Equipo</th><th>Tarifa All In</th>
+      <th>Contrato</th><th>Vigencia</th><th>Quarter</th><th>Estado</th><th>EFA</th>
+    </tr>`;
+
+  // Use current rates filtered
+  const vO  = document.getElementById('f-t-origen').value.trim();
+  const vD  = document.getElementById('f-t-destino').value.trim();
+  const est = document.getElementById('f-estado').value;
+  const qf  = document.getElementById('f-quarter').value;
+  const etd = document.getElementById('f-etd').value;
+
+  let datos = rates.filter(r=>{
+    if(!r.origen&&!r.destino)return false;
+    if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
+    if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selC.size>0&&!selC.has(r.carrier))return false;
+    if(selE.size>0&&!selE.has(r.equipo))return false;
+    const u=(r.estado||'').toUpperCase();
+    if(est==='confirmada'&&!u.includes('CONFIRM'))return false;
+    if(est==='pendiente'&&!u.includes('PEND'))return false;
+    if(est==='no-disponible'&&!u.includes('NO DISP'))return false;
+    if(qf&&(r.quarter||'').toUpperCase()!==qf.toUpperCase())return false;
+    return true;
+  });
+  datos.sort((a,b)=>sortOrder(a)-sortOrder(b));
+
+  datos.forEach(r=>{
+    const efaSt=efaApplies(r,etd);
+    const efaStr=r.efaNum?(efaSt==='yes'?'⚡ '+usd(r.efaNum)+' (aplica)':efaSt==='no'?usd(r.efaNum)+' (no aplica aún)':usd(r.efaNum)+' (verificar ETD)'):'—';
+    const stCls2=stCls(r.estado).replace('conf','conf').replace('pend','pend').replace('nodsp','nodsp');
+    html+=`<tr>
+      <td><strong>${r.origen||'—'} → ${r.destino||'—'}</strong></td>
+      <td>${r.carrier||'—'}<br><small>${r.equipo||'—'}</small></td>
+      <td><strong>${isNum(r.tarifa)?usd(r.tarifa):r.tarifa||'—'}</strong></td>
+      <td>${r.contrato||'—'}</td>
+      <td>${fDate(r.desde)} → ${fDate(r.hasta)}</td>
+      <td>${r.quarter?`<span class="q">${r.quarter}</span>`:'—'}</td>
+      <td><span class="${stCls2}">${r.estado||'—'}</span></td>
+      <td class="efa">${efaStr}</td>
+    </tr>`;
+  });
+
+  html+=`</table><div style="font-size:9px;color:#999;margin-top:12px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div>
+  </body></html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
+
+// ── EXPORT TARIFAS EXCEL ──
+function exportTarifasExcel(){
+  const vO  = document.getElementById('f-t-origen').value.trim();
+  const vD  = document.getElementById('f-t-destino').value.trim();
+  const est = document.getElementById('f-estado').value;
+  const qf  = document.getElementById('f-quarter').value;
+  const etd = document.getElementById('f-etd').value;
+
+  let datos = rates.filter(r=>{
+    if(!r.origen&&!r.destino)return false;
+    if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
+    if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selC.size>0&&!selC.has(r.carrier))return false;
+    if(selE.size>0&&!selE.has(r.equipo))return false;
+    const u=(r.estado||'').toUpperCase();
+    if(est==='confirmada'&&!u.includes('CONFIRM'))return false;
+    if(est==='pendiente'&&!u.includes('PEND'))return false;
+    if(est==='no-disponible'&&!u.includes('NO DISP'))return false;
+    if(qf&&(r.quarter||'').toUpperCase()!==qf.toUpperCase())return false;
+    return true;
+  });
+  datos.sort((a,b)=>sortOrder(a)-sortOrder(b));
+
+  if(!datos.length){ alert('No hay tarifas para exportar.'); return; }
+
+  const rows=[['ORIGEN','DESTINO','CARRIER','EQUIPO','TARIFA ALL IN (USD)','CONTRATO','INICIO VIGENCIA','FIN VIGENCIA','QUARTER','ESTADO','EFA MONTO (USD)','INICIO EFA','FIN EFA','EFA ESTADO','COMENTARIO']];
+  datos.forEach(r=>{
+    const efaSt=efaApplies(r,etd);
+    const efaEstado = efaSt==='yes'?'APLICA':efaSt==='no'?'NO APLICA AUN':efaSt==='none'?'SIN EFA':'VERIFICAR ETD';
+    rows.push([
+      r.origen||'', r.destino||'', r.carrier||'', r.equipo||'',
+      isNum(r.tarifa)?r.tarifa:(r.tarifa||''),   // number if available
+      r.contrato||'', fDate(r.desde), fDate(r.hasta),
+      r.quarter||'', r.estado||'',
+      r.efaNum||'',                               // number
+      fDate(r.efaDesde), r.efaHasta||'',
+      efaEstado,
+      r.comentario||''
+    ]);
+  });
+
+  // CSV: numbers without quotes, strings with quotes
+  const csvRows = rows.map((row, rowIdx) => {
+    return row.map((v, colIdx) => {
+      if(rowIdx === 0) return `"${v}"`; // header always quoted
+      // Cols 4 (tarifa) and 10 (efa monto) — keep as number if numeric
+      if((colIdx === 4 || colIdx === 10) && v !== '' && !isNaN(Number(v))) return Number(v);
+      return `"${String(v).replace(/"/g,'""')}"`;
+    }).join(',');
+  });
+  const csv = '\uFEFF' + csvRows.join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`tarifas_bid_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── EXPORT SCHEDULE PDF ──
+function exportSchedPDF(){
+  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
+
+  const vO  = document.getElementById('f-s-origen').value.trim();
+  const vD  = document.getElementById('f-s-destino').value.trim();
+  const vV  = document.getElementById('f-s-vessel').value.trim();
+  const per = document.getElementById('f-s-periodo').value;
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
+
+  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
+
+  let rows=schedule.filter(r=>{
+    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
+    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
+    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
+    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
+    return true;
+  });
+  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
+
+  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
+
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;color:#1a2540;margin:20px}
+    h1{font-size:15px;color:#0f2044;margin-bottom:4px}
+    .sub{font-size:9px;color:#6b7a99;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#0f2044;color:#fff;padding:5px 6px;text-align:left;font-size:9px}
+    td{padding:4px 6px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+    tr:nth-child(even) td{background:#f8fafc}
+    .dir{color:#0d9e80;font-weight:700} .one{color:#c87a00} .multi{color:#c0392b}
+    @media print{body{margin:8px}}
+  </style></head><body>
+  <h1>🚢 Schedule de Buques</h1>
+  <div class="sub">Exportado: ${fecha} · ${scheduleFileName||'Schedule local'}</div>
+  <table>
+    <tr><th>Buque</th><th>Naviera</th><th>Origen → Destino</th><th>Cut Off Doc</th><th>Cut Off Físico</th><th>ETD</th><th>ETA</th><th>Tránsito</th><th>Tipo</th></tr>`;
+
+  rows.forEach(r=>{
+    const t=(r.TRASBORDOS||'').toUpperCase();
+    const cls=t.includes('DIRECTO')?'dir':t.includes('2')||t.includes('4')?'multi':'one';
+    html+=`<tr>
+      <td><strong>${r.VESSEL||'—'}</strong></td>
+      <td>${r.NAVIERA||'—'}</td>
+      <td>${r.ORIGEN||'—'} → ${r.DESTINO||'—'}</td>
+      <td>${fDate(r['CUT OFF DOC'])}</td>
+      <td>${fDate(r['CUT OFF FISICO'])}</td>
+      <td><strong>${fDate(r.ETD||r['ETD'])}</strong></td>
+      <td>${fDate(r['ETA ']||r.ETA||r['ETA'])}</td>
+      <td>${r.TRANSITO||'—'}</td>
+      <td class="${cls}">${r.TRASBORDOS||'—'}</td>
+    </tr>`;
+  });
+
+  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div></body></html>`;
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(),500);
+}
+
+// ── EXPORT SCHEDULE EXCEL ──
+function exportSchedExcel(){
+  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
+
+  const vO  = document.getElementById('f-s-origen').value.trim();
+  const vD  = document.getElementById('f-s-destino').value.trim();
+  const vV  = document.getElementById('f-s-vessel').value.trim();
+  const per = document.getElementById('f-s-periodo').value;
+  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
+  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
+
+  let rows=schedule.filter(r=>{
+    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
+    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
+    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
+    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
+    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
+    return true;
+  });
+  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
+
+  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
+
+  const header=[['BUQUE','NAVIERA','ORIGEN','DESTINO','CUT OFF DOC','CUT OFF FISICO','ETD','ETA','SAP DD','TRANSITO','TRASBORDOS','SERVICIO','OBSERVACIONES']];
+  const data=rows.map(r=>[
+    r.VESSEL||'', r.NAVIERA||'', r.ORIGEN||'', r.DESTINO||'',
+    fDate(r['CUT OFF DOC']), fDate(r['CUT OFF FISICO']),
+    fDate(r.ETD||r['ETD']), fDate(r['ETA ']||r.ETA||r['ETA']),
+    fDate(r['"SAP DD"']||r['SAP DD']||r['" SAP DD"']||''),
+    r.TRANSITO||'', r.TRASBORDOS||'', r.SERVICIO||'',
+    r.OBSERVACIONES||r.COMENTARIOS||''
+  ]);
+
+  const csv='\uFEFF'+[...header,...data].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`schedule_buques_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
