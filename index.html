@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fletes Marítimos · Contrato BID</title>
 <meta name="description" content="Sistema de consulta de fletes marítimos y schedule de buques - DOW/PBB Polisur">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --navy:#0f2044;--blue:#1a6bf5;--blue-lt:#e8f0fe;--teal:#00c9a7;
+  --navy:#050f22;--blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#f97316;
   --bg:#eef1f6;--white:#fff;--border:#d8dfe9;--text:#1a2540;--muted:#6b7a99;--faint:#f0f3f8;
   --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
   --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
@@ -17,13 +17,13 @@
   --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
   --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
   --changed:#fffbe6;--changed-bd:#f0c050;
-  --font:'Inter',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --font:'Geist',sans-serif;--mono:'IBM Plex Mono',monospace;
   --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
 }
 /* ── DARK MODE ── */
 body.dark{
-  --navy:#1a2744;--blue:#5b9bf5;--blue-lt:#1d2f4f;--teal:#00c9a7;
-  --bg:#1a1f2e;--white:#242b3d;--border:#353d52;--text:#dce4f0;--muted:#8d97ae;--faint:#1e2436;
+  --navy:#1a2744;--blue:#5b9bf5;--blue-lt:#1d2f4f;--teal:#06b6d4;--accent:#fb923c;
+  --bg:#1a1f2e;--white:#242b3d;--border:#353d52;--text:#dce4f0;--muted:#9bb3d4;--faint:#1e2436;
   --green:#4ac26b;--green-bg:#0f2a1a;--green-bd:#1e5c33;
   --amber:#e8b84b;--amber-bg:#2a2010;--amber-bd:#6b4e00;
   --red:#f87171;--red-bg:#2e1515;--red-bd:#5a2020;
@@ -95,7 +95,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .dot.err{background:#ff6b6b}
 .dot.spin{background:#f4a723;animation:blink .9s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.btn-top{font-family:var(--font);font-size:12px;font-weight:500;padding:7px 15px;border-radius:7px;cursor:pointer;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);background:rgba(255,255,255,.09);transition:all .15s}
+.btn-top{font-family:var(--font);font-size:12px;font-weight:500;padding:7px 15px;border-radius:7px;cursor:pointer;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);background:rgba(255,255,255,.09);transition:all .15s cubic-bezier(.4,0,.2,1)}
+.btn-top:hover{background:rgba(255,255,255,.18);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.btn-top:active{transform:translateY(0)}
+.btn-top:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-top:hover{background:rgba(255,255,255,.18)}
 .btn-top:disabled{opacity:.4;cursor:not-allowed}
 .btn-upload{border-color:rgba(0,201,167,.4);color:rgba(0,201,167,.9)}
@@ -126,7 +129,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 
 /* ── TABS ── */
 .tab-bar{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0;flex-shrink:0}
-.tab-btn{padding:12px 20px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;margin-bottom:-1px}
+.tab-btn{padding:12px 20px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s ease;margin-bottom:-1px;position:relative}
+.tab-btn::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--blue);transition:width .3s cubic-bezier(.4,0,.2,1)}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);font-weight:600}
+.tab-btn.active::after{width:100%}
 .tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 
@@ -138,12 +145,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 
 /* Estado select */
 .estado-sel{padding:8px 26px 8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--text);background:var(--faint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7a99' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 8px center;appearance:none;cursor:pointer;width:145px;transition:border-color .15s}
-.estado-sel:focus{outline:none;border-color:var(--blue);background-color:var(--white)}
+.estado-sel:focus{outline:none;border-color:var(--blue);background-color:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 
 /* Autocomplete */
 .ac-wrap{position:relative}
 .ac-in{padding:8px 26px 8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--faint);transition:border-color .15s,background .15s}
-.ac-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.ac-in:focus{outline:none;border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .ac-in.sel{border-color:var(--blue);background:var(--white);font-weight:500}
 .ac-in.w165{width:165px}.ac-in.w140{width:140px}
 .ac-x{position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;line-height:1;display:none}
@@ -174,13 +181,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .qty-unit{display:flex;flex-direction:column;align-items:center;gap:2px}
 .qty-lbl{font-size:10px;color:var(--muted);font-family:var(--mono)}
 .qty-in{width:58px;padding:7px 5px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);background:var(--faint);text-align:center;transition:border-color .15s}
-.qty-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.qty-in:focus{outline:none;border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .qty-in.active{border-color:var(--blue);background:var(--white);font-weight:600}
 
 /* Date + generic input */
 .date-in,.gen-in{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--faint);transition:border-color .15s}
 .date-in{width:148px}.gen-in{width:145px}
-.date-in:focus,.gen-in:focus{outline:none;border-color:var(--blue);background:var(--white)}
+.date-in:focus,.gen-in:focus{outline:none;border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 
 /* Clear + filter banner */
 .btn-clear{padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;background:var(--faint);color:var(--muted);transition:all .15s;align-self:flex-end;white-space:nowrap}
@@ -201,8 +208,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .alert-bar{padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:10px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
 
 /* ── TARIFA CARD ── */
-.card{background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden;border:1px solid var(--border);transition:box-shadow .2s,border-color .2s}
-.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.09),0 8px 24px rgba(0,0,0,.07);border-color:#c0ccdf}
+.card{background:var(--white);border-radius:12px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden;border:1px solid var(--border);transition:all .2s cubic-bezier(.4,0,.2,1)}
+.card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .card.no-serv{opacity:.65;border-left:4px solid var(--red-bd)}
 .card.has-efa{border-left:4px solid var(--purple-bd)}
 .card.expiring{border-top:2px solid var(--orange)}
@@ -231,6 +238,116 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .sbadge.nd{background:var(--faint);color:var(--muted);border:1px solid var(--border)}
 .efa-amt{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--purple)}
 .efa-pending{font-size:11px;color:var(--amber);font-style:italic;margin-top:2px}
+.vessel-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:var(--blue-lt);border:1.5px solid var(--blue);color:var(--blue);font-size:12px;font-weight:600}
+.vessel-chip .vc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+.vessel-chip .vc-name{font-family:var(--mono);color:var(--text);font-weight:700}
+.vessel-chip .vc-sep{color:var(--muted)}
+.vessel-chip .vc-etd{font-family:var(--mono);color:var(--blue);font-weight:700}
+.vessel-chip .vc-x{background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0 2px;font-weight:700}
+.vessel-chip .vc-x:hover{color:var(--red)}
+.sched-card.clickable{cursor:pointer;transition:all .12s}
+.sched-card.clickable:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(26,107,245,.15)}
+.sched-card.selected{border:2px solid var(--blue);background:var(--blue-lt);box-shadow:0 2px 12px rgba(26,107,245,.25)}
+body.dark .sched-card.selected{background:#1d2f4f}
+.sched-efa-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.sched-efa-amt{font-family:var(--mono);font-weight:700;color:var(--purple);font-size:11px;background:var(--purple-bg);padding:2px 6px;border-radius:4px;border:1px solid var(--purple-bd)}
+.sched-efa-amt.no{color:var(--muted);background:var(--faint);border-color:var(--border)}
+.sched-efa-vig{font-family:var(--mono);font-size:9px;color:var(--muted)}
+/* ── EFA TAB ── */
+#panel-efa{padding:0}
+.efa-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--white);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.efa-view-toggle{display:inline-flex;background:var(--faint);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px}
+.efa-tg{padding:7px 16px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:none;border-radius:6px;cursor:pointer;transition:all .15s}
+.efa-tg.active{background:var(--purple);color:#fff;box-shadow:0 1px 3px rgba(109,40,217,.3)}
+.efa-toolbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.efa-count{font-size:12px;color:var(--muted);font-weight:500}
+.efa-btn-pri{padding:8px 16px;background:var(--purple);color:#fff;border:none;border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.efa-btn-pri:hover{background:#5b1fb8;box-shadow:0 2px 8px rgba(109,40,217,.3)}
+.efa-btn-sec{padding:7px 14px;background:var(--white);color:var(--purple);border:1.5px solid var(--purple-bd);border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.efa-btn-sec:hover{background:var(--purple-bg)}
+.efa-content{padding:20px 24px}
+.efa-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+/* Gantt EFA */
+.gantt-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:72vh;position:relative}
+.gantt-inner{position:relative;min-width:2400px}
+.gantt-head{position:sticky;top:0;z-index:4;background:var(--faint);border-bottom:1px solid var(--border);display:flex}
+.gantt-head .gh-label{flex:0 0 280px;padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-right:2px solid var(--border);position:sticky;left:0;background:var(--faint);z-index:5}
+.gantt-head .gh-time{flex:1;position:relative;height:46px}
+.gantt-head .gh-month{position:absolute;top:4px;font-size:11px;font-weight:700;color:var(--navy);padding:2px 6px;background:var(--purple-bg,rgba(124,58,237,.12));border-radius:4px}
+.gantt-head .gh-week{position:absolute;top:26px;font-size:9px;color:var(--muted);transform:translateX(-50%);font-family:var(--mono)}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:54px}
+.gantt-row:hover{background:rgba(124,58,237,.03)}
+.gantt-row .gc-label{flex:0 0 280px;padding:10px 14px;border-right:2px solid var(--border);position:sticky;left:0;background:var(--white);z-index:2;display:flex;flex-direction:column;justify-content:center}
+.gantt-row .gc-label .gc-carrier{font-weight:700;font-size:12px;color:var(--purple)}
+.gantt-row .gc-label .gc-route{font-size:11px;color:var(--navy);font-weight:600;margin-top:2px}
+.gantt-row .gc-label .gc-eq{font-size:10px;color:var(--muted);margin-top:1px}
+.gc-track{flex:1;position:relative;background-image:linear-gradient(to right,var(--border) 1px,transparent 1px);background-size:calc(100%/26) 100%}
+.gc-bar{position:absolute;top:8px;height:22px;border-radius:5px;padding:0 8px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);overflow:hidden;white-space:nowrap;z-index:1}
+.gc-bar:hover{filter:brightness(1.15);box-shadow:0 2px 10px rgba(109,40,237,.5);z-index:6}
+.gc-bar.open-end{border-right:2px dashed rgba(255,255,255,.8)}
+.gc-bar.expired{opacity:.4}
+.gc-ship{position:absolute;top:34px;width:14px;height:16px;transform:translateX(-50%);cursor:help;z-index:3}
+.gc-ship::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #0ea5e9;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.gc-ship::after{content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);width:2px;height:9px;background:#0ea5e9}
+.gc-ship:hover::before{border-top-color:#f59e0b}
+.gc-ship:hover::after{background:#f59e0b}
+.bid-cell{border:1px solid transparent;transition:background .08s,border-color .08s}
+.bid-cell:hover{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.4)}
+.bid-cell:focus,.bid-cell.editing{outline:2px solid #7c3aed;outline-offset:-2px;background:#fff}
+#bid-table-wrap table tr:hover td{background:rgba(124,58,237,.04)}
+#bid-table-wrap table tr:hover td.bid-cell:hover{background:rgba(124,58,237,.12)}
+.gc-today{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:5;pointer-events:none;box-shadow:0 0 4px rgba(239,68,68,.5)}
+.gc-today-lbl{position:absolute;top:2px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;transform:translateX(-50%);z-index:5;pointer-events:none}
+.gantt-legend{display:flex;align-items:center;gap:18px;font-size:10px;color:var(--muted);padding:10px 14px;background:var(--faint);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.gantt-legend .gl-item{display:flex;align-items:center;gap:6px}
+.gantt-legend .gl-sw{width:16px;height:11px;border-radius:2px;background:#7c3aed}
+.gantt-legend .gl-ship{display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #0ea5e9;vertical-align:middle}
+.efa-empty .ico{font-size:42px;margin-bottom:12px}
+.efa-empty .ttl{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.efa-empty .sub{font-size:13px}
+
+/* Resumen — filtros */
+.efa-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 24px;background:var(--faint);border-bottom:1px solid var(--border);font-size:12px}
+.efa-filters label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.efa-filters select,.efa-filters input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);color:var(--text);font-family:var(--font);font-size:12px}
+.efa-filters .ef-tg{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
+.efa-filters .ef-tg.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+
+/* Resumen — agrupado por carrier */
+.efa-carrier-group{margin-bottom:16px;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+.efa-carrier-hdr{padding:8px 14px;background:var(--navy);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+.efa-carrier-hdr .ec-name{font-family:var(--mono);font-size:13px}
+.efa-carrier-hdr .ec-count{margin-left:auto;font-size:10px;color:rgba(255,255,255,.7);font-weight:500}
+.efa-row-tbl{width:100%;border-collapse:collapse;font-family:var(--font);font-size:11px;table-layout:fixed}
+.efa-row-tbl thead th{background:var(--faint);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.efa-row-tbl tbody td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.efa-row-tbl tbody tr:last-child td{border-bottom:none}
+.efa-row-tbl tbody tr:hover{background:var(--faint)}
+.efa-route{font-weight:600;color:var(--text);font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.efa-route .arr{color:var(--muted);font-size:9px}
+.efa-equipo-tag{display:inline-block;padding:1px 6px;border-radius:3px;background:var(--blue-lt);color:var(--blue);font-family:var(--mono);font-size:9px;font-weight:700}
+.efa-period{padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--faint);display:flex;align-items:center;gap:8px;justify-content:space-between}
+.efa-period.vigente{background:var(--purple-bg);border:1.5px solid var(--purple)}
+.efa-period.anterior{opacity:.55}
+.efa-period.proximo{background:var(--blue-lt);border-color:var(--blue)}
+.efa-period.empty{background:transparent;border:1px dashed var(--border);color:var(--muted);text-align:center;font-size:10px;font-style:italic;padding:6px;justify-content:center}
+.efa-period .ep-amt{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--purple);white-space:nowrap}
+.efa-period.anterior .ep-amt{color:var(--muted)}
+.efa-period.proximo .ep-amt{color:var(--blue)}
+.efa-period .ep-vig{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+
+/* Planilla — tabla editable estilo Excel */
+.efa-planilla-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:auto;box-shadow:var(--shadow)}
+.efa-planilla{width:100%;border-collapse:collapse;font-family:var(--font);font-size:12px;min-width:900px}
+.efa-planilla thead th{background:var(--faint);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:1}
+.efa-planilla tbody td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.efa-planilla tbody tr:hover{background:var(--faint)}
+.efa-planilla .ep-monto{font-family:var(--mono);font-weight:700;color:var(--purple)}
+.efa-planilla .ep-vig{font-family:var(--mono);font-size:11px;color:var(--text)}
+.efa-planilla .ep-status{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase}
+.efa-planilla .ep-status.vigente{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
+.efa-planilla .ep-status.vencido{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.efa-planilla .ep-status.futuro{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue)}
 .total-cell{background:var(--navy);display:flex;flex-direction:column;justify-content:center;padding:12px 16px;gap:3px;border-radius:0 11px 11px 0}
 .total-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em}
 .total-amt{font-family:var(--mono);font-weight:700;font-size:21px;color:#fff;letter-spacing:-.5px;line-height:1.1}
@@ -240,6 +357,92 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .total-hint{font-size:11px;color:rgba(255,255,255,.4);font-style:italic}
 .total-warn{font-size:10px;color:#fbbf24;margin-top:3px}
 .comment-row{padding:7px 14px;background:var(--amber-bg);border-top:1px solid var(--amber-bd);font-size:12px;color:#7a5200;line-height:1.5;display:flex;gap:7px}
+
+/* ── EFA MODAL (C2) ── */
+.efa-mod-bk{position:fixed;inset:0;background:rgba(5,15,34,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 20px;overflow-y:auto}
+.efa-mod-bk.open{display:flex;animation:efaBkIn .2s ease forwards}
+@keyframes efaBkIn{from{opacity:0}to{opacity:1}}
+.efa-mod{background:var(--white);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:100%;max-width:780px;font-family:var(--font);overflow:hidden;animation:efaModIn .3s cubic-bezier(.4,0,.2,1)}
+@keyframes efaModIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.efa-mod-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:var(--purple);color:#fff}
+.efa-mod-hdr h3{margin:0;font-size:15px;font-weight:700;letter-spacing:.2px}
+.efa-mod-x{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+.efa-mod-bd{padding:18px 22px;max-height:calc(100vh - 220px);overflow-y:auto}
+.efa-mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.efa-mod-grid .full{grid-column:1/-1}
+.efa-mod-grid label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.efa-mod-grid input,.efa-mod-grid select,.efa-mod-grid textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--white);box-sizing:border-box}
+.efa-mod-grid textarea{font-family:var(--font);resize:vertical;min-height:50px}
+.efa-mod-grid input:focus,.efa-mod-grid select:focus,.efa-mod-grid textarea:focus{outline:none;border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-bg)}
+.efa-mod-grid input.input-error,.efa-mod-grid select.input-error,.efa-mod-grid textarea.input-error{border-color:var(--red)!important;background:var(--red-bg)!important}
+.efa-mod-grid input.input-error:focus,.efa-mod-grid select.input-error:focus{box-shadow:0 0 0 3px rgba(192,57,43,.15)!important}
+.efa-mod-grid input.input-success,.efa-mod-grid select.input-success{border-color:var(--green)!important}
+.efa-mod-grid input.input-success:focus,.efa-mod-grid select.input-success:focus{box-shadow:0 0 0 3px rgba(13,158,128,.15)!important}
+.input-help{font-size:10px;margin-top:4px;color:var(--muted);display:block;font-weight:500}
+.input-help.error{color:var(--red)}
+.input-help.success{color:var(--green)}
+.efa-mod-grid label.required::after{content:' *';color:var(--red);font-weight:700}
+input.input-error,select.input-error,textarea.input-error{border-color:var(--red)!important;background:var(--red-bg)!important}
+input.input-error:focus,select.input-error:focus,textarea.input-error:focus{box-shadow:0 0 0 3px rgba(192,57,43,.15)!important;outline:none}
+input.input-success,select.input-success{border-color:var(--green)!important}
+label.required::after{content:' *';color:var(--red);font-weight:700}
+.progress-container{width:100%;height:22px;background:var(--faint);border-radius:11px;overflow:hidden;border:1px solid var(--border);margin:10px 0 6px;position:relative}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));width:0%;transition:width .25s ease;border-radius:11px}
+.progress-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--mono);text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.progress-status{font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;margin-bottom:4px}
+.progress-status.success{color:var(--green);font-weight:600}
+.progress-status.error{color:var(--red);font-weight:600}
+.efa-mod-multi{margin-top:14px;padding:12px;background:var(--faint);border:1px solid var(--border);border-radius:8px}
+.efa-mod-multi-hdr{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px}
+.efa-mod-multi-list{max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.efa-mod-multi-list label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);text-transform:none;letter-spacing:0;font-weight:500;margin:0;padding:3px 6px;border-radius:4px;cursor:pointer}
+.efa-mod-multi-list label:hover{background:var(--white)}
+.efa-mod-prev{margin-top:14px;padding:12px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:8px}
+.efa-mod-prev-hdr{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.efa-mod-prev-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.efa-mod-prev-tbl th{text-align:left;font-weight:700;color:var(--muted);font-size:9px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid var(--blue)}
+.efa-mod-prev-tbl td{padding:4px 6px;border-bottom:1px solid rgba(26,107,245,.15);color:var(--text)}
+.efa-mod-prev-tbl tr:last-child td{border-bottom:none}
+.efa-mod-prev-empty{font-size:11px;color:var(--muted);font-style:italic;padding:6px 0}
+.efa-mod-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 22px;background:var(--faint);border-top:1px solid var(--border)}
+.efa-mod-ft-l{display:flex;gap:8px}
+.efa-mod-ft-r{display:flex;gap:8px}
+.efa-mod-btn{padding:8px 16px;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text);transition:all .12s}
+.efa-mod-btn:hover{background:var(--faint)}
+.efa-mod-btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.efa-mod-btn.primary:hover{filter:brightness(1.08)}
+.efa-mod-btn.danger{background:var(--white);color:var(--red);border-color:var(--red-bd)}
+.efa-mod-btn.danger:hover{background:var(--red-bg)}
+.efa-mod-btn:disabled{opacity:.5;cursor:not-allowed}
+.efa-planilla .ep-act{display:flex;gap:4px;justify-content:flex-end}
+.efa-planilla .ep-act button{padding:4px 8px;font-size:10px;border-radius:4px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-weight:600;color:var(--text)}
+.efa-planilla .ep-act button:hover{background:var(--faint)}
+.efa-planilla .ep-act button.del{color:var(--red);border-color:var(--red-bd)}
+.efa-planilla .ep-act button.del:hover{background:var(--red-bg)}
+.efa-period .ep-cont{margin-left:auto;background:var(--white);border:1px dashed var(--purple);color:var(--purple);font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;cursor:pointer}
+.efa-period .ep-cont:hover{background:var(--purple);color:#fff}
+
+/* C3 — alerts, coverage, gaps, por-equipo, grouping */
+.efa-carrier-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.efa-carrier-hdr .ec-coverage{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--muted);font-weight:600}
+.efa-carrier-hdr .ec-bar{width:100px;height:6px;background:var(--faint);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.efa-carrier-hdr .ec-bar-fill{height:100%;background:var(--green,#10b981);transition:width .3s}
+.efa-carrier-hdr .ec-bar-fill.low{background:var(--red)}
+.efa-carrier-hdr .ec-bar-fill.mid{background:var(--amber)}
+.efa-period .ep-warn{display:inline-block;margin-left:6px;padding:1px 5px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:#92400e;font-size:9px;font-weight:700;border-radius:3px}
+.efa-period.has-gap{border-left:3px solid var(--amber)}
+.efa-period.expiring{border-color:var(--amber);background:var(--amber-bg)}
+.efa-period.expiring .ep-amt{color:#92400e}
+.efa-equipo-cells{display:flex;gap:8px}
+.efa-equipo-cells .efa-period{flex:1;min-width:0}
+.efa-equipo-tag.in-cell{margin-bottom:3px;display:inline-block}
+.efa-eq-col{display:flex;flex-direction:column;gap:3px;flex:1}
+.efa-eq-col .eq-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.efa-group-banner{margin:8px 0 4px;padding:6px 10px;background:var(--blue-lt);border:1px dashed var(--blue);border-radius:6px;font-size:11px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}
+.efa-group-banner:hover{background:#dceaff}
+.efa-group-banner .gb-arrow{font-size:9px;transition:transform .15s}
+.efa-group-banner.collapsed .gb-arrow{transform:rotate(-90deg)}
+.efa-group-rows.collapsed{display:none}
 
 /* ── SCHEDULE SECTION (inside tarifa view) ── */
 .schedule-section{margin-top:1rem;border-top:2px solid var(--border);padding-top:1rem}
@@ -306,9 +509,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 [data-tip]{position:relative;cursor:help}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1a2540;color:#fff;font-size:11px;font-family:var(--font);padding:7px 11px;border-radius:7px;white-space:normal;max-width:320px;min-width:160px;line-height:1.55;z-index:9999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 [data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a2540;z-index:9999;pointer-events:none}
+/* Splash screen */
+.splash{position:fixed;inset:0;background:var(--navy);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .45s ease-out}
+.splash.hide{transform:translateY(-100%)}
+.splash img{max-width:240px;width:60vw;height:auto;margin-bottom:24px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4))}
+.splash .splash-ttl{color:#fff;font-size:28px;font-weight:800;letter-spacing:.18em;font-family:var(--mono)}
+.splash .splash-sub{color:rgba(255,255,255,.6);font-size:14px;margin-top:6px;letter-spacing:.05em}
+.splash .splash-status{margin-top:28px;color:rgba(255,255,255,.65);font-size:13px;letter-spacing:.04em;display:flex;align-items:center;gap:10px;min-height:20px}
+.splash .splash-status.ok{color:#4ade80}
+.splash .splash-status.err{color:#f87171}
+.splash .splash-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#a78bfa;border-radius:50%;animation:splash-spin .8s linear infinite;display:inline-block}
+@keyframes splash-spin{to{transform:rotate(360deg)}}
+.splash .splash-btn{margin-top:22px;padding:12px 38px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase}
+.splash .splash-btn:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed}
+.splash .splash-btn:not(:disabled):hover{background:#8b5cf6;transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5)}
+.splash .splash-btn:not(:disabled){animation:btn-pulse 1.6s ease-in-out infinite}
+@keyframes btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}
 </style>
 </head>
 <body>
+
+<div class="splash" id="splash">
+  <img src="assets/SSB_logo.png" alt="SSB" onerror="this.style.display='none'">
+  <div class="splash-ttl">SSB INTERNATIONAL</div>
+  <div class="splash-sub">Herramientas Operativas</div>
+  <div class="splash-status" id="splash-status"><span class="splash-spin"></span> Sincronizando información…</div>
+  <button class="splash-btn" id="splash-btn" disabled onclick="document.getElementById('splash').classList.add('hide');setTimeout(()=>document.getElementById('splash').remove(),500)">Ingresar</button>
+</div>
 
 <!-- TOPBAR -->
 <header class="topbar">
@@ -328,12 +555,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
         <div class="bell-list" id="bell-list"><div class="bell-empty">Sin cambios recientes</div></div>
       </div>
     </div>
-    <!-- Upload tarifas BID -->
-    <label class="btn-top" style="cursor:pointer;border-color:rgba(0,201,167,.4);color:rgba(255,255,255,.8)" title="Subir Excel de Tarifas BID">
-      📊 Subir Tarifas
-      <input type="file" id="file-tarifas" accept=".xlsx,.xls" style="display:none" onchange="handleTarifasUpload(this)">
-    </label>
-    <!-- Upload schedule -->
+<!-- Upload schedule -->
     <label class="btn-top btn-upload" style="cursor:pointer" title="Subir Excel de Schedule">
       📁 Subir Schedule
       <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(this)">
@@ -350,7 +572,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 <!-- TABS -->
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')">📋 Tarifas BID</button>
+  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')">⚡ EFA</button>
   <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')">🚢 Schedule</button>
+  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')">🛠 Admin BID</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -422,6 +646,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
           </div>
         </div>
         <button class="btn-clear" onclick="clearTarifaFilters()">✕ Limpiar</button>
+        <div id="vessel-chip" class="vessel-chip" style="display:none">
+          <span class="vc-lbl">Buque</span>
+          <span class="vc-name" id="vc-name">—</span>
+          <span class="vc-sep">·</span>
+          <span class="vc-etd" id="vc-etd">—</span>
+          <button class="vc-x" onclick="clearSelectedVessel()" title="Quitar selección">✕</button>
+        </div>
       </div>
       <div class="filter-banner" id="filter-banner">
         <span class="banner-lbl">Total a declarar</span>
@@ -446,6 +677,91 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
     <div class="schedule-section" id="sched-in-tarifa" style="display:none">
       <div class="schedule-section-title">🚢 Próximas salidas disponibles</div>
       <div class="schedule-cards" id="sched-tarifa-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB: EFA ═══════════ -->
+<div class="tab-panel" id="panel-efa">
+  <div class="efa-toolbar">
+    <div class="efa-view-toggle">
+      <button class="efa-tg active" id="efa-tg-resumen" onclick="setEfaView('resumen')" title="Vista resumen agrupada por carrier">📊 Resumen</button>
+      <button class="efa-tg" id="efa-tg-planilla" onclick="setEfaView('planilla')" title="Vista planilla editable, fila por fila">📋 Planilla</button>
+      <button class="efa-tg" id="efa-tg-gantt" onclick="setEfaView('gantt')" title="Vista calendario / línea de tiempo de vigencias EFA">📅 Calendario</button>
+    </div>
+    <div class="efa-toolbar-right">
+      <span class="efa-count" id="efa-count">—</span>
+      <button class="efa-btn-sec" onclick="openLogModal()" title="Ver historial de cambios EFA">📜 Historial</button>
+      <button class="efa-btn-sec" onclick="openImportModal()" title="Importar EFA desde Excel pegando datos">📥 Importar Excel</button>
+      <button class="efa-btn-sec" onclick="openBulkUpdateModal()" title="Actualizar varios EFA a la vez por carrier/destino">🔄 Actualización masiva</button>
+      <button class="efa-btn-pri" onclick="openEfaModal(null)" title="Crear un nuevo EFA">+ Nuevo EFA</button>
+    </div>
+  </div>
+  <div class="efa-filters">
+    <label>Carrier</label>
+    <select id="efa-f-carrier" onchange="renderEFATab()" title="Filtrar por carrier"><option value="">Todos</option></select>
+    <label>Equipo</label>
+    <select id="efa-f-equipo" onchange="renderEFATab()" title="Filtrar por tipo de equipo"><option value="">Todos</option></select>
+    <label>Buscar</label>
+    <input id="efa-f-search" type="text" placeholder="Origen o destino..." oninput="renderEFATab()" style="width:180px" title="Buscar por puerto de origen o destino">
+    <button class="ef-tg on" id="efa-f-hideempty" onclick="toggleEfaHideEmpty()" title="Mostrar/ocultar rutas que no tienen EFA cargado">Ocultar sin EFA</button>
+    <div class="efa-view-toggle" id="efa-resumen-mode-wrap" style="margin-left:8px">
+      <button class="efa-tg active" id="efa-rm-ruta" onclick="setEfaResumenMode('ruta')" title="Agrupar por ruta (origen→destino)">📐 Por ruta</button>
+      <button class="efa-tg" id="efa-rm-equipo" onclick="setEfaResumenMode('equipo')" title="Comparar columnas 20'STD vs 40'HC">📦 Por equipo</button>
+    </div>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="efa-filter-info"></span>
+  </div>
+  <div class="efa-content">
+    <div id="efa-view-resumen"></div>
+    <div id="efa-view-planilla" style="display:none"></div>
+    <div id="efa-view-gantt" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB: ADMIN BID ═══════════ -->
+<div class="tab-panel" id="panel-admin-bid">
+  <div class="efa-toolbar">
+    <div style="font-weight:700;color:var(--navy);font-size:13px">🛠 Administración Tarifas BID</div>
+    <div class="efa-toolbar-right">
+      <span class="efa-count" id="bid-count">—</span>
+      <button class="efa-btn-sec" onclick="openLogModal('bid')" title="Ver historial de cambios BID">📜 Historial</button>
+      <button class="efa-btn-sec" onclick="openBidImportModal()" title="Importar tarifas desde Excel pegando datos">📥 Importar</button>
+      <button class="efa-btn-sec" onclick="openBidBulkModal()" title="Actualizar varias tarifas a la vez">🔄 Actualización masiva</button>
+      <button class="efa-btn-pri" onclick="openBidModal(null)" title="Crear nueva tarifa BID">+ Nueva tarifa</button>
+    </div>
+  </div>
+  <div class="efa-filters">
+    <label>Carrier</label>
+    <select id="bid-f-carrier" onchange="renderAdminBID()"><option value="">Todos</option></select>
+    <label>Origen</label>
+    <select id="bid-f-origen" onchange="renderAdminBID()"><option value="">Todos</option></select>
+    <label>Destino</label>
+    <select id="bid-f-destino" onchange="renderAdminBID()"><option value="">Todos</option></select>
+    <label>Equipo</label>
+    <select id="bid-f-equipo" onchange="renderAdminBID()"><option value="">Todos</option></select>
+    <label>Estado</label>
+    <select id="bid-f-estado" onchange="renderAdminBID()">
+      <option value="">Todos</option>
+      <option value="confirmada">Confirmada</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="no-disponible">No disponible</option>
+    </select>
+    <label>Buscar</label>
+    <input id="bid-f-search" type="text" placeholder="Texto libre..." oninput="renderAdminBID()" style="width:160px">
+    <button class="efa-btn-sec" onclick="clearBidFilters()" style="margin-left:6px">✕ Limpiar</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="bid-filter-info"></span>
+  </div>
+  <div class="efa-content" style="overflow:auto">
+    <div id="bid-bulk-bar" style="display:none;position:sticky;top:0;z-index:5;background:#7c3aed;color:#fff;padding:10px 14px;font-size:12px;font-weight:600;display:none">
+      <span id="bid-bulk-count">0 filas seleccionadas</span>
+      <button class="efa-btn-sec" onclick="bidBulkAction('estado')" style="margin-left:12px">Cambiar estado</button>
+      <button class="efa-btn-sec" onclick="bidBulkAction('delete')" style="margin-left:6px">Eliminar</button>
+      <button class="efa-btn-sec" onclick="bidClearSelection()" style="margin-left:6px">Cancelar</button>
+    </div>
+    <div id="bid-table-wrap"></div>
+    <div id="bid-impact-panel" style="display:none;border-top:2px solid var(--purple);padding:14px;background:#faf5ff">
+      <div style="font-weight:700;color:var(--purple);margin-bottom:8px">🚢 Buques afectados por la fila seleccionada</div>
+      <div id="bid-impact-body"></div>
     </div>
   </div>
 </div>
@@ -536,6 +852,8 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi3VyU-KiobStqXJ6T9
 const CHANGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 let rates = [];
+let efaSheet = [];
+let selectedVessel = null; // {key, vessel, etdISO}
 let schedule = [];
 let scheduleChanges = [];
 let scheduleFileName = '';
@@ -563,10 +881,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','schedule'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', t===name);
     document.getElementById('panel-'+t).classList.toggle('active', t===name);
   });
+  if(name==='efa'){ if(!window._efaFiltersRestored){restoreEfaFilters();window._efaFiltersRestored=true;} setEfaView('resumen'); renderEFATab(); }
+  if(name==='admin-bid'){ renderAdminBID(); }
 }
 
 // ── BELL ──
@@ -618,6 +938,13 @@ function renderBell() {
 // ── STATUS ──
 const setDot = (t,txt) => { document.getElementById('dot').className='dot '+t; document.getElementById('sync-lbl').textContent=txt; };
 
+// ── SPLASH ──
+function splashReady(kind,msg){
+  const s=document.getElementById('splash-status');const b=document.getElementById('splash-btn');
+  if(s){s.className='splash-status '+(kind||'ok');s.innerHTML=msg;}
+  if(b){b.disabled=false;b.focus();}
+}
+
 // ── SYNC TARIFAS ──
 async function syncSheet() {
   setDot('spin','Sincronizando...');
@@ -632,6 +959,9 @@ async function syncSheet() {
     if (Array.isArray(tarifasData)) loadTarifas(tarifasData);
     else if (Array.isArray(raw)) loadTarifas(raw);
 
+    // Load EFA sheet (new source of truth, ignores old EFA cols in Tarifas)
+    if (Array.isArray(raw.efa)) loadEFA(raw.efa);
+
     // Load schedule from Drive
     if (raw.schedule && Array.isArray(raw.schedule) && raw.schedule.length > 0) {
       schedule = raw.schedule;
@@ -644,6 +974,7 @@ async function syncSheet() {
 
     const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setDot('ok','Actualizado '+t);
+    splashReady('ok','✓ Información sincronizada');
   } catch(e) {
     // Fallback: try tarifas-only if getAll fails
     try {
@@ -653,10 +984,12 @@ async function syncSheet() {
       if(Array.isArray(data2)) {
         loadTarifas(data2);
         setDot('ok','Tarifas OK · Schedule: subí el Excel');
+        splashReady('ok','✓ Tarifas sincronizadas');
       } else throw new Error('invalid');
     } catch(e2) {
       setDot('err','Error de conexión');
       document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico">⚠</div><div class="empty-ttl">No se pudo conectar</div><div class="empty-sub">Verificá tu conexión y presioná ↻ Sincronizar.</div></div>`;
+      splashReady('err','⚠ Error de conexión — podés ingresar igual');
     }
   }
   document.getElementById('btn-sync').disabled = false;
@@ -715,21 +1048,8 @@ function loadTarifas(data) {
   const kI  = fk('ESTADO');
   const kJ  = fk('COMENTARIO');
   const kQT = fk('QUARTER');
-  // EFA columns: L=monto, M=inicio vigencia, N=fin vigencia
-  // Match by exact name first, then positional fallback
-  const efaKeys = keys.filter(k=>k.toUpperCase().includes('EFA'));
-  // kK = EFA monto (col L): "EFA (Emergency Surcharge) por contenedor"
-  const kK = keys.find(k=>k.toUpperCase().includes('EFA')&&k.toUpperCase().includes('CONTENEDOR'))
-           || keys.find(k=>k.toUpperCase().includes('EFA')&&!k.toUpperCase().includes('INICIO')&&!k.toUpperCase().includes('FIN')&&!k.toUpperCase().includes('USD')&&!k.toUpperCase().includes('DESGLOSE'))
-           || null;
-  // kL = INICIO EFA (col M): fecha inicio vigencia EFA
-  const kL = keys.find(k=>k.toUpperCase()==='INICIO EFA')
-           || keys.find(k=>k.toUpperCase().includes('INICIO')&&k.toUpperCase().includes('EFA'))
-           || null;
-  // kM = FIN EFA (col N): fecha fin vigencia EFA
-  const kM = keys.find(k=>k.toUpperCase()==='FIN EFA')
-           || keys.find(k=>k.toUpperCase().includes('FIN')&&k.toUpperCase().includes('EFA'))
-           || null;
+  // EFA: ya NO se lee de la solapa Tarifas. Esas columnas (L/M/N) quedan
+  // en el Sheet para notas del operario, pero la web usa la solapa EFA.
 
   const g  = (row,k) => k&&row[k]!=null ? row[k].toString().trim() : '';
   const gn = (row,k) => { const v=row[k]; return(v!==null&&v!==undefined&&!isNaN(Number(v))&&v!=='') ? Number(v) : null; };
@@ -737,12 +1057,12 @@ function loadTarifas(data) {
   rates = data
     .filter(row=>Object.values(row).some(v=>v!==''&&v!==null&&v!==undefined))
     .map(row=>({
+      _rowIndex: row._rowIndex || null,
       origen:g(row,kA), destino:g(row,kB), carrier:g(row,kC), equipo:g(row,kD),
       tarifa:gn(row,kE)??(g(row,kE)||null),
       contrato:g(row,kF), desde:g(row,kG), hasta:g(row,kH),
       estado:g(row,kI), comentario:g(row,kJ), quarter:g(row,kQT),
-      efaNum:gn(row,kK),
-      efaDesde:g(row,kL), efaHasta:g(row,kM),
+      efaNum:null, efaDesde:'', efaHasta:'',
     }));
 
   buildCarrierBtns();
@@ -818,7 +1138,1236 @@ function clearTarifaFilters(){
   document.getElementById('f-etd-text').style.borderColor='';
   document.getElementById('f-estado').value='confirmada';
   document.getElementById('f-quarter').value='';
+  clearSelectedVessel(true);
   applyFilter();
+}
+
+// ── SELECCIÓN DE BUQUE (alternativa al ETD manual) ──
+function vesselKey(r){return (r.VESSEL||'')+'|'+toISO(r.ETD||r['ETD']||'');}
+
+function selectVessel(key){
+  const row = schedule.find(r=>vesselKey(r)===key);
+  if(!row)return;
+  // Toggle off si ya estaba
+  if(selectedVessel && selectedVessel.key===key){
+    clearSelectedVessel();
+    applyFilter();
+    return;
+  }
+  const etdISO = toISO(row.ETD||row['ETD']||'');
+  selectedVessel = {key, vessel:row.VESSEL||'—', etdISO, row};
+  // Seteo el ETD en los inputs
+  if(etdISO){
+    document.getElementById('f-etd').value = etdISO;
+    const dt = new Date(etdISO);
+    const dd=String(dt.getUTCDate()).padStart(2,'0');
+    const mm=String(dt.getUTCMonth()+1).padStart(2,'0');
+    const yyyy=dt.getUTCFullYear();
+    document.getElementById('f-etd-text').value = `${dd}/${mm}/${yyyy}`;
+    document.getElementById('f-etd-text').style.borderColor = 'var(--blue)';
+  }
+  updateVesselChip();
+  applyFilter();
+}
+
+function clearSelectedVessel(skipRender){
+  selectedVessel = null;
+  updateVesselChip();
+  if(!skipRender) applyFilter();
+}
+
+function updateVesselChip(){
+  const chip = document.getElementById('vessel-chip');
+  if(!chip)return;
+  if(!selectedVessel){chip.style.display='none';return;}
+  chip.style.display='inline-flex';
+  document.getElementById('vc-name').textContent = selectedVessel.vessel;
+  document.getElementById('vc-etd').textContent = selectedVessel.etdISO ? fDate(selectedVessel.etdISO) : '—';
+}
+
+// EFA por buque (para módulo Próximas Salidas): devuelve array de {equipo, match, st}
+function getEfaInfoForSched(r, etdRow){
+  const equipos = selE.size>0 ? [...selE] : ["20'STD","40'HC"];
+  const sn=(r.NAVIERA||'').toUpperCase();
+  const carriers=[];
+  if(sn.includes('HAPAG'))carriers.push('HAPAG');
+  if(sn.includes('MAERSK'))carriers.push('MAERSK');
+  if(sn.includes('LOG IN')||sn.includes('LOGIN'))carriers.push('LOGIN');
+  if(sn.includes('MSC'))carriers.push('MSC');
+  if(sn.includes('CMA')||sn.includes('MERCOSUL'))carriers.push('CMA CGM');
+  if(!carriers.length)carriers.push(sn);
+  const out=[];
+  for(const eq of equipos){
+    for(const c of carriers){
+      const synth={carrier:c,origen:r.ORIGEN,destino:r.DESTINO,equipo:eq};
+      // Buscar SOLO un período cuya vigencia incluya el ETD del buque
+      const etdISO=toISO(etdRow);
+      if(!etdISO)break;
+      const periodMatch = efaSheet.find(e=>{
+        if((e.carrier||'').toUpperCase()!==c)return false;
+        if(normalizeOrigen(e.origen)!==normalizeOrigen(synth.origen))return false;
+        if((e.destino||'').toUpperCase()!==(synth.destino||'').toUpperCase())return false;
+        if((e.equipo||'').toUpperCase()!==eq.toUpperCase())return false;
+        if(e.monto==null)return false;
+        const dISO=toISO(e.desde);if(!dISO||etdISO<dISO)return false;
+        const hISO=toISO(e.hasta);if(hISO&&etdISO>hISO)return false;
+        return true;
+      });
+      if(periodMatch){
+        out.push({equipo:eq,match:periodMatch,st:'yes'});
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+// ── TAB EFA ──
+let efaCurrentView = 'resumen';
+let efaHideEmpty = true;
+
+function setEfaView(v){
+  efaCurrentView = v;
+  document.getElementById('efa-tg-resumen').classList.toggle('active', v==='resumen');
+  document.getElementById('efa-tg-planilla').classList.toggle('active', v==='planilla');
+  const tgg=document.getElementById('efa-tg-gantt');if(tgg)tgg.classList.toggle('active', v==='gantt');
+  document.getElementById('efa-view-resumen').style.display = v==='resumen'?'block':'none';
+  document.getElementById('efa-view-planilla').style.display = v==='planilla'?'block':'none';
+  const vg=document.getElementById('efa-view-gantt');if(vg)vg.style.display = v==='gantt'?'block':'none';
+  renderEFATab();
+}
+
+function toggleEfaHideEmpty(){
+  efaHideEmpty = !efaHideEmpty;
+  document.getElementById('efa-f-hideempty').classList.toggle('on', efaHideEmpty);
+  renderEFATab();
+}
+
+function buildEfaFilterOptions(){
+  const carriers = [...new Set(efaSheet.map(e=>e.carrier).filter(Boolean))].sort();
+  const equipos  = [...new Set(efaSheet.map(e=>e.equipo).filter(Boolean))].sort();
+  const cSel = document.getElementById('efa-f-carrier');
+  const eSel = document.getElementById('efa-f-equipo');
+  const cVal = cSel.value, eVal = eSel.value;
+  cSel.innerHTML = '<option value="">Todos</option>'+carriers.map(c=>`<option ${c===cVal?'selected':''}>${c}</option>`).join('');
+  eSel.innerHTML = '<option value="">Todos</option>'+equipos.map(e=>`<option ${e===eVal?'selected':''}>${e}</option>`).join('');
+}
+
+function getFilteredEFA(){
+  buildEfaFilterOptions();
+  const fc = document.getElementById('efa-f-carrier').value;
+  const fe = document.getElementById('efa-f-equipo').value;
+  const fs = (document.getElementById('efa-f-search').value||'').toUpperCase().trim();
+  return efaSheet.filter(e=>{
+    if(fc && e.carrier!==fc) return false;
+    if(fe && e.equipo!==fe) return false;
+    if(fs && !((e.origen||'').toUpperCase().includes(fs) || (e.destino||'').toUpperCase().includes(fs))) return false;
+    return true;
+  });
+}
+
+let efaResumenMode = 'ruta'; // 'ruta' | 'equipo'
+function setEfaResumenMode(m){
+  efaResumenMode = m;
+  document.getElementById('efa-rm-ruta').classList.toggle('active', m==='ruta');
+  document.getElementById('efa-rm-equipo').classList.toggle('active', m==='equipo');
+  renderEFATab();
+}
+
+function renderEFATab(){
+  document.getElementById('efa-count').textContent = `${efaSheet.length} registro${efaSheet.length!==1?'s':''}`;
+  // toggle mode toggle visibility (only show in resumen view)
+  const rmw=document.getElementById('efa-resumen-mode-wrap');
+  if(rmw)rmw.style.display = efaCurrentView==='resumen' ? '' : 'none';
+  if(efaCurrentView==='resumen'){
+    if(efaResumenMode==='equipo') renderEFAResumenByEquipo();
+    else renderEFAResumen();
+  } else if(efaCurrentView==='gantt'){
+    renderEfaGantt();
+  } else renderEFAPlanilla();
+  saveEfaFilters();
+}
+
+// ── EFA GANTT VIEW ──
+const GANTT_CARRIER_COLORS={HAPAG:'#7c3aed',MAERSK:'#0ea5e9',MSC:'#f59e0b',CMA:'#10b981','CMA CGM':'#10b981',COSCO:'#ef4444',ONE:'#ec4899',EVERGREEN:'#22c55e',YANG:'#6366f1','YANG MING':'#6366f1',ZIM:'#14b8a6',HMM:'#f97316',LOGIN:'#8b5cf6',ARKAS:'#a855f7'};
+function ganttCarrierColor(c){const u=(c||'').toUpperCase();for(const k of Object.keys(GANTT_CARRIER_COLORS))if(u.includes(k))return GANTT_CARRIER_COLORS[k];let h=0;for(let i=0;i<u.length;i++)h=(h*31+u.charCodeAt(i))%360;return `hsl(${h},65%,50%)`;}
+
+function renderEfaGantt(){
+  const cont=document.getElementById('efa-view-gantt');
+  if(!cont)return;
+  if(!efaSheet.length){cont.innerHTML='<div class="efa-empty">No hay registros EFA cargados.</div>';return;}
+  const fC=document.getElementById('efa-f-carrier').value;
+  const fE=document.getElementById('efa-f-equipo').value;
+  const fS=(document.getElementById('efa-f-search').value||'').toUpperCase();
+  // Window: -1 month to +5 months
+  const today=new Date();today.setHours(0,0,0,0);
+  const start=new Date(today);start.setMonth(start.getMonth()-1);start.setDate(1);
+  const end=new Date(today);end.setMonth(end.getMonth()+5);end.setDate(0);
+  const totalMs=end-start;
+  // Group EFAs
+  const groups={};
+  efaSheet.forEach(e=>{
+    if(fC&&e.carrier!==fC)return;
+    if(fE&&e.equipo!==fE)return;
+    if(fS&&!(`${e.origen} ${e.destino}`).toUpperCase().includes(fS))return;
+    if(!e.desde&&!e.hasta&&e.monto==null)return;
+    const k=`${e.carrier}||${e.origen}||${e.destino}||${e.equipo}`;
+    if(!groups[k])groups[k]={carrier:e.carrier,origen:e.origen,destino:e.destino,equipo:e.equipo,periods:[]};
+    groups[k].periods.push(e);
+  });
+  const groupKeys=Object.keys(groups).sort();
+  if(!groupKeys.length){cont.innerHTML='<div class="efa-empty">No hay EFAs que coincidan con los filtros.</div>';return;}
+  const pctOf=d=>((d-start)/totalMs)*100;
+  const todayPct=Math.max(0,Math.min(100,pctOf(today)));
+  // Header: months on top, weekly ticks below
+  let head='<div class="gantt-head"><div class="gh-label">Carrier · Ruta · Equipo</div><div class="gh-time">';
+  // months
+  const cur=new Date(start);
+  while(cur<=end){
+    const monthStart=new Date(cur);
+    const monthEnd=new Date(cur.getFullYear(),cur.getMonth()+1,0);
+    const ms=monthStart<start?start:monthStart;
+    const me=monthEnd>end?end:monthEnd;
+    const left=pctOf(ms),right=pctOf(me);
+    const lbl=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'][cur.getMonth()]+' '+String(cur.getFullYear()).slice(-2);
+    head+=`<div class="gh-month" style="left:${left}%;width:${right-left}%;text-align:center">${lbl}</div>`;
+    cur.setMonth(cur.getMonth()+1);cur.setDate(1);
+  }
+  // weekly ticks (every Monday)
+  const wk=new Date(start);while(wk.getDay()!==1)wk.setDate(wk.getDate()+1);
+  while(wk<=end){
+    head+=`<div class="gh-week" style="left:${pctOf(wk)}%">${String(wk.getDate()).padStart(2,'0')}/${String(wk.getMonth()+1).padStart(2,'0')}</div>`;
+    wk.setDate(wk.getDate()+7);
+  }
+  head+=`<div class="gc-today-lbl" style="left:${todayPct}%">HOY</div>`;
+  head+='</div></div>';
+  // Rows
+  let rows='';
+  groupKeys.forEach(k=>{
+    const g=groups[k];
+    const color=ganttCarrierColor(g.carrier);
+    // Find buques in schedule for this combination
+    const C=(g.carrier||'').toUpperCase();
+    const O=normalizeOrigen(g.origen);
+    const D=(g.destino||'').toUpperCase();
+    const E=(g.equipo||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+    const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
+      const sn=(s.NAVIERA||'').toUpperCase();
+      if(!sn.includes(C)&&!C.includes(sn))return false;
+      if(normalizeOrigen(s.ORIGEN)!==O)return false;
+      if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
+      const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+      if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
+      const etd=toISO(s.ETD);if(!etd)return false;
+      const d=new Date(etd+'T00:00:00');
+      return d>=start&&d<=end;
+    });
+    rows+=`<div class="gantt-row"><div class="gc-label"><div class="gc-carrier">${g.carrier}</div><div class="gc-route">${g.origen} → ${g.destino}</div><div class="gc-eq">${g.equipo}</div></div><div class="gc-track">`;
+    rows+=`<div class="gc-today" style="left:${todayPct}%"></div>`;
+    g.periods.forEach(p=>{
+      const dIso=toISO(p.desde);if(!dIso)return;
+      const hIso=p.hasta?toISO(p.hasta):null;
+      const pStart=new Date(dIso+'T00:00:00');
+      const pEnd=hIso?new Date(hIso+'T00:00:00'):new Date(end);
+      if(pEnd<start||pStart>end)return;
+      const cs=pStart<start?start:pStart;
+      const ce=pEnd>end?end:pEnd;
+      const left=pctOf(cs);
+      const width=Math.max(1.2,pctOf(ce)-left);
+      const expired=hIso&&pEnd<today;
+      const openEnd=!hIso;
+      const cls='gc-bar'+(openEnd?' open-end':'')+(expired?' expired':'');
+      const tip=`${g.carrier} ${g.origen}→${g.destino} ${g.equipo}\nUSD ${p.monto??'—'}\n${fDate(p.desde)} → ${p.hasta?fDate(p.hasta):'sin fin'}${p.comentario?'\n'+p.comentario:''}`;
+      const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal(${p._rowIndex})"`:'';
+      rows+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}>${g.carrier} · USD ${p.monto??'—'}</div>`;
+    });
+    // Buque pins
+    ships.forEach(s=>{
+      const etd=toISO(s.ETD);
+      const d=new Date(etd+'T00:00:00');
+      const left=pctOf(d);
+      const tip=`${s.VESSEL||'—'}\n${fDate(s.ETD)}\n${s.ORIGEN}→${s.DESTINO}`;
+      rows+=`<div class="gc-ship" style="left:${left}%" title="${tip.replace(/"/g,'&quot;')}"></div>`;
+    });
+    rows+='</div></div>';
+  });
+  const legend='<div class="gantt-legend"><span class="gl-item"><span class="gl-sw"></span>EFA vigente</span><span class="gl-item"><span class="gl-sw" style="opacity:.4"></span>vencido</span><span class="gl-item">▣ borde discontinuo = sin fin</span><span class="gl-item"><span class="gl-ship"></span> buque (hover = nombre + ETD)</span><span class="gl-item">click barra → editar</span></div>';
+  cont.innerHTML=legend+'<div class="gantt-wrap"><div class="gantt-inner">'+head+rows+'</div></div>';
+}
+
+// Compute gap (días) entre fin de período A y inicio de B. Negativo = solapado.
+function periodGapDays(a,b){
+  if(!a||!b)return null;
+  const ah=toISO(a.hasta),bd=toISO(b.desde);
+  if(!ah||!bd)return null;
+  const ms=new Date(bd)-new Date(ah);
+  return Math.round(ms/86400000)-1;
+}
+
+function daysUntil(iso){
+  if(!iso)return null;
+  const ms=new Date(iso)-new Date(new Date().toISOString().split('T')[0]);
+  return Math.round(ms/86400000);
+}
+
+function efaPeriodStatus(e, todayISO){
+  const d=toISO(e.desde),h=toISO(e.hasta);
+  if(!d) return 'futuro';
+  if(todayISO<d) return 'futuro';
+  if(h && todayISO>h) return 'vencido';
+  return 'vigente';
+}
+
+function renderEFAResumen(){
+  const cont = document.getElementById('efa-view-resumen');
+  if(!efaSheet.length){
+    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    return;
+  }
+  const filtered = getFilteredEFA();
+  const today = new Date().toISOString().split('T')[0];
+
+  // Agrupar por (carrier, origen, destino, equipo) — solo registros con monto cuentan como períodos
+  const groups = new Map();
+  filtered.forEach(e=>{
+    const key = `${e.carrier}|${e.origen}|${e.destino}|${e.equipo}`;
+    if(!groups.has(key)) groups.set(key, {carrier:e.carrier,origen:e.origen,destino:e.destino,equipo:e.equipo,periods:[]});
+    if(e.monto!=null && e.monto!=='') groups.get(key).periods.push(e);
+  });
+
+  // Por cada grupo, ordenar y elegir anterior/vigente/proximo
+  const enriched = [];
+  for(const g of groups.values()){
+    if(efaHideEmpty && g.periods.length===0) continue;
+    const sorted = [...g.periods].sort((a,b)=>(toISO(a.desde)||'').localeCompare(toISO(b.desde)||''));
+    const vigenteIdx = sorted.findIndex(e=>efaPeriodStatus(e,today)==='vigente');
+    let anterior=null,vigente=null,proximo=null;
+    if(vigenteIdx>=0){
+      vigente = sorted[vigenteIdx];
+      anterior = sorted[vigenteIdx-1] || null;
+      proximo  = sorted[vigenteIdx+1] || null;
+    } else {
+      const vencidos = sorted.filter(e=>efaPeriodStatus(e,today)==='vencido');
+      const futuros  = sorted.filter(e=>efaPeriodStatus(e,today)==='futuro');
+      anterior = vencidos.length ? vencidos[vencidos.length-1] : null;
+      proximo  = futuros.length ? futuros[0] : null;
+    }
+    enriched.push({...g, anterior, vigente, proximo});
+  }
+  document.getElementById('efa-filter-info').textContent = `Mostrando ${enriched.length} de ${filtered.length} combinaciones`;
+  if(!enriched.length){
+    cont.innerHTML = `<div class="efa-empty"><div class="ico">🔍</div><div class="ttl">Sin resultados</div><div class="sub">${efaHideEmpty?'Activá "Ocultar sin EFA" para ver todas las combinaciones, o ajustá los filtros.':'Ajustá los filtros para ver registros.'}</div></div>`;
+    return;
+  }
+
+  // Agrupar por carrier
+  const byCarrier = new Map();
+  enriched.forEach(r=>{
+    if(!byCarrier.has(r.carrier)) byCarrier.set(r.carrier, []);
+    byCarrier.get(r.carrier).push(r);
+  });
+  const carriers = [...byCarrier.keys()].sort();
+
+  const cellHtml = (e, type, opts={})=>{
+    if(!e) return `<div class="efa-period empty">—</div>`;
+    const vig = `${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'—'}`;
+    const ri  = e._rowIndex;
+    const click = ri!=null?` onclick="event.stopPropagation();openEfaModal(${ri})" style="cursor:pointer" title="Click para editar"`:'';
+    const cont  = (type==='vigente'&&ri!=null)?`<button class="ep-cont" onclick="event.stopPropagation();duplicateAsContinuation(${ri})" title="Crear período siguiente">+ continuar</button>`:'';
+    let extraCls='', warn='';
+    if(type==='vigente'){
+      const du=daysUntil(e.hasta);
+      if(du!=null && du>=0 && du<=7){extraCls+=' expiring';warn=`<span class="ep-warn">vence en ${du}d</span>`;}
+    }
+    if(opts.gap!=null){
+      if(opts.gap>0){extraCls+=' has-gap';warn+=`<span class="ep-warn">⚠ gap ${opts.gap}d</span>`;}
+      else if(opts.gap<0){extraCls+=' has-gap';warn+=`<span class="ep-warn">⚠ solap ${Math.abs(opts.gap)}d</span>`;}
+    }
+    return `<div class="efa-period ${type}${extraCls}"${click}>
+      <span class="ep-amt">${usd(e.monto||0)}</span>
+      <span class="ep-vig">${vig}</span>
+      ${warn}
+      ${cont}
+    </div>`;
+  };
+
+  // identical-period grouping: rows whose vigente has same monto+desde+hasta
+  const identicalKey = r => r.vigente ? `${r.vigente.monto}|${toISO(r.vigente.desde)}|${toISO(r.vigente.hasta)}` : null;
+
+  let html = '';
+  carriers.forEach(c=>{
+    const rows = byCarrier.get(c).sort((a,b)=>{
+      return (a.origen+a.destino+a.equipo).localeCompare(b.origen+b.destino+b.equipo);
+    });
+    // coverage: % of rows with vigente
+    const withVig = rows.filter(r=>r.vigente).length;
+    const pct = rows.length ? Math.round(100*withVig/rows.length) : 0;
+    const barCls = pct>=80?'':(pct>=50?'mid':'low');
+
+    // detect identical-period clusters (≥3 rows sharing same vigente period)
+    const clusters = new Map();
+    rows.forEach(r=>{const k=identicalKey(r);if(!k)return;if(!clusters.has(k))clusters.set(k,[]);clusters.get(k).push(r);});
+    const bigClusters = new Set([...clusters.entries()].filter(([k,v])=>v.length>=3).map(([k])=>k));
+    const seenClusters = new Set();
+
+    html += `<div class="efa-carrier-group">
+      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${c}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
+        <span class="ec-coverage" title="Rutas con período vigente">
+          <span class="ec-bar"><span class="ec-bar-fill ${barCls}" style="width:${pct}%"></span></span>
+          ${withVig}/${rows.length} (${pct}%)
+        </span>
+      </div>
+      <table class="efa-row-tbl">
+        <thead><tr>
+          <th style="width:30%">Ruta · Equipo</th>
+          <th style="width:23%">Período anterior</th>
+          <th style="width:23%">Período vigente</th>
+          <th style="width:24%">Próximo período</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r,idx)=>{
+            const k=identicalKey(r);
+            const isCluster = k && bigClusters.has(k);
+            let prefix='';
+            if(isCluster && !seenClusters.has(k)){
+              seenClusters.add(k);
+              const cl=clusters.get(k);
+              const first=cl[0].vigente;
+              const cid=`cl-${c.replace(/\W/g,'')}-${idx}`;
+              prefix=`<tr><td colspan="4" style="padding:0;border:none">
+                <div class="efa-group-banner" onclick="document.getElementById('${cid}').classList.toggle('collapsed');this.classList.toggle('collapsed')">
+                  <span class="gb-arrow">▼</span>
+                  📦 ${cl.length} rutas comparten período · ${usd(first.monto)} · ${fDate(first.desde)}→${first.hasta?fDate(first.hasta):'—'}
+                </div></td></tr>`;
+              // wrap subsequent cluster rows in a tbody-like marker via class on tr
+            }
+            const gapVN = periodGapDays(r.vigente, r.proximo);
+            const gapAV = periodGapDays(r.anterior, r.vigente);
+            const trCls = isCluster?` class="efa-group-rows" data-cl="${k}"`:'';
+            return prefix + `<tr${trCls}>
+              <td><div class="efa-route">${r.origen} <span class="arr">→</span> ${r.destino} <span class="efa-equipo-tag">${r.equipo}</span></div></td>
+              <td>${cellHtml(r.anterior,'anterior',{gap:gapAV})}</td>
+              <td>${cellHtml(r.vigente,'vigente')}</td>
+              <td>${cellHtml(r.proximo,'proximo',{gap:gapVN})}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+// Vista Por equipo: una fila por (carrier+ruta), columnas = 20'STD / 40'HC (solo período vigente)
+function renderEFAResumenByEquipo(){
+  const cont = document.getElementById('efa-view-resumen');
+  if(!efaSheet.length){
+    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    return;
+  }
+  const filtered = getFilteredEFA();
+  const today = new Date().toISOString().split('T')[0];
+  // Group by (carrier+origen+destino), each route has periods per equipo
+  const groups = new Map();
+  filtered.forEach(e=>{
+    if(e.monto==null||e.monto==='')return;
+    const key=`${e.carrier}|${e.origen}|${e.destino}`;
+    if(!groups.has(key))groups.set(key,{carrier:e.carrier,origen:e.origen,destino:e.destino,byEquipo:{}});
+    const g=groups.get(key);
+    if(!g.byEquipo[e.equipo])g.byEquipo[e.equipo]=[];
+    g.byEquipo[e.equipo].push(e);
+  });
+  // For each route+equipo pick vigente (or null)
+  const pickVigente = arr=>{
+    const sorted=[...arr].sort((a,b)=>(toISO(a.desde)||'').localeCompare(toISO(b.desde)||''));
+    return sorted.find(e=>efaPeriodStatus(e,today)==='vigente') || null;
+  };
+  const enriched=[];
+  for(const g of groups.values()){
+    const vig20=pickVigente(g.byEquipo["20'STD"]||[]);
+    const vig40=pickVigente(g.byEquipo["40'HC"]||[]);
+    if(efaHideEmpty && !vig20 && !vig40)continue;
+    enriched.push({...g, vig20, vig40});
+  }
+  document.getElementById('efa-filter-info').textContent = `Mostrando ${enriched.length} ruta${enriched.length!==1?'s':''} · vista por equipo (período vigente)`;
+  if(!enriched.length){
+    cont.innerHTML = `<div class="efa-empty"><div class="ico">🔍</div><div class="ttl">Sin resultados</div><div class="sub">Ajustá los filtros.</div></div>`;
+    return;
+  }
+  const byCarrier=new Map();
+  enriched.forEach(r=>{if(!byCarrier.has(r.carrier))byCarrier.set(r.carrier,[]);byCarrier.get(r.carrier).push(r);});
+  const carriers=[...byCarrier.keys()].sort();
+
+  const cellEq = e=>{
+    if(!e)return `<div class="efa-period empty">— sin EFA</div>`;
+    const ri=e._rowIndex;
+    const du=daysUntil(e.hasta);
+    let extra='',warn='';
+    if(du!=null && du>=0 && du<=7){extra=' expiring';warn=`<span class="ep-warn">${du}d</span>`;}
+    const click=ri!=null?` onclick="openEfaModal(${ri})" style="cursor:pointer" title="Click para editar"`:'';
+    return `<div class="efa-period vigente${extra}"${click}>
+      <span class="ep-amt">${usd(e.monto)}</span>
+      <span class="ep-vig">${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'—'}</span>
+      ${warn}
+    </div>`;
+  };
+
+  let html='';
+  carriers.forEach(c=>{
+    const rows=byCarrier.get(c).sort((a,b)=>(a.origen+a.destino).localeCompare(b.origen+b.destino));
+    const withAny=rows.filter(r=>r.vig20||r.vig40).length;
+    const withBoth=rows.filter(r=>r.vig20&&r.vig40).length;
+    const pct=rows.length?Math.round(100*withBoth/rows.length):0;
+    const barCls=pct>=80?'':(pct>=50?'mid':'low');
+    html+=`<div class="efa-carrier-group">
+      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${c}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
+        <span class="ec-coverage" title="Rutas con ambos equipos cargados">
+          <span class="ec-bar"><span class="ec-bar-fill ${barCls}" style="width:${pct}%"></span></span>
+          ${withBoth}/${rows.length} ambos equipos (${pct}%)
+        </span>
+      </div>
+      <table class="efa-row-tbl">
+        <thead><tr>
+          <th style="width:32%">Ruta</th>
+          <th style="width:34%">20'STD vigente</th>
+          <th style="width:34%">40'HC vigente</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(r=>`<tr>
+            <td><div class="efa-route">${r.origen} <span class="arr">→</span> ${r.destino}</div></td>
+            <td>${cellEq(r.vig20)}</td>
+            <td>${cellEq(r.vig40)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  cont.innerHTML=html;
+}
+
+function renderEFAPlanilla(){
+  const cont = document.getElementById('efa-view-planilla');
+  if(!efaSheet.length){
+    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    return;
+  }
+  const filtered = getFilteredEFA().filter(e=>!efaHideEmpty || (e.monto!=null && e.monto!==''));
+  document.getElementById('efa-filter-info').textContent = `Mostrando ${filtered.length} de ${efaSheet.length} registros`;
+  const today = new Date().toISOString().split('T')[0];
+  const sorted = [...filtered].sort((a,b)=>{
+    return (a.carrier+a.origen+a.destino+a.equipo).localeCompare(b.carrier+b.origen+b.destino+b.equipo)
+        || (toISO(b.desde)||'').localeCompare(toISO(a.desde)||'');
+  });
+  cont.innerHTML = `<div class="efa-planilla-wrap"><table class="efa-planilla">
+    <thead><tr>
+      <th>Carrier</th><th>Origen</th><th>Destino</th><th>Equipo</th>
+      <th>Monto USD</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Comentario</th><th style="text-align:right">Acciones</th>
+    </tr></thead>
+    <tbody>
+      ${sorted.map(e=>{
+        const st = efaPeriodStatus(e, today);
+        const ri = e._rowIndex;
+        return `<tr>
+          <td>${e.carrier||'—'}</td>
+          <td>${e.origen||'—'}</td>
+          <td>${e.destino||'—'}</td>
+          <td><span class="efa-equipo-tag">${e.equipo||'—'}</span></td>
+          <td class="ep-monto"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'monto')" title="Doble click para editar"`:''}>${e.monto!=null?usd(e.monto):'—'}</td>
+          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'desde')" title="Doble click para editar"`:''}>${fDate(e.desde)}</td>
+          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'hasta')" title="Doble click para editar"`:''}>${e.hasta?fDate(e.hasta):'—'}</td>
+          <td><span class="ep-status ${st}">${st}</span></td>
+          <td style="font-size:11px;color:var(--muted)">${e.comentario||''}</td>
+          <td class="ep-act">${ri!=null?`<button onclick="openEfaModal(${ri})" title="Editar este EFA">✏️</button><button class="del" onclick="deleteEfaRow(${ri})" title="Eliminar este EFA">🗑</button>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+// ── EFA MODAL (C2) ──
+let efaModalState = {mode:'new', rowIndex:null};
+
+function openEfaModal(rowIndex, prefill){
+  const isEdit = rowIndex!=null;
+  efaModalState = {mode: isEdit?'edit':'new', rowIndex: isEdit?rowIndex:null};
+  document.getElementById('efa-mod-title').textContent = isEdit ? '⚡ Editar EFA' : '⚡ Nuevo EFA';
+  document.getElementById('efm-del-btn').style.display = isEdit ? 'inline-block' : 'none';
+  document.getElementById('efm-multi-wrap').style.display = isEdit ? 'none' : 'block';
+  document.getElementById('efm-multi-on').checked = false;
+  document.getElementById('efm-multi-list').style.display = 'none';
+
+  // datalists from existing EFA values
+  const uniq = k => [...new Set(efaSheet.map(e=>e[k]).filter(Boolean))].sort();
+  document.getElementById('efm-dl-carrier').innerHTML = uniq('carrier').map(v=>`<option value="${v}">`).join('');
+  document.getElementById('efm-dl-origen').innerHTML  = uniq('origen').map(v=>`<option value="${v}">`).join('');
+  document.getElementById('efm-dl-destino').innerHTML = uniq('destino').map(v=>`<option value="${v}">`).join('');
+
+  // values
+  let src = prefill || (isEdit ? efaSheet.find(e=>e._rowIndex===rowIndex) : null);
+  document.getElementById('efm-carrier').value = src?.carrier || '';
+  document.getElementById('efm-equipo').value  = src?.equipo  || '';
+  document.getElementById('efm-origen').value  = src?.origen  || '';
+  document.getElementById('efm-destino').value = src?.destino || '';
+  document.getElementById('efm-monto').value   = src?.monto!=null ? src.monto : '';
+  document.getElementById('efm-desde').value   = toISO(src?.desde) || '';
+  document.getElementById('efm-hasta').value   = toISO(src?.hasta) || '';
+  document.getElementById('efm-coment').value  = src?.comentario || '';
+
+  ['efm-carrier','efm-origen','efm-destino','efm-equipo','efm-monto','efm-desde'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('input-error','input-success');});
+  document.getElementById('efa-modal').classList.add('open');
+  efaModalPreview();
+}
+
+function closeEfaModal(){
+  document.getElementById('efa-modal').classList.remove('open');
+}
+
+function buildMultiRouteList(){
+  const c=document.getElementById('efm-carrier').value.trim().toUpperCase();
+  const eq=document.getElementById('efm-equipo').value.trim().toUpperCase();
+  const cur=`${document.getElementById('efm-origen').value.trim()}|${document.getElementById('efm-destino').value.trim()}`.toUpperCase();
+  if(!c||!eq){document.getElementById('efm-multi-list').innerHTML='';return;}
+  const routes=[...new Set(efaSheet
+    .filter(e=>(e.carrier||'').toUpperCase()===c && (e.equipo||'').toUpperCase()===eq)
+    .map(e=>`${e.origen}|${e.destino}`)
+    .filter(k=>k.toUpperCase()!==cur))].sort();
+  document.getElementById('efm-multi-list').innerHTML = routes.length
+    ? routes.map(k=>{const[o,d]=k.split('|');return `<label><input type="checkbox" value="${k}"> ${o} → ${d}</label>`;}).join('')
+    : '<div style="font-size:11px;color:var(--muted);font-style:italic">No hay otras rutas para este carrier+equipo</div>';
+}
+
+function efaModalPreview(){
+  buildMultiRouteList();
+  const carrier=document.getElementById('efm-carrier').value.trim();
+  const origen =document.getElementById('efm-origen').value.trim();
+  const destino=document.getElementById('efm-destino').value.trim();
+  const desde  =document.getElementById('efm-desde').value;
+  const hasta  =document.getElementById('efm-hasta').value;
+  const body=document.getElementById('efm-prev-body');
+  const cnt=document.getElementById('efm-prev-count');
+  if(!carrier||!origen||!destino||!desde){
+    body.innerHTML='<div class="efa-mod-prev-empty">Completá carrier, origen, destino e inicio para ver los buques.</div>';
+    cnt.textContent='';return;
+  }
+  if(!Array.isArray(schedule)||!schedule.length){
+    body.innerHTML='<div class="efa-mod-prev-empty">No hay schedule cargado.</div>';
+    cnt.textContent='';return;
+  }
+  const C=carrier.toUpperCase(),O=normalizeOrigen(origen),D=destino.toUpperCase();
+  const matches=schedule.filter(s=>{
+    const sn=(s.NAVIERA||'').toUpperCase();
+    if(!sn.includes(C)&&!C.includes(sn))return false;
+    if(normalizeOrigen(s.ORIGEN)!==O)return false;
+    if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
+    const etd=toISO(s.ETD);if(!etd)return false;
+    if(etd<desde)return false;
+    if(hasta&&etd>hasta)return false;
+    return true;
+  }).sort((a,b)=>(toISO(a.ETD)||'').localeCompare(toISO(b.ETD)||''));
+  cnt.textContent=`(${matches.length})`;
+  if(!matches.length){
+    body.innerHTML='<div class="efa-mod-prev-empty">Ningún buque del schedule cae en la vigencia indicada.</div>';
+    return;
+  }
+  body.innerHTML=`<table class="efa-mod-prev-tbl"><thead><tr><th>Buque</th><th>Naviera</th><th>Origen→Destino</th><th>ETD</th></tr></thead><tbody>${
+    matches.slice(0,30).map(s=>`<tr><td>${s.VESSEL||'—'}</td><td>${s.NAVIERA||'—'}</td><td>${s.ORIGEN||''} → ${s.DESTINO||''}</td><td>${fDate(s.ETD)}</td></tr>`).join('')
+  }</tbody></table>${matches.length>30?`<div style="font-size:10px;color:var(--muted);margin-top:4px">… y ${matches.length-30} buques más</div>`:''}`;
+}
+
+function efaModalCollect(){
+  const v={
+    CARRIER:document.getElementById('efm-carrier').value.trim(),
+    ORIGEN :document.getElementById('efm-origen').value.trim(),
+    DESTINO:document.getElementById('efm-destino').value.trim(),
+    EQUIPO :document.getElementById('efm-equipo').value.trim(),
+    'MONTO USD':document.getElementById('efm-monto').value,
+    INICIO :isoToDMY(document.getElementById('efm-desde').value),
+    FIN    :isoToDMY(document.getElementById('efm-hasta').value),
+    COMENTARIO:document.getElementById('efm-coment').value.trim(),
+  };
+  const reqMap={CARRIER:'efm-carrier',ORIGEN:'efm-origen',DESTINO:'efm-destino',EQUIPO:'efm-equipo','MONTO USD':'efm-monto',INICIO:'efm-desde'};
+  let firstBad=null;Object.entries(reqMap).forEach(([k,id])=>{const el=document.getElementById(id);if(!v[k]){el.classList.add('input-error');el.classList.remove('input-success');if(!firstBad)firstBad=el;}else{el.classList.remove('input-error');el.classList.add('input-success');}});
+  if(firstBad){firstBad.focus();return null;}
+  v['MONTO USD']=Number(v['MONTO USD']);
+  return v;
+}
+
+async function saveEfaModal(){
+  const data=efaModalCollect();if(!data)return;
+  const btn=document.getElementById('efm-save-btn');
+  btn.disabled=true;const orig=btn.textContent;btn.textContent='Guardando…';
+  try{
+    if(efaModalState.mode==='edit'){
+      await postEfaAction({action:'updateEFA', rowIndex:efaModalState.rowIndex, data});
+    } else {
+      await smartAddEFA(data);
+      // multi-route batch
+      if(document.getElementById('efm-multi-on').checked){
+        const checks=[...document.querySelectorAll('#efm-multi-list input[type=checkbox]:checked')];
+        for(const c of checks){
+          const[o,d]=c.value.split('|');
+          await smartAddEFA({...data, ORIGEN:o, DESTINO:d});
+        }
+      }
+    }
+    closeEfaModal();
+    await reloadEfaFromSheet();
+  }catch(e){
+    alert('Error al guardar: '+e.message);
+  }finally{
+    btn.disabled=false;btn.textContent=orig;
+  }
+}
+
+async function deleteEfaFromModal(){
+  if(efaModalState.mode!=='edit'||efaModalState.rowIndex==null)return;
+  if(!confirm('¿Eliminar este EFA? Esta acción no se puede deshacer.'))return;
+  try{
+    await postEfaAction({action:'deleteEFA', rowIndex:efaModalState.rowIndex});
+    closeEfaModal();
+    await reloadEfaFromSheet();
+  }catch(e){alert('Error al eliminar: '+e.message);}
+}
+
+// Inline edit (dblclick) en planilla
+function efaInlineEdit(td, rowIndex, field){
+  if(td.querySelector('input'))return;
+  const src=efaSheet.find(e=>e._rowIndex===rowIndex);if(!src)return;
+  const cur=src[field]||'';
+  const isDate=field==='desde'||field==='hasta';
+  const inp=document.createElement('input');
+  inp.type=isDate?'date':'number';
+  if(!isDate){inp.step='0.01';inp.min='0';}
+  inp.value=isDate?(toISO(cur)||''):(cur||'');
+  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px';
+  const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();inp.select();
+  let done=false;
+  const cancel=()=>{if(done)return;done=true;td.innerHTML=orig;};
+  const save=async()=>{
+    if(done)return;done=true;
+    const nv=inp.value;
+    const newVal=isDate?nv:(nv===''?'':parseFloat(nv));
+    if(String(newVal)===String(cur||'')){td.innerHTML=orig;return;}
+    td.innerHTML='<span style="font-size:10px;color:var(--muted)">guardando...</span>';
+    try{
+      const upd={...src,[field]:newVal};
+      const data={
+        CARRIER:upd.carrier,ORIGEN:upd.origen,DESTINO:upd.destino,EQUIPO:upd.equipo,
+        'MONTO USD':Number(upd.monto),
+        INICIO:isoToDMY(upd.desde||''),
+        FIN:isoToDMY(upd.hasta||''),
+        COMENTARIO:upd.comentario||'',
+      };
+      await postEfaAction({action:'updateEFA',rowIndex,data});
+      await reloadEfaFromSheet();
+    }catch(e){alert('Error: '+e.message);td.innerHTML=orig;}
+  };
+  inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')save();else if(ev.key==='Escape')cancel();});
+  inp.addEventListener('blur',save);
+}
+
+async function deleteEfaRow(rowIndex){
+  if(!confirm('¿Eliminar este EFA?'))return;
+  try{
+    await postEfaAction({action:'deleteEFA', rowIndex});
+    await reloadEfaFromSheet();
+  }catch(e){alert('Error al eliminar: '+e.message);}
+}
+
+function duplicateAsContinuation(rowIndex){
+  const src=efaSheet.find(e=>e._rowIndex===rowIndex);
+  if(!src)return;
+  const next=src.hasta?new Date(toISO(src.hasta)):new Date();
+  next.setDate(next.getDate()+1);
+  const nextISO=next.toISOString().split('T')[0];
+  openEfaModal(null,{...src, _rowIndex:null, desde:nextISO, hasta:'', comentario:'Continuación de '+(src.comentario||'período anterior')});
+}
+
+// ── BULK UPDATE (C4) ──
+function openBulkUpdateModal(){
+  const sel=document.getElementById('bulk-carrier');
+  const carriers=[...new Set(efaSheet.map(e=>e.carrier).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">—</option>'+carriers.map(c=>`<option>${c}</option>`).join('');
+  ['bulk-equipo','bulk-destino','bulk-origen','bulk-valor','bulk-desde','bulk-hasta'].forEach(id=>{const el=document.getElementById(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';});
+  document.getElementById('bulk-tipo').selectedIndex=0;
+  document.getElementById('bulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Seleccioná carrier para ver registros</div>';
+  document.getElementById('bulk-prev-count').textContent='';
+  document.getElementById('bulk-modal').classList.add('open');
+}
+function closeBulkModal(){document.getElementById('bulk-modal').classList.remove('open');}
+function bulkMatch(){
+  const c=document.getElementById('bulk-carrier').value;
+  if(!c)return [];
+  const eq=document.getElementById('bulk-equipo').value;
+  const d=(document.getElementById('bulk-destino').value||'').toUpperCase().trim();
+  const o=(document.getElementById('bulk-origen').value||'').toUpperCase().trim();
+  return efaSheet.filter(e=>e._rowIndex!=null && e.carrier===c && (!eq||e.equipo===eq) && (!d||(e.destino||'').toUpperCase().includes(d)) && (!o||(e.origen||'').toUpperCase().includes(o)));
+}
+function bulkPreview(){
+  const list=bulkMatch();
+  document.getElementById('bulk-prev-count').textContent=list.length?`(${list.length})`:'';
+  if(!list.length){document.getElementById('bulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Sin coincidencias</div>';return;}
+  document.getElementById('bulk-prev-body').innerHTML=`<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:4px 6px">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="text-align:right;padding:4px 6px">Monto actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>${list.map(e=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px">${e.origen}→${e.destino}</td><td style="padding:4px 6px;text-align:center">${e.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${e.monto!=null?usd(e.monto):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'∞'}</td></tr>`).join('')}</tbody></table>`;
+}
+async function applyBulkUpdate(){
+  const list=bulkMatch();
+  if(!list.length){alert('Sin registros');return;}
+  const tipo=document.getElementById('bulk-tipo').value;
+  const valor=parseFloat(document.getElementById('bulk-valor').value);
+  const nd=document.getElementById('bulk-desde').value;
+  const nh=document.getElementById('bulk-hasta').value;
+  const hayMonto=!isNaN(valor);
+  const hayVig=nd||nh;
+  if(!hayMonto && !hayVig){alert('Indicá un ajuste de monto o vigencia');return;}
+  if(!confirm(`Aplicar a ${list.length} EFA?`))return;
+  let ok=0,fail=0;
+  for(const e of list){
+    try{
+      let nuevoMonto=e.monto;
+      if(hayMonto){
+        if(tipo==='set')nuevoMonto=valor;
+        else if(tipo==='pct')nuevoMonto=Math.round((Number(e.monto||0)*(1+valor/100))*100)/100;
+        else if(tipo==='add')nuevoMonto=Math.round((Number(e.monto||0)+valor)*100)/100;
+      }
+      const data={
+        CARRIER:e.carrier,ORIGEN:e.origen,DESTINO:e.destino,EQUIPO:e.equipo,
+        'MONTO USD':Number(nuevoMonto),
+        INICIO:isoToDMY(nd||e.desde||''),
+        FIN:isoToDMY(nh||e.hasta||''),
+        COMENTARIO:e.comentario||'',
+      };
+      await postEfaAction({action:'updateEFA',rowIndex:e._rowIndex,data});
+      ok++;
+    }catch(err){fail++;}
+  }
+  closeBulkModal();
+  await reloadEfaFromSheet();
+  alert(`Actualizados: ${ok}${fail?` · Errores: ${fail}`:''}`);
+}
+
+// ── IMPORT EXCEL (C4) ──
+let importParsed=[];
+function openImportModal(){
+  document.getElementById('import-ta').value='';
+  importParsed=[];
+  document.getElementById('import-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div>';
+  document.getElementById('import-prev-count').textContent='';
+  const cb=document.getElementById('import-confirm-btn');
+  cb.disabled=true;cb.textContent='✓ Importar';cb.style.display='';
+  document.getElementById('import-modal').classList.add('open');
+}
+function closeImportModal(){document.getElementById('import-modal').classList.remove('open');}
+
+// ── HISTORIAL (EFA + BID) ──
+let logRows=[];
+let logSource='efa'; // 'efa' | 'bid' | 'all'
+function openLogModal(src){
+  logSource=src||'efa';
+  const ttl=document.getElementById('log-modal-title');
+  if(ttl)ttl.textContent='📜 Historial de cambios — '+(logSource==='bid'?'BID':logSource==='all'?'EFA + BID':'EFA');
+  const sel=document.getElementById('log-source');if(sel)sel.value=logSource;
+  document.getElementById('log-modal').classList.add('open');
+  loadLogData();
+}
+function setLogSource(s){logSource=s;loadLogData();const ttl=document.getElementById('log-modal-title');if(ttl)ttl.textContent='📜 Historial de cambios — '+(s==='bid'?'BID':s==='all'?'EFA + BID':'EFA');}
+function closeLogModal(){document.getElementById('log-modal').classList.remove('open');}
+async function loadLogData(){
+  const body=document.getElementById('log-body');
+  body.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Cargando...</div>';
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=getLog&t='+Date.now(),{cache:'no-store'});
+    const j=await res.json();
+    const data=Array.isArray(j.data)?j.data:[];
+    if(data.length<2){logRows=[];renderLogTable();return;}
+    const headers=data[0].map(h=>h.toString().toUpperCase().trim());
+    const idx=name=>headers.indexOf(name);
+    const iTs=idx('TIMESTAMP'),iArch=idx('ARCHIVO'),iCampo=idx('CAMPO'),iOri=idx('ORIGEN'),iDes=idx('DESTINO'),iNav=idx('NAVIERA'),iOld=idx('VALOR ANTERIOR'),iNew=idx('VALOR NUEVO'),iTipo=idx('TIPO'),iEq=idx('EQUIPO'),iRow=idx('ROW_INDEX');
+    logRows=data.slice(1).map(r=>({
+      ts:r[iTs],archivo:iArch>=0?r[iArch]:'',campo:iCampo>=0?r[iCampo]:'',
+      origen:iOri>=0?r[iOri]:'',destino:iDes>=0?r[iDes]:'',carrier:iNav>=0?r[iNav]:'',
+      old:iOld>=0?r[iOld]:'',new:iNew>=0?r[iNew]:'',tipo:iTipo>=0?r[iTipo]:'',
+      equipo:iEq>=0?r[iEq]:'',rowIdx:iRow>=0?r[iRow]:''
+    })).filter(r=>{
+      const t=(r.tipo||'').toString().toUpperCase();
+      if(logSource==='efa')return t.startsWith('EFA');
+      if(logSource==='bid')return t.startsWith('BID');
+      return t.startsWith('EFA')||t.startsWith('BID');
+    }).reverse();
+    renderLogTable();
+  }catch(e){
+    body.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626">Error al cargar historial: '+e.message+'</div>';
+  }
+}
+function renderLogTable(){
+  const body=document.getElementById('log-body');
+  const cnt=document.getElementById('log-count');
+  const q=(document.getElementById('log-search').value||'').toLowerCase();
+  const fa=document.getElementById('log-action').value;
+  const filtered=logRows.filter(r=>{
+    const tipo=(r.tipo||'').toLowerCase();
+    if(fa==='add'&&!tipo.includes('add'))return false;
+    if(fa==='update'&&!tipo.includes('update'))return false;
+    if(fa==='delete'&&!tipo.includes('delete'))return false;
+    if(q){
+      const hay=`${r.carrier} ${r.origen} ${r.destino} ${r.equipo} ${r.campo} ${r.old} ${r.new}`.toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+  cnt.textContent=`${filtered.length} de ${logRows.length} registros`;
+  if(!filtered.length){body.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">No hay cambios registrados</div>';return;}
+  const fmtTs=v=>{
+    if(!v)return '—';
+    try{const d=new Date(v);if(isNaN(d))return v;
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }catch(e){return v;}
+  };
+  const tipoBadge=t=>{
+    const tt=(t||'').toLowerCase();
+    const src=tt.startsWith('bid')?'<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">BID</span>':'<span style="background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">EFA</span>';
+    if(tt.includes('add'))return src+'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">+ ALTA</span>';
+    if(tt.includes('update'))return src+'<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">✎ EDICIÓN</span>';
+    if(tt.includes('delete'))return src+'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">🗑 BAJA</span>';
+    return t||'—';
+  };
+  body.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--faint);position:sticky;top:0">
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Cuándo</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Acción</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Carrier</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Ruta</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Equipo</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Campo</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Antes</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Después</th>
+  </tr></thead><tbody>${filtered.map(r=>`<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:6px 8px;font-family:var(--mono);font-size:10px;white-space:nowrap">${fmtTs(r.ts)}</td>
+    <td style="padding:6px 8px">${tipoBadge(r.tipo)}</td>
+    <td style="padding:6px 8px;font-weight:600">${r.carrier||'—'}</td>
+    <td style="padding:6px 8px">${r.origen||''} → ${r.destino||''}</td>
+    <td style="padding:6px 8px">${r.equipo||'—'}</td>
+    <td style="padding:6px 8px;color:var(--muted)">${r.campo||'—'}</td>
+    <td style="padding:6px 8px;color:#991b1b">${(r.old||'').toString().slice(0,80)||'—'}</td>
+    <td style="padding:6px 8px;color:#166534;font-weight:600">${(r.new||'').toString().slice(0,80)||'—'}</td>
+  </tr>`).join('')}</tbody></table>`;
+}
+function loadSheetJS(){
+  return new Promise((resolve,reject)=>{
+    if(window.XLSX)return resolve(window.XLSX);
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload=()=>resolve(window.XLSX);
+    s.onerror=()=>reject(new Error('No se pudo cargar SheetJS (revisar conexión a internet)'));
+    document.head.appendChild(s);
+  });
+}
+async function loadImportFile(inp){
+  const f=inp.files[0];if(!f){return;}
+  const name=f.name.toLowerCase();
+  const isXlsx=name.endsWith('.xlsx')||name.endsWith('.xls');
+  try{
+    if(isXlsx){
+      const ta=document.getElementById('import-ta');
+      ta.value='⏳ Procesando Excel...';
+      const XLSX=await loadSheetJS();
+      const buf=await f.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const tsv=XLSX.utils.sheet_to_csv(ws,{FS:'\t',blankrows:false});
+      ta.value=tsv;
+      parseImport();
+    } else {
+      const txt=await f.text();
+      document.getElementById('import-ta').value=txt;
+      parseImport();
+    }
+  }catch(e){
+    alert('Error leyendo archivo: '+e.message+'\n\nAlternativa: copiá las celdas en Excel y pegalas directamente en el cuadro.');
+  }
+  inp.value='';
+}
+function parseImportDate(s){
+  if(!s)return '';
+  s=String(s).trim();
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){let y=m[3];if(y.length===2)y='20'+y;return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  return '';
+}
+function parseImport(){
+  const txt=document.getElementById('import-ta').value.trim();
+  importParsed=[];
+  if(!txt){document.getElementById('import-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div>';document.getElementById('import-prev-count').textContent='';document.getElementById('import-confirm-btn').disabled=true;return;}
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2){renderImportError('Pegá al menos encabezado + 1 fila');return;}
+  const sep=lines[0].includes('\t')?'\t':(lines[0].includes(';')?';':',');
+  const head=lines[0].split(sep).map(h=>h.trim().toLowerCase());
+  const idx={};['carrier','origen','destino','equipo','monto','desde','hasta','comentario'].forEach(k=>idx[k]=head.indexOf(k));
+  const missing=['carrier','origen','destino','equipo','monto','desde'].filter(k=>idx[k]<0);
+  if(missing.length){renderImportError('Faltan columnas: '+missing.join(', '));return;}
+  const errs=[];
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(sep).map(s=>s.trim());
+    const r={
+      carrier:c[idx.carrier]||'',
+      origen:c[idx.origen]||'',
+      destino:c[idx.destino]||'',
+      equipo:c[idx.equipo]||'',
+      monto:parseFloat((c[idx.monto]||'').replace(',','.')),
+      desde:parseImportDate(c[idx.desde]||''),
+      hasta:idx.hasta>=0?parseImportDate(c[idx.hasta]||''):'',
+      comentario:idx.comentario>=0?(c[idx.comentario]||''):'',
+    };
+    const e=[];
+    if(!r.carrier)e.push('carrier');
+    if(!r.origen)e.push('origen');
+    if(!r.destino)e.push('destino');
+    if(!r.equipo)e.push('equipo');
+    if(isNaN(r.monto))e.push('monto');
+    if(!r.desde)e.push('desde');
+    r._err=e.length?e.join(','):null;
+    // Detectar conflicto vs efaSheet existente
+    if(!r._err){
+      const C=(r.carrier||'').toUpperCase().trim();
+      const O=(r.origen||'').toUpperCase().trim();
+      const D=(r.destino||'').toUpperCase().trim();
+      const EQ=(r.equipo||'').toUpperCase().trim();
+      const existing=efaSheet.find(x=>x._rowIndex!=null
+        && (x.carrier||'').toUpperCase().trim()===C
+        && (x.origen ||'').toUpperCase().trim()===O
+        && (x.destino||'').toUpperCase().trim()===D
+        && (x.equipo ||'').toUpperCase().trim()===EQ);
+      if(!existing){r._status='nuevo';}
+      else if((existing.monto==null||existing.monto==='') && !existing.desde && !existing.hasta){
+        r._status='fill';r._existingRow=existing._rowIndex;
+      } else {
+        const exDesdeIso=toISO(existing.desde);
+        const exHastaIso=toISO(existing.hasta);
+        const newDesdeIso=r.desde; // ya viene en YYYY-MM-DD
+        // Continuación: anterior abierto (sin fin) y nuevo arranca después
+        if(existing.monto!=null && existing.monto!=='' && exDesdeIso && !exHastaIso && newDesdeIso && newDesdeIso>exDesdeIso){
+          r._status='continuation';r._existingRow=existing._rowIndex;
+          r._existingMonto=existing.monto;r._existingDesde=existing.desde;
+          r._autoCloseHasta=dmyMinusOneDay(newDesdeIso);
+          r._existingFull=existing;
+        } else {
+          r._status='conflict';r._existingRow=existing._rowIndex;
+          r._existingMonto=existing.monto;r._existingDesde=existing.desde;r._existingHasta=existing.hasta;
+        }
+      }
+    }
+    importParsed.push(r);
+    if(e.length)errs.push(i);
+  }
+  const valid=importParsed.filter(r=>!r._err);
+  const nNew=valid.filter(r=>r._status==='nuevo').length;
+  const nFill=valid.filter(r=>r._status==='fill').length;
+  const nCont=valid.filter(r=>r._status==='continuation').length;
+  const nConf=valid.filter(r=>r._status==='conflict').length;
+  document.getElementById('import-prev-count').textContent=`(${valid.length}/${importParsed.length} válidos · ${nNew} nuevos · ${nFill} llenan vacías · ${nCont} continuaciones · ${nConf} conflictos)`;
+  document.getElementById('import-confirm-btn').disabled=valid.length===0;
+  const stBadge=r=>{
+    if(r._err)return `<span style="color:#c00">⚠ ${r._err}</span>`;
+    if(r._status==='nuevo')return '<span style="color:#0a0;font-weight:700">✓ nuevo</span>';
+    if(r._status==='fill')return '<span style="color:#0277bd;font-weight:700">⊕ llena vacía</span>';
+    if(r._status==='continuation')return `<span style="color:#6a1b9a;font-weight:700" title="Cierra anterior con fin=${r._autoCloseHasta} (era ${usd(r._existingMonto||0)} desde ${r._existingDesde||''}, sin fin)">🔗 cierra anterior</span>`;
+    if(r._status==='conflict')return `<span style="color:#e65100;font-weight:700" title="Existe: ${usd(r._existingMonto||0)} ${r._existingDesde||''}→${r._existingHasta||'∞'}">⚠ duplicado</span>`;
+    return '';
+  };
+  const rowBg=r=>r._err?'background:#fee':(r._status==='conflict'?'background:#fff3e0':(r._status==='fill'?'background:#e3f2fd':(r._status==='continuation'?'background:#f3e5f5':'')));
+  document.getElementById('import-prev-body').innerHTML=`<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px">#</th><th style="padding:4px;text-align:left">Carrier</th><th style="padding:4px;text-align:left">Ruta</th><th style="padding:4px">Eq.</th><th style="padding:4px;text-align:right">Monto</th><th style="padding:4px">Vigencia</th><th style="padding:4px">Estado</th></tr></thead><tbody>${importParsed.map((r,i)=>`<tr style="border-bottom:1px solid #eee;${rowBg(r)}"><td style="padding:3px 5px;text-align:center">${i+1}</td><td style="padding:3px 5px">${r.carrier}</td><td style="padding:3px 5px">${r.origen}→${r.destino}</td><td style="padding:3px 5px;text-align:center">${r.equipo}</td><td style="padding:3px 5px;text-align:right">${isNaN(r.monto)?'—':usd(r.monto)}</td><td style="padding:3px 5px;text-align:center;font-family:monospace;font-size:10px">${r.desde||'?'}→${r.hasta||'∞'}</td><td style="padding:3px 5px;text-align:center">${stBadge(r)}</td></tr>`).join('')}</tbody></table>`;
+}
+function renderImportError(msg){
+  document.getElementById('import-prev-body').innerHTML=`<div style="padding:14px;text-align:center;color:#c00;font-size:12px">⚠ ${msg}</div>`;
+  document.getElementById('import-prev-count').textContent='';
+  document.getElementById('import-confirm-btn').disabled=true;
+}
+async function confirmImport(){
+  const valid=importParsed.filter(r=>!r._err);
+  const body=document.getElementById('import-prev-body');
+  if(!valid.length){body.innerHTML='<div style="padding:18px;text-align:center;color:#c00;font-size:13px">⚠ No hay filas válidas para importar</div>';return;}
+  const nNew=valid.filter(r=>r._status==='nuevo').length;
+  const nFill=valid.filter(r=>r._status==='fill').length;
+  const nCont=valid.filter(r=>r._status==='continuation').length;
+  const nConf=valid.filter(r=>r._status==='conflict').length;
+  // Decisión sobre conflictos
+  let conflictMode='skip'; // skip | overwrite
+  if(nConf>0){
+    conflictMode=await new Promise(resolve=>{
+      body.innerHTML=`<div style="padding:18px"><div style="text-align:center;font-size:32px">⚠</div><div style="text-align:center;font-size:14px;font-weight:700;margin:6px 0 12px">${nConf} conflicto${nConf>1?'s':''} detectado${nConf>1?'s':''}</div><div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px">Hay filas que ya existen en el sheet con monto/vigencia cargados.<br>¿Qué querés hacer con esos duplicados?</div><div style="display:flex;flex-direction:column;gap:8px;max-width:420px;margin:0 auto"><button class="efa-mod-btn" id="cf-skip" style="text-align:left;padding:10px 14px"><b>⊘ Saltar conflictos</b><div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">Importa solo: ${nNew} nuevos + ${nFill} que llenan vacías. Ignora ${nConf} duplicados.</div></button><button class="efa-mod-btn" id="cf-over" style="text-align:left;padding:10px 14px"><b>↻ Sobreescribir conflictos</b><div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">Reemplaza monto/vigencia de los ${nConf} existentes con los nuevos valores.</div></button><button class="efa-mod-btn" id="cf-cancel" style="text-align:left;padding:10px 14px"><b>✕ Cancelar todo</b><div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">No importa nada, vuelve al preview.</div></button></div></div>`;
+      document.getElementById('cf-skip').onclick=()=>resolve('skip');
+      document.getElementById('cf-over').onclick=()=>resolve('overwrite');
+      document.getElementById('cf-cancel').onclick=()=>{parseImport();resolve(null);};
+    });
+    if(!conflictMode)return;
+  } else {
+    const proceed=await new Promise(resolve=>{
+      body.innerHTML=`<div style="padding:24px;text-align:center"><div style="font-size:32px;margin-bottom:8px">❓</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">¿Importar ${valid.length} EFA?</div><div style="font-size:11px;color:var(--muted);margin-bottom:14px">${nNew} nuevos · ${nFill} llenan filas vacías${nCont?` · <b style="color:#6a1b9a">${nCont} continuaciones</b> (cierran períodos anteriores automáticamente)`:''}</div><div style="display:flex;gap:8px;justify-content:center"><button class="efa-mod-btn" id="imp-cancel-yn">Cancelar</button><button class="efa-mod-btn primary" id="imp-ok-yn">✓ Sí, importar</button></div></div>`;
+      document.getElementById('imp-cancel-yn').onclick=()=>{parseImport();resolve(false);};
+      document.getElementById('imp-ok-yn').onclick=()=>resolve(true);
+    });
+    if(!proceed)return;
+  }
+  // Filtrar según modo
+  const ok=valid.filter(r=>r._status!=='conflict' || conflictMode==='overwrite');
+  const btn=document.getElementById('import-confirm-btn');
+  btn.disabled=true;btn.textContent='⏳ Importando...';
+  let done=0,fail=0;const errors=[];
+  for(let i=0;i<ok.length;i++){
+    const r=ok[i];
+    body.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px"><div style="font-size:24px">⏳</div><div style="margin-top:8px"><b>${i+1}/${ok.length}</b> — ${r.carrier} ${r.origen}→${r.destino}</div><div style="margin-top:6px;color:var(--muted)">OK: ${done} · Errores: ${fail}</div></div>`;
+    try{
+      const data={
+        CARRIER:r.carrier,
+        ORIGEN :r.origen,
+        DESTINO:r.destino,
+        EQUIPO :r.equipo,
+        'MONTO USD':Number(r.monto),
+        INICIO :isoToDMY(r.desde),
+        FIN    :isoToDMY(r.hasta||''),
+        COMENTARIO:r.comentario||'',
+      };
+      console.log('[IMPORT] enviando fila',i+1,r._status,data);
+      let resp;
+      if(r._status==='continuation'){
+        // 1) cerrar el período anterior con fin = nuevo_desde - 1
+        const ex=r._existingFull;
+        const closeData={
+          CARRIER:ex.carrier,ORIGEN:ex.origen,DESTINO:ex.destino,EQUIPO:ex.equipo,
+          'MONTO USD':Number(ex.monto),
+          INICIO:isoToDMY(ex.desde||''),
+          FIN:r._autoCloseHasta,
+          COMENTARIO:ex.comentario||'',
+        };
+        await postEfaAction({action:'updateEFA',rowIndex:r._existingRow,data:closeData});
+        // 2) crear el nuevo
+        resp=await postEfaAction({action:'addEFA',data});
+      } else if((r._status==='fill') || (r._status==='conflict' && conflictMode==='overwrite')){
+        resp=await postEfaAction({action:'updateEFA',rowIndex:r._existingRow,data});
+      } else {
+        resp=await postEfaAction({action:'addEFA',data});
+      }
+      console.log('[IMPORT] respuesta fila',i+1,resp);
+      done++;
+    }catch(e){
+      fail++;
+      errors.push(`Fila ${i+1} (${r.carrier} ${r.origen}→${r.destino}): ${e.message||e}`);
+      console.error('Import row error',r,e);
+    }
+  }
+  btn.textContent='✓ Importar';
+  if(fail===0){
+    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados a Google Sheets</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
+    btn.style.display='none';
+  } else {
+    body.innerHTML=`<div style="padding:14px;font-size:12px"><div style="font-weight:700;color:#c00;margin-bottom:8px">⚠ Importación parcial: ${done} OK · ${fail} errores</div><div style="max-height:160px;overflow:auto;background:#fee;border:1px solid #fcc;border-radius:4px;padding:8px;font-family:monospace;font-size:10px;white-space:pre-wrap;margin-bottom:10px">${errors.join('\n')}</div>${done>0?`<div style="text-align:center"><button class="efa-mod-btn primary" onclick="location.reload()">🔄 Recargar página</button></div>`:''}</div>`;
+    btn.disabled=false;
+  }
+}
+
+// Resta 1 día a una fecha (cualquier formato) y devuelve DMY
+function dmyMinusOneDay(dateStr){
+  const iso=toISO(dateStr);if(!iso)return '';
+  const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()-1);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+// Convierte YYYY-MM-DD o Date → DD/MM/YYYY (formato estándar usado en sheet)
+function isoToDMY(v){
+  if(!v)return '';
+  if(v instanceof Date)return `${String(v.getDate()).padStart(2,'0')}/${String(v.getMonth()+1).padStart(2,'0')}/${v.getFullYear()}`;
+  const s=String(v).trim();
+  const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return `${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;
+  return s; // ya viene en otro formato, dejarlo
+}
+// Smart-merge: busca fila existente vacía (sin monto ni vigencia) para misma combinación
+function findEmptyEfaRow(carrier,origen,destino,equipo){
+  const C=(carrier||'').toUpperCase().trim();
+  const O=(origen||'').toUpperCase().trim();
+  const D=(destino||'').toUpperCase().trim();
+  const E=(equipo||'').toUpperCase().trim();
+  return efaSheet.find(r=>
+    r._rowIndex!=null
+    && (r.carrier||'').toUpperCase().trim()===C
+    && (r.origen ||'').toUpperCase().trim()===O
+    && (r.destino||'').toUpperCase().trim()===D
+    && (r.equipo ||'').toUpperCase().trim()===E
+    && (r.monto==null||r.monto==='')
+    && !r.desde && !r.hasta
+  );
+}
+// Add inteligente: si hay fila vacía → updateEFA, sino → addEFA
+async function smartAddEFA(data){
+  const empty=findEmptyEfaRow(data.CARRIER,data.ORIGEN,data.DESTINO,data.EQUIPO);
+  if(empty){
+    console.log('[smartAdd] llenando fila vacía existente _rowIndex='+empty._rowIndex);
+    return await postEfaAction({action:'updateEFA',rowIndex:empty._rowIndex,data});
+  }
+  return await postEfaAction({action:'addEFA',data});
+}
+
+async function postEfaAction(payload){
+  let res;
+  try{res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});}
+  catch(e){throw new Error('Network error: '+e.message);}
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const txt=await res.text();
+  let j;
+  try{j=JSON.parse(txt);}
+  catch(e){
+    console.error('Apps Script returned non-JSON:',txt.slice(0,500));
+    throw new Error('Apps Script no devolvió JSON. Respuesta: '+txt.slice(0,200));
+  }
+  if(j&&j.error)throw new Error(j.error);
+  if(j&&j.success===false)throw new Error(j.message||'Apps Script reportó fallo');
+  console.log('Apps Script OK',payload.action,j);
+  return j;
+}
+
+async function reloadEfaFromSheet(){
+  await new Promise(r=>setTimeout(r,800)); // dar tiempo a Apps Script a propagar la escritura
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=getEFA&t='+Date.now(),{redirect:'follow',method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
+    const j=await res.json();
+    if(Array.isArray(j))loadEFA(j);
+    else if(Array.isArray(j.efa))loadEFA(j.efa);
+    buildEfaFilterOptions();
+    renderEFATab();
+    if(typeof renderTarifas==='function')renderTarifas();
+    if(typeof applySchedFilter==='function')applySchedFilter();
+  }catch(e){console.warn('reloadEFA failed',e);}
+}
+
+// Persist EFA filters
+function saveEfaFilters(){
+  try{
+    localStorage.setItem('efa_filters', JSON.stringify({
+      carrier:document.getElementById('efa-f-carrier').value,
+      equipo :document.getElementById('efa-f-equipo').value,
+      search :document.getElementById('efa-f-search').value,
+      hideEmpty:efaHideEmpty,
+      view:efaCurrentView,
+      resumenMode:efaResumenMode,
+    }));
+  }catch(e){}
+}
+function restoreEfaFilters(){
+  try{
+    const s=JSON.parse(localStorage.getItem('efa_filters')||'null');if(!s)return;
+    if(s.carrier!=null)document.getElementById('efa-f-carrier').value=s.carrier;
+    if(s.equipo !=null)document.getElementById('efa-f-equipo').value=s.equipo;
+    if(s.search !=null)document.getElementById('efa-f-search').value=s.search;
+    if(typeof s.hideEmpty==='boolean'){efaHideEmpty=s.hideEmpty;
+      const b=document.getElementById('efa-f-hideempty');if(b)b.classList.toggle('on',efaHideEmpty);}
+    if(s.view){efaCurrentView=s.view;
+      document.getElementById('efa-tg-resumen').classList.toggle('active',s.view==='resumen');
+      document.getElementById('efa-tg-planilla').classList.toggle('active',s.view==='planilla');
+      document.getElementById('efa-view-resumen').style.display=s.view==='resumen'?'':'none';
+      document.getElementById('efa-view-planilla').style.display=s.view==='planilla'?'':'none';}
+    if(s.resumenMode){efaResumenMode=s.resumenMode;
+      document.getElementById('efa-rm-ruta').classList.toggle('active',s.resumenMode==='ruta');
+      document.getElementById('efa-rm-equipo').classList.toggle('active',s.resumenMode==='equipo');}
+  }catch(e){}
 }
 
 function clearSchedFilters(){
@@ -892,26 +2441,108 @@ function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classLi
 function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else applySchedFilter();}
 
 // ── HELPERS ──
-const usd = v=>'USD '+Math.round(v).toLocaleString('es-AR');
+const usd = v=>'USD '+(Number(v)||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const isNum = v=>typeof v==='number';
 const tr = (s,n=24)=>s&&s.length>n?s.slice(0,n)+'…':(s||'');
-function fDate(d){if(!d)return'—';if(d instanceof Date){return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}if(!isNaN(Date.parse(d))){const dt=new Date(d);return dt.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});}return d.toString().slice(0,14);}
+function fDate(d){
+  if(!d)return'—';
+  const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  let dt=null;
+  if(d instanceof Date) dt=d;
+  else if(!isNaN(Date.parse(d))) dt=new Date(d);
+  else return d.toString().slice(0,14);
+  const dd=String(dt.getDate()).padStart(2,'0');
+  const mm=MES[dt.getMonth()];
+  const yy=String(dt.getFullYear()).slice(-2);
+  return `${dd}/${mm}/${yy}`;
+}
 function toISO(d){if(!d)return'';if(d instanceof Date)return d.toISOString().split('T')[0];if(!isNaN(Date.parse(d)))return new Date(d).toISOString().split('T')[0];return'';}
 function daysUntil(d){if(!d||isNaN(Date.parse(d)))return null;return Math.ceil((new Date(d)-new Date())/86400000);}
 const noServ = r=>[r.tarifa,r.comentario,r.estado].some(v=>v&&v.toString().toUpperCase().match(/NO TIENE SERV|NO OFRE|NO DISPONIBLE/));
 const stCls  = s=>{if(!s)return'nd';const u=s.toUpperCase();if(u.includes('CONFIRM'))return'conf';if(u.includes('PEND'))return'pend';if(u.includes('NO DISP'))return'nodsp';return'nd';};
 function sortOrder(r){const e=(r.estado||'').toUpperCase();if(e.includes('CONFIRM'))return 0;if(e.includes('PEND'))return 1;return 2;}
 
-// EFA logic
+// ── EFA SHEET (nueva fuente, solapa "EFA") ──
+function loadEFA(data){
+  if(!Array.isArray(data)){efaSheet=[];return;}
+  efaSheet = data
+    .filter(row=>row && Object.values(row).some(v=>v!==''&&v!==null&&v!==undefined))
+    .map(row=>{
+      const keys=Object.keys(row);
+      const fk=(...kws)=>{
+        for(const kw of kws){
+          let k=keys.find(k=>k.toUpperCase()===kw.toUpperCase());if(k)return k;
+          k=keys.find(k=>k.toUpperCase().includes(kw.toUpperCase()));if(k)return k;
+        }return null;
+      };
+      const g=k=>k&&row[k]!=null?row[k].toString().trim():'';
+      const gn=k=>{const v=row[k];return(v!==null&&v!==undefined&&!isNaN(Number(v))&&v!=='')?Number(v):null;};
+      return {
+        _rowIndex: row._rowIndex || null,
+        carrier:g(fk('CARRIER','NAVIERA')),
+        origen :g(fk('ORIGEN','EMBARQUE')),
+        destino:g(fk('DESTINO')),
+        equipo :g(fk('EQUIPO','CONTAINER')),
+        monto  :gn(fk('MONTO','USD','EFA')),
+        desde  :g(fk('INICIO','DESDE','VIGENCIA INICIO')),
+        hasta  :g(fk('FIN','HASTA','VIGENCIA FIN')),
+        comentario:g(fk('COMENTARIO','OBSERV')),
+      };
+    });
+  console.log('[EFA] cargados', efaSheet.length, 'registros');
+}
+
+// Devuelve el registro EFA que aplica a (carrier+origen+destino+equipo) para una ETD.
+// Si no hay ETD, devuelve el período más reciente (mayor 'desde').
+function getEfaForRow(r, etd){
+  if(!efaSheet.length||!r.carrier||!r.origen||!r.destino||!r.equipo)return null;
+  const C=(r.carrier||'').toUpperCase();
+  const O=normalizeOrigen(r.origen);
+  const D=(r.destino||'').toUpperCase();
+  const E=(r.equipo||'').toUpperCase();
+  const matches=efaSheet.filter(e=>{
+    return (e.carrier||'').toUpperCase()===C
+      && normalizeOrigen(e.origen)===O
+      && (e.destino||'').toUpperCase()===D
+      && (e.equipo||'').toUpperCase()===E;
+  });
+  if(!matches.length)return null;
+  const etdISO=toISO(etd);
+  if(etdISO){
+    // Período cuya vigencia incluye la ETD (o si no tiene fin, que haya empezado)
+    const inRange=matches.find(e=>{
+      const d=toISO(e.desde);if(!d)return false;
+      if(etdISO<d)return false;
+      const h=toISO(e.hasta);
+      return h?etdISO<=h:true;
+    });
+    if(inRange)return inRange;
+  }
+  // Sin ETD o sin match en rango: devolver el más reciente por 'desde'
+  const sorted=[...matches].sort((a,b)=>(toISO(b.desde)||'').localeCompare(toISO(a.desde)||''));
+  return sorted[0]||null;
+}
+
+// EFA logic — ahora consulta la solapa EFA y muta la fila para que los renderers
+// existentes puedan seguir usando r.efaNum / r.efaDesde / r.efaHasta sin cambios.
 function efaApplies(r,etd){
-  if(!r.efaNum)return'none';
+  const match=getEfaForRow(r,etd);
+  if(!match||match.monto==null){
+    r.efaNum=null;r.efaDesde='';r.efaHasta='';
+    return 'none';
+  }
+  r.efaNum=match.monto;
+  r.efaDesde=match.desde||'';
+  r.efaHasta=match.hasta||'';
   if(!r.efaDesde||isNaN(Date.parse(r.efaDesde)))return'none';
   if(!etd)return'unverified';
-  // Normalize both to YYYY-MM-DD to avoid ISO timezone string comparison issues
-  const etdDate  = toISO(etd);
-  const efaDesde = toISO(r.efaDesde);
+  const etdDate=toISO(etd);
+  const efaDesde=toISO(r.efaDesde);
   if(!etdDate||!efaDesde)return'none';
-  return etdDate >= efaDesde ? 'yes' : 'no';
+  if(etdDate<efaDesde)return'no';
+  const efaHasta=toISO(r.efaHasta);
+  if(efaHasta&&etdDate>efaHasta)return'no';
+  return 'yes';
 }
 
 // ── NAVIERA MATCHING (schedule ↔ tarifa) ──
@@ -936,7 +2567,7 @@ function normalizeOrigen(s){
   if(!s)return'';
   const u=s.toUpperCase().trim();
   if(u==='BUE'||u.includes('BUENOS AIRES'))return'BUE';
-  if(u==='BAHIA'||u.includes('BAHIA BLANCA'))return'BAHIA';
+  if(u==='BAHIA'||u.includes('BAHIA BLANCA')||u==='B.BLANCA'||u==='BBL'||u==='B BLANCA'||u.startsWith('B.BL'))return'BAHIA';
   return u;
 }
 
@@ -1032,12 +2663,12 @@ function buildCard(r,etd,q20,q40){
   const totalPorCont=base!==null?(base+efaVal):null;
   const totalEmb=totalPorCont!==null&&qty>0?totalPorCont*qty:null;
   const diasHasta=daysUntil(r.hasta);
-  const expiring=diasHasta!==null&&diasHasta>=0&&diasHasta<=30;
+  const expiring=diasHasta!==null&&diasHasta>=0&&diasHasta<=7;
   const expired=diasHasta!==null&&diasHasta<0;
   const tarifaDisp=ns?`<span class="cval noserv">Sin servicio</span>`:base===null?`<span class="cval soft">${r.tarifa?tr(r.tarifa.toString(),16):'Pendiente'}</span>`:`<span class="cval">${usd(base)}</span>`;
   const contratoDisp=r.contrato?`<span class="cval" style="font-size:13px;" data-tip="Contrato: ${r.contrato}">${tr(r.contrato,22)}</span>`:`<span style="color:var(--muted);font-size:12px;">—</span>`;
   const vigHtml=`<div class="vig-row"><span class="vig-date">${fDate(r.desde)}</span><span class="vig-arr">→</span><span class="vig-date">${fDate(r.hasta)}</span></div>
-  ${expiring?`<span class="vig-warn">⚠ Vence en ${diasHasta}d</span>`:''}${expired?`<span class="vig-warn" style="color:var(--red);background:var(--red-bg);border-color:var(--red-bd);">Vencida</span>`:''}`;
+  ${expiring?`<span class="vig-warn">⏰ Tarifa vence en ${diasHasta}d</span>`:''}${expired?`<span class="vig-warn" style="color:var(--red);background:var(--red-bg);border-color:var(--red-bd);">Vencida</span>`:''}`;
   let efaDisp='<span style="color:var(--muted);font-size:12px;">—</span>';
   if(r.efaNum&&r.efaDesde&&!isNaN(Date.parse(r.efaDesde))){
     const efaHastaStr=(r.efaHasta&&!isNaN(Date.parse(r.efaHasta)))?fDate(r.efaHasta):`<span class="vig-aconf">A CONF</span>`;
@@ -1128,8 +2759,28 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
   if(!rows.length){sec.style.display='none';return;}
   sec.style.display='block';
   const isDirect = r=>(r.TRASBORDOS||'').toUpperCase().includes('DIRECTO');
-  lst.innerHTML = rows.map(r=>`
-    <div class="sched-card ${isDirect(r)?'direct':'transbordo'}">
+  // Click solo habilitado si ya están seleccionados carrier+origen+destino
+  const clickable = !!(vOrigen && vDestino && selC.size>0);
+  lst.innerHTML = rows.map(r=>{
+    const key = vesselKey(r);
+    const isSel = selectedVessel && selectedVessel.key===key;
+    const etdRow=toISO(r.ETD||r['ETD']||'');
+    const efaInfos = getEfaInfoForSched(r, etdRow);
+    let efaHtml;
+    if(!efaInfos.length){
+      efaHtml = '<span class="sc-val" style="color:var(--muted);font-size:10px">Sin EFA</span>';
+    } else {
+      efaHtml = efaInfos.map(info=>{
+        const cls = info.st==='yes'?'':'no';
+        const lbl = info.st==='yes'?'⚡':(info.st==='no'?'⊘':'⚠');
+        const eq = info.equipo;
+        const vig = `${fDate(info.match.desde)}→${info.match.hasta?fDate(info.match.hasta):'—'}`;
+        return `<div class="sched-efa-line"><span class="sched-efa-amt ${cls}">${lbl} +${usd(info.match.monto)} <span style="opacity:.7">(${eq})</span></span><span class="sched-efa-vig">${vig}</span></div>`;
+      }).join('');
+    }
+    const onClick = clickable ? `onclick="selectVessel('${key.replace(/'/g,"\\'")}')"` : '';
+    return `
+    <div class="sched-card ${isDirect(r)?'direct':'transbordo'}${clickable?' clickable':''}${isSel?' selected':''}" ${onClick}>
       <div class="sched-row">
         <div class="sc"><span class="sc-lbl">Buque</span><span class="sc-val vessel-name">${r.VESSEL||'—'}</span><span class="sc-val" style="font-size:10px;color:var(--muted)">${r.NAVIERA||''}</span></div>
         <div class="sc"><span class="sc-lbl">Cut Off Doc</span><span class="sc-val">${fDate(r['CUT OFF DOC'])}</span></div>
@@ -1138,38 +2789,11 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
         <div class="sc"><span class="sc-lbl">ETA</span><span class="sc-val">${fDate(r['ETA ']||r.ETA)}</span></div>
         <div class="sc"><span class="sc-lbl">Tránsito</span><span class="sc-val">${r.TRANSITO||'—'}</span></div>
         <div class="sc"><span class="sc-lbl">Tipo</span><span class="days-badge ${isDirect(r)?'direct':'via'}">${r.TRASBORDOS||'—'}</span></div>
-        <div class="sc"><span class="sc-lbl">EFA</span>${(()=>{
-          const etdRow=toISO(r.ETD||r['ETD']||'');
-          // Match naviera from schedule to carrier in tarifas
-          // Schedule: "LOG IN", "HAPAG-MAERSK" etc → Tarifa: "LOGIN", "HAPAG" etc
-          const naviNorm = n => {
-            const u=(n||'').toUpperCase();
-            if(u.includes('HAPAG')&&u.includes('MAERSK'))return['HAPAG','MAERSK'];
-            if(u.includes('HAPAG'))return['HAPAG'];
-            if(u.includes('MAERSK'))return['MAERSK'];
-            if(u.includes('LOG IN')||u.includes('LOGIN'))return['LOGIN'];
-            if(u.includes('MSC'))return['MSC'];
-            if(u.includes('CMA')||u.includes('MERCOSUL'))return['CMA CGM','CMA','MERCOSUL'];
-            return[u];
-          };
-          const schedBrands = naviNorm(r.NAVIERA);
-          const tm=rates.find(t=>{
-            const tCarrier=(t.carrier||'').toUpperCase();
-            const tOrigen=normalizeOrigen(t.origen);
-            const sOrigen=normalizeOrigen(r.ORIGEN);
-            const tDest=(t.destino||'').toUpperCase();
-            const sDest=(r.DESTINO||'').toUpperCase();
-            return tOrigen===sOrigen && tDest===sDest && schedBrands.some(b=>tCarrier.includes(b)||b.includes(tCarrier));
-          });
-          if(!tm||!tm.efaNum) return '<span class="sc-val" style="color:var(--muted);font-size:10px">Sin EFA</span>';
-          const st=efaApplies(tm,etdRow);
-          if(st==='yes') return '<span style="font-size:10px;font-weight:700;color:#6d28d9;background:#f3f0ff;padding:2px 7px;border-radius:4px;border:1px solid #c4b5fd">⚡ Aplica</span>';
-          if(st==='no')  return '<span style="font-size:10px;font-weight:600;color:var(--muted);background:var(--faint);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">No aplica</span>';
-          return '<span style="font-size:10px;color:var(--muted)">—</span>';
-        })()}</div>
+        <div class="sc"><span class="sc-lbl">EFA</span>${efaHtml}</div>
       </div>
       ${(r.OBSERVACIONES)?`<div class="sc-obs">📝 ${r.OBSERVACIONES}</div>`:''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── SCHEDULE MODULE FILTER ──
@@ -1415,7 +3039,8 @@ function handleFileUpload(input){
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const arrayBuffer = e.target.result;
+      const wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
       const sheetName = wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(ws, {raw:false, dateNF:'YYYY-MM-DD'});
@@ -1435,6 +3060,8 @@ function handleFileUpload(input){
       });
 
       schedule = newSched;
+      scheduleFileName = file.name;
+      scheduleFileDate = new Date().toISOString();
 
       // Save changes to local storage + push to Google Sheets
       if(changes.length){
@@ -1450,15 +3077,55 @@ function handleFileUpload(input){
       buildSchedOpts();
       applySchedFilter();
       applyFilter(); // refresh schedule in tarifa view
+      updateSchedIndicator();
 
-      // Update upload count label
-      setDot('ok',`Schedule: ${data.length} registros · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
+      setDot('spin',`Schedule: ${data.length} registros · subiendo al Drive...`);
+
+      // Upload to Drive
+      uploadScheduleToDrive(file, arrayBuffer)
+        .then(res => {
+          if(res && res.ok){
+            setDot('ok',`Schedule actualizado · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
+          } else {
+            setDot('err','Schedule local cargado · error al subir al Drive');
+            console.warn('Upload error:', res);
+          }
+        })
+        .catch(err => {
+          setDot('err','Schedule local cargado · sin conexion al Drive');
+          console.warn('Upload error:', err);
+        });
+
       input.value='';
     } catch(err) {
       alert('Error al leer el archivo: '+err.message);
     }
   };
   reader.readAsArrayBuffer(file);
+}
+
+// Upload schedule file to Google Drive via Apps Script
+async function uploadScheduleToDrive(file, arrayBuffer){
+  // Convert ArrayBuffer to base64
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  const base64 = btoa(binary);
+
+  const res = await fetch(SCRIPT_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({
+      action:'uploadSchedule',
+      fileName:file.name,
+      mimeType:file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      fileBase64:base64
+    })
+  });
+  return await res.json();
 }
 
 function detectChanges(oldSched, newSched){
@@ -1815,5 +3482,660 @@ function exportSchedExcel(){
   a.click(); URL.revokeObjectURL(url);
 }
 </script>
+
+<!-- ═══════════ EFA MODAL (C2) ═══════════ -->
+<div class="efa-mod-bk" id="efa-modal" onclick="if(event.target===this)closeEfaModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr">
+      <h3 id="efa-mod-title">⚡ Nuevo EFA</h3>
+      <button class="efa-mod-x" onclick="closeEfaModal()" title="Cerrar (sin guardar)">×</button>
+    </div>
+    <div class="efa-mod-bd">
+      <div class="efa-mod-grid">
+        <div>
+          <label>Carrier *</label>
+          <input id="efm-carrier" type="text" list="efm-dl-carrier" autocomplete="off" oninput="efaModalPreview()">
+          <datalist id="efm-dl-carrier"></datalist>
+        </div>
+        <div>
+          <label>Equipo *</label>
+          <select id="efm-equipo" onchange="efaModalPreview()">
+            <option value="">—</option>
+            <option value="20'STD">20'STD</option>
+            <option value="40'HC">40'HC</option>
+          </select>
+        </div>
+        <div>
+          <label>Origen *</label>
+          <input id="efm-origen" type="text" list="efm-dl-origen" autocomplete="off" oninput="efaModalPreview()">
+          <datalist id="efm-dl-origen"></datalist>
+        </div>
+        <div>
+          <label>Destino *</label>
+          <input id="efm-destino" type="text" list="efm-dl-destino" autocomplete="off" oninput="efaModalPreview()">
+          <datalist id="efm-dl-destino"></datalist>
+        </div>
+        <div>
+          <label>Monto USD *</label>
+          <input id="efm-monto" type="number" step="0.01" min="0">
+        </div>
+        <div></div>
+        <div>
+          <label>Inicio vigencia *</label>
+          <input id="efm-desde" type="date" oninput="efaModalPreview()">
+        </div>
+        <div>
+          <label>Fin vigencia</label>
+          <input id="efm-hasta" type="date" oninput="efaModalPreview()">
+        </div>
+        <div class="full">
+          <label>Comentario</label>
+          <textarea id="efm-coment" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="efa-mod-multi" id="efm-multi-wrap" style="display:none">
+        <div class="efa-mod-multi-hdr">
+          <input type="checkbox" id="efm-multi-on" onchange="document.getElementById('efm-multi-list').style.display=this.checked?'flex':'none'">
+          <label for="efm-multi-on" style="margin:0;cursor:pointer">Aplicar también a otras rutas del mismo carrier+equipo</label>
+        </div>
+        <div class="efa-mod-multi-list" id="efm-multi-list" style="display:none"></div>
+      </div>
+      <div class="efa-mod-prev">
+        <div class="efa-mod-prev-hdr">🚢 Buques afectados <span id="efm-prev-count" style="color:var(--muted);font-weight:500"></span></div>
+        <div id="efm-prev-body"><div class="efa-mod-prev-empty">Completá carrier, origen, destino e inicio para ver los buques.</div></div>
+      </div>
+    </div>
+    <div class="efa-mod-ft">
+      <div class="efa-mod-ft-l">
+        <button class="efa-mod-btn danger" id="efm-del-btn" onclick="deleteEfaFromModal()" style="display:none" title="Eliminar este EFA permanentemente">🗑 Eliminar</button>
+      </div>
+      <div class="efa-mod-ft-r">
+        <button class="efa-mod-btn" onclick="closeEfaModal()" title="Cerrar sin guardar cambios">Cancelar</button>
+        <button class="efa-mod-btn primary" id="efm-save-btn" onclick="saveEfaModal()" title="Guardar este EFA en la planilla">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: BULK UPDATE EFA (C4) ═══════════ -->
+<div class="efa-mod-bk" id="bulk-modal" onclick="if(event.target===this)closeBulkModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr">
+      <h3>🔄 Actualización masiva de EFA</h3>
+      <button class="efa-mod-x" onclick="closeBulkModal()" title="Cerrar">×</button>
+    </div>
+    <div class="efa-mod-bd">
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#664d03">
+        ⚠ Esta acción va a modificar varios EFA a la vez. Filtrá primero los registros, ajustá monto/vigencia y revisá el preview antes de confirmar.
+      </div>
+      <div class="efa-mod-grid">
+        <div><label>Carrier *</label><select id="bulk-carrier" onchange="bulkPreview()"><option value="">—</option></select></div>
+        <div><label>Equipo</label><select id="bulk-equipo" onchange="bulkPreview()"><option value="">Todos</option><option>20'STD</option><option>40'HC</option></select></div>
+        <div><label>Destino (contiene)</label><input id="bulk-destino" type="text" placeholder="ej: SHANGHAI" oninput="bulkPreview()"></div>
+        <div><label>Origen (contiene)</label><input id="bulk-origen" type="text" placeholder="ej: B.BLANCA" oninput="bulkPreview()"></div>
+        <div class="full"><hr style="border:none;border-top:1px dashed #ddd;margin:4px 0"></div>
+        <div><label>Tipo de ajuste</label><select id="bulk-tipo"><option value="set">Setear monto fijo</option><option value="pct">Ajustar % sobre actual</option><option value="add">Sumar/restar USD</option></select></div>
+        <div><label>Valor</label><input id="bulk-valor" type="number" step="0.01" placeholder="ej: 200 / 10 / -50"></div>
+        <div><label>Nueva vigencia desde</label><input id="bulk-desde" type="date"></div>
+        <div><label>Nueva vigencia hasta</label><input id="bulk-hasta" type="date"></div>
+      </div>
+      <div class="efa-mod-prev">
+        <div class="efa-mod-prev-hdr">📋 EFA que se van a actualizar <span id="bulk-prev-count"></span></div>
+        <div id="bulk-prev-body" style="max-height:260px;overflow:auto"></div>
+      </div>
+    </div>
+    <div class="efa-mod-ft">
+      <div class="efa-mod-ft-l"></div>
+      <div class="efa-mod-ft-r">
+        <button class="efa-mod-btn" onclick="closeBulkModal()" title="Cerrar sin aplicar">Cancelar</button>
+        <button class="efa-mod-btn primary" onclick="applyBulkUpdate()" title="Aplicar cambios a los EFA listados">✓ Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: IMPORT EXCEL EFA (C4) ═══════════ -->
+<div class="efa-mod-bk" id="log-modal" onclick="if(event.target===this)closeLogModal()">
+  <div class="efa-mod" style="max-width:1100px">
+    <div class="efa-mod-hdr">
+      <h3 id="log-modal-title">📜 Historial de cambios — EFA</h3>
+      <button class="efa-mod-x" onclick="closeLogModal()" title="Cerrar">×</button>
+    </div>
+    <div class="efa-mod-bd">
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
+        <select id="log-source" onchange="setLogSource(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+          <option value="efa">Solo EFA</option>
+          <option value="bid">Solo BID</option>
+          <option value="all">EFA + BID</option>
+        </select>
+        <input id="log-search" type="text" placeholder="Buscar carrier, ruta, campo..." oninput="renderLogTable()" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+        <select id="log-action" onchange="renderLogTable()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+          <option value="">Todas las acciones</option>
+          <option value="add">Solo altas</option>
+          <option value="update">Solo modificaciones</option>
+          <option value="delete">Solo bajas</option>
+        </select>
+        <button class="efa-btn-sec" onclick="loadLogData()" title="Recargar historial desde Sheets">🔄 Refrescar</button>
+        <span id="log-count" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+      <div id="log-body" style="max-height:60vh;overflow:auto;border:1px solid var(--border);border-radius:6px">
+        <div style="padding:40px;text-align:center;color:var(--muted)">Cargando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="efa-mod-bk" id="import-modal" onclick="if(event.target===this)closeImportModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr">
+      <h3>📥 Importar EFA desde Excel</h3>
+      <button class="efa-mod-x" onclick="closeImportModal()" title="Cerrar">×</button>
+    </div>
+    <div class="efa-mod-bd">
+      <div style="background:#cfe2ff;border:1px solid #0d6efd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#052c65;line-height:1.5">
+        <div style="font-weight:700;margin-bottom:6px">📌 Cómo importar correctamente</div>
+        1. En Excel, copiá las filas (Ctrl+C) <b>incluyendo el encabezado</b>.<br>
+        2. Pegalas en el cuadro de abajo (Ctrl+V).<br>
+        3. El sistema detecta las columnas por nombre. Las columnas requeridas son:
+        <ul style="margin:4px 0 4px 18px;padding:0">
+          <li><b>carrier</b> — nombre del carrier (ej: HAPAG)</li>
+          <li><b>origen</b> — puerto de origen (ej: B.BLANCA)</li>
+          <li><b>destino</b> — puerto de destino (ej: SHANGHAI)</li>
+          <li><b>equipo</b> — 20'STD o 40'HC</li>
+          <li><b>monto</b> — número en USD (sin símbolo, ej: 150.50)</li>
+          <li><b>desde</b> — fecha inicio vigencia (DD/MM/YYYY)</li>
+          <li><b>hasta</b> — fecha fin vigencia (opcional)</li>
+          <li><b>comentario</b> — opcional</li>
+        </ul>
+        ⚠ El orden de las columnas no importa, pero los nombres deben coincidir exactamente.
+      </div>
+      <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted)">Pegar datos aquí</label>
+      <textarea id="import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px" placeholder="carrier	origen	destino	equipo	monto	desde	hasta	comentario&#10;HAPAG	B.BLANCA	SHANGHAI	20'STD	150	01/04/2026	30/04/2026	" oninput="parseImport()"></textarea>
+      <div class="efa-mod-prev" style="margin-top:12px">
+        <div class="efa-mod-prev-hdr">👀 Preview <span id="import-prev-count"></span></div>
+        <div id="import-prev-body" style="max-height:240px;overflow:auto"><div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div></div>
+      </div>
+    </div>
+    <div class="efa-mod-ft">
+      <div class="efa-mod-ft-l"><button class="efa-mod-btn" onclick="document.getElementById('import-modal-file').click()" title="Importar desde archivo .xlsx, .csv o .tsv">📂 Cargar archivo</button><input type="file" id="import-modal-file" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none" onchange="loadImportFile(this)"></div>
+      <div class="efa-mod-ft-r">
+        <button class="efa-mod-btn" onclick="closeImportModal()" title="Cerrar sin importar">Cancelar</button>
+        <button class="efa-mod-btn primary" id="import-confirm-btn" onclick="confirmImport()" title="Crear los EFA listados" disabled>✓ Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: BID ADD/EDIT ═══════════ -->
+<div class="efa-mod-bk" id="bid-modal" onclick="if(event.target===this)closeBidModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr">
+      <h3 id="bid-modal-title">+ Nueva tarifa BID</h3>
+      <button class="efa-mod-x" onclick="closeBidModal()">×</button>
+    </div>
+    <div class="efa-mod-bd">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Carrier</label><input id="bid-m-carrier" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Equipo</label><input id="bid-m-equipo" type="text" placeholder="20'STD / 40'HC" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Origen</label><input id="bid-m-origen" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Destino</label><input id="bid-m-destino" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Tarifa USD</label><input id="bid-m-tarifa" type="number" step="0.01" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Contrato</label><input id="bid-m-contrato" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Inicio vigencia</label><input id="bid-m-desde" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Fin vigencia</label><input id="bid-m-hasta" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Estado</label>
+          <select id="bid-m-estado" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
+            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Quarter</label>
+          <select id="bid-m-quarter" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
+            <option value="">—</option><option>1stQ</option><option>2ndQ</option><option>3rdQ</option><option>4thQ</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:700;color:var(--muted)">Comentario</label><input id="bid-m-comentario" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+      </div>
+      <div id="bid-m-impact" style="margin-top:14px;padding:10px;background:#faf5ff;border-left:3px solid var(--purple);border-radius:4px;font-size:11px;display:none"></div>
+    </div>
+    <div class="efa-mod-ft">
+      <div class="efa-mod-ft-l"><button class="efa-mod-btn" id="bid-m-del" onclick="deleteBidFromModal()" style="display:none;background:#fee2e2;color:#991b1b">🗑 Eliminar</button></div>
+      <div class="efa-mod-ft-r">
+        <button class="efa-mod-btn" onclick="closeBidModal()">Cancelar</button>
+        <button class="efa-mod-btn primary" id="bid-m-save" onclick="saveBidFromModal()">✓ Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: BID BULK ═══════════ -->
+<div class="efa-mod-bk" id="bid-bulk-modal" onclick="if(event.target===this)closeBidBulkModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr"><h3>🔄 Actualización masiva BID</h3><button class="efa-mod-x" onclick="closeBidBulkModal()">×</button></div>
+    <div class="efa-mod-bd">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Carrier</label><select id="bidbulk-carrier" onchange="bidBulkPreview()" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></select></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Equipo</label><select id="bidbulk-equipo" onchange="bidBulkPreview()" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"><option value="">Todos</option></select></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Origen contiene</label><input id="bidbulk-origen" oninput="bidBulkPreview()" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Destino contiene</label><input id="bidbulk-destino" oninput="bidBulkPreview()" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Acción</label>
+          <select id="bidbulk-tipo" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
+            <option value="tarifa">Cambiar tarifa USD</option>
+            <option value="estado">Cambiar estado</option>
+            <option value="desde">Cambiar inicio vigencia</option>
+            <option value="hasta">Cambiar fin vigencia</option>
+            <option value="delete">Eliminar</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Nuevo valor</label><input id="bidbulk-valor" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+      </div>
+      <div class="efa-mod-prev"><div class="efa-mod-prev-hdr">👀 Coincidencias <span id="bidbulk-prev-count"></span></div><div id="bidbulk-prev-body" style="max-height:240px;overflow:auto"><div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Seleccioná carrier para previsualizar</div></div></div>
+    </div>
+    <div class="efa-mod-ft"><div class="efa-mod-ft-l"></div><div class="efa-mod-ft-r"><button class="efa-mod-btn" onclick="closeBidBulkModal()">Cancelar</button><button class="efa-mod-btn primary" onclick="applyBidBulkUpdate()">✓ Aplicar</button></div></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: BID IMPORT ═══════════ -->
+<div class="efa-mod-bk" id="bid-import-modal" onclick="if(event.target===this)closeBidImportModal()">
+  <div class="efa-mod">
+    <div class="efa-mod-hdr"><h3>📥 Importar tarifas BID</h3><button class="efa-mod-x" onclick="closeBidImportModal()">×</button></div>
+    <div class="efa-mod-bd">
+      <div style="background:#cfe2ff;border:1px solid #0d6efd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#052c65">
+        Pegá filas desde Excel <b>incluyendo el encabezado</b>. Columnas esperadas: <b>carrier, origen, destino, equipo, tarifa, contrato, desde, hasta, estado, comentario, quarter</b>. El sistema detecta filas existentes (mismo carrier+origen+destino+equipo+vigencia) y las actualiza en lugar de duplicar (smart-merge).
+      </div>
+      <textarea id="bid-import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px" oninput="parseBidImport()"></textarea>
+      <div class="efa-mod-prev" style="margin-top:12px"><div class="efa-mod-prev-hdr">👀 Preview <span id="bid-import-prev-count"></span></div><div id="bid-import-prev-body" style="max-height:240px;overflow:auto"><div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div></div></div>
+      <div id="bid-import-progress-wrap" style="display:none;margin-top:14px"><div class="progress-status" id="bid-import-progress-status">Procesando…</div><div class="progress-container"><div class="progress-bar" id="bid-import-progress-bar"></div><div class="progress-text" id="bid-import-progress-text">0%</div></div></div>
+    </div>
+    <div class="efa-mod-ft"><div class="efa-mod-ft-l"></div><div class="efa-mod-ft-r"><button class="efa-mod-btn" onclick="closeBidImportModal()">Cancelar</button><button class="efa-mod-btn primary" id="bid-import-confirm-btn" onclick="confirmBidImport()" disabled>✓ Importar</button></div></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// ADMIN BID — CRUD completo
+// ════════════════════════════════════════════════════════════
+let bidSelected=new Set();
+let bidSelectedRowKey=null;
+let bidImportParsed=[];
+
+function uniqSorted(arr){return [...new Set(arr.filter(Boolean))].sort();}
+
+function buildBidFilterOptions(){
+  const fill=(id,vals)=>{const sel=document.getElementById(id);const cur=sel.value;sel.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${v}">${v}</option>`).join('');sel.value=cur;};
+  fill('bid-f-carrier',uniqSorted(rates.map(r=>r.carrier)));
+  fill('bid-f-origen', uniqSorted(rates.map(r=>r.origen)));
+  fill('bid-f-destino',uniqSorted(rates.map(r=>r.destino)));
+  fill('bid-f-equipo', uniqSorted(rates.map(r=>r.equipo)));
+}
+
+function getBidFiltered(){
+  const fc=document.getElementById('bid-f-carrier').value;
+  const fo=document.getElementById('bid-f-origen').value;
+  const fd=document.getElementById('bid-f-destino').value;
+  const fe=document.getElementById('bid-f-equipo').value;
+  const fs=document.getElementById('bid-f-estado').value;
+  const q=(document.getElementById('bid-f-search').value||'').toUpperCase();
+  return rates.filter(r=>{
+    if(fc&&r.carrier!==fc)return false;
+    if(fo&&r.origen!==fo)return false;
+    if(fd&&r.destino!==fd)return false;
+    if(fe&&r.equipo!==fe)return false;
+    if(fs){const e=(r.estado||'').toUpperCase();if(fs==='confirmada'&&!e.includes('CONFIRM'))return false;if(fs==='pendiente'&&!e.includes('PEND'))return false;if(fs==='no-disponible'&&!e.includes('NO DISP'))return false;}
+    if(q){const hay=`${r.carrier} ${r.origen} ${r.destino} ${r.equipo} ${r.contrato} ${r.comentario} ${r.estado} ${r.quarter}`.toUpperCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+}
+
+function clearBidFilters(){
+  ['bid-f-carrier','bid-f-origen','bid-f-destino','bid-f-equipo','bid-f-estado'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bid-f-search').value='';
+  renderAdminBID();
+}
+
+function renderAdminBID(){
+  document.getElementById('bid-count').textContent=`${rates.length} tarifas`;
+  buildBidFilterOptions();
+  const wrap=document.getElementById('bid-table-wrap');
+  if(!rates.length){wrap.innerHTML='<div class="efa-empty" style="padding:40px;text-align:center;color:var(--muted)">No hay tarifas cargadas. Sincronizá o agregá una nueva.</div>';return;}
+  const list=getBidFiltered();
+  document.getElementById('bid-filter-info').textContent=`Mostrando ${list.length} de ${rates.length}`;
+  const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
+  let html='<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--faint);position:sticky;top:0;z-index:2">';
+  html+='<th style="padding:6px;width:30px"><input type="checkbox" id="bid-check-all" onchange="bidToggleAll(this.checked)"></th>';
+  ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{html+=`<th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap">${h}</th>`;});
+  html+='</tr></thead><tbody>';
+  list.forEach(r=>{
+    const ri=r._rowIndex;
+    const k=ri||`${r.carrier}|${r.origen}|${r.destino}|${r.equipo}|${r.desde}`;
+    const sel=bidSelected.has(ri);
+    const rowSel=bidSelectedRowKey===k;
+    const bg=rowSel?'background:#dbeafe':(sel?'background:#fef3c7':'');
+    const dis=ri==null;
+    html+=`<tr data-key="${k}" data-ri="${ri||''}" style="border-bottom:1px solid #eee;${bg}" onclick="bidSelectRow('${k}',${ri||'null'})">`;
+    html+=`<td style="padding:4px 6px;text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${sel?'checked':''} ${dis?'disabled':''} onchange="bidToggleSel(${ri||'null'},this.checked)"></td>`;
+    const cell=(field,val,editable=true)=>{const v=val==null?'':val;if(editable&&!dis)return `<td class="bid-cell" data-field="${field}" data-ri="${ri}" style="padding:4px 8px;cursor:cell" onclick="event.stopPropagation();bidInlineEdit(this,${ri},'${field}')">${v}</td>`;return `<td style="padding:4px 8px">${v}</td>`;};
+    html+=cell('carrier',r.carrier);
+    html+=cell('origen',r.origen);
+    html+=cell('destino',r.destino);
+    html+=cell('equipo',r.equipo);
+    html+=cell('tarifa',r.tarifa!=null?(typeof r.tarifa==='number'?r.tarifa.toLocaleString('es-AR'):r.tarifa):'');
+    html+=cell('contrato',r.contrato);
+    html+=cell('desde',fmtD(r.desde));
+    html+=cell('hasta',fmtD(r.hasta));
+    html+=cell('estado',r.estado);
+    html+=cell('quarter',r.quarter);
+    html+=cell('comentario',r.comentario);
+    html+=`<td style="padding:4px 8px;white-space:nowrap" onclick="event.stopPropagation()">${ri!=null?`<button onclick="openBidModal(${ri})" title="Editar">✏️</button> <button onclick="deleteBidRow(${ri})" title="Eliminar" style="background:#fee2e2;color:#991b1b">🗑</button>`:'<span style="color:var(--muted);font-size:10px">sin _rowIndex</span>'}</td>`;
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  bidUpdateBulkBar();
+  if(bidSelectedRowKey)bidRenderImpact();
+}
+
+// ── Selección filas ──
+function bidToggleSel(ri,on){if(ri==null)return;if(on)bidSelected.add(ri);else bidSelected.delete(ri);bidUpdateBulkBar();}
+function bidToggleAll(on){bidSelected.clear();if(on)getBidFiltered().forEach(r=>{if(r._rowIndex!=null)bidSelected.add(r._rowIndex);});renderAdminBID();}
+function bidClearSelection(){bidSelected.clear();renderAdminBID();}
+function bidUpdateBulkBar(){const bar=document.getElementById('bid-bulk-bar');const n=bidSelected.size;if(n>0){bar.style.display='block';document.getElementById('bid-bulk-count').textContent=`${n} fila${n!==1?'s':''} seleccionada${n!==1?'s':''}`;}else{bar.style.display='none';}}
+async function bidBulkAction(action){
+  if(!bidSelected.size)return;
+  const ris=[...bidSelected];
+  if(action==='delete'){
+    if(!confirm(`¿Eliminar ${ris.length} tarifas? No se puede deshacer.`))return;
+    for(const ri of ris){try{await postEfaAction({action:'deleteTarifa',rowIndex:ri});}catch(e){alert('Error fila '+ri+': '+e.message);return;}}
+    bidSelected.clear();await reloadTarifasFromSheet();return;
+  }
+  if(action==='estado'){
+    const v=prompt('Nuevo estado (CONFIRMADA / PENDIENTE / NO DISPONIBLE):','CONFIRMADA');
+    if(!v)return;
+    for(const ri of ris){const src=rates.find(r=>r._rowIndex===ri);if(!src)continue;try{await postEfaAction({action:'updateTarifa',rowIndex:ri,data:bidPayloadFrom({...src,estado:v})});}catch(e){alert('Error '+ri+': '+e.message);return;}}
+    bidSelected.clear();await reloadTarifasFromSheet();
+  }
+}
+
+// ── Selección de fila → impacto ──
+function bidSelectRow(k,ri){
+  if(bidSelectedRowKey===k){bidSelectedRowKey=null;document.getElementById('bid-impact-panel').style.display='none';renderAdminBID();return;}
+  bidSelectedRowKey=k;
+  renderAdminBID();
+  bidRenderImpact();
+}
+function bidRenderImpact(){
+  const tr=document.querySelector(`#bid-table-wrap tr[data-key="${CSS.escape(bidSelectedRowKey)}"]`);
+  if(!tr){document.getElementById('bid-impact-panel').style.display='none';return;}
+  const ri=parseInt(tr.dataset.ri);
+  const r=rates.find(x=>x._rowIndex===ri);
+  if(!r){document.getElementById('bid-impact-panel').style.display='none';return;}
+  const C=(r.carrier||'').toUpperCase();
+  const O=normalizeOrigen(r.origen);
+  const D=(r.destino||'').toUpperCase();
+  const E=(r.equipo||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+  const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
+    const sn=(s.NAVIERA||'').toUpperCase();if(!sn.includes(C)&&!C.includes(sn))return false;
+    if(normalizeOrigen(s.ORIGEN)!==O)return false;
+    if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
+    const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+    if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
+    const etd=toISO(s.ETD);if(!etd)return false;
+    const desde=toISO(r.desde);const hasta=toISO(r.hasta);
+    if(desde&&etd<desde)return false;
+    if(hasta&&etd>hasta)return false;
+    return true;
+  });
+  const body=document.getElementById('bid-impact-body');
+  document.getElementById('bid-impact-panel').style.display='block';
+  if(!ships.length){body.innerHTML='<div style="color:var(--muted);font-size:11px">Ningún buque en la vigencia de esta tarifa.</div>';return;}
+  body.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${ships.length} buque${ships.length!==1?'s':''} dentro de la vigencia ${fDate(r.desde)} → ${r.hasta?fDate(r.hasta):'∞'}</div>`+
+    '<table style="width:100%;border-collapse:collapse;font-size:11px">'+
+    ships.slice(0,30).map(s=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px;font-weight:600">${s.VESSEL||'—'}</td><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">${fDate(s.ETD)}</td><td style="padding:4px 8px">${s.ORIGEN}→${s.DESTINO}</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--purple)">${r.tarifa!=null?usd(r.tarifa):'—'}</td></tr>`).join('')+
+    '</table>'+(ships.length>30?`<div style="font-size:10px;color:var(--muted);margin-top:6px">+${ships.length-30} más...</div>`:'');
+}
+
+// ── Inline edit ──
+function bidInlineEdit(td,ri,field){
+  if(td.querySelector('input'))return;
+  const src=rates.find(r=>r._rowIndex===ri);if(!src)return;
+  const cur=src[field]||'';
+  const isDate=field==='desde'||field==='hasta';
+  const isNum=field==='tarifa';
+  const inp=document.createElement('input');
+  inp.type=isDate?'date':(isNum?'number':'text');
+  if(isNum){inp.step='0.01';inp.min='0';}
+  inp.value=isDate?(toISO(cur)||''):(cur||'');
+  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px';
+  const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();inp.select();
+  let done=false;
+  const cancel=()=>{if(done)return;done=true;td.innerHTML=orig;};
+  const save=async()=>{
+    if(done)return;done=true;
+    const nv=inp.value;
+    const newVal=isDate?nv:(isNum?(nv===''?'':parseFloat(nv)):nv);
+    if(String(newVal)===String(cur||'')){td.innerHTML=orig;return;}
+    td.innerHTML='<span style="font-size:10px;color:var(--muted)">guardando...</span>';
+    try{
+      const upd={...src,[field]:newVal};
+      await postEfaAction({action:'updateTarifa',rowIndex:ri,data:bidPayloadFrom(upd)});
+      await reloadTarifasFromSheet();
+    }catch(e){alert('Error: '+e.message);td.innerHTML=orig;}
+  };
+  inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')save();else if(ev.key==='Escape')cancel();});
+  inp.addEventListener('blur',save);
+}
+
+// ── Payload helper (mapea campos internos → headers Sheets) ──
+// IMPORTANTE: estos nombres deben coincidir con los headers de la solapa "Flete contrato BID"
+function bidPayloadFrom(r){
+  return {
+    CARRIER:r.carrier||'',
+    'PUERTO DE EMBARQUE':r.origen||'',
+    DESTINO:r.destino||'',
+    EQUIPO:r.equipo||'',
+    'TARIFA USD':r.tarifa==null||r.tarifa===''?'':Number(r.tarifa),
+    CONTRATO:r.contrato||'',
+    'INICIO VIGENCIA CONTRATO':isoToDMY(r.desde||''),
+    'FIN VIGENCIA CONTRATO':isoToDMY(r.hasta||''),
+    'ESTADO TARIFA':r.estado||'',
+    'COMENTARIOS PARA COORDINACION (TOOL TIP)':r.comentario||'',
+    QUARTER:r.quarter||'',
+  };
+}
+
+// ── Modal ADD/EDIT ──
+let bidModalState={mode:'add',rowIndex:null};
+function openBidModal(ri){
+  bidModalState={mode:ri?'edit':'add',rowIndex:ri||null};
+  document.getElementById('bid-modal-title').textContent=ri?'✏️ Editar tarifa BID':'+ Nueva tarifa BID';
+  document.getElementById('bid-m-del').style.display=ri?'inline-block':'none';
+  const src=ri?rates.find(r=>r._rowIndex===ri):null;
+  const set=(id,v)=>{document.getElementById(id).value=v||'';};
+  set('bid-m-carrier',src?.carrier);
+  set('bid-m-equipo',src?.equipo);
+  set('bid-m-origen',src?.origen);
+  set('bid-m-destino',src?.destino);
+  set('bid-m-tarifa',src?.tarifa);
+  set('bid-m-contrato',src?.contrato);
+  set('bid-m-desde',toISO(src?.desde||''));
+  set('bid-m-hasta',toISO(src?.hasta||''));
+  document.getElementById('bid-m-estado').value=src?.estado||'CONFIRMADA';
+  document.getElementById('bid-m-quarter').value=src?.quarter||'';
+  set('bid-m-comentario',src?.comentario);
+  document.getElementById('bid-m-impact').style.display='none';
+  ['bid-m-carrier','bid-m-equipo','bid-m-origen','bid-m-destino'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('input-error','input-success');});
+  document.getElementById('bid-modal').classList.add('open');
+}
+function closeBidModal(){document.getElementById('bid-modal').classList.remove('open');}
+async function saveBidFromModal(){
+  const data={
+    carrier:document.getElementById('bid-m-carrier').value.trim(),
+    equipo: document.getElementById('bid-m-equipo').value.trim(),
+    origen: document.getElementById('bid-m-origen').value.trim(),
+    destino:document.getElementById('bid-m-destino').value.trim(),
+    tarifa: parseFloat(document.getElementById('bid-m-tarifa').value)||'',
+    contrato:document.getElementById('bid-m-contrato').value.trim(),
+    desde:  document.getElementById('bid-m-desde').value,
+    hasta:  document.getElementById('bid-m-hasta').value,
+    estado: document.getElementById('bid-m-estado').value,
+    quarter:document.getElementById('bid-m-quarter').value,
+    comentario:document.getElementById('bid-m-comentario').value.trim(),
+  };
+  const reqMap={carrier:'bid-m-carrier',equipo:'bid-m-equipo',origen:'bid-m-origen',destino:'bid-m-destino'};
+  let firstBad=null;Object.entries(reqMap).forEach(([k,id])=>{const el=document.getElementById(id);if(!data[k]){el.classList.add('input-error');el.classList.remove('input-success');if(!firstBad)firstBad=el;}else{el.classList.remove('input-error');el.classList.add('input-success');}});
+  if(firstBad){firstBad.focus();return;}
+  const btn=document.getElementById('bid-m-save');const orig=btn.textContent;btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    if(bidModalState.mode==='edit'){
+      await postEfaAction({action:'updateTarifa',rowIndex:bidModalState.rowIndex,data:bidPayloadFrom(data)});
+    }else{
+      await postEfaAction({action:'addTarifa',data:bidPayloadFrom(data)});
+    }
+    closeBidModal();
+    await reloadTarifasFromSheet();
+  }catch(e){alert('Error al guardar: '+e.message);}
+  finally{btn.disabled=false;btn.textContent=orig;}
+}
+async function deleteBidFromModal(){
+  if(bidModalState.mode!=='edit'||bidModalState.rowIndex==null)return;
+  if(!confirm('¿Eliminar esta tarifa? No se puede deshacer.'))return;
+  try{await postEfaAction({action:'deleteTarifa',rowIndex:bidModalState.rowIndex});closeBidModal();await reloadTarifasFromSheet();}
+  catch(e){alert('Error: '+e.message);}
+}
+async function deleteBidRow(ri){
+  if(!confirm('¿Eliminar esta tarifa?'))return;
+  try{await postEfaAction({action:'deleteTarifa',rowIndex:ri});await reloadTarifasFromSheet();}
+  catch(e){alert('Error: '+e.message);}
+}
+
+async function reloadTarifasFromSheet(){
+  await new Promise(r=>setTimeout(r,800));
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=getTarifas&t='+Date.now(),{cache:'no-store'});
+    const j=await res.json();
+    const data=Array.isArray(j)?j:(j.data||j.tarifas||[]);
+    if(Array.isArray(data))loadTarifas(data);
+    renderAdminBID();
+    if(typeof applyFilter==='function')applyFilter();
+  }catch(e){console.warn('reloadTarifas failed',e);}
+}
+
+// ── BULK BID ──
+function openBidBulkModal(){
+  const sel=document.getElementById('bidbulk-carrier');
+  sel.innerHTML='<option value="">—</option>'+uniqSorted(rates.map(r=>r.carrier)).map(c=>`<option>${c}</option>`).join('');
+  const eqSel=document.getElementById('bidbulk-equipo');
+  eqSel.innerHTML='<option value="">Todos</option>'+uniqSorted(rates.map(r=>r.equipo)).map(e=>`<option>${e}</option>`).join('');
+  ['bidbulk-origen','bidbulk-destino','bidbulk-valor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bidbulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Seleccioná carrier para previsualizar</div>';
+  document.getElementById('bidbulk-prev-count').textContent='';
+  document.getElementById('bid-bulk-modal').classList.add('open');
+}
+function closeBidBulkModal(){document.getElementById('bid-bulk-modal').classList.remove('open');}
+function bidBulkMatch(){
+  const c=document.getElementById('bidbulk-carrier').value;if(!c)return [];
+  const eq=document.getElementById('bidbulk-equipo').value;
+  const o=(document.getElementById('bidbulk-origen').value||'').toUpperCase().trim();
+  const d=(document.getElementById('bidbulk-destino').value||'').toUpperCase().trim();
+  return rates.filter(r=>r._rowIndex!=null&&r.carrier===c&&(!eq||r.equipo===eq)&&(!o||(r.origen||'').toUpperCase().includes(o))&&(!d||(r.destino||'').toUpperCase().includes(d)));
+}
+function bidBulkPreview(){
+  const list=bidBulkMatch();
+  document.getElementById('bidbulk-prev-count').textContent=list.length?`(${list.length})`:'';
+  if(!list.length){document.getElementById('bidbulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Sin coincidencias</div>';return;}
+  document.getElementById('bidbulk-prev-body').innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px 6px;text-align:left">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="padding:4px 6px;text-align:right">Tarifa actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>'+list.map(r=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px">${r.origen}→${r.destino}</td><td style="padding:4px 6px;text-align:center">${r.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${r.tarifa!=null?usd(r.tarifa):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(r.desde)}→${r.hasta?fDate(r.hasta):'∞'}</td></tr>`).join('')+'</tbody></table>';
+}
+async function applyBidBulkUpdate(){
+  const list=bidBulkMatch();if(!list.length){alert('Sin coincidencias');return;}
+  const tipo=document.getElementById('bidbulk-tipo').value;
+  const valor=document.getElementById('bidbulk-valor').value;
+  if(tipo!=='delete'&&!valor){alert('Indicá el nuevo valor');return;}
+  if(!confirm(`Aplicar "${tipo}" a ${list.length} tarifas?`))return;
+  for(const r of list){
+    try{
+      if(tipo==='delete'){await postEfaAction({action:'deleteTarifa',rowIndex:r._rowIndex});}
+      else{
+        const upd={...r};
+        if(tipo==='tarifa')upd.tarifa=parseFloat(valor);
+        else if(tipo==='estado')upd.estado=valor;
+        else if(tipo==='desde')upd.desde=valor;
+        else if(tipo==='hasta')upd.hasta=valor;
+        await postEfaAction({action:'updateTarifa',rowIndex:r._rowIndex,data:bidPayloadFrom(upd)});
+      }
+    }catch(e){alert('Error en fila '+r._rowIndex+': '+e.message);return;}
+  }
+  closeBidBulkModal();
+  await reloadTarifasFromSheet();
+}
+
+// ── IMPORT BID (smart-merge) ──
+function openBidImportModal(){
+  document.getElementById('bid-import-ta').value='';
+  bidImportParsed=[];
+  document.getElementById('bid-import-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div>';
+  document.getElementById('bid-import-prev-count').textContent='';
+  document.getElementById('bid-import-confirm-btn').disabled=true;
+  document.getElementById('bid-import-modal').classList.add('open');
+}
+function closeBidImportModal(){document.getElementById('bid-import-modal').classList.remove('open');}
+function parseBidImport(){
+  const txt=document.getElementById('bid-import-ta').value.trim();
+  if(!txt){bidImportParsed=[];document.getElementById('bid-import-confirm-btn').disabled=true;return;}
+  const lines=txt.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2){return;}
+  const headers=lines[0].split('\t').map(h=>h.trim().toLowerCase());
+  const idx=name=>headers.findIndex(h=>h.includes(name));
+  const iC=idx('carrier'),iO=idx('origen'),iD=idx('destino'),iE=idx('equipo'),iT=idx('tarifa'),iCo=idx('contrato'),iDes=idx('desde'),iH=idx('hasta'),iEs=idx('estado'),iCm=idx('coment'),iQ=idx('quarter');
+  bidImportParsed=lines.slice(1).map(l=>{
+    const c=l.split('\t');
+    return {
+      carrier:c[iC]?.trim()||'',origen:c[iO]?.trim()||'',destino:c[iD]?.trim()||'',equipo:c[iE]?.trim()||'',
+      tarifa:parseFloat(c[iT])||'',contrato:c[iCo]?.trim()||'',
+      desde:dmyToISO(c[iDes]?.trim()||''),hasta:dmyToISO(c[iH]?.trim()||''),
+      estado:c[iEs]?.trim()||'',comentario:c[iCm]?.trim()||'',quarter:c[iQ]?.trim()||'',
+    };
+  }).filter(r=>r.carrier&&r.origen&&r.destino);
+  // smart-merge: detectar existentes
+  bidImportParsed.forEach(p=>{
+    const ex=rates.find(r=>r._rowIndex!=null&&r.carrier===p.carrier&&r.origen===p.origen&&r.destino===p.destino&&r.equipo===p.equipo&&toISO(r.desde)===p.desde);
+    p._existing=ex||null;
+  });
+  const body=document.getElementById('bid-import-prev-body');
+  document.getElementById('bid-import-prev-count').textContent=`(${bidImportParsed.length})`;
+  body.innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px;text-align:left">Acción</th><th style="padding:4px">Carrier</th><th style="padding:4px">Ruta</th><th style="padding:4px">Equipo</th><th style="padding:4px;text-align:right">Tarifa</th></tr></thead><tbody>'+bidImportParsed.map(p=>{
+    const tag=p._existing?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:9px">UPDATE</span>':'<span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:3px;font-size:9px">NEW</span>';
+    return `<tr style="border-bottom:1px solid #eee"><td style="padding:4px">${tag}</td><td style="padding:4px">${p.carrier}</td><td style="padding:4px">${p.origen}→${p.destino}</td><td style="padding:4px;text-align:center">${p.equipo}</td><td style="padding:4px;text-align:right">${p.tarifa?usd(p.tarifa):'—'}</td></tr>`;
+  }).join('')+'</tbody></table>';
+  document.getElementById('bid-import-confirm-btn').disabled=bidImportParsed.length===0;
+}
+async function confirmBidImport(){
+  if(!bidImportParsed.length)return;
+  if(!confirm(`Importar ${bidImportParsed.length} tarifas?`))return;
+  const total=bidImportParsed.length;
+  const wrap=document.getElementById('bid-import-progress-wrap');
+  const bar=document.getElementById('bid-import-progress-bar');
+  const txt=document.getElementById('bid-import-progress-text');
+  const st=document.getElementById('bid-import-progress-status');
+  const btn=document.getElementById('bid-import-confirm-btn');
+  wrap.style.display='block';st.className='progress-status';st.textContent=`Procesando 0/${total}…`;bar.style.width='0%';txt.textContent='0%';btn.disabled=true;
+  let done=0,errors=0;
+  for(const p of bidImportParsed){
+    try{
+      const payload=bidPayloadFrom(p);
+      if(p._existing)await postEfaAction({action:'updateTarifa',rowIndex:p._existing._rowIndex,data:payload});
+      else await postEfaAction({action:'addTarifa',data:payload});
+    }catch(e){errors++;console.error('Error en '+p.carrier+' '+p.origen+'→'+p.destino+': '+e.message);}
+    done++;
+    const pct=Math.round((done/total)*100);
+    bar.style.width=pct+'%';txt.textContent=pct+'%';st.textContent=`Procesando ${done}/${total}…`;
+  }
+  if(errors){st.className='progress-status error';st.textContent=`⚠ ${done-errors}/${total} importadas · ${errors} errores`;}
+  else{st.className='progress-status success';st.textContent=`✓ ${total} tarifas importadas`;}
+  await reloadTarifasFromSheet();
+  setTimeout(()=>{closeBidImportModal();wrap.style.display='none';btn.disabled=false;},errors?2500:1200);
+}
+
+function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!m)return '';const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+</script>
+
 </body>
 </html>
