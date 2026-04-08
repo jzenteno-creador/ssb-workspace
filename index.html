@@ -944,13 +944,18 @@ function splashReady(kind,msg){
   if(s){s.className='splash-status '+(kind||'ok');s.innerHTML=msg;}
   if(b){b.disabled=false;b.focus();}
 }
+// Failsafe: si syncSheet se cuelga (típico abriendo con file://), habilitar Ingresar a los 8s
+setTimeout(()=>{const b=document.getElementById('splash-btn');if(b&&b.disabled)splashReady('err','⚠ Sincronización lenta — podés ingresar igual');},4000);
 
 // ── SYNC TARIFAS ──
 async function syncSheet() {
   setDot('spin','Sincronizando...');
   document.getElementById('btn-sync').disabled = true;
   try {
-    const res = await fetch(SCRIPT_URL+'?action=getAll', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'}});
+    const ctrl = new AbortController();
+    const tmo = setTimeout(()=>ctrl.abort(), 30000);
+    const res = await fetch(SCRIPT_URL+'?action=getAll', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'},signal:ctrl.signal});
+    clearTimeout(tmo);
     if (!res.ok) throw new Error('HTTP '+res.status);
     const raw = await res.json();
 
@@ -983,8 +988,15 @@ async function syncSheet() {
       const data2 = raw2.data || raw2;
       if(Array.isArray(data2)) {
         loadTarifas(data2);
+        // pedir EFA aparte (el fallback no lo trae con getTarifas)
+        try{
+          const resE = await fetch(SCRIPT_URL+'?action=getEFA&t='+Date.now(),{redirect:'follow',method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
+          const jE = await resE.json();
+          if(Array.isArray(jE))loadEFA(jE);
+          else if(Array.isArray(jE.efa))loadEFA(jE.efa);
+        }catch(eEFA){console.warn('getEFA fallback failed',eEFA);}
         setDot('ok','Tarifas OK · Schedule: subí el Excel');
-        splashReady('ok','✓ Tarifas sincronizadas');
+        splashReady('ok','✓ Tarifas + EFA sincronizados');
       } else throw new Error('invalid');
     } catch(e2) {
       setDot('err','Error de conexión');
@@ -1497,18 +1509,15 @@ function renderEFAResumen(){
   let html = '';
   carriers.forEach(c=>{
     const rows = byCarrier.get(c).sort((a,b)=>{
+      const ma = a.vigente?Number(a.vigente.monto)||0:-1;
+      const mb = b.vigente?Number(b.vigente.monto)||0:-1;
+      if(ma!==mb)return ma-mb;
       return (a.origen+a.destino+a.equipo).localeCompare(b.origen+b.destino+b.equipo);
     });
     // coverage: % of rows with vigente
     const withVig = rows.filter(r=>r.vigente).length;
     const pct = rows.length ? Math.round(100*withVig/rows.length) : 0;
     const barCls = pct>=80?'':(pct>=50?'mid':'low');
-
-    // detect identical-period clusters (≥3 rows sharing same vigente period)
-    const clusters = new Map();
-    rows.forEach(r=>{const k=identicalKey(r);if(!k)return;if(!clusters.has(k))clusters.set(k,[]);clusters.get(k).push(r);});
-    const bigClusters = new Set([...clusters.entries()].filter(([k,v])=>v.length>=3).map(([k])=>k));
-    const seenClusters = new Set();
 
     html += `<div class="efa-carrier-group">
       <div class="efa-carrier-hdr">⚓ <span class="ec-name">${c}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
@@ -1525,26 +1534,10 @@ function renderEFAResumen(){
           <th style="width:24%">Próximo período</th>
         </tr></thead>
         <tbody>
-          ${rows.map((r,idx)=>{
-            const k=identicalKey(r);
-            const isCluster = k && bigClusters.has(k);
-            let prefix='';
-            if(isCluster && !seenClusters.has(k)){
-              seenClusters.add(k);
-              const cl=clusters.get(k);
-              const first=cl[0].vigente;
-              const cid=`cl-${c.replace(/\W/g,'')}-${idx}`;
-              prefix=`<tr><td colspan="4" style="padding:0;border:none">
-                <div class="efa-group-banner" onclick="document.getElementById('${cid}').classList.toggle('collapsed');this.classList.toggle('collapsed')">
-                  <span class="gb-arrow">▼</span>
-                  📦 ${cl.length} rutas comparten período · ${usd(first.monto)} · ${fDate(first.desde)}→${first.hasta?fDate(first.hasta):'—'}
-                </div></td></tr>`;
-              // wrap subsequent cluster rows in a tbody-like marker via class on tr
-            }
+          ${rows.map(r=>{
             const gapVN = periodGapDays(r.vigente, r.proximo);
             const gapAV = periodGapDays(r.anterior, r.vigente);
-            const trCls = isCluster?` class="efa-group-rows" data-cl="${k}"`:'';
-            return prefix + `<tr${trCls}>
+            return `<tr>
               <td><div class="efa-route">${r.origen} <span class="arr">→</span> ${r.destino} <span class="efa-equipo-tag">${r.equipo}</span></div></td>
               <td>${cellHtml(r.anterior,'anterior',{gap:gapAV})}</td>
               <td>${cellHtml(r.vigente,'vigente')}</td>
@@ -1755,8 +1748,7 @@ function efaModalPreview(){
   }
   const C=carrier.toUpperCase(),O=normalizeOrigen(origen),D=destino.toUpperCase();
   const matches=schedule.filter(s=>{
-    const sn=(s.NAVIERA||'').toUpperCase();
-    if(!sn.includes(C)&&!C.includes(sn))return false;
+    if(!matchCarrier(s.NAVIERA,[carrier]))return false;
     if(normalizeOrigen(s.ORIGEN)!==O)return false;
     if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
     const etd=toISO(s.ETD);if(!etd)return false;
@@ -1884,61 +1876,133 @@ function duplicateAsContinuation(rowIndex){
 }
 
 // ── BULK UPDATE (C4) ──
+// ── BULK UPDATE EFA (rediseñado) ──
+// Lista las rutas EFA del carrier elegido. Por cada fila el operario puede:
+//   modo "edit": editar in-place el monto y/o vigencia del período actual
+//   modo "new" : crear un período nuevo (cierra el actual con FIN = día anterior)
+let bulkRowsState=[]; // [{key, e, sel, monto, desde, hasta}]
 function openBulkUpdateModal(){
   const sel=document.getElementById('bulk-carrier');
   const carriers=[...new Set(efaSheet.map(e=>e.carrier).filter(Boolean))].sort();
   sel.innerHTML='<option value="">—</option>'+carriers.map(c=>`<option>${c}</option>`).join('');
-  ['bulk-equipo','bulk-destino','bulk-origen','bulk-valor','bulk-desde','bulk-hasta'].forEach(id=>{const el=document.getElementById(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';});
-  document.getElementById('bulk-tipo').selectedIndex=0;
-  document.getElementById('bulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Seleccioná carrier para ver registros</div>';
-  document.getElementById('bulk-prev-count').textContent='';
+  document.getElementById('bulk-equipo').selectedIndex=0;
+  document.getElementById('bulk-mode').selectedIndex=0;
+  bulkRowsState=[];
+  document.getElementById('bulk-rows-wrap').innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Seleccioná un carrier para ver las rutas</div>';
+  document.getElementById('bulk-sel-count').textContent='0';
   document.getElementById('bulk-modal').classList.add('open');
 }
 function closeBulkModal(){document.getElementById('bulk-modal').classList.remove('open');}
-function bulkMatch(){
+
+// Para cada (carrier+origen+destino+equipo) tomar el período más reciente que aún esté vigente o el más reciente sin importar
+function bulkLatestByRoute(c,eqFilter){
+  const groups=new Map();
+  efaSheet.forEach(e=>{
+    if(e._rowIndex==null)return;
+    if(e.carrier!==c)return;
+    if(eqFilter && e.equipo!==eqFilter)return;
+    const k=`${e.origen}|${e.destino}|${e.equipo}`;
+    if(!groups.has(k))groups.set(k,[]);
+    groups.get(k).push(e);
+  });
+  const today=new Date().toISOString().slice(0,10);
+  const rows=[];
+  groups.forEach((arr,k)=>{
+    // priorizar el vigente (desde<=hoy<=hasta || sin fin), si no hay, el más reciente por desde
+    arr.sort((a,b)=>(b.desde||'').localeCompare(a.desde||''));
+    let pick=arr.find(e=>{const d=e.desde||'',h=e.hasta||'';return (!d||d<=today)&&(!h||h>=today);});
+    if(!pick)pick=arr[0];
+    rows.push({key:k,e:pick});
+  });
+  rows.sort((a,b)=>(a.e.origen+a.e.destino+a.e.equipo).localeCompare(b.e.origen+b.e.destino+b.e.equipo));
+  return rows;
+}
+
+function bulkRenderRows(){
   const c=document.getElementById('bulk-carrier').value;
-  if(!c)return [];
   const eq=document.getElementById('bulk-equipo').value;
-  const d=(document.getElementById('bulk-destino').value||'').toUpperCase().trim();
-  const o=(document.getElementById('bulk-origen').value||'').toUpperCase().trim();
-  return efaSheet.filter(e=>e._rowIndex!=null && e.carrier===c && (!eq||e.equipo===eq) && (!d||(e.destino||'').toUpperCase().includes(d)) && (!o||(e.origen||'').toUpperCase().includes(o)));
+  const wrap=document.getElementById('bulk-rows-wrap');
+  if(!c){wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Seleccioná un carrier para ver las rutas</div>';bulkRowsState=[];bulkUpdateSelCount();return;}
+  const rows=bulkLatestByRoute(c,eq);
+  if(!rows.length){wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Sin rutas para este carrier'+(eq?'+equipo':'')+'</div>';bulkRowsState=[];bulkUpdateSelCount();return;}
+  bulkRowsState=rows.map(r=>({key:r.key,e:r.e,sel:false,monto:r.e.monto??'',desde:r.e.desde||'',hasta:r.e.hasta||''}));
+  let html=`<table style="width:100%;font-size:11px;border-collapse:collapse">
+    <thead><tr style="background:#f3f4f6;position:sticky;top:0">
+      <th style="padding:6px 4px;width:28px"></th>
+      <th style="padding:6px 8px;text-align:left">Ruta · Equipo</th>
+      <th style="padding:6px 8px;text-align:right">Actual</th>
+      <th style="padding:6px 8px">Nuevo monto USD</th>
+      <th style="padding:6px 8px">Nueva vigencia desde</th>
+      <th style="padding:6px 8px">Nueva vigencia hasta</th>
+    </tr></thead><tbody>`;
+  bulkRowsState.forEach((r,i)=>{
+    const actual = (r.e.monto!=null?usd(r.e.monto):'—')+'<br><span style="font-family:monospace;font-size:10px;color:var(--muted)">'+(r.e.desde?fDate(r.e.desde):'?')+'→'+(r.e.hasta?fDate(r.e.hasta):'∞')+'</span>';
+    html+=`<tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px 4px;text-align:center"><input type="checkbox" id="bulk-cb-${i}" onchange="bulkRowToggle(${i},this.checked)"></td>
+      <td style="padding:6px 8px"><b>${r.e.origen}</b> → <b>${r.e.destino}</b> <span style="color:var(--muted);font-size:10px">${r.e.equipo||''}</span></td>
+      <td style="padding:6px 8px;text-align:right">${actual}</td>
+      <td style="padding:6px 8px"><input type="number" step="0.01" value="${r.monto}" oninput="bulkRowsState[${i}].monto=this.value;bulkAutoSel(${i})" style="width:90px;padding:4px 6px;border:1px solid var(--border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><input type="date" value="${r.desde}" oninput="bulkRowsState[${i}].desde=this.value;bulkAutoSel(${i})" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px"></td>
+      <td style="padding:6px 8px"><input type="date" value="${r.hasta}" oninput="bulkRowsState[${i}].hasta=this.value;bulkAutoSel(${i})" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px"></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  bulkUpdateSelCount();
 }
-function bulkPreview(){
-  const list=bulkMatch();
-  document.getElementById('bulk-prev-count').textContent=list.length?`(${list.length})`:'';
-  if(!list.length){document.getElementById('bulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Sin coincidencias</div>';return;}
-  document.getElementById('bulk-prev-body').innerHTML=`<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:4px 6px">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="text-align:right;padding:4px 6px">Monto actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>${list.map(e=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px">${e.origen}→${e.destino}</td><td style="padding:4px 6px;text-align:center">${e.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${e.monto!=null?usd(e.monto):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'∞'}</td></tr>`).join('')}</tbody></table>`;
-}
+function bulkRowToggle(i,v){bulkRowsState[i].sel=v;bulkUpdateSelCount();}
+function bulkAutoSel(i){const cb=document.getElementById('bulk-cb-'+i);if(cb&&!cb.checked){cb.checked=true;bulkRowsState[i].sel=true;bulkUpdateSelCount();}}
+function bulkToggleAll(v){bulkRowsState.forEach((r,i)=>{r.sel=v;const cb=document.getElementById('bulk-cb-'+i);if(cb)cb.checked=v;});bulkUpdateSelCount();}
+function bulkUpdateSelCount(){const n=bulkRowsState.filter(r=>r.sel).length;const el=document.getElementById('bulk-sel-count');if(el)el.textContent=String(n);}
+
 async function applyBulkUpdate(){
-  const list=bulkMatch();
-  if(!list.length){alert('Sin registros');return;}
-  const tipo=document.getElementById('bulk-tipo').value;
-  const valor=parseFloat(document.getElementById('bulk-valor').value);
-  const nd=document.getElementById('bulk-desde').value;
-  const nh=document.getElementById('bulk-hasta').value;
-  const hayMonto=!isNaN(valor);
-  const hayVig=nd||nh;
-  if(!hayMonto && !hayVig){alert('Indicá un ajuste de monto o vigencia');return;}
-  if(!confirm(`Aplicar a ${list.length} EFA?`))return;
+  const sel=bulkRowsState.filter(r=>r.sel);
+  if(!sel.length){alert('Tildá al menos una fila para aplicar.');return;}
+  const mode=document.getElementById('bulk-mode').value; // 'edit' | 'new'
+  // Validación
+  for(const r of sel){
+    if(r.monto===''||isNaN(Number(r.monto))){alert(`Monto inválido en ${r.e.origen}→${r.e.destino}`);return;}
+    if(!r.desde){alert(`Fecha de inicio obligatoria en ${r.e.origen}→${r.e.destino}`);return;}
+  }
+  const verbo = mode==='new'?'crear nuevo período':'editar período actual';
+  if(!confirm(`Vas a ${verbo} en ${sel.length} ruta${sel.length!==1?'s':''}. ¿Confirmar?`))return;
   let ok=0,fail=0;
-  for(const e of list){
+  for(const r of sel){
     try{
-      let nuevoMonto=e.monto;
-      if(hayMonto){
-        if(tipo==='set')nuevoMonto=valor;
-        else if(tipo==='pct')nuevoMonto=Math.round((Number(e.monto||0)*(1+valor/100))*100)/100;
-        else if(tipo==='add')nuevoMonto=Math.round((Number(e.monto||0)+valor)*100)/100;
+      if(mode==='edit'){
+        const data={
+          CARRIER:r.e.carrier,ORIGEN:r.e.origen,DESTINO:r.e.destino,EQUIPO:r.e.equipo,
+          'MONTO USD':Number(r.monto),
+          INICIO:isoToDMY(r.desde),
+          FIN:isoToDMY(r.hasta||''),
+          COMENTARIO:r.e.comentario||'',
+        };
+        await postEfaAction({action:'updateEFA',rowIndex:r.e._rowIndex,data});
+      } else {
+        // cerrar el período actual: FIN = día anterior al nuevo desde
+        const newDesde=r.desde;
+        const finPrev=new Date(newDesde);finPrev.setDate(finPrev.getDate()-1);
+        const finPrevISO=finPrev.toISOString().slice(0,10);
+        const closeData={
+          CARRIER:r.e.carrier,ORIGEN:r.e.origen,DESTINO:r.e.destino,EQUIPO:r.e.equipo,
+          'MONTO USD':Number(r.e.monto||0),
+          INICIO:isoToDMY(r.e.desde||''),
+          FIN:isoToDMY(finPrevISO),
+          COMENTARIO:r.e.comentario||'',
+        };
+        await postEfaAction({action:'updateEFA',rowIndex:r.e._rowIndex,data:closeData});
+        // crear nuevo
+        const newData={
+          CARRIER:r.e.carrier,ORIGEN:r.e.origen,DESTINO:r.e.destino,EQUIPO:r.e.equipo,
+          'MONTO USD':Number(r.monto),
+          INICIO:isoToDMY(newDesde),
+          FIN:isoToDMY(r.hasta||''),
+          COMENTARIO:'',
+        };
+        await postEfaAction({action:'addEFA',data:newData});
       }
-      const data={
-        CARRIER:e.carrier,ORIGEN:e.origen,DESTINO:e.destino,EQUIPO:e.equipo,
-        'MONTO USD':Number(nuevoMonto),
-        INICIO:isoToDMY(nd||e.desde||''),
-        FIN:isoToDMY(nh||e.hasta||''),
-        COMENTARIO:e.comentario||'',
-      };
-      await postEfaAction({action:'updateEFA',rowIndex:e._rowIndex,data});
       ok++;
-    }catch(err){fail++;}
+    }catch(err){console.error(err);fail++;}
   }
   closeBulkModal();
   await reloadEfaFromSheet();
@@ -2333,7 +2397,7 @@ async function reloadEfaFromSheet(){
     else if(Array.isArray(j.efa))loadEFA(j.efa);
     buildEfaFilterOptions();
     renderEFATab();
-    if(typeof renderTarifas==='function')renderTarifas();
+    if(typeof applyFilter==='function')applyFilter();
     if(typeof applySchedFilter==='function')applySchedFilter();
   }catch(e){console.warn('reloadEFA failed',e);}
 }
@@ -3310,7 +3374,7 @@ function exportTarifasPDF(){
   });
 
   html+=`</table><div style="font-size:9px;color:#999;margin-top:12px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div>
-  </body></html>`;
+  </bo${''}dy></html>`;
 
   const win=window.open('','_blank');
   win.document.write(html);
@@ -3434,7 +3498,7 @@ function exportSchedPDF(){
     </tr>`;
   });
 
-  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div></body></html>`;
+  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div></bo${''}dy></html>`;
   const win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
@@ -3559,36 +3623,39 @@ function exportSchedExcel(){
 
 <!-- ═══════════ MODAL: BULK UPDATE EFA (C4) ═══════════ -->
 <div class="efa-mod-bk" id="bulk-modal" onclick="if(event.target===this)closeBulkModal()">
-  <div class="efa-mod">
+  <div class="efa-mod" style="max-width:1100px">
     <div class="efa-mod-hdr">
-      <h3>🔄 Actualización masiva de EFA</h3>
+      <h3>🔄 Actualización masiva de EFA por carrier</h3>
       <button class="efa-mod-x" onclick="closeBulkModal()" title="Cerrar">×</button>
     </div>
     <div class="efa-mod-bd">
-      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#664d03">
-        ⚠ Esta acción va a modificar varios EFA a la vez. Filtrá primero los registros, ajustá monto/vigencia y revisá el preview antes de confirmar.
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#1e3a8a">
+        Elegí un carrier para listar todas sus rutas. Para cada fila podés <b>editar</b> el período actual (cambia monto/vigencia in-place) o <b>crear un período nuevo</b> (cierra el actual con FIN y crea uno nuevo desde la fecha indicada). Tildá las filas que querés aplicar y presioná Guardar.
       </div>
-      <div class="efa-mod-grid">
-        <div><label>Carrier *</label><select id="bulk-carrier" onchange="bulkPreview()"><option value="">—</option></select></div>
-        <div><label>Equipo</label><select id="bulk-equipo" onchange="bulkPreview()"><option value="">Todos</option><option>20'STD</option><option>40'HC</option></select></div>
-        <div><label>Destino (contiene)</label><input id="bulk-destino" type="text" placeholder="ej: SHANGHAI" oninput="bulkPreview()"></div>
-        <div><label>Origen (contiene)</label><input id="bulk-origen" type="text" placeholder="ej: B.BLANCA" oninput="bulkPreview()"></div>
-        <div class="full"><hr style="border:none;border-top:1px dashed #ddd;margin:4px 0"></div>
-        <div><label>Tipo de ajuste</label><select id="bulk-tipo"><option value="set">Setear monto fijo</option><option value="pct">Ajustar % sobre actual</option><option value="add">Sumar/restar USD</option></select></div>
-        <div><label>Valor</label><input id="bulk-valor" type="number" step="0.01" placeholder="ej: 200 / 10 / -50"></div>
-        <div><label>Nueva vigencia desde</label><input id="bulk-desde" type="date"></div>
-        <div><label>Nueva vigencia hasta</label><input id="bulk-hasta" type="date"></div>
+      <div class="efa-mod-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div><label>Carrier *</label><select id="bulk-carrier" onchange="bulkRenderRows()"><option value="">—</option></select></div>
+        <div><label>Equipo</label><select id="bulk-equipo" onchange="bulkRenderRows()"><option value="">Todos</option><option>20'STD</option><option>40'HC</option></select></div>
+        <div><label>Modo</label>
+          <select id="bulk-mode" onchange="bulkRenderRows()">
+            <option value="edit">Editar período actual (in-place)</option>
+            <option value="new">Crear período nuevo (cierra el actual)</option>
+          </select>
+        </div>
       </div>
-      <div class="efa-mod-prev">
-        <div class="efa-mod-prev-hdr">📋 EFA que se van a actualizar <span id="bulk-prev-count"></span></div>
-        <div id="bulk-prev-body" style="max-height:260px;overflow:auto"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin:10px 0 6px;font-size:12px">
+        <button class="efa-mod-btn" onclick="bulkToggleAll(true)" type="button">☑ Seleccionar todo</button>
+        <button class="efa-mod-btn" onclick="bulkToggleAll(false)" type="button">☐ Quitar todo</button>
+        <span style="color:var(--muted);margin-left:auto"><span id="bulk-sel-count">0</span> filas seleccionadas</span>
+      </div>
+      <div id="bulk-rows-wrap" style="max-height:400px;overflow:auto;border:1px solid var(--border);border-radius:6px">
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Seleccioná un carrier para ver las rutas</div>
       </div>
     </div>
     <div class="efa-mod-ft">
       <div class="efa-mod-ft-l"></div>
       <div class="efa-mod-ft-r">
-        <button class="efa-mod-btn" onclick="closeBulkModal()" title="Cerrar sin aplicar">Cancelar</button>
-        <button class="efa-mod-btn primary" onclick="applyBulkUpdate()" title="Aplicar cambios a los EFA listados">✓ Aplicar</button>
+        <button class="efa-mod-btn" onclick="closeBulkModal()" type="button">Cancelar</button>
+        <button class="efa-mod-btn primary" onclick="applyBulkUpdate()" type="button">💾 Guardar cambios</button>
       </div>
     </div>
   </div>
