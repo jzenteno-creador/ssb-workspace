@@ -750,6 +750,110 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 .splash .splash-btn:not(:disabled):hover{background:#8b5cf6;transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5)}
 .splash .splash-btn:not(:disabled){animation:btn-pulse 1.6s ease-in-out infinite}
 @keyframes btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}
+
+/* ========== GANTT EFA — DARK MODE PREMIUM (Cursor Analysis) ========== */
+
+/* Legibilidad eje temporal (dark) */
+body.dark .gantt-head {
+  background: linear-gradient(180deg, #1e2436 0%, #181e2c 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
+}
+
+body.dark .gantt-head .gh-month {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(180, 142, 245, 0.14);
+  border: 1px solid rgba(180, 142, 245, 0.28);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+body.dark .gantt-head .gh-week {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c5d4eb;
+  letter-spacing: 0.02em;
+}
+
+/* Columna sticky: corte premium al hacer scroll */
+body.dark .gantt-head .gh-label,
+body.dark .gantt-row .gc-label {
+  background: rgba(36, 43, 61, 0.92);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 10px 0 28px -10px rgba(0, 0, 0, 0.55);
+}
+
+/* Carril: rejilla + banda semanal */
+body.dark .gc-track {
+  background-color: rgba(17, 22, 36, 0.92);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to right, transparent 50%, rgba(180, 142, 245, 0.04) 50%);
+  background-size: calc(100% / 26) 100%, calc(200% / 26) 100%;
+}
+
+/* Filas: menos caja vacía, más timeline */
+body.dark .gantt-row {
+  margin-bottom: 0;
+  padding: 10px 8px;
+  min-height: 44px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.dark .gantt-row:hover {
+  background: rgba(180, 142, 245, 0.05);
+}
+
+/* Barras: volumen sin cambiar colores de naviera */
+body.dark .gc-period,
+body.dark .gc-bar {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 28px -16px rgba(0, 0, 0, 0.75);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), var(--naviera-color)) !important;
+}
+
+body.dark .gc-period-label {
+  font-size: 13px !important;
+  font-weight: 650;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .gc-amount {
+  font-size: 12px !important;
+  font-weight: 700;
+  opacity: 0.98 !important;
+}
+
+/* HOY: más instrumento que etiqueta */
+body.dark .gc-today {
+  width: 2px;
+  background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 20px rgba(244, 63, 94, 0.45);
+}
+
+body.dark .gc-today-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Leyenda: respiración */
+body.dark .gantt-legend {
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 12px 16px;
+  gap: 14px 22px;
+  color: #b8c7de;
+}
 </style>
 </head>
 <body>
