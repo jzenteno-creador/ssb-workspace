@@ -381,6 +381,145 @@ body.dark .gc-ship {
 body.dark .gc-ship:hover {
   box-shadow: 0 4px 12px rgba(255,107,107,.4);
 }
+/* ── EFA GANTT NESTED STRUCTURE ── */
+.gantt-naviera {
+  border-bottom: 2px solid var(--border);
+  background: var(--white);
+}
+.gn-title {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-left: 4px solid var(--purple);
+  background: var(--faint);
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+.gantt-ruta {
+  border-top: 1px solid var(--border);
+}
+.gr-title {
+  padding: 6px 16px 6px 28px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  background: rgba(124,58,237,.04);
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+.gr-equipos {
+  display: flex;
+  flex-direction: column;
+}
+.gc-equipo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--purple);
+  background: var(--purple-bg);
+  border: 1px solid var(--purple-bd);
+  border-radius: 4px;
+  letter-spacing: .03em;
+}
+.gc-period-label {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.2;
+  opacity: .98;
+}
+.gc-amount {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: .92;
+}
+/* Ship pin: fix position + línea sutil vertical + nombre diagonal */
+.gc-ship {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: #ff6b6b;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 4;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  transition: all .15s;
+}
+.gc-ship::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 40px;
+  background: #ff6b6b;
+  opacity: .3;
+  pointer-events: none;
+}
+.gc-ship:hover {
+  transform: translateX(-50%) scale(1.3);
+  box-shadow: 0 4px 12px rgba(255,107,107,.4);
+  z-index: 6;
+}
+.gc-ship:hover::before {
+  opacity: .7;
+}
+.gc-ship-name {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  transform-origin: left top;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: .75;
+}
+/* Dark mode */
+body.dark .gantt-naviera {
+  background: var(--white);
+  border-bottom-color: var(--border);
+}
+body.dark .gn-title {
+  background: #1e2436;
+  color: var(--text);
+}
+body.dark .gantt-ruta {
+  border-top-color: var(--border);
+}
+body.dark .gr-title {
+  background: rgba(180,142,245,.06);
+  color: var(--text);
+}
+body.dark .gc-equipo-badge {
+  background: var(--purple-bg);
+  border-color: var(--purple-bd);
+  color: var(--purple);
+}
+body.dark .gc-ship {
+  background: #ff8787;
+  border-color: #1a1f2e;
+}
+body.dark .gc-ship::before {
+  background: #ff8787;
+}
+body.dark .gc-ship-name {
+  color: #e8c97a;
+  opacity: .85;
+}
 
 /* Resumen — agrupado por carrier */
 .efa-carrier-group{margin-bottom:16px;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
