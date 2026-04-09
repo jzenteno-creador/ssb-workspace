@@ -11,7 +11,7 @@ Está en producción — cambios afectan al equipo.
 ## Stack
 
 - HTML/CSS/JS vanilla — archivo único index.html
-- Deploy: Netlify — auto-deploy en git push origin main
+- Deploy: Netlify — auto-deploy en git push origin master (rama es `master`, no `main`)
 - Sin frameworks, sin npm, sin bundlers
 
 ## Correr en local
@@ -41,6 +41,15 @@ Usar Live Server en VS Code — click derecho en index.html → Open with Live S
 - Listeners onclick= inline en strings HTML generados dinámicamente
 - Estado global mutable: rates, efaSheet, schedule, selC, selE, selSC
 - Archivo supera 4200 líneas — candidato a modularización futura
+
+## EFA Gantt — arquitectura actual (post-rediseño 2026-04-09)
+
+- Estructura anidada 2 niveles: `navierGroups[carrier].rutas[origen||destino].equipos[equipo].periods[]`
+- Render: `<div class="gantt-naviera">` → `.gantt-ruta` → `.gantt-row` (uno por equipo, o colapsado si 40HC/20HC comparten períodos)
+- Colores por naviera: `getNavieraColor(carrier)` devuelve `var(--naviera-hapag|login|maersk)` o fallback a `ganttCarrierColor()`. Se setea en `.gantt-naviera` como `--naviera-color` y cascadea a `.gc-period`, `.gc-equipo-badge`, `.gn-title-name`
+- Colapso equipos: `shouldCollapseEquipos(ruta)` compara signatures `${monto}|${desde}|${hasta}` entre equipos — si todos iguales, se muestra un solo row con label "40HC / 20HC"
+- Ship pins: ocultos por default (`opacity:0`), visibles en `.gc-track:hover`, con `.gc-ship-tooltip` en hover del pin
+- Filas alternadas: `.gantt-row:nth-child(odd/even)` con `var(--row-bg-light|dark)`
 
 ## Patrones a evitar (lecciones de auditoría 2026-04-09)
 
