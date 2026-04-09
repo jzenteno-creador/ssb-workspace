@@ -1527,6 +1527,25 @@ function renderEFATab(){
 const GANTT_CARRIER_COLORS={HAPAG:'#7c3aed',MAERSK:'#0ea5e9',MSC:'#f59e0b',CMA:'#10b981','CMA CGM':'#10b981',COSCO:'#ef4444',ONE:'#ec4899',EVERGREEN:'#22c55e',YANG:'#6366f1','YANG MING':'#6366f1',ZIM:'#14b8a6',HMM:'#f97316',LOGIN:'#8b5cf6',ARKAS:'#a855f7'};
 function ganttCarrierColor(c){const u=(c||'').toUpperCase();for(const k of Object.keys(GANTT_CARRIER_COLORS))if(u.includes(k))return GANTT_CARRIER_COLORS[k];let h=0;for(let i=0;i<u.length;i++)h=(h*31+u.charCodeAt(i))%360;return `hsl(${h},65%,50%)`;}
 
+// Colapsa equipos (40HC/20HC) de una ruta si tienen EXACTAMENTE los mismos periods (monto+desde+hasta).
+function collapseEquipos(equiposMap,equipoKeys){
+  if(equipoKeys.length<2){
+    return equipoKeys.map(ek=>({equipoLabel:ek,periods:equiposMap[ek].periods}));
+  }
+  const sig=ek=>{
+    const ps=equiposMap[ek].periods.slice().map(p=>`${p.monto??''}|${p.desde||''}|${p.hasta||''}`).sort();
+    return ps.join('#');
+  };
+  // agrupar equipos por signature
+  const buckets={};
+  equipoKeys.forEach(ek=>{
+    const s=sig(ek);
+    if(!buckets[s])buckets[s]={labels:[],periods:equiposMap[ek].periods};
+    buckets[s].labels.push(ek);
+  });
+  return Object.values(buckets).map(b=>({equipoLabel:b.labels.join('/'),periods:b.periods}));
+}
+
 function renderEfaGantt(){
   const cont=document.getElementById('efa-view-gantt');
   if(!cont)return;
@@ -1594,7 +1613,7 @@ function renderEfaGantt(){
       const D=(ruta.destino||'').toUpperCase();
       nvHtml+=`<div class="gantt-ruta"><div class="gr-title">${ruta.origen||'—'} → ${ruta.destino||'—'}</div><div class="gr-equipos">`;
       const equipoKeys=Object.keys(ruta.equipos).sort();
-      const rowsToRender=equipoKeys.map(ek=>({equipoLabel:ek,periods:ruta.equipos[ek].periods}));
+      const rowsToRender=collapseEquipos(ruta.equipos,equipoKeys);
       rowsToRender.forEach(row=>{
         const E=(row.equipoLabel||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
         const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
