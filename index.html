@@ -1434,9 +1434,11 @@ function renderEfaGantt(){
       const expired=hIso&&pEnd<today;
       const openEnd=!hIso;
       const cls='gc-bar'+(openEnd?' open-end':'')+(expired?' expired':'');
-      const tip=`${g.carrier} ${g.origen}→${g.destino} ${g.equipo}\nUSD ${p.monto??'—'}\n${fDate(p.desde)} → ${p.hasta?fDate(p.hasta):'sin fin'}${p.comentario?'\n'+p.comentario:''}`;
+      const dFmt = d => d ? fDate(d) : '∞';
+      const label = `${dFmt(p.desde)} → ${dFmt(p.hasta)}`;
+      const tip=`${g.carrier} ${g.origen}→${g.destino} ${g.equipo}\nUSD ${p.monto??'—'}\nVigencia: ${label}${p.comentario?'\n'+p.comentario:''}`;
       const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal(${p._rowIndex})"`:'';
-      rows+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}>${g.carrier} · USD ${p.monto??'—'}</div>`;
+      rows+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}><span class="gc-period-label">${label}</span><span class="gc-amount">USD ${p.monto??'—'}</span></div>`;
     });
     // Buque pins
     ships.forEach(s=>{
