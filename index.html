@@ -1400,19 +1400,23 @@ function renderEfaGantt(){
   const start=new Date(today);start.setMonth(start.getMonth()-1);start.setDate(1);
   const end=new Date(today);end.setMonth(end.getMonth()+5);end.setDate(0);
   const totalMs=end-start;
-  // Group EFAs
-  const groups={};
+  // Group EFAs — estructura 2 niveles: naviera → ruta → equipo
+  const navierGroups={};
   efaSheet.forEach(e=>{
     if(fC&&e.carrier!==fC)return;
     if(fE&&e.equipo!==fE)return;
     if(fS&&!(`${e.origen} ${e.destino}`).toUpperCase().includes(fS))return;
     if(!e.desde&&!e.hasta&&e.monto==null)return;
-    const k=`${e.carrier}||${e.origen}||${e.destino}||${e.equipo}`;
-    if(!groups[k])groups[k]={carrier:e.carrier,origen:e.origen,destino:e.destino,equipo:e.equipo,periods:[]};
-    groups[k].periods.push(e);
+    const nv=e.carrier||'—';
+    const rk=`${e.origen||''}||${e.destino||''}`;
+    const eq=e.equipo||'—';
+    if(!navierGroups[nv])navierGroups[nv]={carrier:e.carrier,rutas:{}};
+    if(!navierGroups[nv].rutas[rk])navierGroups[nv].rutas[rk]={origen:e.origen,destino:e.destino,equipos:{}};
+    if(!navierGroups[nv].rutas[rk].equipos[eq])navierGroups[nv].rutas[rk].equipos[eq]={equipo:eq,periods:[]};
+    navierGroups[nv].rutas[rk].equipos[eq].periods.push(e);
   });
-  const groupKeys=Object.keys(groups).sort();
-  if(!groupKeys.length){cont.innerHTML='<div class="efa-empty">No hay EFAs que coincidan con los filtros.</div>';return;}
+  const navierKeys=Object.keys(navierGroups).sort();
+  if(!navierKeys.length){cont.innerHTML='<div class="efa-empty">No hay EFAs que coincidan con los filtros.</div>';return;}
   const pctOf=d=>((d-start)/totalMs)*100;
   const todayPct=Math.max(0,Math.min(100,pctOf(today)));
   // Header: months on top, weekly ticks below
