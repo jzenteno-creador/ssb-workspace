@@ -2533,7 +2533,9 @@ function opts(f){
     }
     const map={origen:'ORIGEN',destino:'DESTINO',carrier:'NAVIERA',vessel:'VESSEL'};
     const field=f.replace('s-','');
-    return[...new Set(src.map(r=>r[map[field]]).filter(Boolean))].sort();
+    let result = [...new Set(src.map(r=>r[map[field]]).filter(Boolean))].sort();
+    if(field==='origen'||field==='destino') result = result.map(displayOrigen);
+    return result;
   }
   return[];
 }
