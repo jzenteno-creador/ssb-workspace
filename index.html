@@ -19,9 +19,13 @@
   --changed:#fffbe6;--changed-bd:#f0c050;
   --font:'Geist',sans-serif;--mono:'IBM Plex Mono',monospace;
   --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+  --naviera-hapag:#2563EB;--naviera-login:#059669;--naviera-maersk:#DC2626;
+  --row-bg-light:#f3f4f6;--row-bg-dark:#ffffff;--row-border:rgba(0,0,0,0.05);
 }
 /* ── DARK MODE ── */
 body.dark{
+  --naviera-hapag:#3b82f6;--naviera-login:#10b981;--naviera-maersk:#ef4444;
+  --row-bg-light:#1f2937;--row-bg-dark:#111827;--row-border:rgba(255,255,255,0.1);
   --navy:#1a2744;--blue:#5b9bf5;--blue-lt:#1d2f4f;--teal:#06b6d4;--accent:#fb923c;
   --bg:#1a1f2e;--white:#242b3d;--border:#353d52;--text:#dce4f0;--muted:#9bb3d4;--faint:#1e2436;
   --green:#4ac26b;--green-bg:#0f2a1a;--green-bd:#1e5c33;
@@ -1546,6 +1550,13 @@ function collapseEquipos(equiposMap,equipoKeys){
   return Object.values(buckets).map(b=>({equipoLabel:b.labels.join('/'),periods:b.periods}));
 }
 
+function getNavieraColor(carrier){
+  const u=(carrier||'').toUpperCase();
+  if(u.includes('HAPAG'))return 'var(--naviera-hapag)';
+  if(u.includes('LOG-IN')||u.includes('LOGIN'))return 'var(--naviera-login)';
+  if(u.includes('MAERSK'))return 'var(--naviera-maersk)';
+  return ganttCarrierColor(carrier);
+}
 function renderEfaGantt(){
   const cont=document.getElementById('efa-view-gantt');
   if(!cont)return;
