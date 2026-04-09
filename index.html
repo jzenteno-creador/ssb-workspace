@@ -82,6 +82,36 @@ body.dark .ac-opt:hover,.dark .ac-opt.hi{background:var(--faint);color:var(--blu
 body.dark [data-tip]:hover::after{background:#0d1117}
 body.dark .sched-module{background:var(--bg)}
 body.dark .main{background:var(--bg)}
+/* ── ADMIN BID TABLE DARK MODE ── */
+body.dark .bid-xls {
+  background: var(--white) !important;
+  color: var(--text);
+}
+body.dark .bid-xls thead tr {
+  background: var(--navy) !important;
+  color: #fff;
+  border-color: var(--border) !important;
+}
+body.dark .bid-xls thead th {
+  border-color: var(--border) !important;
+  color: #fff;
+}
+body.dark .bid-xls tbody tr {
+  border-color: rgba(53,61,82,.5) !important;
+}
+body.dark .bid-xls tbody td {
+  border-color: var(--border) !important;
+  background: var(--white);
+}
+body.dark .bid-xls tbody tr:nth-child(odd) td {
+  background: var(--faint);
+}
+body.dark .bid-xls tbody tr[style*="dbeafe"] td {
+  background: #1e3f5c !important;
+}
+body.dark .bid-xls tbody tr[style*="fef3c7"] td {
+  background: #2a2010 !important;
+}
 body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
 
 /* ── TOPBAR ── */
