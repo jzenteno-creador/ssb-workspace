@@ -392,16 +392,21 @@ body.dark .gc-ship:hover {
 }
 .gn-title {
   padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
-  border-left: 4px solid var(--purple);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: var(--faint);
   position: sticky;
   left: 0;
   z-index: 3;
 }
+.gn-title-name { color: var(--naviera-color); }
+.gn-title-count { font-size: 12px; font-weight: 400; color: var(--muted); opacity: .7; }
 .gantt-ruta {
   border-top: 1px solid var(--border);
 }
@@ -1614,9 +1619,9 @@ function renderEfaGantt(){
   let rows='';
   navierKeys.forEach(nv=>{
     const nvData=navierGroups[nv];
-    const color=ganttCarrierColor(nvData.carrier);
-    let nvHtml=`<div class="gantt-naviera"><div class="gn-title" style="border-left-color:${color};color:${color}">${nvData.carrier||'—'}</div>`;
+    const color=getNavieraColor(nvData.carrier);
     const rutaKeys=Object.keys(nvData.rutas).sort();
+    let nvHtml=`<div class="gantt-naviera" style="--naviera-color:${color}"><div class="gn-title"><span class="gn-title-name">${nvData.carrier||'—'}</span><span class="gn-title-count">${rutaKeys.length} ruta${rutaKeys.length!==1?'s':''}</span></div>`;
     rutaKeys.forEach(rk=>{
       const ruta=nvData.rutas[rk];
       const C=(nvData.carrier||'').toUpperCase();
