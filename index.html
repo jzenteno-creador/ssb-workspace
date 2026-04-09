@@ -309,7 +309,9 @@ body.dark .sched-card.selected{background:#1d2f4f}
 .gantt-head .gh-time{flex:1;position:relative;height:46px}
 .gantt-head .gh-month{position:absolute;top:4px;font-size:11px;font-weight:700;color:var(--navy);padding:2px 6px;background:var(--purple-bg,rgba(124,58,237,.12));border-radius:4px}
 .gantt-head .gh-week{position:absolute;top:26px;font-size:9px;color:var(--muted);transform:translateX(-50%);font-family:var(--mono)}
-.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:54px}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:50px;padding:16px 8px;margin-bottom:8px}
+.gantt-row:nth-child(odd){background:var(--row-bg-light)}
+.gantt-row:nth-child(even){background:var(--row-bg-dark)}
 .gantt-row:hover{background:rgba(124,58,237,.03)}
 .gantt-row .gc-label{flex:0 0 280px;padding:10px 14px;border-right:2px solid var(--border);position:sticky;left:0;background:var(--white);z-index:2;display:flex;flex-direction:column;justify-content:center}
 .gantt-row .gc-label .gc-carrier{font-weight:700;font-size:12px;color:var(--purple)}
@@ -408,7 +410,14 @@ body.dark .gc-ship:hover {
 .gn-title-name { color: var(--naviera-color); }
 .gn-title-count { font-size: 12px; font-weight: 400; color: var(--muted); opacity: .7; }
 .gantt-ruta {
-  border-top: 1px solid var(--border);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--row-border);
+}
+.gantt-ruta:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 .gr-title {
   padding: 6px 16px 6px 28px;
@@ -426,16 +435,18 @@ body.dark .gc-ship:hover {
 }
 .gc-equipo-badge {
   display: inline-block;
-  padding: 2px 8px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--purple);
-  background: var(--purple-bg);
-  border: 1px solid var(--purple-bd);
+  background: rgba(37,99,235,0.1);
+  color: var(--naviera-color);
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid var(--naviera-color);
   border-radius: 4px;
+  margin-right: 8px;
   letter-spacing: .03em;
+  font-family: var(--mono);
 }
+body.dark .gc-equipo-badge { background: rgba(59,130,246,0.15); }
 .gc-period, .gc-bar {
   background: var(--naviera-color) !important;
   border-radius: 6px;
