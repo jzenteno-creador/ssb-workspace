@@ -1443,55 +1443,66 @@ function renderEfaGantt(){
   head+='</div></div>';
   // Rows
   let rows='';
-  groupKeys.forEach(k=>{
-    const g=groups[k];
-    const color=ganttCarrierColor(g.carrier);
-    // Find buques in schedule for this combination
-    const C=(g.carrier||'').toUpperCase();
-    const O=normalizeOrigen(g.origen);
-    const D=(g.destino||'').toUpperCase();
-    const E=(g.equipo||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
-    const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
-      const sn=(s.NAVIERA||'').toUpperCase();
-      if(!sn.includes(C)&&!C.includes(sn))return false;
-      if(normalizeOrigen(s.ORIGEN)!==O)return false;
-      if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
-      const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
-      if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
-      const etd=toISO(s.ETD);if(!etd)return false;
-      const d=new Date(etd+'T00:00:00');
-      return d>=start&&d<=end;
+  navierKeys.forEach(nv=>{
+    const nvData=navierGroups[nv];
+    const color=ganttCarrierColor(nvData.carrier);
+    let nvHtml=`<div class="gantt-naviera"><div class="gn-title" style="border-left-color:${color};color:${color}">${nvData.carrier||'—'}</div>`;
+    const rutaKeys=Object.keys(nvData.rutas).sort();
+    rutaKeys.forEach(rk=>{
+      const ruta=nvData.rutas[rk];
+      const C=(nvData.carrier||'').toUpperCase();
+      const O=normalizeOrigen(ruta.origen);
+      const D=(ruta.destino||'').toUpperCase();
+      nvHtml+=`<div class="gantt-ruta"><div class="gr-title">${ruta.origen||'—'} → ${ruta.destino||'—'}</div><div class="gr-equipos">`;
+      const equipoKeys=Object.keys(ruta.equipos).sort();
+      const rowsToRender=equipoKeys.map(ek=>({equipoLabel:ek,periods:ruta.equipos[ek].periods}));
+      rowsToRender.forEach(row=>{
+        const E=(row.equipoLabel||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+        const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
+          const sn=(s.NAVIERA||'').toUpperCase();
+          if(!sn.includes(C)&&!C.includes(sn))return false;
+          if(normalizeOrigen(s.ORIGEN)!==O)return false;
+          if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
+          const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+          if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
+          const etd=toISO(s.ETD);if(!etd)return false;
+          const d=new Date(etd+'T00:00:00');
+          return d>=start&&d<=end;
+        });
+        nvHtml+=`<div class="gantt-row"><div class="gc-label"><span class="gc-equipo-badge">${row.equipoLabel}</span></div><div class="gc-track">`;
+        nvHtml+=`<div class="gc-today" style="left:${todayPct}%"></div>`;
+        row.periods.forEach(p=>{
+          const dIso=toISO(p.desde);if(!dIso)return;
+          const hIso=p.hasta?toISO(p.hasta):null;
+          const pStart=new Date(dIso+'T00:00:00');
+          const pEnd=hIso?new Date(hIso+'T00:00:00'):new Date(end);
+          if(pEnd<start||pStart>end)return;
+          const cs=pStart<start?start:pStart;
+          const ce=pEnd>end?end:pEnd;
+          const left=pctOf(cs);
+          const width=Math.max(1.2,pctOf(ce)-left);
+          const expired=hIso&&pEnd<today;
+          const openEnd=!hIso;
+          const cls='gc-bar'+(openEnd?' open-end':'')+(expired?' expired':'');
+          const dFmt=d=>d?fDate(d):'∞';
+          const label=`${dFmt(p.desde)} → ${dFmt(p.hasta)}`;
+          const tip=`${nvData.carrier} ${ruta.origen}→${ruta.destino} ${row.equipoLabel}\nUSD ${p.monto??'—'}\nVigencia: ${label}${p.comentario?'\n'+p.comentario:''}`;
+          const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal(${p._rowIndex})"`:'';
+          nvHtml+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}><span class="gc-period-label">${label}</span><span class="gc-amount">USD ${p.monto??'—'}</span></div>`;
+        });
+        ships.forEach(s=>{
+          const etd=toISO(s.ETD);
+          const d=new Date(etd+'T00:00:00');
+          const left=pctOf(d);
+          const tip=`${s.VESSEL||'—'}\n${fDate(s.ETD)}\n${s.ORIGEN}→${s.DESTINO}`;
+          nvHtml+=`<div class="gc-ship" style="left:${left}%" title="${tip.replace(/"/g,'&quot;')}"><span class="gc-ship-name">${s.VESSEL||''}</span></div>`;
+        });
+        nvHtml+='</div></div>';
+      });
+      nvHtml+='</div></div>';
     });
-    rows+=`<div class="gantt-row"><div class="gc-label"><div class="gc-carrier">${g.carrier}</div><div class="gc-route">${g.origen} → ${g.destino}</div><div class="gc-eq">${g.equipo}</div></div><div class="gc-track">`;
-    rows+=`<div class="gc-today" style="left:${todayPct}%"></div>`;
-    g.periods.forEach(p=>{
-      const dIso=toISO(p.desde);if(!dIso)return;
-      const hIso=p.hasta?toISO(p.hasta):null;
-      const pStart=new Date(dIso+'T00:00:00');
-      const pEnd=hIso?new Date(hIso+'T00:00:00'):new Date(end);
-      if(pEnd<start||pStart>end)return;
-      const cs=pStart<start?start:pStart;
-      const ce=pEnd>end?end:pEnd;
-      const left=pctOf(cs);
-      const width=Math.max(1.2,pctOf(ce)-left);
-      const expired=hIso&&pEnd<today;
-      const openEnd=!hIso;
-      const cls='gc-bar'+(openEnd?' open-end':'')+(expired?' expired':'');
-      const dFmt = d => d ? fDate(d) : '∞';
-      const label = `${dFmt(p.desde)} → ${dFmt(p.hasta)}`;
-      const tip=`${g.carrier} ${g.origen}→${g.destino} ${g.equipo}\nUSD ${p.monto??'—'}\nVigencia: ${label}${p.comentario?'\n'+p.comentario:''}`;
-      const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal(${p._rowIndex})"`:'';
-      rows+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}><span class="gc-period-label">${label}</span><span class="gc-amount">USD ${p.monto??'—'}</span></div>`;
-    });
-    // Buque pins
-    ships.forEach(s=>{
-      const etd=toISO(s.ETD);
-      const d=new Date(etd+'T00:00:00');
-      const left=pctOf(d);
-      const tip=`${s.VESSEL||'—'}\n${fDate(s.ETD)}\n${s.ORIGEN}→${s.DESTINO}`;
-      rows+=`<div class="gc-ship" style="left:${left}%" title="${tip.replace(/"/g,'&quot;')}"></div>`;
-    });
-    rows+='</div></div>';
+    nvHtml+='</div>';
+    rows+=nvHtml;
   });
   const legend='<div class="gantt-legend"><span class="gl-item"><span class="gl-sw"></span>EFA vigente</span><span class="gl-item"><span class="gl-sw" style="opacity:.4"></span>vencido</span><span class="gl-item">▣ borde discontinuo = sin fin</span><span class="gl-item"><span class="gl-ship"></span> buque (hover = nombre + ETD)</span><span class="gl-item">click barra → editar</span></div>';
   cont.innerHTML=legend+'<div class="gantt-wrap"><div class="gantt-inner">'+head+rows+'</div></div>';
