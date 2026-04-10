@@ -904,6 +904,7 @@ body.dark .gantt-legend {
   <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')">⚡ EFA</button>
   <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')">🚢 Schedule</button>
   <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')">🛠 Admin BID</button>
+  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')">📊 Schedule Realtime</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -1181,6 +1182,49 @@ body.dark .gantt-legend {
   </div>
 </div>
 
+<!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
+<div class="tab-panel" id="panel-schedule-rt">
+  <div class="sched-filter-bar">
+    <div class="sched-filter-row" style="align-items:center">
+      <span style="font-weight:700;color:var(--navy);font-size:13px">📊 Schedule Marítimo — Realtime</span>
+      <span style="font-size:12px;color:var(--muted);margin-left:4px">· datos en vivo desde Supabase</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <span id="srt-status" style="font-size:11px;color:var(--muted)">Conectando…</span>
+        <button class="efa-btn-sec" onclick="loadScheduleRT()" title="Recargar tabla">↺ Recargar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="efa-content" style="overflow:auto;padding:16px">
+    <div class="sched-table-wrap" id="srt-wrap">
+      <div class="sched-table-head" style="grid-template-columns:1.2fr .9fr 1.2fr 1fr 1fr .9fr .9fr .9fr .9fr">
+        <span class="sth">Naviera</span>
+        <span class="sth">Contrato</span>
+        <span class="sth">Buque</span>
+        <span class="sth">Origen</span>
+        <span class="sth">Destino</span>
+        <span class="sth">ETD</span>
+        <span class="sth">ETA</span>
+        <span class="sth">Cut-off Doc</span>
+        <span class="sth">Vte. hasta</span>
+      </div>
+      <div id="srt-body">
+        <div class="empty">
+          <div class="empty-ico">📊</div>
+          <div class="empty-ttl">Cargando schedules…</div>
+          <div class="empty-sub">Conectando con Supabase Realtime</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:14px;font-size:11px;color:var(--muted)">
+      ℹ️ Última actualización: <span id="srt-last-update">—</span>
+      &nbsp;·&nbsp;
+      Los datos se actualizan automáticamente cuando se sube un nuevo Excel de Schedule.
+    </p>
+  </div>
+</div>
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1217,12 +1261,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','efa','schedule','admin-bid'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t===name);
-    document.getElementById('panel-'+t).classList.toggle('active', t===name);
+  ['tarifas','efa','schedule','admin-bid','schedule-rt'].forEach(t => {
+    const btn = document.getElementById('tab-'+t);
+    const pan = document.getElementById('panel-'+t);
+    if(btn) btn.classList.toggle('active', t===name);
+    if(pan) pan.classList.toggle('active', t===name);
   });
   if(name==='efa'){ if(!window._efaFiltersRestored){restoreEfaFilters();window._efaFiltersRestored=true;} setEfaView('resumen'); renderEFATab(); }
   if(name==='admin-bid'){ renderAdminBID(); }
+  if(name==='schedule-rt'){ loadScheduleRT(); setupScheduleRT(); }
 }
 
 // ── BELL ──
@@ -4673,6 +4720,90 @@ async function confirmBidImport(){
 
 function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);if(!m)return '';const y=m[3].length===2?'20'+m[3]:m[3];return `${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
 </script>
+
+<!-- ═══════════ SCHEDULE REALTIME — SUPABASE ═══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(function() {
+  const SUPA_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  let _rtChannel = null;
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.loadScheduleRT = async function() {
+    const body = document.getElementById('srt-body');
+    const status = document.getElementById('srt-status');
+    if (!body) return;
+
+    body.innerHTML = '<div class="empty"><div class="empty-ico">⏳</div><div class="empty-ttl">Cargando…</div></div>';
+
+    const { data, error } = await supa
+      .from('schedules_master')
+      .select('naviera,contrato,buque,puerto_origen,puerto_destino,etd,eta,cut_off_doc,vigente_hasta')
+      .eq('activo', true)
+      .order('etd', { ascending: true });
+
+    if (error) {
+      body.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Error al cargar datos</div><div class="empty-sub">${esc(error.message)}</div></div>`;
+      if (status) status.textContent = 'Error de conexión';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      body.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><div class="empty-ttl">Sin schedules vigentes</div><div class="empty-sub">Subí un Excel de Schedule para comenzar</div></div>';
+      if (status) status.textContent = 'Sin datos';
+      return;
+    }
+
+    const cols = 'grid-template-columns:1.2fr .9fr 1.2fr 1fr 1fr .9fr .9fr .9fr .9fr';
+    body.innerHTML = data.map(s => `
+      <div class="sched-row-wrap">
+        <div class="sched-main-row" style="${cols}">
+          <span class="sr"><span class="naviera-badge">${esc(s.naviera)}</span></span>
+          <span class="sr mono">${esc(s.contrato)}</span>
+          <span class="sr vessel">${esc(s.buque)}</span>
+          <span class="sr">${esc(s.puerto_origen)}</span>
+          <span class="sr">${esc(s.puerto_destino)}</span>
+          <span class="sr mono">${fmtDate(s.etd)}</span>
+          <span class="sr mono">${fmtDate(s.eta)}</span>
+          <span class="sr mono">${fmtDate(s.cut_off_doc)}</span>
+          <span class="sr mono muted">${fmtDate(s.vigente_hasta)}</span>
+        </div>
+      </div>
+    `).join('');
+
+    const now = new Date().toLocaleString('es-AR');
+    const lu = document.getElementById('srt-last-update');
+    if (lu) lu.textContent = now;
+    if (status) status.textContent = `✓ ${data.length} registros · ${now}`;
+  };
+
+  window.setupScheduleRT = function() {
+    if (_rtChannel) return; // ya suscripto
+    _rtChannel = supa
+      .channel('srt-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules_master' }, () => {
+        loadScheduleRT();
+      })
+      .subscribe(state => {
+        const status = document.getElementById('srt-status');
+        if (status && state === 'SUBSCRIBED') status.textContent = '🟢 Realtime activo';
+      });
+  };
+})();
+</script>
+<!-- ═══════════ FIN SCHEDULE REALTIME ═══════════ -->
 
 </body>
 </html>
