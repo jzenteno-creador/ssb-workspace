@@ -1184,44 +1184,53 @@ body.dark .gantt-legend {
 
 <!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
 <div class="tab-panel" id="panel-schedule-rt">
+
   <div class="sched-filter-bar">
-    <div class="sched-filter-row" style="align-items:center">
-      <span style="font-weight:700;color:var(--navy);font-size:13px">📊 Schedule Marítimo — Realtime</span>
-      <span style="font-size:12px;color:var(--muted);margin-left:4px">· datos en vivo desde Supabase</span>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <span id="srt-status" style="font-size:11px;color:var(--muted)">Conectando…</span>
-        <button class="efa-btn-sec" onclick="loadScheduleRT()" title="Recargar tabla">↺ Recargar</button>
+    <div class="sched-filter-row">
+      <div>
+        <span class="flbl">Origen</span>
+        <input class="ac-in w140" id="rt-f-origen" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
       </div>
+      <div>
+        <span class="flbl">Destino</span>
+        <input class="ac-in w140" id="rt-f-destino" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
+      </div>
+      <div>
+        <span class="flbl">Buque</span>
+        <input class="ac-in w140" id="rt-f-buque" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
+      </div>
+      <div>
+        <span class="flbl">Cut Off Físico desde</span>
+        <input class="date-in" type="date" id="rt-f-cutoff" oninput="applyRtFilter()">
+      </div>
+      <div>
+        <span class="flbl">ETA hasta</span>
+        <input class="date-in" type="date" id="rt-f-eta" oninput="applyRtFilter()">
+      </div>
+      <div>
+        <span class="flbl">Naviera</span>
+        <div class="btn-grp" id="rt-naviera-grp"></div>
+      </div>
+      <button class="btn-clear" onclick="clearRtFilters()">✕ Limpiar</button>
     </div>
   </div>
 
-  <div class="efa-content" style="overflow:auto;padding:16px">
-    <div class="sched-table-wrap" id="srt-wrap">
-      <div class="sched-table-head" style="grid-template-columns:1.2fr .9fr 1.2fr 1fr 1fr .9fr .9fr .9fr .9fr">
-        <span class="sth">Naviera</span>
-        <span class="sth">Contrato</span>
-        <span class="sth">Buque</span>
-        <span class="sth">Origen</span>
-        <span class="sth">Destino</span>
-        <span class="sth">ETD</span>
-        <span class="sth">ETA</span>
-        <span class="sth">Cut-off Doc</span>
-        <span class="sth">Vte. hasta</span>
-      </div>
-      <div id="srt-body">
-        <div class="empty">
-          <div class="empty-ico">📊</div>
-          <div class="empty-ttl">Cargando schedules…</div>
-          <div class="empty-sub">Conectando con Supabase Realtime</div>
-        </div>
+  <div class="sched-module" id="sched-rt-module">
+    <div class="results-bar">
+      <span class="results-title">Schedule Realtime</span>
+      <span class="results-ct" id="sched-rt-ct"></span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="rt-live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);animation:blink .9s infinite"></span>
+        <span style="font-size:11px;font-weight:600;color:var(--muted)">🔴 EN VIVO</span>
       </div>
     </div>
-
-    <p style="margin-top:14px;font-size:11px;color:var(--muted)">
-      ℹ️ Última actualización: <span id="srt-last-update">—</span>
-      &nbsp;·&nbsp;
-      Los datos se actualizan automáticamente cuando se sube un nuevo Excel de Schedule.
-    </p>
+    <div id="sched-rt-list">
+      <div class="empty">
+        <div class="empty-ico">📊</div>
+        <div class="empty-ttl">Cargando schedules…</div>
+        <div class="empty-sub">Conectando con Supabase Realtime</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4729,76 +4738,205 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
 
   const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
-  let _rtChannel = null;
-
-  function fmtDate(iso) {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
-  }
+  let _rtData = [];
+  let _rtNavSet = new Set();
+  let _rtSetup = false;
 
   function esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  const navColor = n => {
+    const u = (n||'').toUpperCase();
+    if(u.includes('HAPAG')&&u.includes('MAERSK')) return {bg:'#dbeafe',color:'#1e40af'};
+    if(u.includes('HAPAG'))  return {bg:'#fef3c7',color:'#92400e'};
+    if(u.includes('MAERSK')) return {bg:'#dbeafe',color:'#1e40af'};
+    if(u.includes('LOG IN')||u.includes('LOGIN')) return {bg:'#d1fae5',color:'#065f46'};
+    if(u.includes('MSC'))    return {bg:'#ede9fe',color:'#4c1d95'};
+    if(u.includes('CMA')||u.includes('MERCOSUL')) return {bg:'#fee2e2',color:'#991b1b'};
+    return {bg:'#f3f4f6',color:'#374151'};
+  };
+
+  function brandOf(n) {
+    const u = (n||'').toUpperCase();
+    if(u.includes('HAPAG')) return 'HAPAG';
+    if(u.includes('MAERSK')) return 'MAERSK';
+    if(u.includes('LOG IN')||u.includes('LOGIN')) return 'LOGIN';
+    if(u.includes('MSC')) return 'MSC';
+    if(u.includes('CMA')||u.includes('MERCOSUL')) return 'CMA CGM';
+    return n||'';
+  }
+
+  function navieraMatch(naviera) {
+    if(!_rtNavSet.size) return true;
+    const u = (naviera||'').toUpperCase();
+    for(const fc of _rtNavSet) {
+      const fn = fc.toUpperCase();
+      if(fn==='HAPAG'&&u.includes('HAPAG')) return true;
+      if(fn==='MAERSK'&&u.includes('MAERSK')) return true;
+      if((fn==='LOGIN'||fn==='LOG IN')&&(u.includes('LOG IN')||u.includes('LOGIN'))) return true;
+      if(fn==='MSC'&&u.includes('MSC')) return true;
+      if(fn==='CMA CGM'&&(u.includes('CMA')||u.includes('MERCOSUL'))) return true;
+      if(u.includes(fn)) return true;
+    }
+    return false;
+  }
+
+  function buildRtNavieraBtns() {
+    const brands = [...new Set(_rtData.map(r=>brandOf(r.naviera)).filter(Boolean))].sort();
+    const grp = document.getElementById('rt-naviera-grp');
+    if(grp) grp.innerHTML = brands.map(b=>`<button class="tog${_rtNavSet.has(b)?' on':''}" onclick="togRtNav('${esc(b)}')">${esc(b)}</button>`).join('');
+  }
+
+  window.togRtNav = function(b) {
+    _rtNavSet.has(b) ? _rtNavSet.delete(b) : _rtNavSet.add(b);
+    buildRtNavieraBtns();
+    applyRtFilter();
+  };
+
+  window.clearRtFilters = function() {
+    ['rt-f-origen','rt-f-destino','rt-f-buque','rt-f-cutoff','rt-f-eta'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    _rtNavSet.clear();
+    buildRtNavieraBtns();
+    applyRtFilter();
+  };
+
+  window.applyRtFilter = function() {
+    const vO  = (document.getElementById('rt-f-origen') ||{}).value||'';
+    const vD  = (document.getElementById('rt-f-destino')||{}).value||'';
+    const vV  = (document.getElementById('rt-f-buque')  ||{}).value||'';
+    const co  = (document.getElementById('rt-f-cutoff') ||{}).value||'';
+    const ea  = (document.getElementById('rt-f-eta')    ||{}).value||'';
+
+    const rows = _rtData.filter(r => {
+      if(vO && !(r.puerto_origen ||'').toUpperCase().includes(vO.toUpperCase())) return false;
+      if(vD && !(r.puerto_destino||'').toUpperCase().includes(vD.toUpperCase())) return false;
+      if(vV && !(r.buque         ||'').toUpperCase().includes(vV.toUpperCase())) return false;
+      if(co && r.cut_off_cargo && r.cut_off_cargo < co) return false;
+      if(ea && r.eta && r.eta > ea) return false;
+      if(!navieraMatch(r.naviera)) return false;
+      return true;
+    });
+
+    const ct = document.getElementById('sched-rt-ct');
+    if(ct) ct.textContent = rows.length + ' salida' + (rows.length!==1?'s':'') + ' encontrada' + (rows.length!==1?'s':'');
+    renderScheduleRt(rows);
+  };
+
+  function renderScheduleRt(rows) {
+    const el = document.getElementById('sched-rt-list');
+    if(!el) return;
+
+    if(!rows.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros de búsqueda</div></div>`;
+      return;
+    }
+
+    const COLS = '1.5fr 1.3fr 1.4fr 1fr 1fr 1fr 1fr 1fr 1.4fr';
+    const today = new Date().toISOString().split('T')[0];
+
+    const cutStyle = d => {
+      if(!d) return '';
+      if(d <= today) return 'color:var(--red);font-weight:700';
+      const dif = Math.ceil((new Date(d) - new Date()) / 86400000);
+      if(dif<=2) return 'color:var(--red);font-weight:600';
+      if(dif<=5) return 'color:var(--orange);font-weight:600';
+      return '';
+    };
+
+    el.innerHTML = `<div class="sched-table-wrap">
+      <div class="sched-table-head" style="grid-template-columns:${COLS}">
+        <span class="sth">Buque</span>
+        <span class="sth">Naviera / Servicio</span>
+        <span class="sth">Origen → Destino</span>
+        <span class="sth">Cut Off Doc</span>
+        <span class="sth">Cut Off Físico</span>
+        <span class="sth">ETD</span>
+        <span class="sth">ETA</span>
+        <span class="sth">Tránsito / Trasbordos</span>
+        <span class="sth">Obs / Comentarios</span>
+      </div>
+      ${rows.map(r => {
+        const nc = navColor(r.naviera);
+        const flag = portFlag(r.puerto_destino);
+        const transit = (r.etd && r.eta) ? Math.round((new Date(r.eta) - new Date(r.etd)) / 86400000) : null;
+        const trasRaw = (r.trasbordos||'').toUpperCase();
+        const trasCls = trasRaw.includes('DIRECTO') ? 'dir'
+          : (trasRaw.includes('2')||trasRaw.includes('4')||trasRaw.includes('MULTI')) ? 'multi'
+          : r.trasbordos ? 'one' : 'dir';
+        const trasLabel = r.trasbordos || 'DIRECTO';
+        const obs = [r.observaciones, r.comentarios].filter(Boolean).join(' — ') || '—';
+
+        return `<div class="sched-row-wrap">
+          <div class="sched-main-row" style="grid-template-columns:${COLS}">
+            <div class="sr vessel">${esc(r.buque)||'—'}</div>
+            <div>
+              <span class="naviera-badge" style="background:${nc.bg};color:${nc.color}">${esc(r.naviera||'—')}</span>
+              ${r.terminal ? `<span style="font-size:10px;color:var(--muted);margin-left:6px">${esc(r.terminal)}</span>` : ''}
+              ${r.servicio ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">${esc(r.servicio)}</div>` : ''}
+            </div>
+            <div class="sr">${esc(r.puerto_origen||'—')} → ${flag}${esc(r.puerto_destino||'—')}</div>
+            <div class="sr mono" style="${cutStyle(r.cut_off_doc)}">${fDate(r.cut_off_doc)}</div>
+            <div class="sr mono" style="${cutStyle(r.cut_off_cargo)}">${fDate(r.cut_off_cargo)}</div>
+            <div class="sr mono">${fDate(r.etd)}</div>
+            <div class="sr mono">${fDate(r.eta)}</div>
+            <div>
+              ${transit!==null ? `<div style="font-size:10px;color:var(--muted);margin-bottom:3px">${transit}d tránsito</div>` : ''}
+              <span class="tras-badge ${trasCls}">${esc(trasLabel)}</span>
+            </div>
+            <div class="sr muted" style="font-size:11px;line-height:1.4">${esc(obs)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
   }
 
   window.loadScheduleRT = async function() {
-    const body = document.getElementById('srt-body');
-    const status = document.getElementById('srt-status');
-    if (!body) return;
+    const el = document.getElementById('sched-rt-list');
+    const ct = document.getElementById('sched-rt-ct');
+    if(!el) return;
 
-    body.innerHTML = '<div class="empty"><div class="empty-ico">⏳</div><div class="empty-ttl">Cargando…</div></div>';
+    el.innerHTML = '<div class="empty"><div class="empty-ico">⏳</div><div class="empty-ttl">Cargando…</div></div>';
 
+    const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supa
       .from('schedules_master')
-      .select('naviera,contrato,buque,puerto_origen,puerto_destino,etd,eta,cut_off_doc,vigente_hasta')
+      .select('naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios')
+      .gte('etd', today)
       .eq('activo', true)
-      .order('etd', { ascending: true });
+      .order('etd', { ascending: true })
+      .limit(100);
 
-    if (error) {
-      body.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Error al cargar datos</div><div class="empty-sub">${esc(error.message)}</div></div>`;
-      if (status) status.textContent = 'Error de conexión';
+    if(error) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Error al cargar datos</div><div class="empty-sub">${esc(error.message)}</div></div>`;
+      if(ct) ct.textContent = 'Error de conexión';
       return;
     }
 
-    if (!data || data.length === 0) {
-      body.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><div class="empty-ttl">Sin schedules vigentes</div><div class="empty-sub">Subí un Excel de Schedule para comenzar</div></div>';
-      if (status) status.textContent = 'Sin datos';
+    if(!data||!data.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><div class="empty-ttl">Sin schedules vigentes</div><div class="empty-sub">No hay salidas programadas desde hoy</div></div>';
+      if(ct) ct.textContent = '0 salidas';
       return;
     }
 
-    const cols = 'grid-template-columns:1.2fr .9fr 1.2fr 1fr 1fr .9fr .9fr .9fr .9fr';
-    body.innerHTML = data.map(s => `
-      <div class="sched-row-wrap">
-        <div class="sched-main-row" style="${cols}">
-          <span class="sr"><span class="naviera-badge">${esc(s.naviera)}</span></span>
-          <span class="sr mono">${esc(s.contrato)}</span>
-          <span class="sr vessel">${esc(s.buque)}</span>
-          <span class="sr">${esc(s.puerto_origen)}</span>
-          <span class="sr">${esc(s.puerto_destino)}</span>
-          <span class="sr mono">${fmtDate(s.etd)}</span>
-          <span class="sr mono">${fmtDate(s.eta)}</span>
-          <span class="sr mono">${fmtDate(s.cut_off_doc)}</span>
-          <span class="sr mono muted">${fmtDate(s.vigente_hasta)}</span>
-        </div>
-      </div>
-    `).join('');
-
-    const now = new Date().toLocaleString('es-AR');
-    const lu = document.getElementById('srt-last-update');
-    if (lu) lu.textContent = now;
-    if (status) status.textContent = `✓ ${data.length} registros · ${now}`;
+    _rtData = data;
+    buildRtNavieraBtns();
+    applyRtFilter();
   };
 
   window.setupScheduleRT = function() {
-    if (_rtChannel) return; // ya suscripto
-    _rtChannel = supa
-      .channel('srt-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules_master' }, () => {
+    if(_rtSetup) return;
+    _rtSetup = true;
+    supa.channel('schedules-rt')
+      .on('postgres_changes', { event:'*', schema:'public', table:'schedules_master' }, () => {
         loadScheduleRT();
       })
       .subscribe(state => {
-        const status = document.getElementById('srt-status');
-        if (status && state === 'SUBSCRIBED') status.textContent = '🟢 Realtime activo';
+        const dot = document.getElementById('rt-live-dot');
+        if(dot) dot.style.background = state==='SUBSCRIBED' ? 'var(--teal)' : 'var(--amber)';
       });
   };
 })();
