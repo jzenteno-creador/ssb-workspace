@@ -1223,6 +1223,12 @@ body.dark .gantt-legend {
         <input class="date-in" type="date" id="rt-f-eta" oninput="applyRtFilter()">
       </div>
       <div>
+        <span class="flbl">Mes ETD</span>
+        <select class="estado-sel" id="f-rt-mes" onchange="applyRtFilter()" style="width:130px">
+          <option value="">— Todos —</option>
+        </select>
+      </div>
+      <div>
         <span class="flbl">Naviera</span>
         <div class="btn-grp" id="rt-naviera-grp"></div>
       </div>
@@ -4822,6 +4828,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
+    const selMes = document.getElementById('f-rt-mes');
+    if(selMes) selMes.value = '';
     _rtNavSet.clear();
     buildRtNavieraBtns();
     applyRtFilter();
@@ -4833,6 +4841,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const vV  = (document.getElementById('f-rt-vessel') ||{}).value||'';
     const co  = (document.getElementById('rt-f-cutoff') ||{}).value||'';
     const ea  = (document.getElementById('rt-f-eta')    ||{}).value||'';
+    const mes = (document.getElementById('f-rt-mes')    ||{}).value||'';
 
     const rows = _rtData.filter(r => {
       if(vO && !(r.puerto_origen ||'').toUpperCase().includes(vO.toUpperCase())) return false;
@@ -4840,6 +4849,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(vV && !(r.buque         ||'').toUpperCase().includes(vV.toUpperCase())) return false;
       if(co && r.cut_off_cargo && r.cut_off_cargo < co) return false;
       if(ea && r.eta && r.eta > ea) return false;
+      if(mes && r.mes_etd !== mes) return false;
       if(!navieraMatch(r.naviera)) return false;
       return true;
     });
@@ -4858,8 +4868,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
 
-    const COLS = '1.5fr 1.3fr 1.4fr 1fr 1fr 1fr 1fr 1fr 1.4fr';
+    const COLS = '0.7fr 1.4fr 1.3fr 1.3fr 1fr 1fr 1fr 1fr 1fr 1.3fr';
     const today = new Date().toISOString().split('T')[0];
+    const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    const fMesEtd = m => {
+      if(!m) return '—';
+      const [y, mo] = m.split('-');
+      return MESES_CORTOS[parseInt(mo)-1] + ' ' + y;
+    };
 
     const cutStyle = d => {
       if(!d) return '';
@@ -4872,6 +4889,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     el.innerHTML = `<div class="sched-table-wrap">
       <div class="sched-table-head" style="grid-template-columns:${COLS}">
+        <span class="sth" style="text-align:center">MES ETD</span>
         <span class="sth">Buque</span>
         <span class="sth">Naviera / Servicio</span>
         <span class="sth">Origen → Destino</span>
@@ -4895,10 +4913,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
         return `<div class="sched-row-wrap">
           <div class="sched-main-row" style="grid-template-columns:${COLS}">
+            <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600">${esc(fMesEtd(r.mes_etd))}</div>
             <div class="sr vessel">${esc(r.buque)||'—'}</div>
             <div>
-              <span class="naviera-badge" style="background:${nc.bg};color:${nc.color}">${esc(r.naviera||'—')}</span>
-              ${r.terminal ? `<span style="font-size:10px;color:var(--muted);margin-left:6px">${esc(r.terminal)}</span>` : ''}
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span class="naviera-badge" style="background:${nc.bg};color:${nc.color}">${esc(r.naviera||'—')}</span>
+                ${r.terminal ? `<span style="font-size:10px;color:var(--muted);font-family:var(--mono)">${esc(r.terminal)}</span>` : ''}
+              </div>
               ${r.servicio ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">${esc(r.servicio)}</div>` : ''}
             </div>
             <div class="sr">${esc(r.puerto_origen||'—')} → ${flag}${esc(r.puerto_destino||'—')}</div>
@@ -4924,14 +4945,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     el.innerHTML = '<div class="empty"><div class="empty-ico">⏳</div><div class="empty-ttl">Cargando…</div></div>';
 
-    const today = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
     const { data, error } = await supa
       .from('schedules_master')
-      .select('naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios')
-      .gte('etd', today)
+      .select('naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,mes_etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios')
+      .gte('etd', primerDiaMes)
       .eq('activo', true)
       .order('etd', { ascending: true })
-      .limit(100);
+      .limit(200);
 
     if(error) {
       el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Error al cargar datos</div><div class="empty-sub">${esc(error.message)}</div></div>`;
@@ -4951,6 +4973,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       destino: [...new Set(data.map(r=>r.puerto_destino).filter(Boolean))].sort(),
       vessel: [...new Set(data.map(r=>r.buque).filter(Boolean))].sort()
     };
+
+    // Poblar select Mes ETD
+    const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const selMes = document.getElementById('f-rt-mes');
+    if(selMes) {
+      const valActual = selMes.value;
+      const meses = [...new Set(data.map(r=>r.mes_etd).filter(Boolean))].sort();
+      selMes.innerHTML = '<option value="">— Todos —</option>' +
+        meses.map(m => {
+          const [y, mo] = m.split('-');
+          const label = MESES_CORTOS[parseInt(mo)-1] + ' ' + y;
+          return `<option value="${m}"${m===valActual?' selected':''}>${label}</option>`;
+        }).join('');
+    }
+
     buildRtNavieraBtns();
     applyRtFilter();
   };
