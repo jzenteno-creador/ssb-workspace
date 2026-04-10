@@ -1189,15 +1189,30 @@ body.dark .gantt-legend {
     <div class="sched-filter-row">
       <div>
         <span class="flbl">Origen</span>
-        <input class="ac-in w140" id="rt-f-origen" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
+        <div class="ac-wrap" id="wrap-rt-origen">
+          <input class="ac-in w140" id="f-rt-origen" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('rt-origen')" onkeydown="onAcKey(event,'rt-origen')" onfocus="onAcFocus('rt-origen')">
+          <button class="ac-x" id="x-rt-origen" onclick="clearAc('rt-origen')">×</button>
+          <div class="ac-drop" id="drop-rt-origen"></div>
+        </div>
       </div>
       <div>
         <span class="flbl">Destino</span>
-        <input class="ac-in w140" id="rt-f-destino" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
+        <div class="ac-wrap" id="wrap-rt-destino">
+          <input class="ac-in w140" id="f-rt-destino" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('rt-destino')" onkeydown="onAcKey(event,'rt-destino')" onfocus="onAcFocus('rt-destino')">
+          <button class="ac-x" id="x-rt-destino" onclick="clearAc('rt-destino')">×</button>
+          <div class="ac-drop" id="drop-rt-destino"></div>
+        </div>
       </div>
       <div>
         <span class="flbl">Buque</span>
-        <input class="ac-in w140" id="rt-f-buque" type="text" placeholder="Buscar..." oninput="applyRtFilter()">
+        <div class="ac-wrap" id="wrap-rt-vessel">
+          <input class="ac-in w140" id="f-rt-vessel" type="text" placeholder="Buscar..." autocomplete="off"
+            oninput="onAcIn('rt-vessel')" onkeydown="onAcKey(event,'rt-vessel')" onfocus="onAcFocus('rt-vessel')">
+          <button class="ac-x" id="x-rt-vessel" onclick="clearAc('rt-vessel')">×</button>
+          <div class="ac-drop" id="drop-rt-vessel"></div>
+        </div>
       </div>
       <div>
         <span class="flbl">Cut Off Físico desde</span>
@@ -2965,6 +2980,10 @@ function opts(f){
     if(field==='origen'||field==='destino') result = result.map(displayOrigen);
     return result;
   }
+  if(f.startsWith('rt-')){
+    const field=f.replace('rt-','');
+    return(window._rtAcOpts||{})[field]||[];
+  }
   return[];
 }
 function hl(t,q){if(!q)return t;const i=t.toUpperCase().indexOf(q.toUpperCase());if(i<0)return t;return t.slice(0,i)+'<mark>'+t.slice(i,i+q.length)+'</mark>'+t.slice(i+q.length);}
@@ -2985,6 +3004,7 @@ function onAcIn(f){
   openDrop(f,v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o,v);
   if(f.startsWith('t-'))applyFilter();
   else if(f.startsWith('bid-'))renderAdminBID();
+  else if(f.startsWith('rt-'))applyRtFilter();
   else applySchedFilter();
 }
 function onAcFocus(f){
@@ -3003,8 +3023,8 @@ function onAcKey(e,f){
   else if(e.key==='Enter'){e.preventDefault();if(acs[f].i>=0&&items[acs[f].i])pickAc(f,items[acs[f].i].dataset.v);else closeDrop(f);}
   else if(e.key==='Escape')closeDrop(f);
 }
-function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classList.add('sel');document.getElementById('x-'+f).classList.add('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else applySchedFilter();}
-function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else applySchedFilter();}
+function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classList.add('sel');document.getElementById('x-'+f).classList.add('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();else applySchedFilter();}
+function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();else applySchedFilter();}
 
 // ── HELPERS ──
 const usd = v=>'USD '+(Number(v)||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -4795,7 +4815,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   window.clearRtFilters = function() {
-    ['rt-f-origen','rt-f-destino','rt-f-buque','rt-f-cutoff','rt-f-eta'].forEach(id => {
+    clearAc('rt-origen');
+    clearAc('rt-destino');
+    clearAc('rt-vessel');
+    ['rt-f-cutoff','rt-f-eta'].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
@@ -4805,9 +4828,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   window.applyRtFilter = function() {
-    const vO  = (document.getElementById('rt-f-origen') ||{}).value||'';
-    const vD  = (document.getElementById('rt-f-destino')||{}).value||'';
-    const vV  = (document.getElementById('rt-f-buque')  ||{}).value||'';
+    const vO  = (document.getElementById('f-rt-origen') ||{}).value||'';
+    const vD  = (document.getElementById('f-rt-destino')||{}).value||'';
+    const vV  = (document.getElementById('f-rt-vessel') ||{}).value||'';
     const co  = (document.getElementById('rt-f-cutoff') ||{}).value||'';
     const ea  = (document.getElementById('rt-f-eta')    ||{}).value||'';
 
@@ -4923,6 +4946,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     _rtData = data;
+    window._rtAcOpts = {
+      origen: [...new Set(data.map(r=>r.puerto_origen).filter(Boolean))].sort(),
+      destino: [...new Set(data.map(r=>r.puerto_destino).filter(Boolean))].sort(),
+      vessel: [...new Set(data.map(r=>r.buque).filter(Boolean))].sort()
+    };
     buildRtNavieraBtns();
     applyRtFilter();
   };
