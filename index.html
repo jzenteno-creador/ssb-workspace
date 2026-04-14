@@ -1300,6 +1300,7 @@ function switchTab(name) {
   if(name==='efa'){ if(!window._efaFiltersRestored){restoreEfaFilters();window._efaFiltersRestored=true;} setEfaView('resumen'); renderEFATab(); }
   if(name==='admin-bid'){ renderAdminBID(); }
   if(name==='schedule-rt'){ loadScheduleRT(); setupScheduleRT(); }
+  else if(window.cleanupScheduleRT){ window.cleanupScheduleRT(); }
 }
 
 // ── BELL ──
@@ -4766,7 +4767,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
   let _rtData = [];
   let _rtNavSet = new Set();
-  let _rtSetup = false;
+  let _rtChannel = null;
+  let _rtFilterTimer = null;
 
   function esc(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -4811,7 +4813,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function buildRtNavieraBtns() {
     const brands = [...new Set(_rtData.map(r=>brandOf(r.naviera)).filter(Boolean))].sort();
     const grp = document.getElementById('rt-naviera-grp');
-    if(grp) grp.innerHTML = brands.map(b=>`<button class="tog${_rtNavSet.has(b)?' on':''}" onclick="togRtNav('${esc(b)}')">${esc(b)}</button>`).join('');
+    if(!grp) return;
+    grp.innerHTML = '';
+    brands.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = `tog${_rtNavSet.has(b)?' on':''}`;
+      btn.textContent = b;
+      btn.onclick = () => togRtNav(b);
+      grp.appendChild(btn);
+    });
   }
 
   window.togRtNav = function(b) {
@@ -4836,6 +4846,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   window.applyRtFilter = function() {
+    clearTimeout(_rtFilterTimer);
+    _rtFilterTimer = setTimeout(_doApplyRtFilter, 250);
+  };
+  function _doApplyRtFilter() {
     const vO  = (document.getElementById('f-rt-origen') ||{}).value||'';
     const vD  = (document.getElementById('f-rt-destino')||{}).value||'';
     const vV  = (document.getElementById('f-rt-vessel') ||{}).value||'';
@@ -4857,7 +4871,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const ct = document.getElementById('sched-rt-ct');
     if(ct) ct.textContent = rows.length + ' salida' + (rows.length!==1?'s':'') + ' encontrada' + (rows.length!==1?'s':'');
     renderScheduleRt(rows);
-  };
+  }
 
   function renderScheduleRt(rows) {
     const el = document.getElementById('sched-rt-list');
@@ -4993,9 +5007,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   window.setupScheduleRT = function() {
-    if(_rtSetup) return;
-    _rtSetup = true;
-    supa.channel('schedules-rt')
+    if(_rtChannel) return;
+    _rtChannel = supa.channel('schedules-rt')
       .on('postgres_changes', { event:'*', schema:'public', table:'schedules_master' }, () => {
         loadScheduleRT();
       })
@@ -5003,6 +5016,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         const dot = document.getElementById('rt-live-dot');
         if(dot) dot.style.background = state==='SUBSCRIBED' ? 'var(--teal)' : 'var(--amber)';
       });
+  };
+
+  window.cleanupScheduleRT = function() {
+    if(_rtChannel) { supa.removeChannel(_rtChannel); _rtChannel = null; }
   };
 })();
 </script>

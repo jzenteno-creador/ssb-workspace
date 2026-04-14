@@ -1,0 +1,15 @@
+{
+  "name": "ssb-n8n-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Scripts para gestionar workflows n8n de SSB International",
+  "scripts": {
+    "create-claude-workflow": "node create-claude-workflow.mjs"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
