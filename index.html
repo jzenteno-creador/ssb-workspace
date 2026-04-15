@@ -137,6 +137,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 /* Close buttons inside panels need a tighter ring */
 .ac-x:focus-visible,.bell-close:focus-visible,.vc-x:focus-visible,.efa-mod-x:focus-visible{outline-offset:0;border-radius:4px}
 
+/* ── A1: Icon system (Lucide SVG sprite) ── */
+.ic{width:18px;height:18px;flex-shrink:0;display:inline-block;vertical-align:-3px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.ic-sm{width:14px;height:14px;vertical-align:-2px}
+.ic-md{width:16px;height:16px;vertical-align:-3px}
+.ic-lg{width:20px;height:20px;vertical-align:-4px}
+.ic-xl{width:22px;height:22px;vertical-align:-5px}
+.logo-ico .ic{width:18px;height:18px;color:#fff;stroke-width:2}
+.tab-btn .ic{margin-right:6px}
+.efa-tg .ic,.ef-tg .ic,.efa-btn-sec .ic,.efa-btn-pri .ic{margin-right:5px}
+.bell-ico .ic{width:22px;height:22px;color:inherit}
+.btn-top .ic{margin-right:4px}
+
 /* ── TOPBAR ── */
 .topbar{background:var(--navy);color:#fff;padding:0 2rem;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200}
 .logo-wrap{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-.3px}
@@ -159,7 +171,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 
 /* ── BELL ── */
 .bell-wrap{position:relative;cursor:pointer}
-.bell-ico{font-size:20px;opacity:.7;transition:opacity .15s;user-select:none}
+.bell-ico{background:none;border:none;padding:4px;cursor:pointer;color:#fff;opacity:.7;transition:opacity .15s;user-select:none;display:inline-flex;align-items:center;justify-content:center;border-radius:6px}
 .bell-ico:hover{opacity:1}
 .bell-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#f4a723;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;display:none}
 .bell-badge.show{display:flex}
@@ -877,6 +889,38 @@ body.dark .gantt-legend {
 </head>
 <body>
 
+<!-- ── A1: Lucide SVG icon sprite (hidden, used via <use href="#i-*">) ── -->
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M12 8v14"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+    <symbol id="i-ship" viewBox="0 0 24 24"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="i-bars" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+    <symbol id="i-file-spread" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M10 9H8"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  </defs>
+</svg>
+
 <div class="splash" id="splash">
   <img src="assets/SSB_logo.png" alt="SSB" onerror="this.style.display='none'">
   <div class="splash-ttl">SSB INTERNATIONAL</div>
@@ -887,43 +931,43 @@ body.dark .gantt-legend {
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo-wrap"><div class="logo-ico">⚓</div>Fletes Marítimos · Contrato BID</div>
+  <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>Fletes Marítimos · Contrato BID</div>
   <div class="topbar-right">
     <!-- Dark mode toggle -->
-    <button class="btn-top" id="btn-dark" onclick="toggleDark()" title="Modo oscuro" style="font-size:16px;padding:6px 10px">🌙</button>
+    <button class="btn-top" id="btn-dark" onclick="toggleDark()" title="Modo oscuro" aria-label="Alternar modo oscuro"><svg class="ic ic-md" aria-hidden="true"><use href="#i-moon"/></svg></button>
     <!-- Bell -->
     <div class="bell-wrap" id="bell-wrap">
-      <div class="bell-ico" onclick="toggleBell()">🔔</div>
+      <button type="button" class="bell-ico" onclick="toggleBell()" aria-label="Notificaciones de cambios"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg></button>
       <div class="bell-badge" id="bell-badge">0</div>
       <div class="bell-panel" id="bell-panel">
         <div class="bell-panel-head">
           <span class="bell-panel-title">Cambios recientes en Schedule</span>
-          <button class="bell-close" onclick="toggleBell()">✕</button>
+          <button class="bell-close" onclick="toggleBell()" aria-label="Cerrar notificaciones"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
         <div class="bell-list" id="bell-list"><div class="bell-empty">Sin cambios recientes</div></div>
       </div>
     </div>
 <!-- Upload schedule -->
     <label class="btn-top btn-upload" style="cursor:pointer" title="Subir Excel de Schedule">
-      📁 Subir Schedule
+      <svg class="ic ic-md" aria-hidden="true"><use href="#i-upload"/></svg> Subir Schedule
       <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(this)">
     </label>
     <!-- Sync -->
     <div class="sync-pill"><div class="dot" id="dot"></div><span id="sync-lbl">Cargando...</span></div>
     <div id="sched-indicator" style="display:none;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.5);background:rgba(255,255,255,.06);padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);">
-      <span>📁</span><span id="sched-ind-name" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span id="sched-ind-age"></span>
+      <svg class="ic ic-sm" aria-hidden="true"><use href="#i-folder"/></svg><span id="sched-ind-name" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span id="sched-ind-age"></span>
     </div>
-    <button class="btn-top" id="btn-sync" onclick="syncSheet()">↻ Sincronizar</button>
+    <button class="btn-top" id="btn-sync" onclick="syncSheet()" aria-label="Sincronizar datos"><svg class="ic ic-md" aria-hidden="true"><use href="#i-refresh"/></svg> Sincronizar</button>
   </div>
 </header>
 
 <!-- TABS -->
 <div class="tab-bar">
-  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')">📋 Tarifas BID</button>
-  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')">⚡ EFA</button>
-  <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')">🚢 Schedule</button>
-  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')">🛠 Admin BID</button>
-  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')">📊 Schedule Realtime</button>
+  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Tarifas BID</button>
+  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-zap"/></svg>EFA</button>
+  <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
+  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
+  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -990,13 +1034,13 @@ body.dark .gantt-legend {
             <input type="date" id="f-etd" style="display:none" oninput="applyFilter()">
           </div>
         </div>
-        <button class="btn-clear" onclick="clearTarifaFilters()">✕ Limpiar</button>
+        <button class="btn-clear" onclick="clearTarifaFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
         <div id="vessel-chip" class="vessel-chip" style="display:none">
           <span class="vc-lbl">Buque</span>
           <span class="vc-name" id="vc-name">—</span>
           <span class="vc-sep">·</span>
           <span class="vc-etd" id="vc-etd">—</span>
-          <button class="vc-x" onclick="clearSelectedVessel()" title="Quitar selección">✕</button>
+          <button class="vc-x" onclick="clearSelectedVessel()" title="Quitar selección" aria-label="Quitar buque seleccionado"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
       </div>
       <div class="filter-banner" id="filter-banner">
@@ -1012,15 +1056,15 @@ body.dark .gantt-legend {
       <span class="results-title">Resultados</span>
       <span class="results-ct" id="res-ct"></span>
       <div style="display:flex;gap:6px">
-        <button onclick="exportTarifasPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📄 PDF</button>
-        <button onclick="exportTarifasExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📊 Excel</button>
+        <button onclick="exportTarifasPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
+        <button onclick="exportTarifasExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
       </div>
     </div>
     <div id="alert-area"></div>
     <div id="list"></div>
     <!-- Schedule section inside tarifas -->
     <div class="schedule-section" id="sched-in-tarifa" style="display:none">
-      <div class="schedule-section-title">🚢 Próximas salidas disponibles</div>
+      <div class="schedule-section-title"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ship"/></svg>Próximas salidas disponibles</div>
       <div class="schedule-cards" id="sched-tarifa-list"></div>
     </div>
   </div>
@@ -1030,15 +1074,15 @@ body.dark .gantt-legend {
 <div class="tab-panel" id="panel-efa">
   <div class="efa-toolbar">
     <div class="efa-view-toggle">
-      <button class="efa-tg active" id="efa-tg-resumen" onclick="setEfaView('resumen')" title="Vista resumen agrupada por carrier">📊 Resumen</button>
-      <button class="efa-tg" id="efa-tg-planilla" onclick="setEfaView('planilla')" title="Vista planilla editable, fila por fila">📋 Planilla</button>
-      <button class="efa-tg" id="efa-tg-gantt" onclick="setEfaView('gantt')" title="Vista calendario / línea de tiempo de vigencias EFA">📅 Calendario</button>
+      <button class="efa-tg active" id="efa-tg-resumen" onclick="setEfaView('resumen')" title="Vista resumen agrupada por carrier"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-bars"/></svg>Resumen</button>
+      <button class="efa-tg" id="efa-tg-planilla" onclick="setEfaView('planilla')" title="Vista planilla editable, fila por fila"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-clipboard"/></svg>Planilla</button>
+      <button class="efa-tg" id="efa-tg-gantt" onclick="setEfaView('gantt')" title="Vista calendario / línea de tiempo de vigencias EFA"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-calendar"/></svg>Calendario</button>
     </div>
     <div class="efa-toolbar-right">
       <span class="efa-count" id="efa-count">—</span>
-      <button class="efa-btn-sec" onclick="openLogModal()" title="Ver historial de cambios EFA">📜 Historial</button>
-      <button class="efa-btn-sec" onclick="openImportModal()" title="Importar EFA desde Excel pegando datos">📥 Importar Excel</button>
-      <button class="efa-btn-sec" onclick="openBulkUpdateModal()" title="Actualizar varios EFA a la vez por carrier/destino">🔄 Actualización masiva</button>
+      <button class="efa-btn-sec" onclick="openLogModal()" title="Ver historial de cambios EFA"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-history"/></svg>Historial</button>
+      <button class="efa-btn-sec" onclick="openImportModal()" title="Importar EFA desde Excel pegando datos"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-download"/></svg>Importar Excel</button>
+      <button class="efa-btn-sec" onclick="openBulkUpdateModal()" title="Actualizar varios EFA a la vez por carrier/destino"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg>Actualización masiva</button>
       <button class="efa-btn-pri" onclick="openEfaModal(null)" title="Crear un nuevo EFA">+ Nuevo EFA</button>
     </div>
   </div>
@@ -1051,8 +1095,8 @@ body.dark .gantt-legend {
     <input id="efa-f-search" type="text" placeholder="Origen o destino..." oninput="renderEFATab()" style="width:180px" title="Buscar por puerto de origen o destino">
     <button class="ef-tg on" id="efa-f-hideempty" onclick="toggleEfaHideEmpty()" title="Mostrar/ocultar rutas que no tienen EFA cargado">Ocultar sin EFA</button>
     <div class="efa-view-toggle" id="efa-resumen-mode-wrap" style="margin-left:8px">
-      <button class="efa-tg active" id="efa-rm-ruta" onclick="setEfaResumenMode('ruta')" title="Agrupar por ruta (origen→destino)">📐 Por ruta</button>
-      <button class="efa-tg" id="efa-rm-equipo" onclick="setEfaResumenMode('equipo')" title="Comparar columnas 20'STD vs 40'HC">📦 Por equipo</button>
+      <button class="efa-tg active" id="efa-rm-ruta" onclick="setEfaResumenMode('ruta')" title="Agrupar por ruta (origen→destino)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ruler"/></svg>Por ruta</button>
+      <button class="efa-tg" id="efa-rm-equipo" onclick="setEfaResumenMode('equipo')" title="Comparar columnas 20'STD vs 40'HC"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-package"/></svg>Por equipo</button>
     </div>
     <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="efa-filter-info"></span>
   </div>
@@ -1066,12 +1110,12 @@ body.dark .gantt-legend {
 <!-- ═══════════ TAB: ADMIN BID ═══════════ -->
 <div class="tab-panel" id="panel-admin-bid">
   <div class="efa-toolbar">
-    <div style="font-weight:700;color:var(--navy);font-size:13px">🛠 Administración Tarifas BID</div>
+    <div style="font-weight:700;color:var(--navy);font-size:13px;display:flex;align-items:center;gap:6px"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Administración Tarifas BID</div>
     <div class="efa-toolbar-right">
       <span class="efa-count" id="bid-count">—</span>
-      <button class="efa-btn-sec" onclick="openLogModal('bid')" title="Ver historial de cambios BID">📜 Historial</button>
-      <button class="efa-btn-sec" onclick="openBidImportModal()" title="Importar tarifas desde Excel pegando datos">📥 Importar</button>
-      <button class="efa-btn-sec" onclick="openBidBulkModal()" title="Actualizar varias tarifas a la vez">🔄 Actualización masiva</button>
+      <button class="efa-btn-sec" onclick="openLogModal('bid')" title="Ver historial de cambios BID"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-history"/></svg>Historial</button>
+      <button class="efa-btn-sec" onclick="openBidImportModal()" title="Importar tarifas desde Excel pegando datos"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-download"/></svg>Importar</button>
+      <button class="efa-btn-sec" onclick="openBidBulkModal()" title="Actualizar varias tarifas a la vez"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg>Actualización masiva</button>
       <button class="efa-btn-pri" onclick="openBidModal(null)" title="Crear nueva tarifa BID">+ Nueva tarifa</button>
     </div>
   </div>
@@ -1113,7 +1157,7 @@ body.dark .gantt-legend {
     </select>
     <label>Buscar</label>
     <input id="bid-f-search" type="text" placeholder="Texto libre..." oninput="renderAdminBID()" style="width:160px">
-    <button class="efa-btn-sec" onclick="clearBidFilters()" style="margin-left:6px">✕ Limpiar</button>
+    <button class="efa-btn-sec" onclick="clearBidFilters()" style="margin-left:6px" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
     <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="bid-filter-info"></span>
   </div>
   <div class="efa-content" style="overflow:auto">
@@ -1125,7 +1169,7 @@ body.dark .gantt-legend {
     </div>
     <div id="bid-table-wrap"></div>
     <div id="bid-impact-panel" style="display:none;border-top:2px solid var(--purple);padding:14px;background:#faf5ff">
-      <div style="font-weight:700;color:var(--purple);margin-bottom:8px">🚢 Buques afectados por la fila seleccionada</div>
+      <div style="font-weight:700;color:var(--purple);margin-bottom:8px;display:flex;align-items:center;gap:6px"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Buques afectados por la fila seleccionada</div>
       <div id="bid-impact-body"></div>
     </div>
   </div>
@@ -1182,7 +1226,7 @@ body.dark .gantt-legend {
         <span class="flbl">Línea marítima</span>
         <div class="btn-grp" id="sched-carrier-grp"></div>
       </div>
-      <button class="btn-clear" onclick="clearSchedFilters()">✕ Limpiar</button>
+      <button class="btn-clear" onclick="clearSchedFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
     </div>
   </div>
 
@@ -1191,8 +1235,8 @@ body.dark .gantt-legend {
       <span class="results-title">Schedule de buques</span>
       <span class="results-ct" id="sched-ct"></span>
       <div style="display:flex;gap:6px">
-        <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📄 PDF</button>
-        <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">📊 Excel</button>
+        <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
+        <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
       </div>
     </div>
     <div id="sched-list">
@@ -1251,7 +1295,7 @@ body.dark .gantt-legend {
         <span class="flbl">Naviera</span>
         <div class="btn-grp" id="rt-naviera-grp"></div>
       </div>
-      <button class="btn-clear" onclick="clearRtFilters()">✕ Limpiar</button>
+      <button class="btn-clear" onclick="clearRtFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
     </div>
   </div>
 
@@ -1261,7 +1305,7 @@ body.dark .gantt-legend {
       <span class="results-ct" id="sched-rt-ct"></span>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="rt-live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);animation:blink .9s infinite"></span>
-        <span style="font-size:11px;font-weight:600;color:var(--muted)">🔴 EN VIVO</span>
+        <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em">EN VIVO</span>
       </div>
     </div>
     <div id="sched-rt-list">
@@ -3840,13 +3884,19 @@ function toggleDark(){
 }
 function enableDark(){
   document.body.classList.add('dark');
-  document.getElementById('btn-dark').textContent='☀️';
+  setDarkIcon('sun');
   localStorage.setItem('darkMode','1');
 }
 function disableDark(){
   document.body.classList.remove('dark');
-  document.getElementById('btn-dark').textContent='🌙';
+  setDarkIcon('moon');
   localStorage.setItem('darkMode','0');
+}
+function setDarkIcon(name){
+  const btn=document.getElementById('btn-dark');
+  if(!btn)return;
+  btn.innerHTML='<svg class="ic ic-md" aria-hidden="true"><use href="#i-'+name+'"/></svg>';
+  btn.setAttribute('aria-label', name==='sun'?'Cambiar a modo claro':'Cambiar a modo oscuro');
 }
 
 // ── EXPORT HELPERS ──
