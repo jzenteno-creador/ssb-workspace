@@ -149,6 +149,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .bell-ico .ic{width:22px;height:22px;color:inherit}
 .btn-top .ic{margin-right:4px}
 
+/* ── A7: Skeleton loading (CSS-only, shimmer) ── */
+.skel{
+  background:linear-gradient(90deg,var(--faint) 0%,var(--border) 50%,var(--faint) 100%);
+  background-size:200% 100%;
+  border-radius:6px;
+  animation:skel-shimmer 1.4s ease-in-out infinite;
+  display:block;
+}
+@keyframes skel-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-line{height:12px;margin:6px 0}
+.skel-line--sm{height:9px;width:60%}
+.skel-line--lg{height:18px;width:80%}
+.skel-line--xl{height:26px;width:40%}
+.skel-card{
+  background:var(--white);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:8px;display:grid;
+  grid-template-columns:2.1fr 1fr 1.5fr .85fr 1.4fr 1.85fr;gap:14px;align-items:center;
+  box-shadow:var(--shadow);
+}
+.skel-card .skel{margin:0}
+.skel-row{
+  background:var(--white);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;margin-bottom:4px;display:grid;
+  grid-template-columns:1.4fr 1fr 1.1fr 1.2fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:center;
+}
+.skel-group{padding:1rem 0}
+body.dark .skel{background:linear-gradient(90deg,#1e2436 0%,#2a3248 50%,#1e2436 100%);background-size:200% 100%}
+
 /* ── TOPBAR ── */
 .topbar{background:var(--navy);color:#fff;padding:0 2rem;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200}
 .logo-wrap{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-.3px}
@@ -1067,7 +1095,15 @@ body.dark .gantt-legend {
       </div>
     </div>
     <div id="alert-area"></div>
-    <div id="list"></div>
+    <div id="list">
+      <!-- A7: Skeleton cards while rates load -->
+      <div class="skel-group" aria-busy="true" aria-label="Cargando tarifas">
+        <div class="skel-card"><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line skel-line--xl"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--xl"></span></div>
+        <div class="skel-card"><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line skel-line--xl"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--xl"></span></div>
+        <div class="skel-card"><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line skel-line--xl"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--xl"></span></div>
+        <div class="skel-card"><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line skel-line--xl"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--xl"></span></div>
+      </div>
+    </div>
     <!-- Schedule section inside tarifas -->
     <div class="schedule-section" id="sched-in-tarifa" style="display:none">
       <div class="schedule-section-title"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ship"/></svg>Próximas salidas disponibles</div>
@@ -1315,10 +1351,13 @@ body.dark .gantt-legend {
       </div>
     </div>
     <div id="sched-rt-list">
-      <div class="empty">
-        <div class="empty-ico">📊</div>
-        <div class="empty-ttl">Cargando schedules…</div>
-        <div class="empty-sub">Conectando con Supabase Realtime</div>
+      <!-- A7: Skeleton rows while Supabase Realtime connects -->
+      <div class="skel-group" aria-busy="true" aria-label="Cargando schedules en tiempo real">
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
       </div>
     </div>
   </div>
@@ -5032,7 +5071,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const ct = document.getElementById('sched-rt-ct');
     if(!el) return;
 
-    el.innerHTML = '<div class="empty"><div class="empty-ico">⏳</div><div class="empty-ttl">Cargando…</div></div>';
+    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando schedules"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
 
     const hoy = new Date();
     const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
