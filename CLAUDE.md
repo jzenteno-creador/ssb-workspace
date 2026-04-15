@@ -31,6 +31,7 @@ Usar Live Server en VS Code — click derecho en index.html → Open with Live S
 ## Skills activas en este proyecto
 
 - **frontend-design** → para cualquier cambio de UI en index.html
+- **ui-ux-pro-max** → decisiones visuales (style/color/typography/UX checklists). Search CLI: `python3 ~/.claude/skills/ui-ux-pro-max/src/ui-ux-pro-max/scripts/search.py "<q>" --design-system -p "Tarifa Schedule SSB"`
 - **postgres-best-practices** → cuando se migre de Google Sheets a Supabase
 - **security-review** → correr después de cada batch de fixes en index.html,
   especialmente cambios que generen HTML con interpolación de variables
@@ -41,8 +42,19 @@ Usar Live Server en VS Code — click derecho en index.html → Open with Live S
 - XSS pre-existente en renderSchedModule(): `r.OBSERVACIONES` sin `esc()` (línea ~3329)
 - Estado global mutable: rates, efaSheet, schedule, selC, selE, selSC
 - Archivo supera 5000 líneas — candidato a modularización futura
-- No hay debounce en filtros del tab Schedule clásico (solo el RT tiene debounce)
 - Sin diseño responsive — desktop-only, no hay breakpoints móvil
+
+## Arquitectura post-Grupo A (2026-04-15)
+
+- **Icon system:** SVG sprite con 22 Lucide en `<body>`. Uso: `<svg class="ic"><use href="#i-name"/></svg>` + `.ic-sm/md/lg`
+- **Tipografía tokens:** `--fs-2xs/xs/sm/md/base/lg/xl` (9-20px), `--lh-tight/base/loose`. Body en `var(--fs-base)` (15px)
+- **Badges:** `.badge` + `.badge--success/warning/danger/neutral/equipo/carrier/purple/pill/sm`. Legacy (`.tag/.sbadge/.days-badge/.naviera-badge/.tras-badge/.efa-equipo-tag`) siguen funcionando como aliases
+- **Focus states:** `*:focus-visible{outline:2px solid var(--teal);outline-offset:2px}` global — nunca usar `outline:none` sin `:focus-visible` guard
+- **Skeleton:** `.skel-card` + `.skel-row` + `.skel-line*` con keyframes `skel-shimmer`. Reemplazar loading text por skeleton
+- **Empty states:** `.empty-ico` / `.efa-empty .ico` usan SVG 60-64px via `<use href="#i-*">`. Copy humanizado ("No encontré X que coincidan")
+- **Dark cards:** `#1e293b` (slate-900) + borders `rgba(255,255,255,.08)` — NO `#3d4f6e`
+- **Debounce filtros:** `window.X = debounce(_XImpl, 250)` pattern (no `const X` — rompe inline handlers). Aplicado a applyFilter/applySchedFilter/renderAdminBID/applyRtFilter
+- **prefers-reduced-motion:** respetado globalmente — al agregar animation/transition nueva, verificar que no rompa el guard en `@media (prefers-reduced-motion: reduce)`
 
 ## EFA Gantt — arquitectura actual (post-rediseño 2026-04-09)
 
