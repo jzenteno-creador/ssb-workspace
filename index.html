@@ -118,6 +118,25 @@ body.dark .bid-xls tbody tr[style*="fef3c7"] td {
 }
 body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
 
+/* ── A3: Accessible focus ring (WCAG AA) ── */
+/* Hide default focus when clicking with mouse, keep visible ring for keyboard (:focus-visible) */
+*:focus{outline:none}
+*:focus-visible{
+  outline:2px solid var(--teal);
+  outline-offset:2px;
+  transition:outline-offset .12s ease;
+}
+/* Topbar elements: ring sits over dark navy — use same teal, remains visible */
+.topbar *:focus-visible{outline-color:var(--teal)}
+/* Tab buttons: inset ring so it doesn't collide with the underline indicator */
+.tab-btn:focus-visible{outline-offset:-4px;border-radius:4px}
+/* Tabs/toggles/ghost buttons — ring needs slight offset bump so it doesn't clip on rounded corners */
+.tog:focus-visible,.eq-tog:focus-visible,.efa-tg:focus-visible,.ef-tg:focus-visible,.btn-clear:focus-visible,.btn-top:focus-visible,.efa-btn-sec:focus-visible,.efa-btn-pri:focus-visible,.efa-mod-btn:focus-visible,.splash-btn:focus-visible{outline-offset:2px;border-radius:8px}
+/* Inputs keep their internal activated look (border+shadow) AND add outline for keyboard users */
+.estado-sel:focus-visible,.ac-in:focus-visible,.qty-in:focus-visible,.date-in:focus-visible,.gen-in:focus-visible,.efa-mod-grid input:focus-visible,.efa-mod-grid select:focus-visible,.efa-mod-grid textarea:focus-visible{outline-offset:2px}
+/* Close buttons inside panels need a tighter ring */
+.ac-x:focus-visible,.bell-close:focus-visible,.vc-x:focus-visible,.efa-mod-x:focus-visible{outline-offset:0;border-radius:4px}
+
 /* ── TOPBAR ── */
 .topbar{background:var(--navy);color:#fff;padding:0 2rem;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200}
 .logo-wrap{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-.3px}
