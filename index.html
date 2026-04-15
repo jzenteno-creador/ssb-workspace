@@ -374,7 +374,7 @@ body.dark .sched-card.selected{background:#1d2f4f}
 .efa-btn-sec{padding:7px 14px;background:var(--white);color:var(--purple);border:1.5px solid var(--purple-bd);border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .efa-btn-sec:hover{background:var(--purple-bg)}
 .efa-content{padding:20px 24px}
-.efa-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.efa-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px 24px;color:var(--muted);gap:10px}
 /* Gantt EFA */
 .gantt-wrap{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:72vh;position:relative}
 .gantt-inner{position:relative;min-width:2400px}
@@ -407,9 +407,10 @@ body.dark .sched-card.selected{background:#1d2f4f}
 .gantt-legend .gl-item{display:flex;align-items:center;gap:6px}
 .gantt-legend .gl-sw{width:16px;height:11px;border-radius:2px;background:#7c3aed}
 .gantt-legend .gl-ship{display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #0ea5e9;vertical-align:middle}
-.efa-empty .ico{font-size:42px;margin-bottom:12px}
-.efa-empty .ttl{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
-.efa-empty .sub{font-size:13px}
+.efa-empty .ico{width:60px;height:60px;color:var(--muted);opacity:.35;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px}
+.efa-empty .ico svg{width:100%;height:100%;stroke:currentColor;stroke-width:1.25;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.efa-empty .ttl{font-size:var(--fs-lg);font-weight:600;color:var(--text);letter-spacing:-.01em}
+.efa-empty .sub{font-size:var(--fs-md);max-width:42ch;line-height:1.5}
 
 /* Resumen — filtros */
 .efa-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 24px;background:var(--faint);border-bottom:1px solid var(--border);font-size:12px}
@@ -779,11 +780,12 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 .upload-lbl{font-size:12px;color:var(--muted)}
 .upload-count{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600}
 
-/* Empty / loading */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;text-align:center;background:var(--white);border-radius:12px;box-shadow:var(--shadow);gap:10px}
-.empty-ico{font-size:36px;opacity:.18}
-.empty-ttl{font-size:15px;font-weight:600;color:var(--muted)}
-.empty-sub{font-size:13px;color:var(--muted);opacity:.7}
+/* Empty / loading — A6: SVG illustration, humanized copy */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3.5rem 2rem;text-align:center;background:var(--white);border-radius:12px;box-shadow:var(--shadow);gap:12px}
+.empty-ico{width:64px;height:64px;color:var(--muted);opacity:.35;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px}
+.empty-ico svg{width:100%;height:100%;stroke:currentColor;stroke-width:1.25;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.empty-ttl{font-size:var(--fs-lg);font-weight:600;color:var(--text);letter-spacing:-.01em}
+.empty-sub{font-size:var(--fs-md);color:var(--muted);max-width:42ch;line-height:1.5}
 
 /* Tab panels */
 .tab-panel{display:none;flex:1;flex-direction:column;overflow:hidden}
@@ -1276,7 +1278,7 @@ body.dark .gantt-legend {
       </div>
     </div>
     <div id="sched-list">
-      <div class="empty"><div class="empty-ico">🚢</div><div class="empty-ttl">Subí el archivo de Schedule</div><div class="empty-sub">Usá el botón 📁 Subir Schedule en la barra superior</div></div>
+      <div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-ship"/></svg></div><div class="empty-ttl">Aún no subiste el schedule</div><div class="empty-sub">Usá el botón <b>Subir Schedule</b> de la barra superior para cargar el Excel con las próximas salidas.</div></div>
     </div>
   </div>
 </div>
@@ -1516,7 +1518,7 @@ async function syncSheet() {
       } else throw new Error('invalid');
     } catch(e2) {
       setDot('err','Error de conexión');
-      document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico">⚠</div><div class="empty-ttl">No se pudo conectar</div><div class="empty-sub">Verificá tu conexión y presioná ↻ Sincronizar.</div></div>`;
+      document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
       splashReady('err','⚠ Error de conexión — podés ingresar igual');
     }
   }
@@ -1857,7 +1859,7 @@ function getNavieraColor(carrier){
 function renderEfaGantt(){
   const cont=document.getElementById('efa-view-gantt');
   if(!cont)return;
-  if(!efaSheet.length){cont.innerHTML='<div class="efa-empty">No hay registros EFA cargados.</div>';return;}
+  if(!efaSheet.length){cont.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con <b>+ Nuevo EFA</b>.</div></div>';return;}
   const fC=document.getElementById('efa-f-carrier').value;
   const fE=document.getElementById('efa-f-equipo').value;
   const fS=(document.getElementById('efa-f-search').value||'').toUpperCase();
@@ -1882,7 +1884,7 @@ function renderEfaGantt(){
     navierGroups[nv].rutas[rk].equipos[eq].periods.push(e);
   });
   const navierKeys=Object.keys(navierGroups).sort();
-  if(!navierKeys.length){cont.innerHTML='<div class="efa-empty">No hay EFAs que coincidan con los filtros.</div>';return;}
+  if(!navierKeys.length){cont.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="ttl">No encontré EFAs que coincidan</div><div class="sub">Ajustá los filtros para ampliar la búsqueda.</div></div>';return;}
   const pctOf=d=>((d-start)/totalMs)*100;
   const todayPct=Math.max(0,Math.min(100,pctOf(today)));
   // Header: months on top, weekly ticks below
@@ -2000,7 +2002,7 @@ function efaPeriodStatus(e, todayISO){
 function renderEFAResumen(){
   const cont = document.getElementById('efa-view-resumen');
   if(!efaSheet.length){
-    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
   const filtered = getFilteredEFA();
@@ -2035,7 +2037,7 @@ function renderEFAResumen(){
   }
   document.getElementById('efa-filter-info').textContent = `Mostrando ${enriched.length} de ${filtered.length} combinaciones`;
   if(!enriched.length){
-    cont.innerHTML = `<div class="efa-empty"><div class="ico">🔍</div><div class="ttl">Sin resultados</div><div class="sub">${efaHideEmpty?'Activá "Ocultar sin EFA" para ver todas las combinaciones, o ajustá los filtros.':'Ajustá los filtros para ver registros.'}</div></div>`;
+    cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="ttl">No encontré EFAs que coincidan</div><div class="sub">${efaHideEmpty?'Desactivá <b>Ocultar sin EFA</b> para ver todas las combinaciones, o ajustá los filtros.':'Probá con otro carrier, equipo o término de búsqueda.'}</div></div>`;
     return;
   }
 
@@ -2122,7 +2124,7 @@ function renderEFAResumen(){
 function renderEFAResumenByEquipo(){
   const cont = document.getElementById('efa-view-resumen');
   if(!efaSheet.length){
-    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
   const filtered = getFilteredEFA();
@@ -2151,7 +2153,7 @@ function renderEFAResumenByEquipo(){
   }
   document.getElementById('efa-filter-info').textContent = `Mostrando ${enriched.length} ruta${enriched.length!==1?'s':''} · vista por equipo (período vigente)`;
   if(!enriched.length){
-    cont.innerHTML = `<div class="efa-empty"><div class="ico">🔍</div><div class="ttl">Sin resultados</div><div class="sub">Ajustá los filtros.</div></div>`;
+    cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="ttl">No encontré EFAs que coincidan</div><div class="sub">Probá con otro carrier, equipo o término de búsqueda.</div></div>`;
     return;
   }
   const byCarrier=new Map();
@@ -2208,7 +2210,7 @@ function renderEFAResumenByEquipo(){
 function renderEFAPlanilla(){
   const cont = document.getElementById('efa-view-planilla');
   if(!efaSheet.length){
-    cont.innerHTML = `<div class="efa-empty"><div class="ico">⚡</div><div class="ttl">No hay EFA cargados</div><div class="sub">Agregá un EFA con el botón "+ Nuevo EFA"</div></div>`;
+    cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
   const filtered = getFilteredEFA().filter(e=>!efaHideEmpty || (e.monto!=null && e.monto!==''));
@@ -3346,7 +3348,7 @@ function updateBanner(rates,etd,q20,q40){
 function renderTarifas(rates,etd,q20,q40,noVig){
   document.getElementById('alert-area').innerHTML=noVig?`<div class="alert-bar">⚠ Sin tarifas vigentes para la fecha ETD. Mostrando todas las disponibles.</div>`:'';
   document.getElementById('res-ct').textContent=rates.length+' tarifa'+(rates.length!==1?'s':'')+' encontrada'+(rates.length!==1?'s':'');
-  if(!rates.length){document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico">🚢</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros para ver tarifas</div></div>`;return;}
+  if(!rates.length){document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-ship"/></svg></div><div class="empty-ttl">No encontré tarifas con esos filtros</div><div class="empty-sub">Probá con otro puerto, carrier o ETD, o limpiá los filtros para ver todo lo disponible.</div></div>`;return;}
   const conf=rates.filter(r=>sortOrder(r)===0);
   const pend=rates.filter(r=>sortOrder(r)===1);
   const nodsp=rates.filter(r=>sortOrder(r)===2);
@@ -3607,7 +3609,7 @@ function renderSchedModule(rows){
   ct.textContent=rows.length+' salida'+(rows.length!==1?'s':'')+' encontrada'+(rows.length!==1?'s':'');
 
   if(!rows.length){
-    el.innerHTML=`<div class="empty"><div class="empty-ico">🔍</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros o cambiá el período de búsqueda</div></div>`;
+    el.innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay salidas que coincidan</div><div class="empty-sub">Ajustá los filtros o ampliá el período de búsqueda para ver más resultados.</div></div>`;
     return;
   }
 
@@ -4521,7 +4523,7 @@ function renderAdminBID(){
   document.getElementById('bid-count').textContent=`${rates.length} tarifas`;
   buildBidFilterOptions();
   const wrap=document.getElementById('bid-table-wrap');
-  if(!rates.length){wrap.innerHTML='<div class="efa-empty" style="padding:40px;text-align:center;color:var(--muted)">No hay tarifas cargadas. Sincronizá o agregá una nueva.</div>';return;}
+  if(!rates.length){wrap.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-clipboard"/></svg></div><div class="ttl">No hay tarifas cargadas</div><div class="sub">Sincronizá desde el servidor o agregá una nueva con <b>+ Nueva tarifa</b>.</div></div>';return;}
   const list=getBidFiltered();
   document.getElementById('bid-filter-info').textContent=`Mostrando ${list.length} de ${rates.length}`;
   const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
@@ -4986,7 +4988,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!el) return;
 
     if(!rows.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-ttl">Sin resultados</div><div class="empty-sub">Ajustá los filtros de búsqueda</div></div>`;
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay tarifas que coincidan</div><div class="empty-sub">Probá con otro carrier, origen o destino.</div></div>`;
       return;
     }
 
@@ -5078,13 +5080,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       .limit(200);
 
     if(error) {
-      el.innerHTML = `<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-ttl">Error al cargar datos</div><div class="empty-sub">${esc(error.message)}</div></div>`;
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar schedules</div><div class="empty-sub">${esc(error.message)}</div></div>`;
       if(ct) ct.textContent = 'Error de conexión';
       return;
     }
 
     if(!data||!data.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><div class="empty-ttl">Sin schedules vigentes</div><div class="empty-sub">No hay salidas programadas desde hoy</div></div>';
+      el.innerHTML = '<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-calendar"/></svg></div><div class="empty-ttl">Sin salidas programadas</div><div class="empty-sub">No hay schedules desde hoy en adelante. Cuando se sume un buque nuevo va a aparecer acá automáticamente.</div></div>';
       if(ct) ct.textContent = '0 salidas';
       return;
     }
