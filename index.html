@@ -1380,6 +1380,15 @@ let scheduleFileDate = '';
 let selC = new Set(), selE = new Set(), selSC = new Set();
 const acs = {};
 
+// ── A8: Debounce utility (reusable) ──
+function debounce(fn, ms){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
 // ── INIT ──
 document.addEventListener('click', e => {
   // Close bell
@@ -3282,7 +3291,9 @@ function normalizeOrigen(s){
 }
 
 // ── TARIFA FILTER & RENDER ──
-function applyFilter(){
+// A8: applyFilter debounced wrapper — impl renamed to _applyFilterImpl
+window.applyFilter = debounce(_applyFilterImpl, 250);
+function _applyFilterImpl(){
   if(!rates.length)return;
   const vO  = document.getElementById('f-t-origen').value.trim();
   const vD  = document.getElementById('f-t-destino').value.trim();
@@ -3510,7 +3521,9 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
 }
 
 // ── SCHEDULE MODULE FILTER ──
-function applySchedFilter(){
+// A8: applySchedFilter debounced wrapper — impl renamed to _applySchedFilterImpl
+window.applySchedFilter = debounce(_applySchedFilterImpl, 250);
+function _applySchedFilterImpl(){
   if(!schedule.length)return;
   const vO  = document.getElementById('f-s-origen').value.trim();
   const vD  = document.getElementById('f-s-destino').value.trim();
@@ -4524,7 +4537,9 @@ function clearBidFilters(){
   renderAdminBID();
 }
 
-function renderAdminBID(){
+// A8: renderAdminBID debounced wrapper — impl renamed to _renderAdminBIDImpl
+window.renderAdminBID = debounce(_renderAdminBIDImpl, 250);
+function _renderAdminBIDImpl(){
   document.getElementById('bid-count').textContent=`${rates.length} tarifas`;
   buildBidFilterOptions();
   const wrap=document.getElementById('bid-table-wrap');
