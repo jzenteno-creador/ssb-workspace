@@ -284,9 +284,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .route-main{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
 .route-arr{font-weight:400;color:var(--muted);font-size:14px}
 .route-tags{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
-.tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--mono)}
-.tag-carrier{background:var(--navy);color:rgba(255,255,255,.88)}
-.tag-equipo{background:var(--blue-lt);color:var(--blue)}
+/* ── A2: Unified badge system — .badge + .badge--* variants + legacy aliases ── */
+.badge,.tag,.sbadge,.days-badge,.naviera-badge,.tras-badge,.efa-equipo-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-weight:700;white-space:nowrap;line-height:1.4;
+  padding:2px 7px;border-radius:4px;border:1px solid transparent;
+  font-size:10px;letter-spacing:.02em
+}
+/* Shape modifiers */
+.sbadge,.badge--pill{padding:4px 9px;border-radius:20px;letter-spacing:.05em}
+.efa-equipo-tag,.badge--sm{font-size:9px;padding:1px 6px;border-radius:3px}
+/* Semantic tones */
+.badge--success,.sbadge.conf,.days-badge.direct,.tras-badge.dir{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.badge--warning,.sbadge.pend,.days-badge.via,.tras-badge.one{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+.badge--danger,.sbadge.nodsp,.tras-badge.multi{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.badge--neutral,.sbadge.nd{background:var(--faint);color:var(--muted);border-color:var(--border)}
+.badge--equipo,.efa-equipo-tag,.tag-equipo{background:var(--blue-lt);color:var(--blue);border-color:transparent}
+.badge--carrier,.naviera-badge,.tag-carrier{background:var(--navy);color:rgba(255,255,255,.88);border-color:transparent}
+.badge--purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+/* Layout/label helpers (not badges — kept for cards) */
 .clbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
 .cval{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--text)}
 .cval.soft{font-family:var(--font);font-weight:400;font-size:12px;color:var(--amber)}
@@ -294,13 +310,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14
 .vig-row{display:flex;align-items:center;gap:4px;margin-top:2px}
 .vig-date{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
 .vig-arr{font-size:10px;color:var(--muted)}
+/* Warn badge: orange tone + small inline layout offset */
 .vig-warn{font-size:10px;font-weight:700;color:var(--orange);background:var(--orange-bg);border:1px solid var(--orange-bd);padding:1px 6px;border-radius:4px;margin-top:3px;display:inline-block}
 .vig-aconf{font-size:10px;font-weight:600;color:var(--amber);font-family:var(--mono)}
-.sbadge{display:inline-flex;align-items:center;padding:4px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
-.sbadge.conf{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
-.sbadge.pend{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
-.sbadge.nodsp{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
-.sbadge.nd{background:var(--faint);color:var(--muted);border:1px solid var(--border)}
 .efa-amt{font-family:var(--mono);font-weight:700;font-size:15px;color:var(--purple)}
 .efa-pending{font-size:11px;color:var(--amber);font-style:italic;margin-top:2px}
 .vessel-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:var(--blue-lt);border:1.5px solid var(--blue);color:var(--blue);font-size:12px;font-weight:600}
@@ -581,7 +593,7 @@ body.dark .gc-ship-name {
 .efa-row-tbl tbody tr:hover{background:var(--faint)}
 .efa-route{font-weight:600;color:var(--text);font-size:11px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .efa-route .arr{color:var(--muted);font-size:9px}
-.efa-equipo-tag{display:inline-block;padding:1px 6px;border-radius:3px;background:var(--blue-lt);color:var(--blue);font-family:var(--mono);font-size:9px;font-weight:700}
+/* .efa-equipo-tag now defined in A2 unified badge system */
 .efa-period{padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--faint);display:flex;align-items:center;gap:8px;justify-content:space-between}
 .efa-period.vigente{background:var(--purple-bg);border:1.5px solid var(--purple)}
 .efa-period.anterior{opacity:.55}
@@ -716,9 +728,7 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 .sc-val.green{color:var(--green)}
 .sc-val.amber{color:var(--amber)}
 .sc-obs{padding:5px 14px 7px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);background:var(--faint);line-height:1.4}
-.days-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono)}
-.days-badge.direct{background:var(--green-bg);color:var(--green)}
-.days-badge.via{background:var(--amber-bg);color:var(--amber)}
+/* .days-badge now defined in A2 unified badge system */
 
 /* ── SCHEDULE MODULE ── */
 .sched-module{padding:1.1rem 2rem;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem}
@@ -740,11 +750,7 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 /* changed cell highlight */
 .changed-cell{background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd);cursor:help}
 .sched-obs-row{padding:5px 14px 8px;font-size:11px;color:var(--muted);background:var(--faint);border-top:1px solid var(--border);line-height:1.5}
-.tras-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:var(--mono)}
-.tras-badge.dir{background:var(--green-bg);color:var(--green)}
-.tras-badge.one{background:var(--amber-bg);color:var(--amber)}
-.tras-badge.multi{background:var(--red-bg);color:var(--red)}
-.naviera-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--mono);background:var(--navy);color:rgba(255,255,255,.85)}
+/* .tras-badge + .naviera-badge now defined in A2 unified badge system */
 
 /* Upload button */
 .upload-area{display:flex;align-items:center;gap:10px}
