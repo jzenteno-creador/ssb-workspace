@@ -146,7 +146,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .ic-md{width:16px;height:16px;vertical-align:-3px}
 .ic-lg{width:20px;height:20px;vertical-align:-4px}
 .ic-xl{width:22px;height:22px;vertical-align:-5px}
-.logo-ico .ic{width:18px;height:18px;color:#fff;stroke-width:2}
+/* .logo-ico .ic size set in topbar A10 block below */
 .tab-btn .ic{margin-right:6px}
 .efa-tg .ic,.ef-tg .ic,.efa-btn-sec .ic,.efa-btn-pri .ic{margin-right:5px}
 .bell-ico .ic{width:22px;height:22px;color:inherit}
@@ -181,9 +181,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 body.dark .skel{background:linear-gradient(90deg,#1e2436 0%,#2a3248 50%,#1e2436 100%);background-size:200% 100%}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--navy);color:#fff;padding:0 2rem;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200}
-.logo-wrap{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;letter-spacing:-.3px}
-.logo-ico{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.topbar{background:var(--navy);color:#fff;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
+.logo-wrap{display:flex;align-items:center;gap:12px;font-size:var(--fs-base);font-weight:700;letter-spacing:-.3px}
+.logo-ico{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
+/* A10: Topbar icon sizes bumped to 18–20px for better balance */
+.topbar .ic{width:20px;height:20px}
+.topbar .ic-sm{width:16px;height:16px}
+.topbar .ic-md{width:18px;height:18px}
+.logo-ico .ic{width:20px;height:20px;color:#fff;stroke-width:2}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .sync-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.45);font-family:var(--mono)}
 .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
@@ -983,8 +988,8 @@ body.dark .gantt-legend {
       <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFileUpload(this)">
     </label>
     <!-- Sync -->
-    <div class="sync-pill"><div class="dot" id="dot"></div><span id="sync-lbl">Cargando...</span></div>
-    <div id="sched-indicator" style="display:none;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.5);background:rgba(255,255,255,.06);padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);">
+    <div class="sync-pill" role="status" aria-live="polite" aria-label="Estado de sincronización"><div class="dot" id="dot"></div><span id="sync-lbl">Cargando...</span></div>
+    <div id="sched-indicator" role="status" aria-live="polite" style="display:none;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.5);background:rgba(255,255,255,.06);padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);">
       <svg class="ic ic-sm" aria-hidden="true"><use href="#i-folder"/></svg><span id="sched-ind-name" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><span id="sched-ind-age"></span>
     </div>
     <button class="btn-top" id="btn-sync" onclick="syncSheet()" aria-label="Sincronizar datos"><svg class="ic ic-md" aria-hidden="true"><use href="#i-refresh"/></svg> Sincronizar</button>
