@@ -920,6 +920,27 @@ body.dark .gantt-legend {
   gap: 14px 22px;
   color: #b8c7de;
 }
+
+/* ── A9: Respect prefers-reduced-motion (WCAG 2.3.3) ── */
+/* Elimina casi totalmente animaciones/transitions para usuarios con vestibular sensitivity */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    transition-delay:0ms !important;
+    scroll-behavior:auto !important;
+  }
+  /* Skeleton shimmer: disable shifting gradient, keep static muted bg */
+  .skel{animation:none !important;background:var(--faint) !important}
+  body.dark .skel{background:#1e2436 !important}
+  /* Splash spin, bell badge blink, rt-live-dot blink: stop animating */
+  .splash-spin,.dot.spin,#rt-live-dot{animation:none !important}
+  /* Splash transform-based hide: use instant opacity fade instead */
+  .splash{transition:none !important}
+  /* Card hover translate: no lift for reduced-motion users */
+  .card:hover{transform:none !important}
+}
 </style>
 </head>
 <body>
