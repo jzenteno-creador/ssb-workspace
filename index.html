@@ -21,6 +21,9 @@
   --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
   --naviera-hapag:#2563EB;--naviera-login:#059669;--naviera-maersk:#DC2626;
   --row-bg-light:#f3f4f6;--row-bg-dark:#ffffff;--row-border:rgba(0,0,0,0.05);
+  /* A4: Typographic scale tokens */
+  --fs-2xs:9px;--fs-xs:10px;--fs-sm:12px;--fs-md:14px;--fs-base:15px;--fs-lg:17px;--fs-xl:20px;
+  --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
 }
 /* ── DARK MODE ── */
 body.dark{
@@ -116,7 +119,7 @@ body.dark .bid-xls tbody tr[style*="dbeafe"] td {
 body.dark .bid-xls tbody tr[style*="fef3c7"] td {
   background: #2a2010 !important;
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column}
 
 /* ── A3: Accessible focus ring (WCAG AA) ── */
 /* Hide default focus when clicking with mouse, keep visible ring for keyboard (:focus-visible) */
@@ -426,17 +429,7 @@ body.dark .sched-card.selected{background:#1d2f4f}
   white-space: nowrap;
   border-radius: 3px;
 }
-.gc-period-label {
-  font-family: var(--mono);
-  font-weight: 600;
-  font-size: 9px;
-  opacity: 0.95;
-  line-height: 1.2;
-}
-.gc-amount {
-  font-size: 9px;
-  opacity: 0.88;
-}
+/* .gc-period-label / .gc-amount → definidos abajo en EFA Gantt nested structure (A4 evitó duplicación) */
 .gc-ship {
   width: 14px;
   height: 14px;
@@ -529,13 +522,14 @@ body.dark .gc-equipo-badge { background: rgba(59,130,246,0.15); }
   justify-content: center;
 }
 .gc-period-label {
-  font-size: 14px !important;
+  font-family: var(--mono);
+  font-size: 14px;
   font-weight: 600;
   color: white;
   line-height: 1.4;
 }
 .gc-amount {
-  font-size: 13px !important;
+  font-size: 13px;
   font-weight: 600;
   color: rgba(255,255,255,0.95);
   margin-top: 2px;
@@ -885,15 +879,15 @@ body.dark .gc-bar {
 }
 
 body.dark .gc-period-label {
-  font-size: 13px !important;
+  font-size: 13px;
   font-weight: 650;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 body.dark .gc-amount {
-  font-size: 12px !important;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.98 !important;
+  opacity: 0.98;
 }
 
 /* HOY: más instrumento que etiqueta */
