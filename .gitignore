@@ -17,3 +17,4 @@ Thumbs.db
 *.log
 .cache/
 temp/
+.claude/settings.local.json
