@@ -15,6 +15,8 @@
   --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
   --header-bg:#0b0f17; /* constante dark en ambos modos — mantiene "header cockpit" */
   --total-bg:#1a2038; /* total-cell elevated (más clara que --surface en dark) */
+  --naviera-default:#64748b; /* fallback Gantt carrier no mapeado (slate-500) */
+  --purple-tint:rgba(167,139,250,.05); /* tinte sutil para .gr-title y .gantt-row:hover */
   --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
   --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
   --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
@@ -37,6 +39,8 @@ body.light{
   --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
   --header-bg:#0b0f17; /* constante dark: headers/topbar/badges siguen oscuros en light mode */
   --total-bg:#0b0f17; /* total-cell stays dark en light mode (cockpit pop) */
+  --naviera-default:#475569; /* fallback Gantt carrier no mapeado (slate-600) */
+  --purple-tint:rgba(109,40,217,.05); /* tinte sutil light-mode */
   --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
   --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
   --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
@@ -319,7 +323,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .efa-toolbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .efa-count{font-size:12px;color:var(--muted);font-weight:500}
 .efa-btn-pri{padding:8px 16px;background:var(--purple);color:#fff;border:none;border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.efa-btn-pri:hover{background:#5b1fb8;box-shadow:0 2px 8px rgba(109,40,217,.3)}
+.efa-btn-pri:hover{filter:brightness(1.1);box-shadow:0 2px 8px rgba(109,40,217,.3)}
 .efa-btn-sec{padding:7px 14px;background:var(--surface);color:var(--purple);border:1.5px solid var(--purple-bd);border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .efa-btn-sec:hover{background:var(--purple-bg)}
 .efa-content{padding:20px 24px}
@@ -330,18 +334,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .gantt-head{position:sticky;top:0;z-index:4;background:var(--faint);border-bottom:1px solid var(--border);display:flex}
 .gantt-head .gh-label{flex:0 0 280px;padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-right:2px solid var(--border);position:sticky;left:0;background:var(--faint);z-index:5}
 .gantt-head .gh-time{flex:1;position:relative;height:46px}
-.gantt-head .gh-month{position:absolute;top:4px;font-size:11px;font-weight:700;color:var(--text);padding:2px 6px;background:var(--purple-bg,rgba(124,58,237,.12));border-radius:4px}
+.gantt-head .gh-month{position:absolute;top:4px;font-size:11px;font-weight:700;color:var(--text);padding:2px 6px;background:var(--purple-bg);border-radius:4px}
 .gantt-head .gh-week{position:absolute;top:26px;font-size:9px;color:var(--muted);transform:translateX(-50%);font-family:var(--mono)}
-.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:50px;padding:16px 8px;margin-bottom:8px}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:50px;padding:10px 8px;margin-bottom:8px}
 .gantt-row:nth-child(odd){background:var(--row-bg-light)}
 .gantt-row:nth-child(even){background:var(--row-bg-dark)}
-.gantt-row:hover{background:rgba(124,58,237,.03)}
+.gantt-row:hover{background:var(--purple-tint)}
 .gantt-row .gc-label{flex:0 0 280px;padding:10px 14px;border-right:2px solid var(--border);position:sticky;left:0;background:var(--surface);z-index:2;display:flex;flex-direction:column;justify-content:center}
 .gantt-row .gc-label .gc-carrier{font-weight:700;font-size:12px;color:var(--purple)}
 .gantt-row .gc-label .gc-route{font-size:11px;color:var(--text);font-weight:600;margin-top:2px}
 .gantt-row .gc-label .gc-eq{font-size:10px;color:var(--muted);margin-top:1px}
 .gc-track{flex:1;position:relative;background-image:linear-gradient(to right,var(--border) 1px,transparent 1px);background-size:calc(100%/26) 100%}
-.gc-bar{position:absolute;top:8px;height:22px;border-radius:5px;padding:0 8px;display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);overflow:hidden;white-space:nowrap;z-index:1}
+.gc-bar{position:absolute;top:8px;min-height:44px;padding:10px 12px;border-radius:8px;background:var(--naviera-color);color:#fff;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);overflow:hidden;white-space:nowrap;z-index:1}
 .gc-bar:hover{filter:brightness(1.15);box-shadow:0 2px 10px rgba(109,40,237,.5);z-index:6}
 .gc-bar.open-end{border-right:2px dashed rgba(255,255,255,.8)}
 .gc-bar.expired{opacity:.4}
@@ -350,12 +354,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .bid-cell:focus,.bid-cell.editing{outline:2px solid #7c3aed;outline-offset:-2px;background:#fff}
 #bid-table-wrap table tr:hover td{background:rgba(124,58,237,.04)}
 #bid-table-wrap table tr:hover td.bid-cell:hover{background:rgba(124,58,237,.12)}
-.gc-today{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:5;pointer-events:none;box-shadow:0 0 4px rgba(239,68,68,.5)}
-.gc-today-lbl{position:absolute;top:2px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;transform:translateX(-50%);z-index:5;pointer-events:none}
+.gc-today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none;box-shadow:0 0 4px var(--red)}
+.gc-today-lbl{position:absolute;top:2px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;transform:translateX(-50%);z-index:5;pointer-events:none}
 .gantt-legend{display:flex;align-items:center;gap:18px;font-size:10px;color:var(--muted);padding:10px 14px;background:var(--faint);border-bottom:1px solid var(--border);flex-wrap:wrap}
 .gantt-legend .gl-item{display:flex;align-items:center;gap:6px}
-.gantt-legend .gl-sw{width:16px;height:11px;border-radius:2px;background:#7c3aed}
-.gantt-legend .gl-ship{display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #0ea5e9;vertical-align:middle}
+.gantt-legend .gl-sw{width:16px;height:11px;border-radius:2px;background:var(--purple)}
+.gantt-legend .gl-ship{display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--blue);vertical-align:middle}
 .efa-empty .ico{width:60px;height:60px;color:var(--muted);opacity:.35;display:inline-flex;align-items:center;justify-content:center;margin-bottom:2px}
 .efa-empty .ico svg{width:100%;height:100%;stroke:currentColor;stroke-width:1.25;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .efa-empty .ttl{font-size:var(--fs-lg);font-weight:600;color:var(--text);letter-spacing:-.01em}
@@ -368,22 +372,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .efa-filters .ef-tg{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
 .efa-filters .ef-tg.on{background:var(--purple);color:#fff;border-color:var(--purple)}
 /* ── EFA GANTT BARS & SHIPS ── */
-.gc-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 3px 6px;
-  font-size: 10px;
-  overflow: hidden;
-  white-space: nowrap;
-  border-radius: 3px;
-}
-/* .gc-period-label / .gc-amount → definidos abajo en EFA Gantt nested structure (A4 evitó duplicación) */
 .gc-ship {
   width: 14px;
   height: 14px;
-  background: #ff6b6b;
+  background: var(--blue);
   border: 2px solid #fff;
   border-radius: 50%;
   cursor: pointer;
@@ -393,16 +385,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .gc-ship:hover {
   transform: scale(1.3);
   box-shadow: 0 4px 12px rgba(0,0,0,.3);
-}
-/* ── FIXME commit 5 (redesign Gantt): los overrides `body.dark .gc-*` / `body.dark .gantt-*`
-   que siguen a partir de acá quedaron como dead code tras el rename body.dark→body.light
-   (nunca se activan). El redesign Gantt decidirá renombrar+ajustar o reemplazar. ── */
-body.dark .gc-ship {
-  background: #ff8787;
-  border-color: #1a1f2e;
-}
-body.dark .gc-ship:hover {
-  box-shadow: 0 4px 12px rgba(255,107,107,.4);
 }
 /* ── EFA GANTT NESTED STRUCTURE ── */
 .gantt-naviera {
@@ -442,7 +424,7 @@ body.dark .gc-ship:hover {
   font-size: 11px;
   font-weight: 700;
   color: var(--text);
-  background: rgba(124,58,237,.04);
+  background: var(--purple-tint);
   position: sticky;
   left: 0;
   z-index: 2;
@@ -453,7 +435,7 @@ body.dark .gc-ship:hover {
 }
 .gc-equipo-badge {
   display: inline-block;
-  background: rgba(37,99,235,0.1);
+  background: var(--blue-lt);
   color: var(--naviera-color);
   font-weight: 600;
   font-size: 11px;
@@ -463,16 +445,6 @@ body.dark .gc-ship:hover {
   margin-right: 8px;
   letter-spacing: .03em;
   font-family: var(--mono);
-}
-body.dark .gc-equipo-badge { background: rgba(59,130,246,0.15); }
-.gc-period, .gc-bar {
-  background: var(--naviera-color) !important;
-  border-radius: 8px;
-  padding: 10px 12px;
-  min-height: 44px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 .gc-period-label {
   font-family: var(--mono);
@@ -523,38 +495,6 @@ body.dark .gc-equipo-badge { background: rgba(59,130,246,0.15); }
 }
 .gc-ship:hover .gc-ship-tooltip { opacity: 1; }
 .gc-ship-name { display: none; }
-/* Dark mode */
-body.dark .gantt-naviera {
-  background: var(--surface);
-  border-bottom-color: var(--border);
-}
-body.dark .gn-title {
-  background: #1e2436;
-  color: var(--text);
-}
-body.dark .gantt-ruta {
-  border-top-color: var(--border);
-}
-body.dark .gr-title {
-  background: rgba(180,142,245,.06);
-  color: var(--text);
-}
-body.dark .gc-equipo-badge {
-  background: var(--purple-bg);
-  border-color: var(--purple-bd);
-  color: var(--purple);
-}
-body.dark .gc-ship {
-  background: #ff8787;
-  border-color: #1a1f2e;
-}
-body.dark .gc-ship::before {
-  background: #ff8787;
-}
-body.dark .gc-ship-name {
-  color: #e8c97a;
-  opacity: .85;
-}
 
 /* Resumen — agrupado por carrier */
 .efa-carrier-group{margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
@@ -667,20 +607,25 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 .efa-carrier-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .efa-carrier-hdr .ec-coverage{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--muted);font-weight:600}
 .efa-carrier-hdr .ec-bar{width:100px;height:6px;background:var(--faint);border:1px solid var(--border);border-radius:4px;overflow:hidden}
-.efa-carrier-hdr .ec-bar-fill{height:100%;background:var(--green,#10b981);transition:width .3s}
+.efa-carrier-hdr .ec-bar-fill{height:100%;background:var(--green);transition:width .3s}
 .efa-carrier-hdr .ec-bar-fill.low{background:var(--red)}
 .efa-carrier-hdr .ec-bar-fill.mid{background:var(--amber)}
-.efa-period .ep-warn{display:inline-block;margin-left:6px;padding:1px 5px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:#92400e;font-size:9px;font-weight:700;border-radius:3px}
+/* WCAG AA por mode: base var(--amber) pasa dark (7.98:1 sobre --amber-bg #2a1f0a).
+   Override body.light con #92400e pasa light (6.69:1 sobre --amber-bg #fff8e6).
+   var(--amber) light #c87a00 daría 3.18:1 (<4.5), bug pre-existente revelado por tokenización. */
+.efa-period .ep-warn{display:inline-block;margin-left:6px;padding:1px 5px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber);font-size:9px;font-weight:700;border-radius:3px}
 .efa-period.has-gap{border-left:3px solid var(--amber)}
 .efa-period.expiring{border-color:var(--amber);background:var(--amber-bg)}
-.efa-period.expiring .ep-amt{color:#92400e}
+.efa-period.expiring .ep-amt{color:var(--amber)}
+body.light .efa-period .ep-warn,
+body.light .efa-period.expiring .ep-amt{color:#92400e}
 .efa-equipo-cells{display:flex;gap:8px}
 .efa-equipo-cells .efa-period{flex:1;min-width:0}
 .efa-equipo-tag.in-cell{margin-bottom:3px;display:inline-block}
 .efa-eq-col{display:flex;flex-direction:column;gap:3px;flex:1}
 .efa-eq-col .eq-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .efa-group-banner{margin:8px 0 4px;padding:6px 10px;background:var(--blue-lt);border:1px dashed var(--blue);border-radius:6px;font-size:11px;color:var(--blue);cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600}
-.efa-group-banner:hover{background:#dceaff}
+.efa-group-banner:hover{background:var(--blue-lt)}
 .efa-group-banner .gb-arrow{font-size:9px;transition:transform .15s}
 .efa-group-banner.collapsed .gb-arrow{transform:rotate(-90deg)}
 .efa-group-rows.collapsed{display:none}
@@ -762,110 +707,6 @@ label.required::after{content:' *';color:var(--red);font-weight:700}
 .splash .splash-btn:not(:disabled):hover{background:#8b5cf6;transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5)}
 .splash .splash-btn:not(:disabled){animation:btn-pulse 1.6s ease-in-out infinite}
 @keyframes btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}
-
-/* ========== GANTT EFA — DARK MODE PREMIUM (Cursor Analysis) ========== */
-
-/* Legibilidad eje temporal (dark) */
-body.dark .gantt-head {
-  background: linear-gradient(180deg, #1e2436 0%, #181e2c 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
-}
-
-body.dark .gantt-head .gh-month {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-  background: rgba(180, 142, 245, 0.14);
-  border: 1px solid rgba(180, 142, 245, 0.28);
-  padding: 4px 10px;
-  border-radius: 999px;
-}
-
-body.dark .gantt-head .gh-week {
-  font-size: 11px;
-  font-weight: 600;
-  color: #c5d4eb;
-  letter-spacing: 0.02em;
-}
-
-/* Columna sticky: corte premium al hacer scroll */
-body.dark .gantt-head .gh-label,
-body.dark .gantt-row .gc-label {
-  background: rgba(36, 43, 61, 0.92);
-  backdrop-filter: blur(12px) saturate(1.15);
-  -webkit-backdrop-filter: blur(12px) saturate(1.15);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 10px 0 28px -10px rgba(0, 0, 0, 0.55);
-}
-
-/* Carril: rejilla + banda semanal */
-body.dark .gc-track {
-  background-color: rgba(17, 22, 36, 0.92);
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(to right, transparent 50%, rgba(180, 142, 245, 0.04) 50%);
-  background-size: calc(100% / 26) 100%, calc(200% / 26) 100%;
-}
-
-/* Filas: menos caja vacía, más timeline */
-body.dark .gantt-row {
-  margin-bottom: 0;
-  padding: 10px 8px;
-  min-height: 44px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-body.dark .gantt-row:hover {
-  background: rgba(180, 142, 245, 0.05);
-}
-
-/* Barras: volumen sin cambiar colores de naviera */
-body.dark .gc-period,
-body.dark .gc-bar {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.12) inset,
-    0 14px 28px -16px rgba(0, 0, 0, 0.75);
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), var(--naviera-color)) !important;
-}
-
-body.dark .gc-period-label {
-  font-size: 13px;
-  font-weight: 650;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-body.dark .gc-amount {
-  font-size: 12px;
-  font-weight: 700;
-  opacity: 0.98;
-}
-
-/* HOY: más instrumento que etiqueta */
-body.dark .gc-today {
-  width: 2px;
-  background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 20px rgba(244, 63, 94, 0.45);
-}
-
-body.dark .gc-today-lbl {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-/* Leyenda: respiración */
-body.dark .gantt-legend {
-  font-size: 11px;
-  line-height: 1.45;
-  padding: 12px 16px;
-  gap: 14px 22px;
-  color: #b8c7de;
-}
 
 /* ── A9: Respect prefers-reduced-motion (WCAG 2.3.3) ── */
 /* Elimina casi totalmente animaciones/transitions para usuarios con vestibular sensitivity */
@@ -1821,8 +1662,18 @@ function renderEFATab(){
 }
 
 // ── EFA GANTT VIEW ──
-const GANTT_CARRIER_COLORS={HAPAG:'#7c3aed',MAERSK:'#0ea5e9',MSC:'#f59e0b',CMA:'#10b981','CMA CGM':'#10b981',COSCO:'#ef4444',ONE:'#ec4899',EVERGREEN:'#22c55e',YANG:'#6366f1','YANG MING':'#6366f1',ZIM:'#14b8a6',HMM:'#f97316',LOGIN:'#8b5cf6',ARKAS:'#a855f7'};
-function ganttCarrierColor(c){const u=(c||'').toUpperCase();for(const k of Object.keys(GANTT_CARRIER_COLORS))if(u.includes(k))return GANTT_CARRIER_COLORS[k];let h=0;for(let i=0;i<u.length;i++)h=(h*31+u.charCodeAt(i))%360;return `hsl(${h},65%,50%)`;}
+// Gantt carrier color — devuelve token semántico por naviera.
+// Excepción documentada: el Gantt mantiene diferenciación cromática por naviera
+// (función OPERATIVA de pattern recognition en barras apiladas verticalmente),
+// distinto del patrón chip neutro aplicado en commits 2/4 para identificadores.
+// Nuevas navieras se tokenizan en :root cuando aparezcan en data real.
+function ganttCarrierColor(c){
+  const u=(c||'').toUpperCase();
+  if(u.includes('HAPAG'))return 'var(--naviera-hapag)';
+  if(u.includes('LOG-IN')||u.includes('LOGIN'))return 'var(--naviera-login)';
+  if(u.includes('MAERSK'))return 'var(--naviera-maersk)';
+  return 'var(--naviera-default)';
+}
 
 // Colapsa equipos (40HC/20HC) de una ruta si tienen EXACTAMENTE los mismos periods (monto+desde+hasta).
 function collapseEquipos(equiposMap,equipoKeys){
@@ -1843,13 +1694,6 @@ function collapseEquipos(equiposMap,equipoKeys){
   return Object.values(buckets).map(b=>({equipoLabel:b.labels.join('/'),periods:b.periods}));
 }
 
-function getNavieraColor(carrier){
-  const u=(carrier||'').toUpperCase();
-  if(u.includes('HAPAG'))return 'var(--naviera-hapag)';
-  if(u.includes('LOG-IN')||u.includes('LOGIN'))return 'var(--naviera-login)';
-  if(u.includes('MAERSK'))return 'var(--naviera-maersk)';
-  return ganttCarrierColor(carrier);
-}
 function renderEfaGantt(){
   const cont=document.getElementById('efa-view-gantt');
   if(!cont)return;
@@ -1907,15 +1751,15 @@ function renderEfaGantt(){
   let rows='';
   navierKeys.forEach(nv=>{
     const nvData=navierGroups[nv];
-    const color=getNavieraColor(nvData.carrier);
+    const color=ganttCarrierColor(nvData.carrier);
     const rutaKeys=Object.keys(nvData.rutas).sort();
-    let nvHtml=`<div class="gantt-naviera" style="--naviera-color:${color}"><div class="gn-title"><span class="gn-title-name">${nvData.carrier||'—'}</span><span class="gn-title-count">${rutaKeys.length} ruta${rutaKeys.length!==1?'s':''}</span></div>`;
+    let nvHtml=`<div class="gantt-naviera" style="--naviera-color:${color}"><div class="gn-title"><span class="gn-title-name">${esc(nvData.carrier||'—')}</span><span class="gn-title-count">${rutaKeys.length} ruta${rutaKeys.length!==1?'s':''}</span></div>`;
     rutaKeys.forEach(rk=>{
       const ruta=nvData.rutas[rk];
       const C=(nvData.carrier||'').toUpperCase();
       const O=normalizeOrigen(ruta.origen);
       const D=(ruta.destino||'').toUpperCase();
-      nvHtml+=`<div class="gantt-ruta"><div class="gr-title">${ruta.origen||'—'} → ${ruta.destino||'—'}</div><div class="gr-equipos">`;
+      nvHtml+=`<div class="gantt-ruta"><div class="gr-title">${esc(ruta.origen||'—')} → ${esc(ruta.destino||'—')}</div><div class="gr-equipos">`;
       const equipoKeys=Object.keys(ruta.equipos).sort();
       const rowsToRender=collapseEquipos(ruta.equipos,equipoKeys);
       rowsToRender.forEach(row=>{
@@ -1931,7 +1775,7 @@ function renderEfaGantt(){
           const d=new Date(etd+'T00:00:00');
           return d>=start&&d<=end;
         });
-        nvHtml+=`<div class="gantt-row"><div class="gc-label"><span class="gc-equipo-badge">${row.equipoLabel}</span></div><div class="gc-track">`;
+        nvHtml+=`<div class="gantt-row"><div class="gc-label"><span class="gc-equipo-badge">${esc(row.equipoLabel)}</span></div><div class="gc-track">`;
         nvHtml+=`<div class="gc-today" style="left:${todayPct}%"></div>`;
         row.periods.forEach(p=>{
           const dIso=toISO(p.desde);if(!dIso)return;
@@ -1957,7 +1801,7 @@ function renderEfaGantt(){
           const d=new Date(etd+'T00:00:00');
           const left=pctOf(d);
           const tip=`${s.VESSEL||'—'}\n${fDate(s.ETD)}\n${s.ORIGEN}→${s.DESTINO}`;
-          nvHtml+=`<div class="gc-ship" style="left:${left}%" title="${tip.replace(/"/g,'&quot;')}"><div class="gc-ship-tooltip">${s.VESSEL||''} (${nvData.carrier||''})</div></div>`;
+          nvHtml+=`<div class="gc-ship" style="left:${left}%" title="${tip.replace(/"/g,'&quot;')}"><div class="gc-ship-tooltip">${esc(s.VESSEL||'')} (${esc(nvData.carrier||'')})</div></div>`;
         });
         nvHtml+='</div></div>';
       });
@@ -2083,7 +1927,7 @@ function renderEFAResumen(){
     const barCls = pct>=80?'':(pct>=50?'mid':'low');
 
     html += `<div class="efa-carrier-group">
-      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${c}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
+      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${esc(c)}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
         <span class="ec-coverage" title="Rutas con período vigente">
           <span class="ec-bar"><span class="ec-bar-fill ${barCls}" style="width:${pct}%"></span></span>
           ${withVig}/${rows.length} (${pct}%)
@@ -2101,7 +1945,7 @@ function renderEFAResumen(){
             const gapVN = periodGapDays(r.vigente, r.proximo);
             const gapAV = periodGapDays(r.anterior, r.vigente);
             return `<tr>
-              <td><div class="efa-route">${r.origen} <span class="arr">→</span> ${r.destino} <span class="efa-equipo-tag">${r.equipo}</span></div></td>
+              <td><div class="efa-route">${esc(r.origen)} <span class="arr">→</span> ${esc(r.destino)} <span class="efa-equipo-tag">${esc(r.equipo)}</span></div></td>
               <td>${cellHtml(r.anterior,'anterior',{gap:gapAV})}</td>
               <td>${cellHtml(r.vigente,'vigente')}</td>
               <td>${cellHtml(r.proximo,'proximo',{gap:gapVN})}</td>
@@ -2176,7 +2020,7 @@ function renderEFAResumenByEquipo(){
     const pct=rows.length?Math.round(100*withBoth/rows.length):0;
     const barCls=pct>=80?'':(pct>=50?'mid':'low');
     html+=`<div class="efa-carrier-group">
-      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${c}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
+      <div class="efa-carrier-hdr">⚓ <span class="ec-name">${esc(c)}</span><span class="ec-count">${rows.length} ruta${rows.length!==1?'s':''}</span>
         <span class="ec-coverage" title="Rutas con ambos equipos cargados">
           <span class="ec-bar"><span class="ec-bar-fill ${barCls}" style="width:${pct}%"></span></span>
           ${withBoth}/${rows.length} ambos equipos (${pct}%)
@@ -2190,7 +2034,7 @@ function renderEFAResumenByEquipo(){
         </tr></thead>
         <tbody>
           ${rows.map(r=>`<tr>
-            <td><div class="efa-route">${r.origen} <span class="arr">→</span> ${r.destino}</div></td>
+            <td><div class="efa-route">${esc(r.origen)} <span class="arr">→</span> ${esc(r.destino)}</div></td>
             <td>${cellEq(r.vig20)}</td>
             <td>${cellEq(r.vig40)}</td>
           </tr>`).join('')}
@@ -2224,15 +2068,15 @@ function renderEFAPlanilla(){
         const st = efaPeriodStatus(e, today);
         const ri = e._rowIndex;
         return `<tr>
-          <td>${e.carrier||'—'}</td>
-          <td>${e.origen||'—'}</td>
-          <td>${e.destino||'—'}</td>
-          <td><span class="efa-equipo-tag">${e.equipo||'—'}</span></td>
+          <td>${esc(e.carrier||'—')}</td>
+          <td>${esc(e.origen||'—')}</td>
+          <td>${esc(e.destino||'—')}</td>
+          <td><span class="efa-equipo-tag">${esc(e.equipo||'—')}</span></td>
           <td class="ep-monto"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'monto')" title="Doble click para editar"`:''}>${e.monto!=null?usd(e.monto):'—'}</td>
           <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'desde')" title="Doble click para editar"`:''}>${fDate(e.desde)}</td>
           <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'hasta')" title="Doble click para editar"`:''}>${e.hasta?fDate(e.hasta):'—'}</td>
           <td><span class="ep-status ${st}">${st}</span></td>
-          <td style="font-size:11px;color:var(--muted)">${e.comentario||''}</td>
+          <td style="font-size:11px;color:var(--muted)">${esc(e.comentario||'')}</td>
           <td class="ep-act">${ri!=null?`<button onclick="openEfaModal(${ri})" title="Editar este EFA">✏️</button><button class="del" onclick="deleteEfaRow(${ri})" title="Eliminar este EFA">🗑</button>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}</td>
         </tr>`;
       }).join('')}
@@ -2691,12 +2535,16 @@ function renderLogTable(){
       return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }catch(e){return v;}
   };
+  /* WCAG-driven exception: BID y ALTA usan hex hardcoded en lugar de tokens --amber/--green
+     porque los tokens en light dan 3.18/3.09:1 (<4.5 AA). Los hex originales cumplen 6.37/6.49:1.
+     Tokens pasan cómodo en dark (7.98/7.68), pero escalar contraste light requiere oscurecer
+     tokens globalmente — fuera de scope commit 5. Revisar en commit cleanup. */
   const tipoBadge=t=>{
     const tt=(t||'').toLowerCase();
-    const src=tt.startsWith('bid')?'<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">BID</span>':'<span style="background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">EFA</span>';
+    const src=tt.startsWith('bid')?'<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">BID</span>':'<span style="background:var(--purple-bg);color:var(--purple);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">EFA</span>';
     if(tt.includes('add'))return src+'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">+ ALTA</span>';
-    if(tt.includes('update'))return src+'<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">✎ EDICIÓN</span>';
-    if(tt.includes('delete'))return src+'<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">🗑 BAJA</span>';
+    if(tt.includes('update'))return src+'<span style="background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">✎ EDICIÓN</span>';
+    if(tt.includes('delete'))return src+'<span style="background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">🗑 BAJA</span>';
     return t||'—';
   };
   body.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:var(--faint);position:sticky;top:0">
