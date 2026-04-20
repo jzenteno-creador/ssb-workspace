@@ -5,39 +5,50 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fletes Marítimos · Contrato BID</title>
 <meta name="description" content="Sistema de consulta de fletes marítimos y schedule de buques - DOW/PBB Polisur">
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --navy:#050f22;--blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#f97316;
-  --bg:#eef1f6;--white:#fff;--border:#d8dfe9;--text:#1a2540;--muted:#6b7a99;--faint:#f0f3f8;
+  /* Cockpit palette — dark-first (direction A) */
+  --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
+  --white:#141925;--navy:#0b0f17; /* aliases legacy — purgar en commit 2 */
+  --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+  --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
+  --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+  --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+  --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+  --purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+  --orange:#fb923c;--orange-bg:#2a1a0e;--orange-bd:#6b3e18;
+  --changed:#2a2308;--changed-bd:#6b5818;
+  --font:'Inter','system-ui',sans-serif;--mono:'JetBrains Mono','SFMono-Regular',monospace;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+  --naviera-hapag:#3b82f6;--naviera-login:#10b981;--naviera-maersk:#f87171;
+  --row-bg-light:#141925;--row-bg-dark:#0f1420;--row-border:rgba(255,255,255,.06);
+  /* Typographic scale — cockpit data-dense */
+  --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
+  --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
+}
+/* ── LIGHT variant (toggle) ──
+   TODO commit 2 (punto 0): renombrar body.dark → body.light en este bloque,
+     en los overrides (líneas 42+), y en el JS toggle (enableDark/disableDark
+     y botón #btn-dark; refs en classList.contains('dark') / .add('dark') / .remove('dark')).
+   TODO commit 2: purgar aliases --white y --navy → reemplazar por tokens semánticos. */
+body.dark{
+  --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
+  --white:#ffffff;--navy:#ffffff;
+  --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
+  --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
   --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
   --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
   --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
   --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
   --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
   --changed:#fffbe6;--changed-bd:#f0c050;
-  --font:'Geist',sans-serif;--mono:'IBM Plex Mono',monospace;
-  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
   --naviera-hapag:#2563EB;--naviera-login:#059669;--naviera-maersk:#DC2626;
-  --row-bg-light:#f3f4f6;--row-bg-dark:#ffffff;--row-border:rgba(0,0,0,0.05);
-  /* A4: Typographic scale tokens */
-  --fs-2xs:9px;--fs-xs:10px;--fs-sm:12px;--fs-md:14px;--fs-base:15px;--fs-lg:17px;--fs-xl:20px;
-  --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
-}
-/* ── DARK MODE ── */
-body.dark{
-  --naviera-hapag:#3b82f6;--naviera-login:#10b981;--naviera-maersk:#ef4444;
-  --row-bg-light:#1f2937;--row-bg-dark:#111827;--row-border:rgba(255,255,255,0.1);
-  --navy:#1a2744;--blue:#5b9bf5;--blue-lt:#1d2f4f;--teal:#06b6d4;--accent:#fb923c;
-  --bg:#1a1f2e;--white:#242b3d;--border:#353d52;--text:#dce4f0;--muted:#9bb3d4;--faint:#1e2436;
-  --green:#4ac26b;--green-bg:#0f2a1a;--green-bd:#1e5c33;
-  --amber:#e8b84b;--amber-bg:#2a2010;--amber-bd:#6b4e00;
-  --red:#f87171;--red-bg:#2e1515;--red-bd:#5a2020;
-  --purple:#b48ef5;--purple-bg:#221640;--purple-bd:#4d2e8a;
-  --orange:#f09a5a;--orange-bg:#2a1e0e;--orange-bd:#6b3e12;
-  --changed:#2e2800;--changed-bd:#7a6800;
-  --shadow:0 1px 4px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+  --row-bg-light:#f3f4f6;--row-bg-dark:#ffffff;--row-border:rgba(0,0,0,.05);
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
 }
 /* Topbar & tabs */
 body.dark .topbar{background:#111624;border-bottom:1px solid var(--border)}
