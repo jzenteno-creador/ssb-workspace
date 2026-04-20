@@ -14,6 +14,7 @@
   /* Cockpit palette — dark-first (direction A) */
   --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
   --header-bg:#0b0f17; /* constante dark en ambos modos — mantiene "header cockpit" */
+  --total-bg:#1a2038; /* total-cell elevated (más clara que --surface en dark) */
   --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
   --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
   --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
@@ -35,6 +36,7 @@
 body.light{
   --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
   --header-bg:#0b0f17; /* constante dark: headers/topbar/badges siguen oscuros en light mode */
+  --total-bg:#0b0f17; /* total-cell stays dark en light mode (cockpit pop) */
   --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
   --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
   --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
@@ -240,17 +242,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .alert-bar{padding:10px 14px;border-radius:9px;font-size:13px;margin-bottom:10px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
 
 /* ── TARIFA CARD ── */
-.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);margin-bottom:8px;overflow:hidden;border:1px solid var(--border);transition:all .2s cubic-bezier(.4,0,.2,1)}
+.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);margin-bottom:6px;overflow:hidden;border:1px solid var(--border);transition:all .2s cubic-bezier(.4,0,.2,1)}
 .card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .card.no-serv{opacity:.65;border-left:4px solid var(--red-bd)}
 .card.has-efa{border-left:4px solid var(--purple-bd)}
 .card.expiring{border-top:2px solid var(--orange)}
-.card-grid{display:grid;grid-template-columns:2.1fr 1fr 1.5fr .85fr 1.4fr 1.85fr;align-items:stretch}
-.cell{padding:12px 14px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.card-grid{display:grid;grid-template-columns:2.0fr 1.5fr 1.3fr .65fr 1.9fr;align-items:stretch}
+.cell{padding:10px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
 .cell:last-child{border-right:none;padding:0}
-.route-main{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
+.route-main{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
 .route-arr{font-weight:400;color:var(--muted);font-size:14px}
 .route-tags{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap}
+/* ── Commit 3: card structural classes ── */
+.route-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.warn-tip{color:var(--amber);font-size:14px;cursor:help;user-select:none;line-height:1}
+.tarifa-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tarifa-meta{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap}
+.tarifa-meta .vig-date{font-size:11px;font-weight:600;color:var(--text)}
+.q-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:var(--blue-lt);color:var(--blue);font-family:var(--mono);letter-spacing:.02em}
+/* EFA chip adyacente a tarifa USD (celda 2) */
+.chip-efa{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-weight:700;font-size:10px;padding:2px 7px;border-radius:4px;letter-spacing:.02em;line-height:1.4;white-space:nowrap}
+.chip-efa--solid{background:var(--purple);color:#fff;border:1px solid var(--purple)}
+.chip-efa--outline-purple{background:transparent;color:var(--purple);border:1px solid var(--purple-bd)}
+.chip-efa--outline-amber{background:transparent;color:var(--amber);border:1px solid var(--amber-bd)}
 /* ── A2: Unified badge system — .badge + .badge--* variants + legacy aliases ── */
 .badge,.tag,.sbadge,.days-badge,.naviera-badge,.tras-badge,.efa-equipo-tag{
   display:inline-flex;align-items:center;gap:4px;
@@ -577,15 +591,13 @@ body.dark .gc-ship-name {
 .efa-planilla .ep-status.vigente{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)}
 .efa-planilla .ep-status.vencido{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
 .efa-planilla .ep-status.futuro{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue)}
-.total-cell{background:var(--header-bg);display:flex;flex-direction:column;justify-content:center;padding:12px 16px;gap:3px;border-radius:0 11px 11px 0}
+.total-cell{background:var(--total-bg);display:flex;flex-direction:column;justify-content:center;padding:10px 14px;gap:3px;border-radius:0 11px 11px 0;transition:box-shadow .2s}
+.total-cell.has-efa{box-shadow:inset 0 0 0 1px var(--purple-bd)}
+.total-cell.has-efa .total-amt{color:var(--purple)}
 .total-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em}
-.total-amt{font-family:var(--mono);font-weight:700;font-size:21px;color:#fff;letter-spacing:-.5px;line-height:1.1}
-.total-bk{font-size:10px;font-family:var(--mono);color:rgba(255,255,255,.5);line-height:1.7;margin-top:3px}
-.total-efa{color:#c4b5fd;font-weight:600}
-.total-sum{color:rgba(255,255,255,.8);font-weight:700;font-size:11px;border-top:1px solid rgba(255,255,255,.15);padding-top:3px;margin-top:2px}
+.total-amt{font-family:var(--mono);font-weight:700;font-size:22px;color:#fff;letter-spacing:-.5px;line-height:1.1}
+.total-unit{font-size:12px;font-weight:500;color:rgba(255,255,255,.7);margin-left:2px}
 .total-hint{font-size:11px;color:rgba(255,255,255,.4);font-style:italic}
-.total-warn{font-size:10px;color:#fbbf24;margin-top:3px}
-.comment-row{padding:7px 14px;background:var(--amber-bg);border-top:1px solid var(--amber-bd);font-size:12px;color:#7a5200;line-height:1.5;display:flex;gap:7px}
 
 /* ── EFA MODAL (C2) ── */
 .efa-mod-bk{position:fixed;inset:0;background:rgba(5,15,34,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:9999;padding:40px 20px;overflow-y:auto}
@@ -1322,6 +1334,9 @@ body.dark .gantt-legend {
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi3VyU-KiobStqXJ6T9iNkGN2vXISb-6OGZYqMd3mXbzvjfhhHWORnfYlipKGRjdQi/exec';
 const CHANGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Escapa texto para interpolar en HTML. No cubre `'` en atributos con comilla simple.
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 let rates = [];
 let efaSheet = [];
@@ -3342,63 +3357,81 @@ function buildCard(r,etd,q20,q40){
   const diasHasta=daysUntil(r.hasta);
   const expiring=diasHasta!==null&&diasHasta>=0&&diasHasta<=7;
   const expired=diasHasta!==null&&diasHasta<0;
-  const tarifaDisp=ns?`<span class="cval noserv">Sin servicio</span>`:base===null?`<span class="cval soft">${r.tarifa?tr(r.tarifa.toString(),16):'Pendiente'}</span>`:`<span class="cval">${usd(base)}</span>`;
-  const contratoDisp=r.contrato?`<span class="cval" style="font-size:13px;" data-tip="Contrato: ${r.contrato}">${tr(r.contrato,22)}</span>`:`<span style="color:var(--muted);font-size:12px;">—</span>`;
-  const vigHtml=`<div class="vig-row"><span class="vig-date">${fDate(r.desde)}</span><span class="vig-arr">→</span><span class="vig-date">${fDate(r.hasta)}</span></div>
-  ${expiring?`<span class="vig-warn">⏰ Tarifa vence en ${diasHasta}d</span>`:''}${expired?`<span class="vig-warn" style="color:var(--red);background:var(--red-bg);border-color:var(--red-bd);">Vencida</span>`:''}`;
-  let efaDisp='<span style="color:var(--muted);font-size:12px;">—</span>';
-  if(r.efaNum&&r.efaDesde&&!isNaN(Date.parse(r.efaDesde))){
-    const efaHastaStr=(r.efaHasta&&!isNaN(Date.parse(r.efaHasta)))?fDate(r.efaHasta):`<span class="vig-aconf">A CONF</span>`;
-    efaDisp=`<span class="efa-amt">+ ${usd(r.efaNum)}</span><div class="vig-row" style="margin-top:3px;"><span class="vig-date">${fDate(r.efaDesde)}</span><span class="vig-arr">→</span><span>${efaHastaStr}</span></div>${efaSt==='no'?`<span class="efa-pending">No aplica para esta ETD</span>`:''}${efaSt==='unverified'?`<span class="efa-pending">Ingresá ETD para verificar</span>`:''}`;
-  } else if(r.efaNum&&(!r.efaDesde||isNaN(Date.parse(r.efaDesde)))){
-    efaDisp=`<span class="cval soft">Sin inicio — no aplica</span>`;
-  }
-  let totalContent='';
-  if(qty>0&&base!==null){
-    if(efaSt==='yes'){totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(totalEmb)}</span><span class="total-bk">${usd(base)} × ${qty} = ${usd(base*qty)}<br><span class="total-efa">⚡ EFA ${usd(r.efaNum)} × ${qty} = +${usd(r.efaNum*qty)}</span><span class="total-sum">TOTAL = ${usd(totalEmb)}</span></span>`;}
-    else if(efaSt==='unverified'){totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(base*qty)}</span><span class="total-bk">${qty} × ${usd(base)}</span><span class="total-warn">⚠ EFA no confirmado — ingresá ETD</span>`;}
-    else{totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-amt">${usd(totalEmb)}</span><span class="total-bk">${qty} × ${usd(base)}</span>`;}
-  } else {
-    totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-hint">${qty===0?'Ingresá cantidad':'—'}</span>`;
-  }
-  const cmTip=r.comentario?`data-tip="${r.comentario.replace(/"/g,"'")}"` :'';
-  const destFlag = portFlag(r.destino);
+  const destFlag=portFlag(r.destino);
 
-  // Chip carrier neutro uniforme (dirección A — sin distinción cromática por naviera)
-  const ccBg = 'var(--surface-hv)';
-  const ccColor = 'var(--text)';
-  const ccBorder = 'var(--border)';
-  return `<div class="card${ns?' no-serv':''}${(r.efaNum&&r.efaDesde&&!isNaN(Date.parse(r.efaDesde)))?' has-efa':''}${expiring?' expiring':''}">
+  const tarifaDisp=ns
+    ? `<span class="cval noserv">Sin servicio</span>`
+    : base===null
+      ? `<span class="cval soft">${esc(r.tarifa?tr(r.tarifa.toString(),16):'Pendiente')}</span>`
+      : `<span class="cval">${usd(base)}</span>`;
+  const contratoDisp=r.contrato
+    ? `<span class="cval" style="font-size:13px" data-tip="Contrato: ${esc(r.contrato)}">#${esc(tr(r.contrato,21))}</span>`
+    : `<span style="color:var(--muted);font-size:12px">—</span>`;
+  const vigHtml=`<div class="vig-row"><span class="vig-date">${fDate(r.desde)}</span><span class="vig-arr">→</span><span class="vig-date">${fDate(r.hasta)}</span></div>`
+    +(expiring?`<span class="vig-warn">⏰ Tarifa vence en ${diasHasta}d</span>`:'')
+    +(expired?`<span class="vig-warn" style="color:var(--red);background:var(--red-bg);border-color:var(--red-bd)">Vencida</span>`:'');
+
+  // EFA chip inline (celda tarifa)
+  let efaChip='';
+  if(efaSt==='yes')        efaChip=`<span class="chip-efa chip-efa--solid">+ ${usd(r.efaNum)} EFA</span>`;
+  else if(efaSt==='no')    efaChip=`<span class="chip-efa chip-efa--outline-purple">EFA no aplica</span>`;
+  else if(efaSt==='unverified') efaChip=`<span class="chip-efa chip-efa--outline-amber">⚠ Ingresá ETD</span>`;
+  // 'none' → sin chip (ausencia = sin EFA)
+
+  // EFA vigencia + Q badge (línea 2 celda tarifa)
+  const hasEfaVig=r.efaDesde&&!isNaN(Date.parse(r.efaDesde));
+  const efaVigText=hasEfaVig
+    ? `${fDate(r.efaDesde)} → ${r.efaHasta&&!isNaN(Date.parse(r.efaHasta))?fDate(r.efaHasta):'A CONF'}`
+    : '';
+  const qBadge=r.quarter?`<span class="q-badge">${esc(r.quarter)}</span>`:'';
+  const metaSep=efaVigText&&qBadge?'<span>·</span>':'';
+  const tarifaMeta=(efaVigText||qBadge)
+    ? `<div class="tarifa-meta">${efaVigText?`<span class="vig-date">${efaVigText}</span>`:''}${metaSep}${qBadge}</div>`
+    : '';
+
+  // Total 1-línea
+  let totalContent;
+  if(qty>0&&base!==null){
+    totalContent=`<span class="total-lbl">Total a declarar</span>`
+      +`<span class="total-amt">${usd(totalPorCont)} × ${qty} = ${usd(totalEmb)}</span>`;
+  } else if(qty===0&&base!==null){
+    totalContent=`<span class="total-lbl">Total a declarar</span>`
+      +`<span class="total-amt">${usd(totalPorCont)}<span class="total-unit">/u</span></span>`;
+  } else {
+    totalContent=`<span class="total-lbl">Total a declarar</span><span class="total-hint">—</span>`;
+  }
+
+  // Warn tooltip reemplaza .comment-row
+  const warnTip=r.comentario
+    ? `<span class="warn-tip" data-tip="${esc(r.comentario)}">⚠</span>`
+    : '';
+
+  const hasEfaRing=efaSt==='yes';
+  const cardCls=`card${ns?' no-serv':''}${hasEfaVig?' has-efa':''}${expiring?' expiring':''}`;
+
+  return `<div class="${cardCls}">
     <div class="card-grid">
       <div class="cell">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div>
-            <span class="route-main">${r.origen||'—'} <span class="route-arr">→</span> ${destFlag} ${r.destino||'—'}</span>
-          </div>
-          <div style="width:1px;height:32px;background:var(--border);flex-shrink:0"></div>
-          <span class="tag" style="background:${ccBg};color:${ccColor};border:1px solid ${ccBorder}">${r.carrier||'—'}</span>
-          <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
-          ${r.equipo?`<span class="tag tag-equipo">${r.equipo}</span>`:''}
+        <div class="route-row">
+          <span class="route-main">${esc(r.origen||'—')} <span class="route-arr">→</span> ${destFlag} ${esc(r.destino||'—')}</span>
+          <span class="tag" style="background:var(--surface-hv);color:var(--text);border:1px solid var(--border)">${esc(r.carrier||'—')}</span>
+          ${r.equipo?`<span class="tag tag-equipo">${esc(r.equipo)}</span>`:''}
+          ${warnTip}
         </div>
       </div>
       <div class="cell">
-        <span class="clbl">Tarifa All In</span>
-        ${tarifaDisp}
-        ${r.quarter?`<span style="margin-top:4px;display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:var(--blue-lt);color:var(--blue);font-family:var(--mono)">${r.quarter}</span>`:''}
+        <div class="tarifa-row">${tarifaDisp}${efaChip}</div>
+        ${tarifaMeta}
       </div>
-      <div class="cell" ${cmTip}>
-        <span class="clbl">Contrato / Vigencia</span>
+      <div class="cell">
         ${contratoDisp}
         ${vigHtml}
-        ${r.quarter?`<span style="margin-top:4px;display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:var(--blue-lt);color:var(--blue);font-family:var(--mono)">${r.quarter}</span>`:''}
       </div>
-      <div class="cell"><span class="clbl">Estado</span><span class="sbadge ${stCls(r.estado)}">${r.estado||'—'}</span>
-        <span style="margin-top:5px;display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;${efaSt==='yes'?'background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-bd)':'background:var(--faint);color:var(--muted);border:1px solid var(--border)'}">${efaSt==='yes'?'⚡ EFA aplica':efaSt==='no'?'No aplica':efaSt==='none'?'Sin EFA':'⚠ Verificar ETD'}</span>
+      <div class="cell">
+        <span class="sbadge ${stCls(r.estado)}">${esc(r.estado||'—')}</span>
       </div>
-      <div class="cell"><span class="clbl">⚡ EFA / Vigencia</span>${efaDisp}</div>
-      <div class="total-cell">${totalContent}</div>
+      <div class="total-cell${hasEfaRing?' has-efa':''}">${totalContent}</div>
     </div>
-    ${r.comentario?`<div class="comment-row"><span>⚠</span><span>${r.comentario}</span></div>`:''}
   </div>`;
 }
 
