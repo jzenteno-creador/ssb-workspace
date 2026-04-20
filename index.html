@@ -54,9 +54,17 @@ body.light{
   --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
 }
 /* ── ADMIN BID TABLE (zebra + selección via classes, sin !important) ── */
+.bid-xls{table-layout:fixed}
+.bid-xls thead th{position:sticky;top:0;z-index:3;background:var(--header-bg);color:#fff}
 .bid-xls tbody tr:nth-child(odd) td{background:var(--faint)}
 .bid-xls tbody tr.bid-row-selected td{background:var(--blue-lt)}
 .bid-xls tbody tr.bid-row-highlighted td{background:var(--amber-bg)}
+/* D8: class-doubling eleva specificity (0,3,3) sobre zebra nth-child (0,2,3) — sin esto, bid-row-selected/highlighted perdían bg en filas odd */
+.bid-xls tbody tr.bid-row-selected.bid-row-selected td{background:var(--blue-lt)}
+.bid-xls tbody tr.bid-row-highlighted.bid-row-highlighted td{background:var(--amber-bg)}
+/* Hover tint purple sobre estados selected/highlighted (commit 6 decisión N) — color-mix requiere Chromium 111+ */
+.bid-xls tbody tr.bid-row-selected:hover td{background:color-mix(in srgb,var(--blue-lt) 85%,var(--purple) 15%)}
+.bid-xls tbody tr.bid-row-highlighted:hover td{background:color-mix(in srgb,var(--amber-bg) 85%,var(--purple) 15%)}
 body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column}
 
 /* ── A3: Accessible focus ring (WCAG AA) ── */
@@ -350,8 +358,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .gc-bar.open-end{border-right:2px dashed rgba(255,255,255,.8)}
 .gc-bar.expired{opacity:.4}
 .bid-cell{border:1px solid transparent;transition:background .08s,border-color .08s}
+/* Intensificación purple progresiva en hover/compound — rgba no-tokenizado intencionalmente para gradiente 4% → 8% → 12% (D3 commit 6) */
 .bid-cell:hover{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.4)}
-.bid-cell:focus,.bid-cell.editing{outline:2px solid #7c3aed;outline-offset:-2px;background:#fff}
 #bid-table-wrap table tr:hover td{background:rgba(124,58,237,.04)}
 #bid-table-wrap table tr:hover td.bid-cell:hover{background:rgba(124,58,237,.12)}
 .gc-today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:5;pointer-events:none;box-shadow:0 0 4px var(--red)}
@@ -760,6 +768,8 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
   </defs>
 </svg>
 
@@ -1011,6 +1021,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="bid-filter-info"></span>
   </div>
   <div class="efa-content" style="overflow:auto">
+    <!-- WCAG-driven exception (D7): #7c3aed fijo preserva 5.83:1 con #fff en ambos modos. var(--purple) dark da 2.88:1 (<4.5 AA). Mismo patrón que commit 5 D2 badges BID/ALTA. -->
     <div id="bid-bulk-bar" style="display:none;position:sticky;top:0;z-index:5;background:#7c3aed;color:#fff;padding:10px 14px;font-size:12px;font-weight:600;display:none">
       <span id="bid-bulk-count">0 filas seleccionadas</span>
       <button class="efa-btn-sec" onclick="bidBulkAction('estado')" style="margin-left:12px">Cambiar estado</button>
@@ -1018,7 +1029,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
       <button class="efa-btn-sec" onclick="bidClearSelection()" style="margin-left:6px">Cancelar</button>
     </div>
     <div id="bid-table-wrap"></div>
-    <div id="bid-impact-panel" style="display:none;border-top:2px solid var(--purple);padding:14px;background:#faf5ff">
+    <div id="bid-impact-panel" style="display:none;border-top:2px solid var(--purple);padding:14px;background:var(--purple-bg)">
       <div style="font-weight:700;color:var(--purple);margin-bottom:8px;display:flex;align-items:center;gap:6px"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Buques afectados por la fila seleccionada</div>
       <div id="bid-impact-body"></div>
     </div>
@@ -4367,11 +4378,12 @@ function _renderAdminBIDImpl(){
   const list=getBidFiltered();
   document.getElementById('bid-filter-info').textContent=`Mostrando ${list.length} de ${rates.length}`;
   const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
-  // Estilo planilla Excel: header sticky azul oscuro, filas alternas, font 11px, bordes finos
-  const COLW={Carrier:'90px',Origen:'120px',Destino:'120px',Equipo:'80px','Tarifa USD':'90px',Contrato:'100px',Desde:'85px',Hasta:'85px',Estado:'100px',Quarter:'70px',Comentario:'180px',Acciones:'80px'};
-  let html='<table class="bid-xls" style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font);table-layout:auto"><thead><tr style="background:var(--header-bg);color:#fff;position:sticky;top:0;z-index:2">';
-  html+='<th style="padding:5px 6px;width:28px;border:1px solid var(--border)"><input type="checkbox" id="bid-check-all" onchange="bidToggleAll(this.checked)"></th>';
-  ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{html+=`<th style="padding:5px 6px;text-align:left;border:1px solid var(--border);white-space:nowrap;font-weight:700;font-size:11px;min-width:${COLW[h]||'80px'}">${h}</th>`;});
+  // Estilo planilla Excel: header sticky (CSS .bid-xls thead th), filas alternas, font 11px, table-layout:fixed (CSS .bid-xls)
+  // Widths absolutos commit 6 decisión M: suma 1388px, cabe 1440 viewport; Comentario 340 con ellipsis+data-tip
+  const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:85,Hasta:85,Estado:100,Quarter:70,Comentario:340,Acciones:80};
+  let html='<table class="bid-xls" style="width:1388px;border-collapse:collapse;font-size:11px;font-family:var(--font)"><thead><tr>';
+  html+=`<th style="padding:5px 6px;width:${COLW.CHK}px;border:1px solid var(--border)"><input type="checkbox" id="bid-check-all" onchange="bidToggleAll(this.checked)"></th>`;
+  ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{html+=`<th style="padding:5px 6px;text-align:left;border:1px solid var(--border);white-space:nowrap;font-weight:700;font-size:11px;width:${COLW[h]}px">${h}</th>`;});
   html+='</tr></thead><tbody>';
   list.forEach((r,idx)=>{
     const ri=r._rowIndex;
@@ -4383,7 +4395,14 @@ function _renderAdminBIDImpl(){
     const dis=ri==null;
     html+=`<tr class="bid-row ${rowCls}" data-key="${k}" data-ri="${ri||''}" onclick="bidSelectRow('${k}',${ri||'null'})">`;
     html+=`<td style="padding:4px 6px;text-align:center;border:1px solid var(--border)" onclick="event.stopPropagation()"><input type="checkbox" ${sel?'checked':''} ${dis?'disabled':''} onchange="bidToggleSel(${ri||'null'},this.checked)"></td>`;
-    const cell=(field,val,editable=true)=>{const v=val==null?'':val;const base='padding:4px 6px;border:1px solid var(--border);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';if(editable&&!dis)return `<td class="bid-cell" data-field="${field}" data-ri="${ri}" style="${base};cursor:cell" onclick="event.stopPropagation();bidInlineEdit(this,${ri},'${field}')">${v}</td>`;return `<td style="${base}">${v}</td>`;};
+    const cell=(field,val,editable=true)=>{
+      const v=val==null?'':val;
+      const base='padding:4px 6px;border:1px solid var(--border);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      // data-tip con texto completo para Comentario largo (patrón commit 4, decisión M commit 6)
+      const tip=field==='comentario'&&v&&String(v).length>30?` data-tip="${esc(v)}"`:'';
+      if(editable&&!dis)return `<td class="bid-cell" data-field="${field}" data-ri="${ri}"${tip} style="${base};cursor:cell" onclick="event.stopPropagation();bidInlineEdit(this,${ri},'${field}')">${esc(v)}</td>`;
+      return `<td style="${base}"${tip}>${esc(v)}</td>`;
+    };
     html+=cell('carrier',r.carrier);
     html+=cell('origen',r.origen);
     html+=cell('destino',r.destino);
@@ -4395,7 +4414,7 @@ function _renderAdminBIDImpl(){
     html+=cell('estado',r.estado);
     html+=cell('quarter',r.quarter);
     html+=cell('comentario',r.comentario);
-    html+=`<td style="padding:4px 6px;white-space:nowrap;border:1px solid var(--border)" onclick="event.stopPropagation()">${ri!=null?`<button onclick="openBidModal(${ri})" title="Editar">✏️</button> <button onclick="deleteBidRow(${ri})" title="Eliminar" style="background:var(--red-bg);color:var(--red)">🗑</button>`:'<span style="color:var(--muted);font-size:10px">sin _rowIndex</span>'}</td>`;
+    html+=`<td style="padding:4px 6px;white-space:nowrap;border:1px solid var(--border)" onclick="event.stopPropagation()">${ri!=null?`<button onclick="openBidModal(${ri})" title="Editar" aria-label="Editar"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg></button> <button onclick="deleteBidRow(${ri})" title="Eliminar" aria-label="Eliminar" style="background:var(--red-bg);color:var(--red)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`:'<span style="color:var(--muted);font-size:10px">sin _rowIndex</span>'}</td>`;
     html+='</tr>';
   });
   html+='</tbody></table>';
@@ -4459,7 +4478,7 @@ function bidRenderImpact(){
   if(!ships.length){body.innerHTML='<div style="color:var(--muted);font-size:11px">Ningún buque en la vigencia de esta tarifa.</div>';return;}
   body.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${ships.length} buque${ships.length!==1?'s':''} dentro de la vigencia ${fDate(r.desde)} → ${r.hasta?fDate(r.hasta):'∞'}</div>`+
     '<table style="width:100%;border-collapse:collapse;font-size:11px">'+
-    ships.slice(0,30).map(s=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px;font-weight:600">${s.VESSEL||'—'}</td><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">${fDate(s.ETD)}</td><td style="padding:4px 8px">${s.ORIGEN}→${s.DESTINO}</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--purple)">${r.tarifa!=null?usd(r.tarifa):'—'}</td></tr>`).join('')+
+    ships.slice(0,30).map(s=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px;font-weight:600">${esc(s.VESSEL||'—')}</td><td style="padding:4px 8px;font-family:var(--mono);font-size:10px">${fDate(s.ETD)}</td><td style="padding:4px 8px">${esc(s.ORIGEN||'')}→${esc(s.DESTINO||'')}</td><td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--purple)">${r.tarifa!=null?usd(r.tarifa):'—'}</td></tr>`).join('')+
     '</table>'+(ships.length>30?`<div style="font-size:10px;color:var(--muted);margin-top:6px">+${ships.length-30} más...</div>`:'');
 }
 
@@ -4474,7 +4493,8 @@ function bidInlineEdit(td,ri,field){
   inp.type=isDate?'date':(isNum?'number':'text');
   if(isNum){inp.step='0.01';inp.min='0';}
   inp.value=isDate?(toISO(cur)||''):(cur||'');
-  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px';
+  // commit 6 decisión I: background/color explícitos para evitar patch blanco en dark (UA input default ignora color-scheme sin declaración)
+  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px;background:var(--surface);color:var(--text)';
   const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();inp.select();
   let done=false;
   const cancel=()=>{if(done)return;done=true;td.innerHTML=orig;};
