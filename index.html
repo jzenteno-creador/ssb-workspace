@@ -334,7 +334,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .efa-btn-pri:hover{filter:brightness(1.1);box-shadow:0 2px 8px rgba(109,40,217,.3)}
 .efa-btn-sec{padding:7px 14px;background:var(--surface);color:var(--purple);border:1.5px solid var(--purple-bd);border-radius:7px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .efa-btn-sec:hover{background:var(--purple-bg)}
-.efa-content{padding:20px 24px}
+.efa-content{padding:20px 24px;flex:1;overflow-y:auto;min-height:0}
 .efa-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px 24px;color:var(--muted);gap:10px}
 /* Gantt EFA */
 .gantt-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:72vh;position:relative}
@@ -907,6 +907,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     <div class="results-bar">
       <span class="results-title">Resultados</span>
       <span class="results-ct" id="res-ct"></span>
+      <!-- D9: Brand colors #e53e3e PDF (Adobe), #276749 Excel (Microsoft). No tokenizados — reconocimiento visual por filetype intencional. -->
       <div style="display:flex;gap:6px">
         <button onclick="exportTarifasPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
         <button onclick="exportTarifasExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
@@ -1095,6 +1096,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     <div class="results-bar">
       <span class="results-title">Schedule de buques</span>
       <span class="results-ct" id="sched-ct"></span>
+      <!-- D9: Brand colors #e53e3e PDF (Adobe), #276749 Excel (Microsoft). No tokenizados — reconocimiento visual por filetype intencional. -->
       <div style="display:flex;gap:6px">
         <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
         <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
@@ -2249,7 +2251,8 @@ function efaInlineEdit(td, rowIndex, field){
   inp.type=isDate?'date':'number';
   if(!isDate){inp.step='0.01';inp.min='0';}
   inp.value=isDate?(toISO(cur)||''):(cur||'');
-  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px';
+  // commit 7 fix A (paridad con commit 6 decisión I): background/color explícitos para evitar patch blanco en dark (UA input default ignora color-scheme sin declaración)
+  inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px;background:var(--surface);color:var(--text)';
   const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();inp.select();
   let done=false;
   const cancel=()=>{if(done)return;done=true;td.innerHTML=orig;};
@@ -2755,7 +2758,6 @@ async function confirmImport(){
         FIN    :isoToDMY(r.hasta||''),
         COMENTARIO:r.comentario||'',
       };
-      console.log('[IMPORT] enviando fila',i+1,r._status,data);
       let resp;
       if(r._status==='continuation'){
         // 1) cerrar el período anterior con fin = nuevo_desde - 1
@@ -2775,7 +2777,6 @@ async function confirmImport(){
       } else {
         resp=await postEfaAction({action:'addEFA',data});
       }
-      console.log('[IMPORT] respuesta fila',i+1,resp);
       done++;
     }catch(e){
       fail++;
@@ -2828,7 +2829,6 @@ function findEmptyEfaRow(carrier,origen,destino,equipo){
 async function smartAddEFA(data){
   const empty=findEmptyEfaRow(data.CARRIER,data.ORIGEN,data.DESTINO,data.EQUIPO);
   if(empty){
-    console.log('[smartAdd] llenando fila vacía existente _rowIndex='+empty._rowIndex);
     return await postEfaAction({action:'updateEFA',rowIndex:empty._rowIndex,data});
   }
   return await postEfaAction({action:'addEFA',data});
@@ -2848,7 +2848,6 @@ async function postEfaAction(payload){
   }
   if(j&&j.error)throw new Error(j.error);
   if(j&&j.success===false)throw new Error(j.message||'Apps Script reportó fallo');
-  console.log('Apps Script OK',payload.action,j);
   return j;
 }
 
@@ -3039,7 +3038,6 @@ function loadEFA(data){
         comentario:g(fk('COMENTARIO','OBSERV')),
       };
     });
-  console.log('[EFA] cargados', efaSheet.length, 'registros');
 }
 
 // Devuelve el registro EFA que aplica a (carrier+origen+destino+equipo) para una ETD.
@@ -4261,7 +4259,7 @@ function exportSchedExcel(){
         </div>
         <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:700;color:var(--muted)">Comentario</label><input id="bid-m-comentario" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
       </div>
-      <div id="bid-m-impact" style="margin-top:14px;padding:10px;background:#faf5ff;border-left:3px solid var(--purple);border-radius:4px;font-size:11px;display:none"></div>
+      <div id="bid-m-impact" style="margin-top:14px;padding:10px;background:var(--purple-bg);border-left:3px solid var(--purple);border-radius:4px;font-size:11px;display:none"></div>
     </div>
     <div class="efa-mod-ft">
       <div class="efa-mod-ft-l"><button class="efa-mod-btn" id="bid-m-del" onclick="deleteBidFromModal()" style="display:none;background:#fee2e2;color:#991b1b">🗑 Eliminar</button></div>
