@@ -699,22 +699,38 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 [data-tip]{position:relative;cursor:help}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1a2540;color:#fff;font-size:11px;font-family:var(--font);padding:7px 11px;border-radius:7px;white-space:normal;max-width:320px;min-width:160px;line-height:1.55;z-index:9999;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 [data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a2540;z-index:9999;pointer-events:none}
-/* Splash screen */
-.splash{position:fixed;inset:0;background:var(--header-bg);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .45s ease-out}
+/* Splash screen — Dirección A · Cartografía viva */
+.splash{position:fixed;inset:0;background:#0b0f17;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .45s ease-out;overflow:hidden;isolation:isolate}
 .splash.hide{transform:translateY(-100%)}
-.splash img{max-width:240px;width:60vw;height:auto;margin-bottom:24px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.4))}
-.splash .splash-ttl{color:#fff;font-size:28px;font-weight:800;letter-spacing:.18em;font-family:var(--mono)}
-.splash .splash-sub{color:rgba(255,255,255,.6);font-size:14px;margin-top:6px;letter-spacing:.05em}
-.splash .splash-status{margin-top:28px;color:rgba(255,255,255,.65);font-size:13px;letter-spacing:.04em;display:flex;align-items:center;gap:10px;min-height:20px}
+.splash > *:not(.splash-bg){position:relative;z-index:2}
+/* Background host */
+.splash-bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+.splash-bg .route-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.splash-bg .route{fill:none;stroke:#a78bfa;stroke-width:1;stroke-linecap:round;opacity:0;stroke-dasharray:var(--len,800);stroke-dashoffset:var(--len,800);animation:route-trace var(--dur,11s) ease-in-out infinite;animation-delay:var(--delay,0s)}
+.splash-bg .route--teal{stroke:#5eead4}
+@keyframes route-trace{0%{stroke-dashoffset:var(--len,800);opacity:0}15%{opacity:.55}50%{stroke-dashoffset:0;opacity:.55}85%{opacity:.25}100%{stroke-dashoffset:calc(var(--len,800) * -1);opacity:0}}
+.splash-bg .node{fill:#a78bfa;opacity:.5;animation:node-pulse 3.2s ease-in-out infinite}
+.splash-bg .node--teal{fill:#5eead4}
+@keyframes node-pulse{0%,100%{r:1.5;opacity:.35}50%{r:2.5;opacity:.7}}
+.splash-bg .node-halo{fill:none;stroke:#a78bfa;stroke-width:.5;opacity:0;animation:node-halo 3.2s ease-out infinite}
+.splash-bg .node-halo--teal{stroke:#5eead4}
+@keyframes node-halo{0%{r:2;opacity:.5}100%{r:18;opacity:0}}
+.splash-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,#0b0f17 85%);pointer-events:none}
+/* Content */
+.splash img{max-width:200px;width:60vw;height:auto;margin-bottom:24px;image-rendering:-webkit-optimize-contrast;filter:drop-shadow(0 2px 8px rgba(0,0,0,.45))}
+.splash .splash-ttl{color:#e8ecf3;font-size:22px;font-weight:800;letter-spacing:.18em;font-family:var(--mono)}
+.splash .splash-sub{color:#e8ecf3;opacity:.6;font-size:12px;font-weight:500;margin-top:8px;letter-spacing:.05em}
+.splash .splash-sep{width:28px;height:1px;background:#1f2634;margin:22px 0 6px}
+.splash .splash-status{color:#8b94a8;font-size:12px;font-family:var(--mono);letter-spacing:.02em;display:inline-flex;align-items:center;gap:10px;min-height:20px}
 .splash .splash-status.ok{color:#4ade80}
 .splash .splash-status.err{color:#f87171}
-.splash .splash-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#a78bfa;border-radius:50%;animation:splash-spin .8s linear infinite;display:inline-block}
+.splash .splash-spin{width:14px;height:14px;border:2px solid rgba(167,139,250,.18);border-top-color:#a78bfa;border-radius:50%;animation:splash-spin .8s linear infinite;display:inline-block;will-change:transform}
 @keyframes splash-spin{to{transform:rotate(360deg)}}
-.splash .splash-btn{margin-top:22px;padding:12px 38px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .2s;font-family:inherit;text-transform:uppercase}
-.splash .splash-btn:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.25);cursor:not-allowed}
-.splash .splash-btn:not(:disabled):hover{background:#8b5cf6;transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5)}
+.splash .splash-btn{margin-top:22px;padding:12px 30px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,opacity .2s ease;font-family:var(--font);text-transform:uppercase;box-shadow:0 4px 14px rgba(124,58,237,.35)}
+.splash .splash-btn:disabled{background:#1f2634;color:#8b94a8;cursor:not-allowed;box-shadow:none;opacity:.7}
+.splash .splash-btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.5)}
 .splash .splash-btn:not(:disabled){animation:btn-pulse 1.6s ease-in-out infinite}
-@keyframes btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5)}50%{box-shadow:0 0 0 8px rgba(124,58,237,0)}}
+@keyframes btn-pulse{0%,100%{box-shadow:0 4px 14px rgba(124,58,237,.35)}50%{box-shadow:0 4px 22px rgba(124,58,237,.65)}}
 
 /* ── A9: Respect prefers-reduced-motion (WCAG 2.3.3) ── */
 /* Elimina casi totalmente animaciones/transitions para usuarios con vestibular sensitivity */
@@ -732,6 +748,11 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   .splash-spin,.dot.spin,#rt-live-dot{animation:none !important}
   /* Splash transform-based hide: use instant opacity fade instead */
   .splash{transition:none !important}
+  /* Cartografía viva: freeze routes fully drawn so the network still reads */
+  .splash-bg .route,.splash-bg .node,.splash-bg .node-halo{animation:none !important}
+  .splash-bg .route{stroke-dashoffset:0 !important;opacity:.35 !important}
+  .splash-bg .node{opacity:.5 !important}
+  .splash-bg .node-halo{opacity:0 !important}
   /* Card hover translate: no lift for reduced-motion users */
   .card:hover{transform:none !important}
 }
@@ -774,9 +795,30 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 </svg>
 
 <div class="splash" id="splash">
+  <!-- Cartografía viva: arcos great-circle + nodos puerto pulsantes -->
+  <div class="splash-bg" aria-hidden="true">
+    <svg class="route-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice">
+      <path class="route"       d="M 50 280 Q 180 80, 340 180 T 560 120" style="--len:620;--dur:11s;--delay:0s"/>
+      <path class="route route--teal" d="M 80 120 Q 220 320, 380 240 T 580 300" style="--len:640;--dur:12s;--delay:2.5s"/>
+      <path class="route"       d="M 30 220 Q 160 180, 290 260 T 540 220" style="--len:560;--dur:10s;--delay:5s"/>
+      <path class="route"       d="M 120 340 Q 260 140, 420 260 T 570 60" style="--len:700;--dur:13s;--delay:1.5s"/>
+      <path class="route route--teal" d="M 40 80  Q 200 240, 360 120 T 580 200" style="--len:620;--dur:11s;--delay:7s"/>
+      <path class="route"       d="M 100 380 Q 300 280, 500 340" style="--len:450;--dur:9s;--delay:4s"/>
+      <g><circle class="node"       cx="80"  cy="280" r="2" style="animation-delay:0s"/><circle class="node-halo"       cx="80"  cy="280" style="animation-delay:0s"/></g>
+      <g><circle class="node node--teal" cx="340" cy="180" r="2" style="animation-delay:.8s"/><circle class="node-halo node-halo--teal" cx="340" cy="180" style="animation-delay:.8s"/></g>
+      <g><circle class="node"       cx="560" cy="120" r="2" style="animation-delay:1.6s"/><circle class="node-halo"       cx="560" cy="120" style="animation-delay:1.6s"/></g>
+      <g><circle class="node"       cx="290" cy="260" r="2" style="animation-delay:.4s"/><circle class="node-halo"       cx="290" cy="260" style="animation-delay:.4s"/></g>
+      <g><circle class="node node--teal" cx="540" cy="220" r="2" style="animation-delay:1.2s"/><circle class="node-halo node-halo--teal" cx="540" cy="220" style="animation-delay:1.2s"/></g>
+      <g><circle class="node"       cx="420" cy="260" r="2" style="animation-delay:2s"/><circle class="node-halo"       cx="420" cy="260" style="animation-delay:2s"/></g>
+      <g><circle class="node node--teal" cx="360" cy="120" r="2" style="animation-delay:2.4s"/><circle class="node-halo node-halo--teal" cx="360" cy="120" style="animation-delay:2.4s"/></g>
+      <g><circle class="node"       cx="500" cy="340" r="2" style="animation-delay:1s"/><circle class="node-halo"       cx="500" cy="340" style="animation-delay:1s"/></g>
+    </svg>
+    <div class="splash-vignette"></div>
+  </div>
   <img src="assets/SSB_logo.png" alt="SSB" onerror="this.style.display='none'">
   <div class="splash-ttl">SSB INTERNATIONAL</div>
   <div class="splash-sub">Herramientas Operativas</div>
+  <div class="splash-sep" aria-hidden="true"></div>
   <div class="splash-status" id="splash-status"><span class="splash-spin"></span> Sincronizando información…</div>
   <button class="splash-btn" id="splash-btn" disabled onclick="document.getElementById('splash').classList.add('hide');setTimeout(()=>document.getElementById('splash').remove(),500)">Ingresar</button>
 </div>
