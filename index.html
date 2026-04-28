@@ -1398,11 +1398,18 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <datalist id="tt-dl-aduanas"></datalist>
       </div>
       <div id="tt-edicion-carriers" data-subtab="carriers" style="display:none">
-        <div class="empty">
-          <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-package"/></svg></div>
-          <div class="empty-ttl">Modo Edición · Carriers</div>
-          <div class="empty-sub">La edición inline de carriers se habilita en el próximo commit.</div>
+        <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
+          <span class="results-title">Carriers — edición</span>
+          <span class="results-ct" id="tt-edit-carriers-ct"></span>
+          <span id="tt-edit-carriers-pending" style="display:none;font-size:11px;font-weight:500;color:var(--amber)"></span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button type="button" class="btn-clear" data-action="tt-add-carrier" title="Agregar nuevo carrier"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg> Nuevo carrier</button>
+            <button type="button" class="btn-clear" data-action="tt-discard-carriers" title="Descartar cambios de carriers" style="display:none" id="tt-btn-cdiscard">Descartar</button>
+            <button type="button" class="btn-clear" data-action="tt-save-carriers" title="Guardar cambios de carriers" style="display:none;border-color:var(--blue);color:var(--blue);background:var(--blue-lt)" id="tt-btn-csave"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-check"/></svg> Guardar</button>
+          </div>
         </div>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 .6rem;line-height:1.5">El % de seguro se ingresa en porcentaje legible (ej: <code>0,5</code> = 0,5% s/FOB/FCA). Internamente se guarda como <code>0.005</code> en la DB. Solo AGUILUCHO debería tener seguro &gt; 0 según el contrato actual de Dow.</p>
+        <div id="tt-edit-carriers-table"></div>
       </div>
     </div>
   </div>
@@ -5950,10 +5957,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   // ── State del modo Edición ──
   let _ttEditorName     = null;     // se carga lazy desde localStorage
-  let _ttPendingChanges = {};       // { id → { field: newValue, ... } } cambios sobre filas existentes
+  let _ttPendingChanges = {};       // { id → { field: newValue, ... } } cambios sobre tarifas existentes
   let _ttPendingNew     = [];       // tarifas nuevas en sesión, con _tempId 'tmp-N'
-  let _ttPendingNewSeq  = 0;        // contador secuencial para _tempId
+  let _ttPendingNewSeq  = 0;        // contador secuencial para _tempId (tarifas)
   let _ttModalCallback  = null;     // función a ejecutar al confirmar el modal
+
+  // State del modo Edición · Carriers
+  let _ttPendingCarrierChanges = {};  // { id → { field: newValue, ... } } sobre carriers existentes
+  let _ttPendingCarrierNew     = [];  // carriers nuevos
+  let _ttPendingCarrierNewSeq  = 0;
 
   const STORAGE = {
     paises:       'tt_filtro_paises',
@@ -6648,6 +6660,328 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     });
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // MODO EDICIÓN · CARRIERS
+  // ════════════════════════════════════════════════════════════════
+
+  function _hasPendingCarrierChanges(){
+    return Object.keys(_ttPendingCarrierChanges).length > 0 || _ttPendingCarrierNew.length > 0;
+  }
+  function _updateCarrierPendingPill(){
+    const pill = document.getElementById('tt-edit-carriers-pending');
+    const btnSave = document.getElementById('tt-btn-csave');
+    const btnDis  = document.getElementById('tt-btn-cdiscard');
+    const n = Object.keys(_ttPendingCarrierChanges).length + _ttPendingCarrierNew.length;
+    if(n > 0){
+      if(pill){ pill.style.display = ''; pill.textContent = n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':''); }
+      if(btnSave) btnSave.style.display = '';
+      if(btnDis)  btnDis.style.display = '';
+    } else {
+      if(pill) pill.style.display = 'none';
+      if(btnSave) btnSave.style.display = 'none';
+      if(btnDis)  btnDis.style.display = 'none';
+    }
+  }
+  function _getMergedCarrier(orig){
+    const ch = _ttPendingCarrierChanges[orig.id];
+    if(!ch) return orig;
+    return { ...orig, ...ch };
+  }
+
+  // Display ↔ DB conversión: "0,5" ↔ 0.005 (siempre divide/multiplica por 100).
+  function _seguroDecToDisplay(v){
+    if(v == null || v === '') return '';
+    const n = Number(v);
+    if(!isFinite(n)) return '';
+    return (n * 100).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  }
+  function _seguroDisplayToDec(v){
+    if(v == null || v === '') return 0;
+    const cleaned = String(v).replace(',', '.');
+    const n = parseFloat(cleaned);
+    if(!isFinite(n)) return null;
+    return Math.round((n / 100) * 10000) / 10000;  // numeric(6,4)
+  }
+
+  function _renderCarrierRow(c, id, tempId, rowClass){
+    const COLS = '1.6fr 1fr .9fr .55fr';
+    const idAttr  = id     ? `data-cid="${esc(id)}"`         : '';
+    const tidAttr = tempId ? `data-ctempid="${esc(tempId)}"` : '';
+    const cls = rowClass || '';
+    const seguroDisp = _seguroDecToDisplay(c.seguro_pct);
+    const activoChecked = (c.activo === false) ? '' : 'checked';
+    const delBtn = id
+      ? `<button type="button" class="btn-clear" data-action="tt-soft-delete-carrier" data-cid="${esc(id)}" title="Desactivar carrier" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`
+      : `<button type="button" class="btn-clear" data-action="tt-discard-carrier-new" data-ctempid="${esc(tempId)}" title="Descartar carrier nuevo" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>`;
+    return `<div class="sched-row-wrap ${cls}" ${idAttr} ${tidAttr}>
+      <div class="sched-main-row" style="grid-template-columns:${COLS};padding:6px 12px;gap:6px;align-items:center">
+        <input type="text" class="tt-carrier-cell-edit" data-cfield="nombre" value="${esc(c.nombre||'')}" placeholder="Nombre del carrier" autocomplete="off">
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="text" class="tt-carrier-cell-edit" data-cfield="seguro_pct" value="${esc(seguroDisp)}" placeholder="0" style="width:70px;text-align:right">
+          <span style="font-size:11px;color:var(--muted)">% s/FOB/FCA</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" class="tt-carrier-cell-edit" data-cfield="activo" ${activoChecked}>
+          <span style="font-size:12px;color:var(--text)">Activo</span>
+        </label>
+        <div style="display:flex;align-items:center;justify-content:flex-end">${delBtn}</div>
+      </div>
+    </div>`;
+  }
+
+  function _renderCarriers(){
+    const el = document.getElementById('tt-edit-carriers-table');
+    const ct = document.getElementById('tt-edit-carriers-ct');
+    if(!el || !_ttCarriers) return;
+    const COLS = '1.6fr 1fr .9fr .55fr';
+    const head = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
+      <span class="sth">Nombre</span>
+      <span class="sth">% Seguro</span>
+      <span class="sth">Estado</span>
+      <span class="sth"></span>
+    </div>`;
+    const rowsExist = _ttCarriers.map(orig => {
+      const c = _getMergedCarrier(orig);
+      const cls = _ttPendingCarrierChanges[orig.id] ? 'tt-row-changed' : '';
+      return _renderCarrierRow(c, orig.id, null, cls);
+    }).join('');
+    const rowsNew = _ttPendingCarrierNew.map(c => _renderCarrierRow(c, null, c._tempId, 'tt-row-new')).join('');
+    el.innerHTML = head + rowsExist + rowsNew;
+    if(ct) ct.textContent = (_ttCarriers.length + _ttPendingCarrierNew.length) + ' carriers en total';
+    _updateCarrierPendingPill();
+  }
+
+  function _onCarrierCellChange(input){
+    const wrap = input.closest('.sched-row-wrap');
+    if(!wrap) return;
+    const field  = input.dataset.cfield;
+    const id     = wrap.dataset.cid;
+    const tempId = wrap.dataset.ctempid;
+    let value;
+    if(field === 'activo')             value = input.checked;
+    else if(field === 'seguro_pct')    value = _seguroDisplayToDec(input.value);
+    else                                value = String(input.value || '').toUpperCase().trim();
+
+    if(field === 'nombre' && input.value !== value){
+      const cs = input.selectionStart;
+      input.value = value;
+      try { input.setSelectionRange(cs, cs); } catch(_){}
+    }
+
+    if(tempId){
+      const idx = _ttPendingCarrierNew.findIndex(c => c._tempId === tempId);
+      if(idx >= 0) _ttPendingCarrierNew[idx][field] = value;
+    } else if(id){
+      const orig = _ttCarriers.find(c => c.id === id);
+      if(!orig) return;
+      if(!_ttPendingCarrierChanges[id]) _ttPendingCarrierChanges[id] = {};
+      // Si vuelve al original, eliminar.
+      const origVal = orig[field];
+      const same = (field === 'activo')
+        ? (Boolean(origVal) === Boolean(value))
+        : (Number(origVal) === Number(value) || String(origVal ?? '') === String(value ?? ''));
+      if(same){
+        delete _ttPendingCarrierChanges[id][field];
+        if(!Object.keys(_ttPendingCarrierChanges[id]).length) delete _ttPendingCarrierChanges[id];
+      } else {
+        _ttPendingCarrierChanges[id][field] = value;
+      }
+      if(_ttPendingCarrierChanges[id]) wrap.classList.add('tt-row-changed');
+      else                              wrap.classList.remove('tt-row-changed');
+    }
+    _updateCarrierPendingPill();
+  }
+
+  function _validateCarrier(c){
+    const errs = [];
+    if(!String(c.nombre || '').trim()) errs.push('nombre vacío');
+    const s = Number(c.seguro_pct);
+    if(c.seguro_pct === null || !isFinite(s) || s < 0 || s > 1) errs.push('% seguro inválido (debe ser entre 0 y 100%)');
+    return errs;
+  }
+
+  function _carrierNameDuplicate(name, ignoreId, ignoreTempId){
+    const n = String(name||'').toUpperCase().trim();
+    if(!n) return false;
+    if(_ttCarriers.some(c => c.id !== ignoreId && String(c.nombre||'').toUpperCase().trim() === n)) return true;
+    if(_ttPendingCarrierNew.some(c => c._tempId !== ignoreTempId && String(c.nombre||'').toUpperCase().trim() === n)) return true;
+    return false;
+  }
+
+  window.addTTCarrier = function(){
+    _ensureEditor(() => {
+      _ttPendingCarrierNewSeq++;
+      _ttPendingCarrierNew.push({
+        _tempId:'ctmp-' + _ttPendingCarrierNewSeq,
+        nombre:'', seguro_pct:0, activo:true
+      });
+      _renderCarriers();
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#tt-edit-carriers-table .sched-row-wrap[data-ctempid]');
+        const last = rows[rows.length - 1];
+        const inp = last && last.querySelector('input[data-cfield="nombre"]');
+        if(inp) inp.focus();
+      }, 30);
+    });
+  };
+
+  window.discardTTCarrierRowNew = function(tempId){
+    _ttPendingCarrierNew = _ttPendingCarrierNew.filter(c => c._tempId !== tempId);
+    _renderCarriers();
+  };
+
+  window.discardTTCarriersAll = function(){
+    if(!_hasPendingCarrierChanges()) return;
+    const n = Object.keys(_ttPendingCarrierChanges).length + _ttPendingCarrierNew.length;
+    _showModal({
+      title: 'Descartar cambios en carriers',
+      subtitle: 'Vas a perder ' + n + ' cambio(s) sin guardar.',
+      multiline: false,
+      label:'',
+      placeholder:'',
+      confirmText: 'Sí, descartar',
+      onConfirm: () => {
+        _ttPendingCarrierChanges = {};
+        _ttPendingCarrierNew = [];
+        _ttPendingCarrierNewSeq = 0;
+        _renderCarriers();
+        return true;
+      }
+    });
+  };
+
+  window.softDeleteTTCarrier = function(id){
+    const c = _ttCarriers.find(x => x.id === id);
+    if(!c) return;
+    // Bloquear si tiene tarifas activas (espejo del FK ON DELETE RESTRICT, pero en cliente
+    // porque acá hacemos soft delete).
+    const tarifasActivas = (_ttData||[]).filter(t => t.carrier_id === id);
+    if(tarifasActivas.length > 0){
+      alert('No se puede desactivar este carrier — tiene ' + tarifasActivas.length + ' tarifa(s) activa(s).\n\nBorrá primero las tarifas asociadas (sub-tab "Tarifas") o desactivalas, y volvé acá.');
+      return;
+    }
+    _ensureEditor(() => {
+      _showModal({
+        title: 'Desactivar carrier',
+        subtitle: 'Carrier: ' + c.nombre + '. No tiene tarifas activas, se puede desactivar sin problemas.',
+        label: 'Motivo',
+        placeholder: 'Ej: Carrier dado de baja por Dow el 28/04/2026',
+        multiline: true,
+        confirmText: 'Confirmar',
+        onConfirm: async (motivo) => {
+          const m = String(motivo||'').trim();
+          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          const { error } = await supa
+            .from('tarifas_terrestres_carriers')
+            .update({
+              activo: false,
+              updated_at: new Date().toISOString(),
+              updated_by: _ttEditorName,
+              update_reason: m
+            })
+            .eq('id', id);
+          if(error){ alert('Error: ' + error.message); return false; }
+          // Recargar.
+          _ttData = null; _ttLastFetch = 0;
+          await loadTT();
+          switchTTMode('edicion');
+          switchTTEditSubtab('carriers');
+          return true;
+        }
+      });
+    });
+  };
+
+  window.saveTTCarriers = async function(){
+    if(!_hasPendingCarrierChanges()) return;
+    _ensureEditor(() => {
+      // Validaciones cliente.
+      const errs = [];
+      for(const id of Object.keys(_ttPendingCarrierChanges)){
+        const orig = _ttCarriers.find(c => c.id === id);
+        if(!orig) continue;
+        const merged = _getMergedCarrier(orig);
+        const e = _validateCarrier(merged);
+        if(e.length) errs.push('• ' + (merged.nombre||'?') + ': ' + e.join(', '));
+        if(_carrierNameDuplicate(merged.nombre, id, null)) errs.push('• ' + (merged.nombre||'?') + ': nombre duplicado');
+      }
+      for(const c of _ttPendingCarrierNew){
+        const e = _validateCarrier(c);
+        if(e.length) errs.push('• Nuevo "' + (c.nombre||'?') + '": ' + e.join(', '));
+        if(_carrierNameDuplicate(c.nombre, null, c._tempId)) errs.push('• Nuevo "' + (c.nombre||'?') + '": nombre duplicado');
+      }
+      if(errs.length){
+        alert('No se puede guardar — corregí estos problemas:\n\n' + errs.join('\n'));
+        return;
+      }
+      const total = Object.keys(_ttPendingCarrierChanges).length + _ttPendingCarrierNew.length;
+      _showModal({
+        title: 'Guardar cambios de carriers',
+        subtitle: total + ' cambio(s). Carriers no tiene log automático — el motivo queda en updated_by/update_reason de cada fila.',
+        label: 'Motivo',
+        placeholder: 'Ej: Actualización contractual Dow 2026',
+        multiline: true,
+        confirmText: 'Guardar',
+        onConfirm: async (motivo) => {
+          const m = String(motivo||'').trim();
+          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          const nowIso = new Date().toISOString();
+          // UPDATEs
+          for(const id of Object.keys(_ttPendingCarrierChanges)){
+            const orig = _ttCarriers.find(c => c.id === id);
+            if(!orig) continue;
+            const merged = _getMergedCarrier(orig);
+            const payload = {
+              nombre:        String(merged.nombre||'').toUpperCase().trim(),
+              seguro_pct:    Number(merged.seguro_pct) || 0,
+              activo:        merged.activo !== false,
+              updated_at:    nowIso,
+              updated_by:    _ttEditorName,
+              update_reason: m
+            };
+            const { error } = await supa
+              .from('tarifas_terrestres_carriers')
+              .update(payload).eq('id', id);
+            if(error){
+              const msg = (error.code === '23505')
+                ? 'Hay un carrier con ese nombre ya en la DB.'
+                : ('Error UPDATE carrier id=' + id + ': ' + error.message);
+              alert(msg); return false;
+            }
+          }
+          // INSERTs
+          if(_ttPendingCarrierNew.length){
+            const inserts = _ttPendingCarrierNew.map(c => ({
+              nombre:        String(c.nombre||'').toUpperCase().trim(),
+              seguro_pct:    Number(c.seguro_pct) || 0,
+              activo:        c.activo !== false,
+              updated_at:    nowIso,
+              updated_by:    _ttEditorName,
+              update_reason: m
+            }));
+            const { error } = await supa
+              .from('tarifas_terrestres_carriers')
+              .insert(inserts);
+            if(error){
+              const msg = (error.code === '23505')
+                ? 'Hay un carrier nuevo con nombre duplicado.'
+                : ('Error INSERT carriers: ' + error.message);
+              alert(msg); return false;
+            }
+          }
+          _ttPendingCarrierChanges = {};
+          _ttPendingCarrierNew = [];
+          _ttPendingCarrierNewSeq = 0;
+          _ttData = null; _ttLastFetch = 0;
+          await loadTT();
+          switchTTMode('edicion');
+          switchTTEditSubtab('carriers');
+          return true;
+        }
+      });
+    });
+  };
+
   // Caveat: "last-write-wins" si dos editores entran al modo Edición a la vez.
   // Aceptable para uso interno SSB. La UI no señala conflictos en tiempo real.
 
@@ -6822,7 +7156,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     document.querySelectorAll('#panel-tt-dow [data-subtab][id^="tt-edicion-"]').forEach(div => {
       div.style.display = (div.dataset.subtab === sub) ? '' : 'none';
     });
-    if(sub === 'tarifas' && _ttData) _renderEdit();
+    if(sub === 'tarifas'  && _ttData)     _renderEdit();
+    if(sub === 'carriers' && _ttCarriers) _renderCarriers();
   };
 
   // ── Listeners delegados ──
@@ -6853,6 +7188,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(sd){ softDeleteTTRow(sd.dataset.id); return; }
     const dn = e.target.closest('[data-action="tt-discard-new"]');
     if(dn){ discardTTRowNew(dn.dataset.tempid); return; }
+    // Edición carriers
+    if(e.target.closest('[data-action="tt-add-carrier"]')){ addTTCarrier(); return; }
+    if(e.target.closest('[data-action="tt-discard-carriers"]')){ discardTTCarriersAll(); return; }
+    if(e.target.closest('[data-action="tt-save-carriers"]')){ saveTTCarriers(); return; }
+    const sdc = e.target.closest('[data-action="tt-soft-delete-carrier"]');
+    if(sdc){ softDeleteTTCarrier(sdc.dataset.cid); return; }
+    const dnc = e.target.closest('[data-action="tt-discard-carrier-new"]');
+    if(dnc){ discardTTCarrierRowNew(dnc.dataset.ctempid); return; }
     // Outside-click: cerrar drop abierto si el click fue afuera del wrap
     if(_ttOpenKind){
       const wrap = document.getElementById('tt-' + _ttOpenKind + '-wrap');
@@ -6863,7 +7206,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // Inputs editables — change/blur para capturar valor final.
   document.addEventListener('change', (e) => {
     const inp = e.target.closest('.tt-cell-edit');
-    if(inp) _onCellChange(inp);
+    if(inp){ _onCellChange(inp); return; }
+    const cinp = e.target.closest('.tt-carrier-cell-edit');
+    if(cinp){ _onCarrierCellChange(cinp); return; }
   });
   document.addEventListener('keydown', (e) => {
     if(e.key !== 'Enter') return;
