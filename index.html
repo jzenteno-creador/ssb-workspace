@@ -7683,6 +7683,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     document.querySelectorAll('#panel-tt-dow .tt-mode-section').forEach(sec => {
       sec.classList.toggle('active', sec.dataset.mode === mode);
     });
+    if(mode === 'edicion'){
+      // Forzar render de la sub-tab activa (default tarifas) y pedir editor name
+      // si todavía no se identificó al usuario.
+      const activeSub = document.querySelector('#panel-tt-dow .tt-sub-tab--active')?.dataset?.subtab || 'tarifas';
+      switchTTEditSubtab(activeSub);
+      _ensureEditor();
+    }
     if(mode === 'historial' && window.loadTTLog) loadTTLog();
   };
 
