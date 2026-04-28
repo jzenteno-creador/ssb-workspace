@@ -1379,17 +1379,29 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <button type="button" class="tt-sub-tab" data-action="tt-subtab" data-subtab="carriers">Carriers</button>
       </div>
       <div id="tt-edicion-tarifas" data-subtab="tarifas">
-        <div class="empty">
-          <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg></div>
-          <div class="empty-ttl">Modo Edición · Tarifas</div>
-          <div class="empty-sub">La edición inline se habilita en el próximo commit.</div>
+        <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
+          <span class="results-title">Tarifas — edición</span>
+          <span class="results-ct" id="tt-edit-ct"></span>
+          <span id="tt-edit-pending" style="display:none;font-size:11px;font-weight:500;color:var(--amber)"></span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button type="button" class="btn-clear" data-action="tt-add-row" title="Agregar nueva tarifa"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg> Nueva tarifa</button>
+            <button type="button" class="btn-clear" data-action="tt-discard" title="Descartar todos los cambios pendientes" style="display:none" id="tt-btn-discard">Descartar</button>
+            <button type="button" class="btn-clear" data-action="tt-save" title="Guardar cambios" style="display:none;border-color:var(--blue);color:var(--blue);background:var(--blue-lt)" id="tt-btn-save"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-check"/></svg> Guardar</button>
+          </div>
         </div>
+        <div id="tt-edit-table"></div>
+        <!-- Datalists para auto-completar valores existentes (pero permitiendo tipear nuevos) -->
+        <datalist id="tt-dl-carriers"></datalist>
+        <datalist id="tt-dl-departures"></datalist>
+        <datalist id="tt-dl-destinations"></datalist>
+        <datalist id="tt-dl-paises"></datalist>
+        <datalist id="tt-dl-aduanas"></datalist>
       </div>
       <div id="tt-edicion-carriers" data-subtab="carriers" style="display:none">
         <div class="empty">
           <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-package"/></svg></div>
           <div class="empty-ttl">Modo Edición · Carriers</div>
-          <div class="empty-sub">La edición inline se habilita en el próximo commit.</div>
+          <div class="empty-sub">La edición inline de carriers se habilita en el próximo commit.</div>
         </div>
       </div>
     </div>
@@ -1402,6 +1414,21 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-history"/></svg></div>
         <div class="empty-ttl">Modo Historial</div>
         <div class="empty-sub">El log con diff inline se habilita en el próximo commit.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL GENÉRICO (motivo / editor name / confirm) ═══ -->
+  <div class="tt-modal-overlay" id="tt-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="tt-modal-title">
+    <div class="tt-modal-content">
+      <h3 id="tt-modal-title">Confirmar</h3>
+      <p id="tt-modal-subtitle"></p>
+      <label id="tt-modal-label" for="tt-modal-input">Motivo</label>
+      <input type="text" id="tt-modal-input-text" placeholder="">
+      <textarea id="tt-modal-input" rows="3" placeholder=""></textarea>
+      <div class="tt-modal-actions">
+        <button type="button" class="btn-clear" data-action="tt-modal-cancel">Cancelar</button>
+        <button type="button" class="btn-clear" id="tt-modal-confirm" data-action="tt-modal-confirm" style="border-color:var(--blue);color:var(--blue);background:var(--blue-lt)">Confirmar</button>
       </div>
     </div>
   </div>
@@ -5921,6 +5948,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _ttSelAduanas      = null;
   let _ttSelDestinations = null;
 
+  // ── State del modo Edición ──
+  let _ttEditorName     = null;     // se carga lazy desde localStorage
+  let _ttPendingChanges = {};       // { id → { field: newValue, ... } } cambios sobre filas existentes
+  let _ttPendingNew     = [];       // tarifas nuevas en sesión, con _tempId 'tmp-N'
+  let _ttPendingNewSeq  = 0;        // contador secuencial para _tempId
+  let _ttModalCallback  = null;     // función a ejecutar al confirmar el modal
+
   const STORAGE = {
     paises:       'tt_filtro_paises',
     carriers:     'tt_filtro_carriers',
@@ -6162,6 +6196,461 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _doApplyTTFilter();
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // MODO EDICIÓN
+  // ════════════════════════════════════════════════════════════════
+
+  // ── Editor name (persistencia) ──
+  function _loadEditor(){
+    if(_ttEditorName !== null) return _ttEditorName;
+    try {
+      const v = localStorage.getItem('tt_editor_name');
+      _ttEditorName = (v && v.trim()) ? v.trim() : '';
+    } catch(_) { _ttEditorName = ''; }
+    return _ttEditorName;
+  }
+  function _saveEditor(name){
+    const n = String(name || '').trim().slice(0, 50);
+    _ttEditorName = n;
+    try { localStorage.setItem('tt_editor_name', n); } catch(_) {}
+    _renderEditorPill();
+  }
+  function _renderEditorPill(){
+    const pill = document.getElementById('tt-editor-pill');
+    const nm   = document.getElementById('tt-editor-pill-name');
+    if(!pill || !nm) return;
+    const name = _loadEditor();
+    if(name){ nm.textContent = name; pill.style.display = ''; }
+    else    { pill.style.display = 'none'; }
+  }
+
+  // Asegurar que haya editor name antes de cualquier acción de edición.
+  function _ensureEditor(callback){
+    if(_loadEditor()){ if(callback) callback(); return; }
+    _showModal({
+      title: '¿Quién está editando?',
+      subtitle: 'Tu nombre quedará registrado en el historial junto a cada cambio. Solo se pide una vez por navegador.',
+      label: 'Tu nombre',
+      placeholder: 'Ej: Juan Pérez',
+      confirmText: 'Continuar',
+      multiline: false,
+      onConfirm: (val) => {
+        const trimmed = String(val||'').trim();
+        if(!trimmed){ alert('El nombre es obligatorio.'); return false; }
+        _saveEditor(trimmed);
+        if(callback) callback();
+        return true;
+      }
+    });
+  }
+
+  window.changeTTEditor = function(){
+    _showModal({
+      title: 'Cambiar editor',
+      subtitle: 'Tu nombre quedará registrado en cambios futuros. Cambios pendientes (sin guardar) no cambian de autor.',
+      label: 'Tu nombre',
+      value: _loadEditor() || '',
+      placeholder: 'Ej: Juan Pérez',
+      confirmText: 'Guardar',
+      multiline: false,
+      onConfirm: (val) => {
+        const t = String(val||'').trim();
+        if(!t){ alert('El nombre es obligatorio.'); return false; }
+        _saveEditor(t);
+        return true;
+      }
+    });
+  };
+
+  // ── Modal genérico (motivo / nombre editor / confirm) ──
+  function _showModal(opts){
+    const overlay = document.getElementById('tt-modal-overlay');
+    const titleEl = document.getElementById('tt-modal-title');
+    const subEl   = document.getElementById('tt-modal-subtitle');
+    const labelEl = document.getElementById('tt-modal-label');
+    const inpTxt  = document.getElementById('tt-modal-input-text');
+    const inpTa   = document.getElementById('tt-modal-input');
+    const confBtn = document.getElementById('tt-modal-confirm');
+    if(!overlay) return;
+
+    titleEl.textContent = opts.title || 'Confirmar';
+    if(opts.subtitle){ subEl.textContent = opts.subtitle; subEl.style.display = ''; }
+    else             { subEl.style.display = 'none'; }
+    if(opts.label){ labelEl.textContent = opts.label; labelEl.style.display = ''; }
+    else          { labelEl.style.display = 'none'; }
+
+    if(opts.multiline === false){
+      inpTxt.style.display = '';
+      inpTa.style.display  = 'none';
+      inpTxt.value = opts.value || '';
+      inpTxt.placeholder = opts.placeholder || '';
+    } else {
+      inpTxt.style.display = 'none';
+      inpTa.style.display  = '';
+      inpTa.value = opts.value || '';
+      inpTa.placeholder = opts.placeholder || '';
+    }
+    confBtn.textContent = opts.confirmText || 'Confirmar';
+    _ttModalCallback = opts.onConfirm || null;
+    overlay.style.display = '';
+    setTimeout(() => {
+      const target = (opts.multiline === false) ? inpTxt : inpTa;
+      if(target) target.focus();
+    }, 50);
+  }
+  function _hideModal(){
+    const overlay = document.getElementById('tt-modal-overlay');
+    if(overlay) overlay.style.display = 'none';
+    _ttModalCallback = null;
+  }
+  function _modalGetValue(){
+    const inpTa  = document.getElementById('tt-modal-input');
+    const inpTxt = document.getElementById('tt-modal-input-text');
+    if(inpTa  && inpTa.style.display  !== 'none') return inpTa.value;
+    if(inpTxt && inpTxt.style.display !== 'none') return inpTxt.value;
+    return '';
+  }
+  async function _modalConfirm(){
+    if(!_ttModalCallback){ _hideModal(); return; }
+    const val = _modalGetValue();
+    const result = await _ttModalCallback(val);
+    if(result !== false) _hideModal();
+  }
+
+  // ── Validaciones y helpers de edición ──
+  function _ttRowKey(r){
+    const cid = r.carrier_id || ((_ttCarriers||[]).find(c => c.nombre === r.carrier)?.id || '');
+    return `${cid}|${(r.departure||'').toUpperCase().trim()}|${(r.destination||'').toUpperCase().trim()}|${(r.customs_exit||'').toUpperCase().trim()}`;
+  }
+  function _isDuplicate(row, ignoreId, ignoreTempId){
+    const k = _ttRowKey(row);
+    if(_ttData.some(r => r.id !== ignoreId && _ttRowKey(r) === k)) return true;
+    if(_ttPendingNew.some(r => r._tempId !== ignoreTempId && _ttRowKey(r) === k)) return true;
+    return false;
+  }
+  function _validateRow(r){
+    const errs = [];
+    if(!String(r.carrier || '').trim())      errs.push('carrier vacío');
+    if(!String(r.departure || '').trim())    errs.push('departure vacío');
+    if(!String(r.destination || '').trim())  errs.push('destination vacío');
+    if(!String(r.pais_destino || '').trim()) errs.push('país destino vacío');
+    if(!String(r.customs_exit || '').trim()) errs.push('aduana vacía');
+    const f = Number(r.freight_usd);
+    if(!isFinite(f) || f <= 0) errs.push('flete inválido (debe ser > 0)');
+    if(r.carrier && !(_ttCarriers||[]).find(c => c.nombre === String(r.carrier).toUpperCase().trim())){
+      errs.push(`carrier "${r.carrier}" no existe — creá el carrier primero en el sub-tab "Carriers"`);
+    }
+    return errs;
+  }
+  function _hasPendingChanges(){
+    return Object.keys(_ttPendingChanges).length > 0 || _ttPendingNew.length > 0;
+  }
+  function _updatePendingPill(){
+    const pill = document.getElementById('tt-edit-pending');
+    const btnSave = document.getElementById('tt-btn-save');
+    const btnDis  = document.getElementById('tt-btn-discard');
+    const n = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
+    if(n > 0){
+      if(pill){ pill.style.display = ''; pill.textContent = n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':''); }
+      if(btnSave) btnSave.style.display = '';
+      if(btnDis)  btnDis.style.display = '';
+    } else {
+      if(pill) pill.style.display = 'none';
+      if(btnSave) btnSave.style.display = 'none';
+      if(btnDis)  btnDis.style.display = 'none';
+    }
+  }
+  function _getMergedRow(orig){
+    const ch = _ttPendingChanges[orig.id];
+    if(!ch) return orig;
+    return { ...orig, ...ch };
+  }
+
+  // ── Render de la tabla editable ──
+  function _populateDatalists(){
+    const sets = { carriers:new Set(), departures:new Set(), destinations:new Set(), paises:new Set(), aduanas:new Set() };
+    for(const r of (_ttData || [])){
+      if(r.carrier)      sets.carriers.add(r.carrier);
+      if(r.departure)    sets.departures.add(r.departure);
+      if(r.destination)  sets.destinations.add(r.destination);
+      if(r.pais_destino) sets.paises.add(r.pais_destino);
+      if(r.customs_exit) sets.aduanas.add(r.customs_exit);
+    }
+    for(const c of (_ttCarriers || [])) sets.carriers.add(c.nombre);
+    const dlMap = {
+      'tt-dl-carriers':     [...sets.carriers].sort((a,b)=>a.localeCompare(b,'es')),
+      'tt-dl-departures':   [...sets.departures].sort((a,b)=>a.localeCompare(b,'es')),
+      'tt-dl-destinations': [...sets.destinations].sort((a,b)=>a.localeCompare(b,'es')),
+      'tt-dl-paises':       [...sets.paises].sort((a,b)=>a.localeCompare(b,'es')),
+      'tt-dl-aduanas':      [...sets.aduanas].sort((a,b)=>a.localeCompare(b,'es'))
+    };
+    for(const [id, vals] of Object.entries(dlMap)){
+      const dl = document.getElementById(id);
+      if(dl) dl.innerHTML = vals.map(v => `<option value="${esc(v)}">`).join('');
+    }
+  }
+
+  function _renderEditableRow(r, id, tempId, rowClass){
+    const COLS = '1.2fr 1.4fr 1.4fr 1.1fr 1.4fr .9fr .55fr';
+    const idAttr  = id     ? `data-id="${esc(id)}"`         : '';
+    const tidAttr = tempId ? `data-tempid="${esc(tempId)}"` : '';
+    const cls = rowClass || '';
+    const delBtn = id
+      ? `<button type="button" class="btn-clear" data-action="tt-soft-delete" data-id="${esc(id)}" title="Borrar (soft delete)" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`
+      : `<button type="button" class="btn-clear" data-action="tt-discard-new" data-tempid="${esc(tempId)}" title="Descartar fila nueva" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>`;
+    return `<div class="sched-row-wrap ${cls}" ${idAttr} ${tidAttr}>
+      <div class="sched-main-row" style="grid-template-columns:${COLS};padding:6px 12px;gap:6px">
+        <input type="text" class="tt-cell-edit" data-field="carrier"      value="${esc(r.carrier||'')}"      list="tt-dl-carriers"     placeholder="Carrier" autocomplete="off">
+        <input type="text" class="tt-cell-edit" data-field="departure"    value="${esc(r.departure||'')}"    list="tt-dl-departures"   placeholder="Origen"  autocomplete="off">
+        <input type="text" class="tt-cell-edit" data-field="destination"  value="${esc(r.destination||'')}"  list="tt-dl-destinations" placeholder="Destino" autocomplete="off">
+        <input type="text" class="tt-cell-edit" data-field="pais_destino" value="${esc(r.pais_destino||'')}" list="tt-dl-paises"       placeholder="País"    autocomplete="off">
+        <input type="text" class="tt-cell-edit" data-field="customs_exit" value="${esc(r.customs_exit||'')}" list="tt-dl-aduanas"      placeholder="Aduana"  autocomplete="off">
+        <input type="number" class="tt-cell-edit" data-field="freight_usd" value="${esc(r.freight_usd||'')}" min="0.01" step="0.01" placeholder="USD">
+        <div style="display:flex;align-items:center;justify-content:flex-end">${delBtn}</div>
+      </div>
+    </div>`;
+  }
+
+  function _renderEdit(){
+    const el = document.getElementById('tt-edit-table');
+    const ct = document.getElementById('tt-edit-ct');
+    if(!el || !_ttData) return;
+    _populateDatalists();
+    const COLS = '1.2fr 1.4fr 1.4fr 1.1fr 1.4fr .9fr .55fr';
+    const head = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
+      <span class="sth">Carrier</span>
+      <span class="sth">Departure</span>
+      <span class="sth">Destination</span>
+      <span class="sth">País destino</span>
+      <span class="sth">Aduana</span>
+      <span class="sth">Flete USD</span>
+      <span class="sth"></span>
+    </div>`;
+    const rowsExist = _ttData.map(orig => {
+      const r = _getMergedRow(orig);
+      const cls = _ttPendingChanges[orig.id] ? 'tt-row-changed' : '';
+      return _renderEditableRow(r, orig.id, null, cls);
+    }).join('');
+    const rowsNew = _ttPendingNew.map(r => _renderEditableRow(r, null, r._tempId, 'tt-row-new')).join('');
+    el.innerHTML = head + rowsExist + rowsNew;
+    if(ct) ct.textContent = (_ttData.length + _ttPendingNew.length) + ' filas en total';
+    _updatePendingPill();
+  }
+
+  function _onCellChange(input){
+    const wrap = input.closest('.sched-row-wrap');
+    if(!wrap) return;
+    const field  = input.dataset.field;
+    const id     = wrap.dataset.id;
+    const tempId = wrap.dataset.tempid;
+    let value = input.value;
+    if(field === 'freight_usd'){
+      value = parseFloat(String(value).replace(',','.'));
+      if(!isFinite(value)) value = '';
+    } else {
+      value = String(value).toUpperCase().trim();
+      if(input.value !== value){ const cs = input.selectionStart; input.value = value; try { input.setSelectionRange(cs, cs); } catch(_){} }
+    }
+    if(tempId){
+      const idx = _ttPendingNew.findIndex(r => r._tempId === tempId);
+      if(idx >= 0) _ttPendingNew[idx][field] = value;
+    } else if(id){
+      const orig = _ttData.find(r => r.id === id);
+      if(!orig) return;
+      if(!_ttPendingChanges[id]) _ttPendingChanges[id] = {};
+      // Si vuelve al original, eliminar el cambio.
+      if(String(orig[field] ?? '') === String(value ?? '')){
+        delete _ttPendingChanges[id][field];
+        if(!Object.keys(_ttPendingChanges[id]).length) delete _ttPendingChanges[id];
+      } else {
+        _ttPendingChanges[id][field] = value;
+      }
+      if(_ttPendingChanges[id]) wrap.classList.add('tt-row-changed');
+      else                      wrap.classList.remove('tt-row-changed');
+    }
+    _updatePendingPill();
+  }
+
+  // ── Acciones públicas del modo Edición ──
+  window.addTTRow = function(){
+    _ensureEditor(() => {
+      _ttPendingNewSeq++;
+      _ttPendingNew.push({
+        _tempId:'tmp-' + _ttPendingNewSeq,
+        carrier:'', departure:'', destination:'',
+        pais_destino:'', customs_exit:'', freight_usd:''
+      });
+      _renderEdit();
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#tt-edit-table .sched-row-wrap[data-tempid]');
+        const last = rows[rows.length - 1];
+        const inp = last && last.querySelector('input[data-field="carrier"]');
+        if(inp) inp.focus();
+      }, 30);
+    });
+  };
+
+  window.discardTTRowNew = function(tempId){
+    _ttPendingNew = _ttPendingNew.filter(r => r._tempId !== tempId);
+    _renderEdit();
+  };
+
+  window.discardTTAll = function(){
+    if(!_hasPendingChanges()) return;
+    const n = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
+    _showModal({
+      title: 'Descartar todos los cambios',
+      subtitle: 'Vas a perder ' + n + ' cambio(s) sin guardar. Esta acción no se puede deshacer.',
+      label: '',
+      multiline: false,
+      placeholder: '',
+      confirmText: 'Sí, descartar',
+      onConfirm: () => {
+        _ttPendingChanges = {};
+        _ttPendingNew = [];
+        _ttPendingNewSeq = 0;
+        _renderEdit();
+        return true;
+      }
+    });
+  };
+
+  window.softDeleteTTRow = function(id){
+    const r = _ttData.find(x => x.id === id);
+    if(!r) return;
+    _ensureEditor(() => {
+      _showModal({
+        title: 'Borrar tarifa',
+        subtitle: r.carrier + ' · ' + r.departure + ' → ' + r.destination + ' (' + r.pais_destino + ') · USD ' + Number(r.freight_usd).toLocaleString('es-AR') + '. Soft delete: queda en la DB pero deja de aparecer.',
+        label: 'Motivo del borrado',
+        placeholder: 'Ej: Ruta dada de baja por Dow el 28/04/2026',
+        multiline: true,
+        confirmText: 'Confirmar borrado',
+        onConfirm: async (motivo) => {
+          const m = String(motivo||'').trim();
+          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          const { error } = await supa
+            .from('tarifas_terrestres')
+            .update({
+              activo: false,
+              updated_at: new Date().toISOString(),
+              updated_by: _ttEditorName,
+              update_reason: m
+            })
+            .eq('id', id);
+          if(error){ alert('Error al borrar: ' + error.message); return false; }
+          _ttData = null; _ttLastFetch = 0;
+          await loadTT();
+          switchTTMode('edicion');
+          _renderEdit();
+          return true;
+        }
+      });
+    });
+  };
+
+  window.saveTTChanges = async function(){
+    if(!_hasPendingChanges()) return;
+    _ensureEditor(() => {
+      // Validaciones cliente.
+      const errs = [];
+      for(const id of Object.keys(_ttPendingChanges)){
+        const orig = _ttData.find(r => r.id === id);
+        if(!orig) continue;
+        const merged = _getMergedRow(orig);
+        const e = _validateRow(merged);
+        if(e.length) errs.push('• ' + (merged.departure||'?') + '→' + (merged.destination||'?') + ': ' + e.join(', '));
+        if(_isDuplicate(merged, id, null)) errs.push('• ' + (merged.departure||'?') + '→' + (merged.destination||'?') + ': duplicado de otra tarifa existente');
+      }
+      for(const r of _ttPendingNew){
+        const e = _validateRow(r);
+        if(e.length) errs.push('• Nueva ' + (r.departure||'?') + '→' + (r.destination||'?') + ': ' + e.join(', '));
+        if(_isDuplicate(r, null, r._tempId)) errs.push('• Nueva ' + (r.departure||'?') + '→' + (r.destination||'?') + ': duplicado de otra tarifa');
+      }
+      if(errs.length){
+        alert('No se puede guardar — corregí estos problemas:\n\n' + errs.join('\n'));
+        return;
+      }
+      const total = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
+      _showModal({
+        title: 'Guardar cambios',
+        subtitle: total + ' cambio(s). Quedan registrados en el historial con tu nombre y el motivo.',
+        label: 'Motivo',
+        placeholder: 'Ej: Actualización Dow Q2 2026 — informado el 28/04/2026',
+        multiline: true,
+        confirmText: 'Guardar',
+        onConfirm: async (motivo) => {
+          const m = String(motivo||'').trim();
+          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          const nowIso = new Date().toISOString();
+          const updates = [];
+          const inserts = [];
+          for(const id of Object.keys(_ttPendingChanges)){
+            const orig = _ttData.find(r => r.id === id);
+            if(!orig) continue;
+            const merged = _getMergedRow(orig);
+            const carrierId = (_ttCarriers||[]).find(c => c.nombre === merged.carrier)?.id;
+            if(!carrierId) continue;
+            updates.push({ id, payload: {
+              carrier_id:    carrierId,
+              departure:     String(merged.departure||'').toUpperCase().trim(),
+              destination:   String(merged.destination||'').toUpperCase().trim(),
+              pais_destino:  String(merged.pais_destino||'').toUpperCase().trim(),
+              customs_exit:  String(merged.customs_exit||'').toUpperCase().trim(),
+              freight_usd:   Number(merged.freight_usd),
+              updated_at:    nowIso,
+              updated_by:    _ttEditorName,
+              update_reason: m
+            }});
+          }
+          for(const r of _ttPendingNew){
+            const carrierId = (_ttCarriers||[]).find(c => c.nombre === r.carrier)?.id;
+            if(!carrierId) continue;
+            inserts.push({
+              carrier_id:    carrierId,
+              departure:     String(r.departure||'').toUpperCase().trim(),
+              destination:   String(r.destination||'').toUpperCase().trim(),
+              pais_destino:  String(r.pais_destino||'').toUpperCase().trim(),
+              customs_exit:  String(r.customs_exit||'').toUpperCase().trim(),
+              freight_usd:   Number(r.freight_usd),
+              activo:        true,
+              updated_at:    nowIso,
+              updated_by:    _ttEditorName,
+              update_reason: m
+            });
+          }
+          // UPDATEs uno por uno (el trigger del log captura cada uno con sus datos).
+          for(const u of updates){
+            const { error } = await supa.from('tarifas_terrestres').update(u.payload).eq('id', u.id);
+            if(error){ alert('Error al actualizar id=' + u.id + ': ' + error.message); return false; }
+          }
+          // INSERTs en batch.
+          if(inserts.length){
+            const { error } = await supa.from('tarifas_terrestres').insert(inserts);
+            if(error){
+              const msg = (error.code === '23505')
+                ? 'Hay una tarifa duplicada en la DB que no estaba en cliente. Recargá la página y reintentá.'
+                : ('Error al insertar: ' + error.message);
+              alert(msg); return false;
+            }
+          }
+          // Limpiar pending y recargar desde DB.
+          _ttPendingChanges = {};
+          _ttPendingNew = [];
+          _ttPendingNewSeq = 0;
+          _ttData = null; _ttLastFetch = 0;
+          await loadTT();
+          switchTTMode('edicion');
+          _renderEdit();
+          return true;
+        }
+      });
+    });
+  };
+
+  // Caveat: "last-write-wins" si dos editores entran al modo Edición a la vez.
+  // Aceptable para uso interno SSB. La UI no señala conflictos en tiempo real.
+
   // ── Filtrado y render de tabla ──
   function _filterRows(){
     if(!_ttData) return [];
@@ -6307,6 +6796,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     _buildFilterRow();
     _initSelections();
+    _renderEditorPill();
+    _populateDatalists();
     _doApplyTTFilterImpl();
   };
 
@@ -6331,36 +6822,58 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     document.querySelectorAll('#panel-tt-dow [data-subtab][id^="tt-edicion-"]').forEach(div => {
       div.style.display = (div.dataset.subtab === sub) ? '' : 'none';
     });
+    if(sub === 'tarifas' && _ttData) _renderEdit();
   };
 
-  // ── Listener delegado único ──
+  // ── Listeners delegados ──
   document.addEventListener('click', (e) => {
-    // Modos
+    // Modos y sub-tabs
     const m = e.target.closest('[data-action="tt-mode"]');
     if(m){ switchTTMode(m.dataset.mode); return; }
     const s = e.target.closest('[data-action="tt-subtab"]');
     if(s){ switchTTEditSubtab(s.dataset.subtab); return; }
-    // Toggle item del drop
+    // Cambiar editor (pill)
+    if(e.target.closest('[data-action="tt-change-editor"]')){ changeTTEditor(); e.stopPropagation(); return; }
+    // Modal — cancelar / confirmar
+    if(e.target.closest('[data-action="tt-modal-cancel"]')){ _hideModal(); return; }
+    if(e.target.closest('[data-action="tt-modal-confirm"]')){ _modalConfirm(); return; }
+    // Filtros del modo Consulta
     const tog = e.target.closest('[data-action="tt-multi-tog"]');
-    if(tog){
-      e.preventDefault();
-      _togFilter(tog.dataset.kind, tog.dataset.value);
-      return;
-    }
-    // Quitar chip (×)
+    if(tog){ e.preventDefault(); _togFilter(tog.dataset.kind, tog.dataset.value); return; }
     const untog = e.target.closest('[data-action="tt-multi-untog"]');
-    if(untog){
-      e.stopPropagation();
-      _togFilter(untog.dataset.kind, untog.dataset.value);
-      return;
-    }
+    if(untog){ e.stopPropagation(); _togFilter(untog.dataset.kind, untog.dataset.value); return; }
     // Copy mail line
     const copy = e.target.closest('[data-action="tt-copy-row"]');
     if(copy){ _copyRowMail(copy, copy.dataset.id); return; }
+    // Edición: agregar / descartar / guardar
+    if(e.target.closest('[data-action="tt-add-row"]')){ addTTRow(); return; }
+    if(e.target.closest('[data-action="tt-discard"]')){ discardTTAll(); return; }
+    if(e.target.closest('[data-action="tt-save"]')){ saveTTChanges(); return; }
+    const sd = e.target.closest('[data-action="tt-soft-delete"]');
+    if(sd){ softDeleteTTRow(sd.dataset.id); return; }
+    const dn = e.target.closest('[data-action="tt-discard-new"]');
+    if(dn){ discardTTRowNew(dn.dataset.tempid); return; }
     // Outside-click: cerrar drop abierto si el click fue afuera del wrap
     if(_ttOpenKind){
       const wrap = document.getElementById('tt-' + _ttOpenKind + '-wrap');
       if(wrap && !wrap.contains(e.target)) _closeDrop(_ttOpenKind);
+    }
+  });
+
+  // Inputs editables — change/blur para capturar valor final.
+  document.addEventListener('change', (e) => {
+    const inp = e.target.closest('.tt-cell-edit');
+    if(inp) _onCellChange(inp);
+  });
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== 'Enter') return;
+    const inp = e.target.closest('.tt-cell-edit');
+    if(inp){ e.preventDefault(); inp.blur(); }
+    // Confirmar modal con Enter (solo si no estamos en textarea con shift+Enter para newline).
+    if(document.getElementById('tt-modal-overlay')?.style.display !== 'none'){
+      const inTextarea = e.target.tagName === 'TEXTAREA';
+      if(!inTextarea){ e.preventDefault(); _modalConfirm(); }
+      else if(e.key === 'Enter' && !e.shiftKey && (e.ctrlKey || e.metaKey)){ e.preventDefault(); _modalConfirm(); }
     }
   });
 })();
