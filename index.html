@@ -862,6 +862,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
   <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
   <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
+  <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -1226,6 +1227,39 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   </div>
 </div>
 
+<!-- ═══════════ TAB: DETENTION ═══════════ -->
+<div class="tab-panel" id="panel-detention">
+
+  <div class="sched-filter-bar">
+    <div class="sched-filter-row">
+      <div>
+        <span class="flbl">País</span>
+        <input class="ac-in w140" type="text" id="det-pais" placeholder="Brasil, Chile, ..." autocomplete="off" oninput="applyDetFilter()">
+      </div>
+      <div>
+        <span class="flbl">Naviera</span>
+        <input class="ac-in w140" type="text" id="det-naviera" placeholder="Log-In, Maersk, ..." autocomplete="off" oninput="applyDetFilter()">
+      </div>
+      <button class="btn-clear" onclick="clearDetFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
+    </div>
+    <div id="det-updated" style="padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500"></div>
+  </div>
+
+  <div class="sched-module" id="det-module">
+    <div class="results-bar">
+      <span class="results-title">Detention / Free Time</span>
+      <span class="results-ct" id="det-ct"></span>
+    </div>
+    <div id="det-results">
+      <div class="skel-group" aria-busy="true" aria-label="Cargando free time">
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1285,7 +1319,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','efa','schedule','admin-bid','schedule-rt'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -1295,6 +1329,7 @@ function switchTab(name) {
   if(name==='admin-bid'){ renderAdminBID(); }
   if(name==='schedule-rt'){ loadScheduleRT(); setupScheduleRT(); }
   else if(window.cleanupScheduleRT){ window.cleanupScheduleRT(); }
+  if(name==='detention' && window.loadDetention){ loadDetention(); }
 }
 
 // ── BELL ──
@@ -1499,7 +1534,7 @@ function buildCarrierBtns() {
   if(qSel){
     const cur=qSel.value;
     const qs=[...new Set(rates.map(r=>(r.quarter||'').trim()).filter(Boolean))].sort();
-    qSel.innerHTML='<option value="">— Todos —</option>'+qs.map(q=>`<option value="${q}">${q}</option>`).join('');
+    qSel.innerHTML='<option value="">— Todos —</option>'+qs.map(q=>`<option value="${esc(q)}">${esc(q)}</option>`).join('');
     if(qs.includes(cur)) qSel.value=cur;
   }
 }
@@ -3401,7 +3436,7 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
         <div class="sc"><span class="sc-lbl">Tipo</span><span class="days-badge ${isDirect(r)?'direct':'via'}">${r.TRASBORDOS||'—'}</span></div>
         <div class="sc"><span class="sc-lbl">EFA</span>${efaHtml}</div>
       </div>
-      ${(r.OBSERVACIONES)?`<div class="sc-obs">📝 ${r.OBSERVACIONES}</div>`:''}
+      ${(r.OBSERVACIONES)?`<div class="sc-obs">📝 ${esc(r.OBSERVACIONES)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -5015,6 +5050,150 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 })();
 </script>
 <!-- ═══════════ FIN SCHEDULE REALTIME ═══════════ -->
+
+<!-- ═══════════ DETENTION / FREE TIME — SUPABASE ═══════════ -->
+<script>
+(function() {
+  const SUPA_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const CACHE_TTL = 10 * 60 * 1000;
+  let _detData = null;
+  let _detLastFetch = 0;
+  let _detFilterTimer = null;
+
+  function esc(s) {
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtDate(s) {
+    if(!s) return '—';
+    const d = new Date(s);
+    if(isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  function fmtFreeTime(r) {
+    if(r.combined_days != null) return r.combined_days + 'd';
+    const dem = r.demurrage_days, det = r.detention_days;
+    if(dem == null && det == null) return '—';
+    return `D: ${dem!=null?dem:'—'} / Det: ${det!=null?det:'—'}`;
+  }
+
+  function fmtPerDiem(v) {
+    if(v == null) return '—';
+    const num = Number(v);
+    if(!isFinite(num)) return '—';
+    return 'USD ' + num.toFixed(2);
+  }
+
+  window.applyDetFilter = function() {
+    clearTimeout(_detFilterTimer);
+    _detFilterTimer = setTimeout(_doApplyDetFilter, 250);
+  };
+
+  window.clearDetFilters = function() {
+    ['det-pais','det-naviera'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    applyDetFilter();
+  };
+
+  function _doApplyDetFilter() {
+    if(!_detData) return;
+    const vP = (document.getElementById('det-pais')   ||{}).value || '';
+    const vN = (document.getElementById('det-naviera')||{}).value || '';
+    const rows = _detData.filter(r => {
+      if(vP && !(r.country ||'').toUpperCase().includes(vP.toUpperCase())) return false;
+      if(vN && !(r.supplier||'').toUpperCase().includes(vN.toUpperCase())) return false;
+      return true;
+    });
+    const ct = document.getElementById('det-ct');
+    if(ct) ct.textContent = rows.length + ' registro' + (rows.length!==1?'s':'') + ' encontrado' + (rows.length!==1?'s':'');
+    renderDetention(rows);
+  }
+
+  function renderDetention(rows) {
+    const el = document.getElementById('det-results');
+    if(!el) return;
+
+    if(!rows.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay registros que coincidan</div><div class="empty-sub">Probá con otro país o naviera, o limpiá los filtros.</div></div>`;
+      return;
+    }
+
+    const COLS = '1.2fr .9fr .9fr 1.1fr 1fr 1fr';
+    el.innerHTML = `<div class="sched-table-wrap">
+      <div class="sched-table-head" style="grid-template-columns:${COLS}">
+        <span class="sth">Naviera</span>
+        <span class="sth">País</span>
+        <span class="sth">Tipo</span>
+        <span class="sth">Free Time (días)</span>
+        <span class="sth">Per Diem Dry (USD)</span>
+        <span class="sth">Per Diem Reefer (USD)</span>
+      </div>
+      ${rows.map(r => {
+        const tipoCls = r.tipo === 'ORIGIN' ? 'one' : 'dir';
+        return `<div class="sched-row-wrap">
+          <div class="sched-main-row" style="grid-template-columns:${COLS}">
+            <div><span class="naviera-badge">${esc(r.supplier||'—')}</span></div>
+            <div class="sr">${esc(r.country||'—')}</div>
+            <div class="sr"><span class="tras-badge ${tipoCls}">${esc(r.tipo||'—')}</span></div>
+            <div class="sr mono">${esc(fmtFreeTime(r))}</div>
+            <div class="sr mono">${esc(fmtPerDiem(r.per_diem_dry_usd))}</div>
+            <div class="sr mono">${esc(fmtPerDiem(r.per_diem_reefer_usd))}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  window.loadDetention = async function() {
+    const el = document.getElementById('det-results');
+    if(!el) return;
+
+    const now = Date.now();
+    if(_detData && (now - _detLastFetch) < CACHE_TTL) {
+      _doApplyDetFilter();
+      return;
+    }
+
+    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando free time"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
+
+    const { data, error } = await supa
+      .from('detention_freetime')
+      .select('supplier,country,tipo,combined_days,demurrage_days,detention_days,per_diem_dry_usd,per_diem_reefer_usd,source_date,updated_at')
+      .order('supplier', { ascending: true })
+      .order('country', { ascending: true });
+
+    if(error) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar free time</div><div class="empty-sub">${esc(error.message)}</div></div>`;
+      const ct = document.getElementById('det-ct');
+      if(ct) ct.textContent = 'Error de conexión';
+      return;
+    }
+
+    _detData = data || [];
+    _detLastFetch = now;
+
+    const upd = document.getElementById('det-updated');
+    if(upd) {
+      const maxUpd = _detData.reduce((m, r) => {
+        if(!r.updated_at) return m;
+        return (!m || r.updated_at > m) ? r.updated_at : m;
+      }, null);
+      upd.textContent = maxUpd ? 'Actualizado: ' + fmtDate(maxUpd) : '';
+    }
+
+    _doApplyDetFilter();
+  };
+})();
+</script>
+<!-- ═══════════ FIN DETENTION ═══════════ -->
 
 </body>
 </html>
