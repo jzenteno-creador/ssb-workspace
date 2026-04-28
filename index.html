@@ -1417,11 +1417,47 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   <!-- ═══ MODO HISTORIAL ═══ -->
   <div class="tt-mode-section" data-mode="historial">
     <div style="padding:1.2rem 2rem">
-      <div class="empty">
-        <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-history"/></svg></div>
-        <div class="empty-ttl">Modo Historial</div>
-        <div class="empty-sub">El log con diff inline se habilita en el próximo commit.</div>
+      <!-- Filtros del historial -->
+      <div class="sched-filter-row" id="tt-hist-filter-row" style="align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1rem">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">Desde
+          <input type="date" id="tt-hist-from" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px">
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">Hasta
+          <input type="date" id="tt-hist-to" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px">
+        </label>
+        <div class="tt-mode-bar" role="group" aria-label="Filtro operación" style="padding:2px">
+          <button type="button" class="tt-mode-btn" data-action="tt-hist-op" data-op="INSERT" style="padding:4px 10px"><span class="badge--success" style="padding:1px 6px">INSERT</span></button>
+          <button type="button" class="tt-mode-btn" data-action="tt-hist-op" data-op="UPDATE" style="padding:4px 10px"><span class="badge--warning" style="padding:1px 6px">UPDATE</span></button>
+          <button type="button" class="tt-mode-btn" data-action="tt-hist-op" data-op="DELETE" style="padding:4px 10px"><span class="badge--danger" style="padding:1px 6px">DELETE</span></button>
+        </div>
+        <div class="ac-wrap" id="tt-hist-editor-wrap" style="flex:1 1 200px;min-width:180px;max-width:280px">
+          <div class="ac-in" id="tt-hist-editor-input" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtro Editor"
+               style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:34px;padding:4px 8px;cursor:text;width:auto"
+               onclick="openTTHistDrop()">
+            <input type="text" id="tt-hist-editor-search" placeholder="Editor…" autocomplete="off"
+                   style="border:none;outline:none;background:transparent;flex:1;min-width:80px;font-family:var(--font);font-size:13px;padding:2px;color:var(--text)"
+                   oninput="filterTTHistDrop()" onfocus="openTTHistDrop()" onkeydown="onTTHistDropKey(event)">
+          </div>
+          <div class="ac-drop" id="tt-hist-editor-drop" role="listbox" aria-label="Editores" style="left:0;right:auto;min-width:240px;max-height:240px"></div>
+        </div>
+        <input type="text" id="tt-hist-search" placeholder="Buscar tarifa (departure, destination, carrier…)"
+               style="flex:1 1 240px;min-width:200px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px"
+               oninput="applyTTHistFilter()">
+        <button type="button" class="btn-clear" data-action="tt-hist-reset" title="Limpiar todos los filtros del historial"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg> Resetear</button>
       </div>
+
+      <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
+        <span class="results-title">Historial de cambios</span>
+        <span class="results-ct" id="tt-hist-ct"></span>
+      </div>
+      <div id="tt-hist-list">
+        <div class="skel-group" aria-busy="true" aria-label="Cargando historial">
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        </div>
+      </div>
+      <div id="tt-hist-pagination" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:1rem"></div>
     </div>
   </div>
 
@@ -5967,6 +6003,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _ttPendingCarrierNew     = [];  // carriers nuevos
   let _ttPendingCarrierNewSeq  = 0;
 
+  // State del modo Historial
+  let _ttLog            = null;       // cache del log (todas las filas, ordenadas DESC por fecha)
+  let _ttLogLastFetch   = 0;
+  let _ttHistOps        = new Set();  // operaciones seleccionadas (vacío = todas)
+  let _ttHistEditors    = new Set();  // editores seleccionados (vacío = todos)
+  let _ttHistOpenDrop   = false;      // drop de editor abierto
+  let _ttHistPage       = 0;          // página actual (0-indexed)
+  const TT_HIST_PAGE_SIZE = 50;
+
   const STORAGE = {
     paises:       'tt_filtro_paises',
     carriers:     'tt_filtro_carriers',
@@ -6985,6 +7030,331 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // Caveat: "last-write-wins" si dos editores entran al modo Edición a la vez.
   // Aceptable para uso interno SSB. La UI no señala conflictos en tiempo real.
 
+  // ════════════════════════════════════════════════════════════════
+  // MODO HISTORIAL
+  // ════════════════════════════════════════════════════════════════
+
+  function _fmtDateTime(iso){
+    if(!iso) return '—';
+    const d = new Date(iso);
+    if(isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
+  }
+
+  // Resuelve un carrier_id a su nombre via _ttCarriers (incluye carriers
+  // inactivos para no perder referencias del log).
+  function _carrierNameById(id){
+    if(!id) return '—';
+    const c = (_ttCarriers || []).find(x => x.id === id);
+    return c ? c.nombre : id.slice(0, 8) + '…';
+  }
+
+  // Resumen breve de una entrada del log (para mostrar en la fila).
+  function _logRowSummary(r){
+    const v = r.valores_nuevos || r.valores_anteriores || {};
+    const carrier = _carrierNameById(v.carrier_id) || '—';
+    const dep = v.departure || '—';
+    const dst = v.destination || '—';
+    return `${esc(carrier)} · ${esc(dep)} → ${esc(dst)}`;
+  }
+
+  function _opBadge(op){
+    if(op === 'INSERT') return '<span class="badge--success" style="font-size:10px;padding:2px 8px">INSERT</span>';
+    if(op === 'UPDATE') return '<span class="badge--warning" style="font-size:10px;padding:2px 8px">UPDATE</span>';
+    if(op === 'DELETE') return '<span class="badge--danger"  style="font-size:10px;padding:2px 8px">DELETE</span>';
+    return '<span class="badge--neutral" style="font-size:10px;padding:2px 8px">' + esc(op) + '</span>';
+  }
+
+  // Diff entre valores_anteriores y valores_nuevos. Skip campos técnicos.
+  const TT_DIFF_SKIP = new Set(['id','created_at','updated_at','updated_by','update_reason']);
+  function _diffJsonb(prev, next){
+    const diffs = [];
+    if(!next) next = {};
+    if(!prev) prev = {};
+    const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+    for(const k of keys){
+      if(TT_DIFF_SKIP.has(k)) continue;
+      const a = prev[k];
+      const b = next[k];
+      if(JSON.stringify(a) === JSON.stringify(b)) continue;
+      // Pretty-print especial para carrier_id.
+      if(k === 'carrier_id'){
+        diffs.push({ key: 'carrier', oldV: _carrierNameById(a), newV: _carrierNameById(b) });
+      } else {
+        diffs.push({ key: k, oldV: a, newV: b });
+      }
+    }
+    return diffs;
+  }
+
+  function _renderDiffPanel(prev, next){
+    const ds = _diffJsonb(prev, next);
+    if(!ds.length) return '<div class="tt-diff-panel" style="font-style:italic;color:var(--muted)">Sin cambios visibles (probablemente solo updated_at).</div>';
+    return '<div class="tt-diff-panel">' + ds.map(d => {
+      const ov = (d.oldV == null || d.oldV === '') ? '∅' : String(d.oldV);
+      const nv = (d.newV == null || d.newV === '') ? '∅' : String(d.newV);
+      return `<div class="tt-diff-line"><span class="tt-diff-key">${esc(d.key)}:</span><span class="tt-diff-old">${esc(ov)}</span><span class="tt-diff-arrow">→</span><span class="tt-diff-new">${esc(nv)}</span></div>`;
+    }).join('') + '</div>';
+  }
+
+  // ── Filtros del historial ──
+  function _filterHistRows(){
+    if(!_ttLog) return [];
+    const fromV = (document.getElementById('tt-hist-from')?.value || '').trim();
+    const toV   = (document.getElementById('tt-hist-to')?.value || '').trim();
+    const fromMs = fromV ? new Date(fromV + 'T00:00:00').getTime() : null;
+    const toMs   = toV   ? new Date(toV   + 'T23:59:59').getTime() : null;
+    const search = (document.getElementById('tt-hist-search')?.value || '').toUpperCase().trim();
+    return _ttLog.filter(r => {
+      const ts = new Date(r.changed_at).getTime();
+      if(fromMs && ts < fromMs) return false;
+      if(toMs   && ts > toMs)   return false;
+      if(_ttHistOps.size && !_ttHistOps.has(r.operacion)) return false;
+      if(_ttHistEditors.size && !_ttHistEditors.has(r.changed_by || '')) return false;
+      if(search){
+        const v = r.valores_nuevos || r.valores_anteriores || {};
+        const hay = (
+          (v.departure   || '') + ' ' +
+          (v.destination || '') + ' ' +
+          _carrierNameById(v.carrier_id) + ' ' +
+          (v.pais_destino || '') + ' ' +
+          (v.customs_exit || '') + ' ' +
+          (r.change_reason || '')
+        ).toUpperCase();
+        if(!hay.includes(search)) return false;
+      }
+      return true;
+    });
+  }
+
+  function _renderHistList(){
+    const el  = document.getElementById('tt-hist-list');
+    const ct  = document.getElementById('tt-hist-ct');
+    const pag = document.getElementById('tt-hist-pagination');
+    if(!el || !_ttLog) return;
+    const all = _filterHistRows();
+    const total = all.length;
+    const pages = Math.max(1, Math.ceil(total / TT_HIST_PAGE_SIZE));
+    if(_ttHistPage >= pages) _ttHistPage = pages - 1;
+    if(_ttHistPage < 0) _ttHistPage = 0;
+    const start = _ttHistPage * TT_HIST_PAGE_SIZE;
+    const slice = all.slice(start, start + TT_HIST_PAGE_SIZE);
+
+    if(ct) ct.textContent = total + ' entrada' + (total!==1?'s':'') + ' (página ' + (_ttHistPage+1) + '/' + pages + ')';
+
+    if(!total){
+      el.innerHTML = '<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-history"/></svg></div><div class="empty-ttl">No hay entradas que coincidan</div><div class="empty-sub">Ajustá los filtros o tocá Resetear para ver todo el historial.</div></div>';
+      pag.innerHTML = '';
+      return;
+    }
+
+    const COLS = '1.4fr .65fr 1fr 2.2fr 2fr .65fr';
+    const head = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
+      <span class="sth">Fecha</span>
+      <span class="sth">Op.</span>
+      <span class="sth">Editor</span>
+      <span class="sth">Tarifa</span>
+      <span class="sth">Motivo</span>
+      <span class="sth"></span>
+    </div>`;
+    const body = slice.map(r => `
+      <div class="sched-row-wrap" id="tt-hist-row-${esc(r.id)}">
+        <div class="sched-main-row" style="grid-template-columns:${COLS}">
+          <div class="sr mono">${esc(_fmtDateTime(r.changed_at))}</div>
+          <div class="sr">${_opBadge(r.operacion)}</div>
+          <div class="sr">${esc(r.changed_by || '—')}</div>
+          <div class="sr">${_logRowSummary(r)}</div>
+          <div class="sr" style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.change_reason||'')}">${esc(r.change_reason || '—')}</div>
+          <div class="sr"><button type="button" class="btn-clear" data-action="tt-hist-toggle-diff" data-id="${esc(r.id)}" style="padding:4px 8px;font-size:11px">Ver diff</button></div>
+        </div>
+        <div id="tt-hist-diff-${esc(r.id)}" style="display:none;padding:0 12px 10px"></div>
+      </div>`).join('');
+    el.innerHTML = head + body;
+
+    // Paginación
+    if(pages > 1){
+      pag.innerHTML = `
+        <button type="button" class="btn-clear" data-action="tt-hist-prev" ${_ttHistPage===0?'disabled':''} style="padding:5px 12px;font-size:11px">← Anterior</button>
+        <span style="font-size:12px;color:var(--muted)">Página ${_ttHistPage+1} de ${pages}</span>
+        <button type="button" class="btn-clear" data-action="tt-hist-next" ${_ttHistPage>=pages-1?'disabled':''} style="padding:5px 12px;font-size:11px">Siguiente →</button>
+      `;
+    } else {
+      pag.innerHTML = '';
+    }
+  }
+
+  function _renderHistOps(){
+    document.querySelectorAll('#panel-tt-dow [data-action="tt-hist-op"]').forEach(btn => {
+      const on = _ttHistOps.has(btn.dataset.op);
+      btn.classList.toggle('tt-mode-btn--active', on);
+    });
+  }
+
+  // Editor dropdown — espejo del de Consulta pero independiente.
+  function _renderHistEditorChips(){
+    const wrap = document.getElementById('tt-hist-editor-input');
+    const search = document.getElementById('tt-hist-editor-search');
+    if(!wrap || !search) return;
+    wrap.querySelectorAll('.tt-chip').forEach(el => el.remove());
+    const sorted = [..._ttHistEditors].sort((a,b)=>a.localeCompare(b,'es'));
+    const visible = sorted.slice(0, 3);
+    const moreN = sorted.length - visible.length;
+    for(let i = visible.length - 1; i >= 0; i--){
+      const v = visible[i];
+      const chip = document.createElement('span');
+      chip.className = 'tt-chip';
+      chip.innerHTML = `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(v||'(sin editor)')}</span><button type="button" class="tt-chip-x" data-action="tt-hist-editor-untog" data-value="${esc(v)}" aria-label="Quitar">×</button>`;
+      wrap.insertBefore(chip, search);
+    }
+    if(moreN > 0){
+      const more = document.createElement('span');
+      more.className = 'tt-chip';
+      more.style.cssText = 'background:var(--faint);border-color:var(--border);color:var(--muted)';
+      more.textContent = `+${moreN} más`;
+      wrap.insertBefore(more, search);
+    }
+  }
+  function _renderHistEditorDrop(){
+    const drop = document.getElementById('tt-hist-editor-drop');
+    if(!drop) return;
+    const search = (document.getElementById('tt-hist-editor-search')?.value || '').toUpperCase();
+    const allEd = new Set();
+    for(const r of (_ttLog || [])) if(r.changed_by) allEd.add(r.changed_by);
+    const opts = [...allEd].sort((a,b)=>a.localeCompare(b,'es'));
+    const filtered = search ? opts.filter(o => o.toUpperCase().includes(search)) : opts;
+    if(!filtered.length){
+      drop.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:var(--muted);font-style:italic">Sin editores</div>';
+      return;
+    }
+    const checked = filtered.filter(o => _ttHistEditors.has(o));
+    const unchecked = filtered.filter(o => !_ttHistEditors.has(o));
+    const items = [...checked, ...unchecked];
+    drop.innerHTML = items.map((v, i) => {
+      const on = _ttHistEditors.has(v);
+      const sep = (i === checked.length - 1 && unchecked.length) ? 'border-bottom:2px solid var(--border)' : 'border-bottom:1px solid var(--border)';
+      return `<div data-action="tt-hist-editor-tog" data-value="${esc(v)}" role="option" aria-selected="${on}" style="display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;${sep};font-size:13px;color:var(--text);user-select:none">
+        <input type="checkbox" ${on?'checked':''} tabindex="-1" style="margin:0;pointer-events:none" aria-hidden="true">
+        <span style="flex:1">${esc(v)}</span>
+      </div>`;
+    }).join('');
+  }
+  function _renderHistEditorUI(){ _renderHistEditorChips(); _renderHistEditorDrop(); }
+
+  window.openTTHistDrop = function(){
+    if(_ttOpenKind) _closeDrop(_ttOpenKind);
+    const drop = document.getElementById('tt-hist-editor-drop');
+    if(!drop) return;
+    _renderHistEditorDrop();
+    drop.classList.add('open');
+    const inp = document.getElementById('tt-hist-editor-input');
+    if(inp){ inp.style.borderColor = 'var(--blue)'; inp.style.background = 'var(--surface)'; }
+    _ttHistOpenDrop = true;
+    const s = document.getElementById('tt-hist-editor-search');
+    if(s && document.activeElement !== s) s.focus();
+  };
+  function _closeTTHistDrop(){
+    const drop = document.getElementById('tt-hist-editor-drop');
+    if(drop) drop.classList.remove('open');
+    const inp = document.getElementById('tt-hist-editor-input');
+    if(inp){ inp.style.borderColor = ''; inp.style.background = ''; }
+    _ttHistOpenDrop = false;
+  }
+  window.filterTTHistDrop = function(){
+    if(!_ttHistOpenDrop) openTTHistDrop();
+    else _renderHistEditorDrop();
+  };
+  window.onTTHistDropKey = function(e){
+    if(e.key === 'Escape'){ _closeTTHistDrop(); document.getElementById('tt-hist-editor-search')?.blur(); }
+  };
+
+  window.applyTTHistFilter = debounce(() => {
+    _ttHistPage = 0;
+    _renderHistList();
+  }, 250);
+
+  window.loadTTLog = async function(force){
+    const el = document.getElementById('tt-hist-list');
+    if(!el) return;
+    const now = Date.now();
+    if(_ttLog && !force && (now - _ttLogLastFetch) < CACHE_TTL){
+      _renderHistOps();
+      _renderHistEditorUI();
+      _renderHistList();
+      return;
+    }
+    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando historial"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
+    const PAGE = 1000, MAX = 20;
+    const all = [];
+    let pageErr = null;
+    for(let p = 0; p < MAX; p++){
+      const from = p * PAGE, to = from + PAGE - 1;
+      const { data: chunk, error: err } = await supa
+        .from('tarifas_terrestres_log')
+        .select('*')
+        .order('changed_at', { ascending: false })
+        .range(from, to);
+      if(err){ pageErr = err; break; }
+      if(!chunk || !chunk.length) break;
+      all.push(...chunk);
+      if(chunk.length < PAGE) break;
+    }
+    if(pageErr){
+      el.innerHTML = '<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar el historial</div><div class="empty-sub">' + esc(pageErr.message) + '</div></div>';
+      return;
+    }
+    _ttLog = all;
+    _ttLogLastFetch = now;
+    _ttHistPage = 0;
+    _renderHistOps();
+    _renderHistEditorUI();
+    _renderHistList();
+  };
+
+  window.toggleTTHistDiff = function(logId){
+    const r = (_ttLog || []).find(x => x.id === logId);
+    if(!r) return;
+    const panel = document.getElementById('tt-hist-diff-' + logId);
+    if(!panel) return;
+    if(panel.style.display === 'none'){
+      panel.innerHTML = _renderDiffPanel(r.valores_anteriores, r.valores_nuevos);
+      panel.style.display = '';
+    } else {
+      panel.style.display = 'none';
+      panel.innerHTML = '';
+    }
+  };
+
+  window.togHistOp = function(op){
+    if(_ttHistOps.has(op)) _ttHistOps.delete(op); else _ttHistOps.add(op);
+    _renderHistOps();
+    _ttHistPage = 0;
+    _renderHistList();
+  };
+
+  window.togHistEditor = function(name){
+    if(_ttHistEditors.has(name)) _ttHistEditors.delete(name); else _ttHistEditors.add(name);
+    _renderHistEditorUI();
+    _ttHistPage = 0;
+    _renderHistList();
+  };
+
+  window.resetTTHistFilters = function(){
+    _ttHistOps.clear();
+    _ttHistEditors.clear();
+    const f = document.getElementById('tt-hist-from');     if(f) f.value = '';
+    const t = document.getElementById('tt-hist-to');       if(t) t.value = '';
+    const s = document.getElementById('tt-hist-search');   if(s) s.value = '';
+    const es = document.getElementById('tt-hist-editor-search'); if(es) es.value = '';
+    _ttHistPage = 0;
+    _renderHistOps();
+    _renderHistEditorUI();
+    _renderHistList();
+  };
+
   // ── Filtrado y render de tabla ──
   function _filterRows(){
     if(!_ttData) return [];
@@ -7138,7 +7508,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Modos (segmented controls) ──
   window.switchTTMode = function(mode){
     if(!['consulta','edicion','historial'].includes(mode)) return;
-    document.querySelectorAll('#panel-tt-dow .tt-mode-btn').forEach(btn => {
+    // Solo aplico la clase activa a los botones del segmented control de modos
+    // (que están directamente en .tt-mode-bar), no a TODOS los .tt-mode-btn
+    // del panel — el modo Historial reusa la clase para sus filtros de op.
+    document.querySelectorAll('#panel-tt-dow > .sched-filter-bar .tt-mode-bar .tt-mode-btn[data-action="tt-mode"]').forEach(btn => {
       const on = btn.dataset.mode === mode;
       btn.classList.toggle('tt-mode-btn--active', on);
       btn.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -7146,6 +7519,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     document.querySelectorAll('#panel-tt-dow .tt-mode-section').forEach(sec => {
       sec.classList.toggle('active', sec.dataset.mode === mode);
     });
+    if(mode === 'historial' && window.loadTTLog) loadTTLog();
   };
 
   window.switchTTEditSubtab = function(sub){
@@ -7196,10 +7570,32 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(sdc){ softDeleteTTCarrier(sdc.dataset.cid); return; }
     const dnc = e.target.closest('[data-action="tt-discard-carrier-new"]');
     if(dnc){ discardTTCarrierRowNew(dnc.dataset.ctempid); return; }
-    // Outside-click: cerrar drop abierto si el click fue afuera del wrap
+    // Historial
+    const hop = e.target.closest('[data-action="tt-hist-op"]');
+    if(hop){ togHistOp(hop.dataset.op); return; }
+    const het = e.target.closest('[data-action="tt-hist-editor-tog"]');
+    if(het){ e.preventDefault(); togHistEditor(het.dataset.value); return; }
+    const heu = e.target.closest('[data-action="tt-hist-editor-untog"]');
+    if(heu){ e.stopPropagation(); togHistEditor(heu.dataset.value); return; }
+    if(e.target.closest('[data-action="tt-hist-reset"]')){ resetTTHistFilters(); return; }
+    if(e.target.closest('[data-action="tt-hist-prev"]')){ _ttHistPage = Math.max(0, _ttHistPage - 1); _renderHistList(); return; }
+    if(e.target.closest('[data-action="tt-hist-next"]')){ _ttHistPage++; _renderHistList(); return; }
+    const tdb = e.target.closest('[data-action="tt-hist-toggle-diff"]');
+    if(tdb){ toggleTTHistDiff(tdb.dataset.id); return; }
+    // Outside-click: cerrar drops abiertos
     if(_ttOpenKind){
       const wrap = document.getElementById('tt-' + _ttOpenKind + '-wrap');
       if(wrap && !wrap.contains(e.target)) _closeDrop(_ttOpenKind);
+    }
+    if(_ttHistOpenDrop){
+      const wrap = document.getElementById('tt-hist-editor-wrap');
+      if(wrap && !wrap.contains(e.target)) _closeTTHistDrop();
+    }
+  });
+  // change también para los inputs de fecha del historial (estilo nativo).
+  document.addEventListener('change', (e) => {
+    if(e.target.id === 'tt-hist-from' || e.target.id === 'tt-hist-to'){
+      _ttHistPage = 0; _renderHistList();
     }
   });
 
