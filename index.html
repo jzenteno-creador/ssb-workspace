@@ -1241,11 +1241,17 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <input class="ac-in w140" type="text" id="det-naviera" placeholder="Log-In, Maersk, ..." autocomplete="off" oninput="applyDetFilter()">
       </div>
       <button class="btn-clear" onclick="clearDetFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
+      <span aria-hidden="true" style="width:1px;background:var(--border);align-self:stretch;margin:0 6px"></span>
+      <label class="btn-clear" style="cursor:pointer;border-color:rgba(0,201,167,.5);color:var(--teal,#00c9a7)" title="Subir Excel de free time (.xlsx)">
+        <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg> Subir Excel
+        <input type="file" id="det-file-input" accept=".xlsx" style="display:none" onchange="handleDetentionUpload(this)">
+      </label>
     </div>
     <div id="det-updated" style="display:none;padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500">
       <svg class="ic ic-sm" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><use href="#i-clock"/></svg>
       <span id="det-updated-text"></span>
     </div>
+    <div id="det-upload-status" role="status" aria-live="polite" style="display:none;padding:6px 4px 0;font-size:11px;font-weight:500"></div>
   </div>
 
   <div class="sched-module" id="det-module">
@@ -5202,6 +5208,171 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     _doApplyDetFilter();
+  };
+
+  // Pill local del panel — no toca setDot global (reservado a sync Tarifas/Schedule).
+  function setDetStatus(state, txt) {
+    const el = document.getElementById('det-upload-status');
+    if(!el) return;
+    if(!state || !txt) { el.style.display = 'none'; el.textContent = ''; return; }
+    const colorByState = {
+      spin: 'var(--amber,#f4a723)',
+      ok:   'var(--teal,#00c9a7)',
+      err:  'var(--red,#ef4444)'
+    };
+    el.style.color = colorByState[state] || 'var(--muted)';
+    el.style.display = '';
+    el.textContent = txt;
+  }
+
+  function coerceInt(v) {
+    if(v == null) return null;
+    if(typeof v === 'number') return Number.isFinite(v) ? Math.round(v) : null;
+    const s = String(v).trim();
+    if(!s) return null;
+    const cleaned = s.replace(/[^0-9.\-]/g, '');
+    if(!cleaned || cleaned === '-' || cleaned === '.') return null;
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? Math.round(n) : null;
+  }
+
+  function coerceDecimal(v) {
+    if(v == null) return null;
+    if(typeof v === 'number') return Number.isFinite(v) ? Math.round(v*100)/100 : null;
+    const s = String(v).trim();
+    if(!s) return null;
+    const cleaned = s.replace(/[^0-9.\-]/g, '');
+    if(!cleaned || cleaned === '-' || cleaned === '.') return null;
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? Math.round(n*100)/100 : null;
+  }
+
+  function coerceStr(v) {
+    if(v == null) return null;
+    const s = String(v).trim();
+    return s || null;
+  }
+
+  // Existe también upload_detention.py (raíz del repo) como respaldo desde terminal.
+  window.handleDetentionUpload = function(input) {
+    const file = input.files && input.files[0];
+    if(!file) return;
+
+    const fnameUp = (file.name || '').toUpperCase();
+    let tipo;
+    if(fnameUp.includes('DESTINATION'))      tipo = 'DESTINATION';
+    else if(fnameUp.includes('ORIGIN'))      tipo = 'ORIGIN';
+    else {
+      alert('El nombre del archivo debe contener "Origin" o "Destination" para identificar el tipo. Cargá el archivo original sin renombrar.');
+      input.value = '';
+      return;
+    }
+
+    setDetStatus('spin', 'Procesando ' + file.name + ' …');
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      let data;
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        data = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'YYYY-MM-DD' });
+      } catch(err) {
+        setDetStatus('err', '❌ Error al leer el Excel: ' + err.message);
+        input.value = '';
+        return;
+      }
+
+      if(!data || !data.length) {
+        setDetStatus('err', '❌ El Excel no tiene filas');
+        input.value = '';
+        return;
+      }
+
+      if(!('Supplier' in data[0])) {
+        const cols = Object.keys(data[0]).join(', ');
+        alert('Columna crítica "Supplier" no encontrada.\nColumnas disponibles: ' + cols);
+        setDetStatus('err', '❌ Falta columna "Supplier"');
+        input.value = '';
+        return;
+      }
+
+      const COLMAP_DEST = {
+        'Supplier': 'supplier',
+        'Destination Country': 'country',
+        'Destination Combined Free Demurrage and Detention': 'combined_days',
+        'Destination Free Demurrage (Container Use Inside Port) days': 'demurrage_days',
+        'Destination Free Detention (Container Use Outside Port)': 'detention_days',
+        'Destination Detention/Demurrage Per Diem Rate (USD) for Dry Container': 'per_diem_dry_usd',
+        'Destination Freetime Provided for Reefer': 'per_diem_reefer_usd'
+      };
+      const COLMAP_ORIG = {
+        'Supplier': 'supplier',
+        'Origin Country': 'country',
+        'Origin Combined Free Demurrage and Detention': 'combined_days',
+        'Origin Free Demurrage (Container Use Inside Port) days': 'demurrage_days',
+        'Origin Free Detention (Container Use Outside Port)': 'detention_days',
+        'Origin Detention/Demurrage Per Diem Rate (USD) for Dry Container': 'per_diem_dry_usd',
+        'Origin Freetime Provided for Reefer': 'per_diem_reefer_usd'
+      };
+      const COLMAP = tipo === 'DESTINATION' ? COLMAP_DEST : COLMAP_ORIG;
+
+      const PAISES   = ['BRAZIL', 'CHILE', 'PERU', 'COLOMBIA'];
+      const NAVIERAS = ['LOG-IN', 'MAERSK', 'HAPAG'];
+      const matchesCountry = c => !!c && PAISES.includes(String(c).toUpperCase().trim());
+      const matchesNaviera = s => {
+        if(!s) return false;
+        const u = String(s).toUpperCase();
+        return NAVIERAS.some(n => u.includes(n));
+      };
+
+      const todayIso = new Date().toISOString().slice(0,10);
+      const nowIso   = new Date().toISOString();
+      const intCols  = ['combined_days', 'demurrage_days', 'detention_days'];
+      const decCols  = ['per_diem_dry_usd', 'per_diem_reefer_usd'];
+
+      const rows = [];
+      for(const r of data) {
+        const rec = { tipo: tipo, source_date: todayIso, updated_at: nowIso };
+        for(const src of Object.keys(COLMAP)) {
+          const dst = COLMAP[src];
+          const v = r[src];
+          if(intCols.includes(dst))      rec[dst] = coerceInt(v);
+          else if(decCols.includes(dst)) rec[dst] = coerceDecimal(v);
+          else                           rec[dst] = coerceStr(v);
+        }
+        if(!rec.supplier || !rec.country) continue;
+        if(!matchesCountry(rec.country))  continue;
+        if(!matchesNaviera(rec.supplier)) continue;
+        rows.push(rec);
+      }
+
+      if(!rows.length) {
+        setDetStatus('err', '❌ Sin filas válidas tras filtros (países/navieras)');
+        input.value = '';
+        return;
+      }
+
+      setDetStatus('spin', 'Cargando ' + rows.length + ' registros …');
+
+      const { error } = await supa
+        .from('detention_freetime')
+        .upsert(rows, { onConflict: 'supplier,country,tipo' });
+
+      input.value = '';
+
+      if(error) {
+        setDetStatus('err', '❌ Error de Supabase: ' + error.message);
+        return;
+      }
+
+      setDetStatus('ok', '✓ ' + rows.length + ' registros actualizados (' + tipo + ')');
+
+      _detData = null;
+      _detLastFetch = 0;
+      loadDetention();
+    };
+    reader.readAsArrayBuffer(file);
   };
 })();
 </script>
