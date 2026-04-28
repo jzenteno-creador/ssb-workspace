@@ -955,6 +955,19 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
 #panel-tt-dow .skel-group{padding:0}
 #panel-tt-dow .skel-row{border:none;border-bottom:1px solid var(--row-border);border-radius:0;margin-bottom:0;background:var(--surface)}
 #panel-tt-dow .skel-row:last-child{border-bottom:none}
+
+/* Selects en celdas editables (4 de 6 columnas en modo Edición → Tarifas) —
+   coherentes con .tt-cell-edit pero con ícono dropdown nativo del browser. */
+select.tt-cell-edit{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5l3 3 3-3' stroke='%238b94a8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 8px center;background-size:12px;padding-right:24px;cursor:pointer}
+select.tt-cell-edit option[value="__NEW__"]{font-style:italic;color:var(--blue)}
+select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
+
+/* Headers ordenables (commit 2) — cursor + indicador ↑↓ */
+#panel-tt-dow .sth.tt-sortable{cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;transition:color .12s}
+#panel-tt-dow .sth.tt-sortable:hover{color:#fff}
+#panel-tt-dow .sth.tt-sortable .tt-sort-ind{display:inline-block;width:8px;height:8px;opacity:.35;transition:opacity .12s,transform .12s}
+#panel-tt-dow .sth.tt-sort-active .tt-sort-ind{opacity:1;color:var(--teal)}
+#panel-tt-dow .sth.tt-sort-active.tt-sort-desc .tt-sort-ind{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -1641,6 +1654,32 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
       <div class="tt-modal-actions">
         <button type="button" class="btn-clear" data-action="tt-modal-cancel">Cancelar</button>
         <button type="button" class="btn-clear" id="tt-modal-confirm" data-action="tt-modal-confirm" style="border-color:var(--blue);color:var(--blue);background:var(--blue-lt)">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODAL "Nuevo carrier" — multi-campo dedicado ═══ -->
+  <div class="tt-modal-overlay" id="tt-carrier-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="tt-carrier-modal-title">
+    <div class="tt-modal-content">
+      <h3 id="tt-carrier-modal-title">Nuevo carrier</h3>
+      <p>Los carriers son una lista cerrada — solo se crean acá. Después podés editar % seguro y estado activo desde la tabla, pero el nombre queda fijo.</p>
+      <label for="tt-carrier-modal-name">Nombre</label>
+      <input type="text" id="tt-carrier-modal-name" placeholder="Ej: NUEVO TRANSPORTISTA" maxlength="50" autocomplete="off">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;align-items:end">
+        <div>
+          <label for="tt-carrier-modal-seguro" style="margin-top:0">% Seguro s/FOB-FCA</label>
+          <input type="text" id="tt-carrier-modal-seguro" placeholder="0" autocomplete="off">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);text-transform:none;letter-spacing:normal;font-weight:500;padding-bottom:10px">
+          <input type="checkbox" id="tt-carrier-modal-activo" checked>
+          <span>Activo</span>
+        </label>
+      </div>
+      <label for="tt-carrier-modal-motivo" style="margin-top:14px">Motivo de creación</label>
+      <textarea id="tt-carrier-modal-motivo" rows="2" placeholder="Ej: Alta de transportista por contrato Q3 2026"></textarea>
+      <div class="tt-modal-actions">
+        <button type="button" class="btn-clear" data-action="tt-carrier-modal-cancel">Cancelar</button>
+        <button type="button" class="btn-clear" id="tt-carrier-modal-confirm" data-action="tt-carrier-modal-confirm">Crear</button>
       </div>
     </div>
   </div>
@@ -6568,6 +6607,182 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     return errs;
   }
+  // ── Selects estrictos en modo Edición → Tarifas ──
+
+  // Devuelve los valores únicos para un campo combinando _ttData + pending changes/news.
+  // Esto permite que un valor recién agregado (p.ej. una aduana nueva en una fila pending)
+  // aparezca en los dropdowns de las demás filas.
+  function _buildOptionsForField(field){
+    const set = new Set();
+    for(const r of (_ttData || [])){
+      const v = r[field]; if(v) set.add(String(v).trim());
+    }
+    for(const id of Object.keys(_ttPendingChanges)){
+      const orig = (_ttData || []).find(r => r.id === id);
+      if(!orig) continue;
+      const merged = _getMergedRow(orig);
+      const v = merged[field]; if(v) set.add(String(v).trim());
+    }
+    for(const r of _ttPendingNew){
+      const v = r[field]; if(v) set.add(String(v).trim());
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  // Devuelve el HTML de un <select> para un campo dado.
+  // - 'carrier': cerrado, solo carriers activos. Si la fila tiene un carrier inactivo,
+  //   se incluye como <option disabled> para no perder el dato.
+  // - 'pais_destino' / 'departure' / 'customs_exit': abierto, con opción "+ Agregar nuevo".
+  function _renderSelectField(field, currentValue){
+    const fEsc = esc(field);
+    const cur  = currentValue || '';
+    let optsHtml = '';
+    if(field === 'carrier'){
+      const active = (_ttCarriers || []).filter(c => c.activo !== false).map(c => c.nombre).sort((a,b)=>a.localeCompare(b,'es'));
+      const isInList = active.includes(cur);
+      optsHtml += `<option value="" ${cur ? '' : 'selected'}>—</option>`;
+      if(cur && !isInList){
+        // Carrier inactivo o eliminado — se conserva como opción disabled para no perder
+        // el dato al renderizar; el usuario tiene que reasignar antes de guardar.
+        optsHtml += `<option value="${esc(cur)}" selected disabled>${esc(cur)} (inactivo)</option>`;
+      }
+      for(const name of active){
+        const sel = (name === cur) ? 'selected' : '';
+        optsHtml += `<option value="${esc(name)}" ${sel}>${esc(name)}</option>`;
+      }
+      return `<select class="tt-cell-edit" data-field="${fEsc}">${optsHtml}</select>`;
+    }
+    // pais_destino / departure / customs_exit
+    const opts = _buildOptionsForField(field);
+    const isInList = cur && opts.includes(cur);
+    optsHtml += `<option value="" ${cur ? '' : 'selected'}>—</option>`;
+    if(cur && !isInList){
+      // Defensivo: si por alguna razón el valor actual no está en la lista (carrier
+      // inactivo no aplica acá, pero podría haber datos legacy), lo incluimos.
+      optsHtml += `<option value="${esc(cur)}" selected>${esc(cur)}</option>`;
+    }
+    for(const v of opts){
+      const sel = (v === cur) ? 'selected' : '';
+      optsHtml += `<option value="${esc(v)}" ${sel}>${esc(v)}</option>`;
+    }
+    optsHtml += `<option value="__NEW__">+ Agregar nuevo</option>`;
+    return `<select class="tt-cell-edit" data-field="${fEsc}">${optsHtml}</select>`;
+  }
+
+  // Asigna un valor a un campo de una fila (existente o pending new) y actualiza
+  // la pill de pendientes. Igual que la rama "no-__NEW__" de _onCellChange.
+  function _applyFieldValue(field, idOrTemp, isTemp, value){
+    if(isTemp){
+      const idx = _ttPendingNew.findIndex(r => r._tempId === idOrTemp);
+      if(idx >= 0) _ttPendingNew[idx][field] = value;
+    } else {
+      const orig = (_ttData || []).find(r => r.id === idOrTemp);
+      if(!orig) return;
+      if(!_ttPendingChanges[idOrTemp]) _ttPendingChanges[idOrTemp] = {};
+      if(String(orig[field] ?? '') === String(value ?? '')){
+        delete _ttPendingChanges[idOrTemp][field];
+        if(!Object.keys(_ttPendingChanges[idOrTemp]).length) delete _ttPendingChanges[idOrTemp];
+      } else {
+        _ttPendingChanges[idOrTemp][field] = value;
+      }
+    }
+    _updatePendingPill();
+  }
+
+  // Abre el modal genérico para agregar un nuevo país/departure/aduana al dropdown.
+  // El valor se valida case-insensitive contra los existentes para evitar duplicados
+  // tipo "MENDOZA" / "Mendoza" / " MENDOZA " (mismas defensas que para carriers).
+  const _TT_FIELD_LABELS = {
+    pais_destino: 'país destino',
+    departure:    'departure',
+    customs_exit: 'aduana de salida'
+  };
+  function _promptNewValueForField(field, idOrTemp, isTemp, sourceSelect){
+    const label = _TT_FIELD_LABELS[field] || field;
+    _showModal({
+      title: 'Nuevo ' + label,
+      subtitle: 'Agregá un valor que no estaba en la lista. Se guarda en UPPERCASE y se valida contra duplicados case-insensitive.',
+      label: 'Nuevo ' + label,
+      placeholder: 'Ej: PASO DE LOS LIBRES',
+      multiline: false,
+      confirmText: 'Agregar',
+      onConfirm: (val) => {
+        const v = String(val || '').trim().toUpperCase().slice(0, 50);
+        if(!v){ alert('No puede estar vacío.'); return false; }
+        const existing = _buildOptionsForField(field);
+        const dup = existing.find(x => String(x).toLowerCase() === v.toLowerCase());
+        if(dup){
+          alert(dup + ' ya existe en la lista. Seleccionalo del dropdown.');
+          return false;
+        }
+        _applyFieldValue(field, idOrTemp, isTemp, v);
+        // Re-render para que el select muestre el nuevo valor seleccionado
+        // (preserva chamges/news, sigue scoped al modo Edición).
+        _renderEdit();
+        return true;
+      }
+    });
+  }
+
+  // ── Modal "+ Nuevo carrier" — INSERT directo a la DB ──
+  function _openCarrierModal(){
+    _ensureEditor(() => {
+      const o = document.getElementById('tt-carrier-modal-overlay');
+      if(!o) return;
+      document.getElementById('tt-carrier-modal-name').value    = '';
+      document.getElementById('tt-carrier-modal-seguro').value  = '0';
+      document.getElementById('tt-carrier-modal-activo').checked = true;
+      document.getElementById('tt-carrier-modal-motivo').value  = '';
+      o.style.display = '';
+      setTimeout(() => document.getElementById('tt-carrier-modal-name').focus(), 50);
+    });
+  }
+  function _closeCarrierModal(){
+    const o = document.getElementById('tt-carrier-modal-overlay');
+    if(o) o.style.display = 'none';
+  }
+  async function _confirmCarrierModal(){
+    const nombre = String(document.getElementById('tt-carrier-modal-name').value || '').trim().toUpperCase().slice(0, 50);
+    const seguroDisp = String(document.getElementById('tt-carrier-modal-seguro').value || '').trim() || '0';
+    const activo = !!document.getElementById('tt-carrier-modal-activo').checked;
+    const motivo = String(document.getElementById('tt-carrier-modal-motivo').value || '').trim();
+
+    if(!nombre){ alert('El nombre es obligatorio.'); return; }
+    if(!motivo){ alert('El motivo es obligatorio.'); return; }
+    const seguro_pct = _seguroDisplayToDec(seguroDisp);
+    if(seguro_pct === null || seguro_pct < 0 || seguro_pct > 1){
+      alert('% seguro inválido. Debe ser un número entre 0 y 100.');
+      return;
+    }
+    // Unique case-insensitive (cliente; la UNIQUE de DB es exact-match — espejamos en cliente).
+    const nLower = nombre.toLowerCase();
+    if((_ttCarriers || []).some(c => String(c.nombre || '').toLowerCase() === nLower)){
+      alert('Ya existe un carrier con ese nombre. El nombre del carrier es case-insensitive único.');
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const { error } = await supa.from('tarifas_terrestres_carriers').insert({
+      nombre,
+      seguro_pct,
+      activo,
+      updated_by:    _ttEditorName,
+      update_reason: motivo,
+      updated_at:    nowIso
+    });
+    if(error){
+      const msg = error.code === '23505'
+        ? 'Ya existe un carrier con ese nombre exacto en la DB.'
+        : 'Error al crear el carrier: ' + error.message;
+      alert(msg);
+      return;
+    }
+    _closeCarrierModal();
+    _ttData = null; _ttLastFetch = 0;
+    await loadTT();
+    switchTTMode('edicion');
+    switchTTEditSubtab('carriers');
+  }
+
   function _hasPendingChanges(){
     return Object.keys(_ttPendingChanges).length > 0 || _ttPendingNew.length > 0;
   }
@@ -6624,11 +6839,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       : `<button type="button" class="btn-clear" data-action="tt-discard-new" data-tempid="${esc(tempId)}" title="Descartar fila nueva" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>`;
     return `<div class="sched-row-wrap ${cls}" ${idAttr} ${tidAttr}>
       <div class="sched-main-row" style="grid-template-columns:${COLS};padding:6px 12px;gap:6px">
-        <input type="text" class="tt-cell-edit" data-field="carrier"      value="${esc(r.carrier||'')}"      list="tt-dl-carriers"     placeholder="Carrier" autocomplete="off">
-        <input type="text" class="tt-cell-edit" data-field="departure"    value="${esc(r.departure||'')}"    list="tt-dl-departures"   placeholder="Origen"  autocomplete="off">
-        <input type="text" class="tt-cell-edit" data-field="destination"  value="${esc(r.destination||'')}"  list="tt-dl-destinations" placeholder="Destino" autocomplete="off">
-        <input type="text" class="tt-cell-edit" data-field="pais_destino" value="${esc(r.pais_destino||'')}" list="tt-dl-paises"       placeholder="País"    autocomplete="off">
-        <input type="text" class="tt-cell-edit" data-field="customs_exit" value="${esc(r.customs_exit||'')}" list="tt-dl-aduanas"      placeholder="Aduana"  autocomplete="off">
+        ${_renderSelectField('carrier',      r.carrier      || '')}
+        ${_renderSelectField('departure',    r.departure    || '')}
+        <input type="text" class="tt-cell-edit" data-field="destination"  value="${esc(r.destination||'')}" placeholder="Destino" autocomplete="off">
+        ${_renderSelectField('pais_destino', r.pais_destino || '')}
+        ${_renderSelectField('customs_exit', r.customs_exit || '')}
         <input type="number" class="tt-cell-edit" data-field="freight_usd" value="${esc(r.freight_usd||'')}" min="0.01" step="0.01" placeholder="USD">
         <div style="display:flex;align-items:center;justify-content:flex-end">${delBtn}</div>
       </div>
@@ -6668,9 +6883,24 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const id     = wrap.dataset.id;
     const tempId = wrap.dataset.tempid;
     let value = input.value;
+
+    // Caso especial: en los selects de pais/departure/aduana, el sentinel __NEW__
+    // dispara el modal de "Agregar nuevo X". El valor previo se restaura mientras
+    // tanto para no dejar un select roto si el modal se cancela.
+    if(value === '__NEW__'){
+      const orig = id ? _ttData.find(r => r.id === id) : null;
+      const merged = orig ? _getMergedRow(orig) : (_ttPendingNew.find(r => r._tempId === tempId) || {});
+      input.value = String(merged[field] || '');
+      _promptNewValueForField(field, id || tempId, !!tempId, input);
+      return;
+    }
+
     if(field === 'freight_usd'){
       value = parseFloat(String(value).replace(',','.'));
       if(!isFinite(value)) value = '';
+    } else if(input.tagName === 'SELECT'){
+      // Selects entregan el valor exacto de la opción — no normalizo (ya es UPPER).
+      value = String(value);
     } else {
       value = String(value).toUpperCase().trim();
       if(input.value !== value){ const cs = input.selectionStart; input.value = value; try { input.setSelectionRange(cs, cs); } catch(_){} }
@@ -6922,9 +7152,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const delBtn = id
       ? `<button type="button" class="btn-clear" data-action="tt-soft-delete-carrier" data-cid="${esc(id)}" title="Desactivar carrier" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`
       : `<button type="button" class="btn-clear" data-action="tt-discard-carrier-new" data-ctempid="${esc(tempId)}" title="Descartar carrier nuevo" style="padding:5px 7px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg></button>`;
+    // Carriers existentes: nombre como texto plano (lista cerrada — para crear nuevos
+    // hay que usar el botón "+ Nuevo carrier" que abre un modal con motivo).
+    // Carriers en _ttPendingCarrierNew solo existirían si quedaron de antes del refactor;
+    // los nuevos modernos van directo a la DB sin pasar por pending.
+    const nombreCell = id
+      ? `<span style="font-size:13px;font-weight:600;color:var(--text);padding:0 4px;letter-spacing:.005em">${esc(c.nombre||'—')}</span>`
+      : `<input type="text" class="tt-carrier-cell-edit" data-cfield="nombre" value="${esc(c.nombre||'')}" placeholder="Nombre del carrier" autocomplete="off">`;
     return `<div class="sched-row-wrap ${cls}" ${idAttr} ${tidAttr}>
       <div class="sched-main-row" style="grid-template-columns:${COLS};padding:6px 12px;gap:6px;align-items:center">
-        <input type="text" class="tt-carrier-cell-edit" data-cfield="nombre" value="${esc(c.nombre||'')}" placeholder="Nombre del carrier" autocomplete="off">
+        ${nombreCell}
         <div style="display:flex;align-items:center;gap:6px">
           <input type="text" class="tt-carrier-cell-edit" data-cfield="seguro_pct" value="${esc(seguroDisp)}" placeholder="0" style="width:70px;text-align:right">
           <span style="font-size:11px;color:var(--muted)">% s/FOB/FCA</span>
@@ -7017,22 +7254,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return false;
   }
 
-  window.addTTCarrier = function(){
-    _ensureEditor(() => {
-      _ttPendingCarrierNewSeq++;
-      _ttPendingCarrierNew.push({
-        _tempId:'ctmp-' + _ttPendingCarrierNewSeq,
-        nombre:'', seguro_pct:0, activo:true
-      });
-      _renderCarriers();
-      setTimeout(() => {
-        const rows = document.querySelectorAll('#tt-edit-carriers-table .sched-row-wrap[data-ctempid]');
-        const last = rows[rows.length - 1];
-        const inp = last && last.querySelector('input[data-cfield="nombre"]');
-        if(inp) inp.focus();
-      }, 30);
-    });
-  };
+  // Carriers son una lista cerrada: el nombre solo se setea al crear (modal con motivo).
+  // Después se pueden editar % seguro y estado activo desde la tabla, pero el nombre
+  // queda inmutable. Esta defensa evita typos tipo "AGUILUCHOS" que romperían la
+  // consistencia con la tabla de tarifas.
+  window.addTTCarrier = function(){ _openCarrierModal(); };
 
   window.discardTTCarrierRowNew = function(tempId){
     _ttPendingCarrierNew = _ttPendingCarrierNew.filter(c => c._tempId !== tempId);
@@ -7717,6 +7943,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Modal — cancelar / confirmar
     if(e.target.closest('[data-action="tt-modal-cancel"]')){ _hideModal(); return; }
     if(e.target.closest('[data-action="tt-modal-confirm"]')){ _modalConfirm(); return; }
+    // Modal Carrier
+    if(e.target.closest('[data-action="tt-carrier-modal-cancel"]')){ _closeCarrierModal(); return; }
+    if(e.target.closest('[data-action="tt-carrier-modal-confirm"]')){ _confirmCarrierModal(); return; }
     // Filtros del modo Consulta
     const tog = e.target.closest('[data-action="tt-multi-tog"]');
     if(tog){ e.preventDefault(); _togFilter(tog.dataset.kind, tog.dataset.value); return; }
