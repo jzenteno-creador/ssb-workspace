@@ -5554,21 +5554,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       };
       const COLMAP = tipo === 'DESTINATION' ? COLMAP_DEST : COLMAP_ORIG;
 
-      const PAISES   = ['BRAZIL', 'CHILE', 'PERU', 'COLOMBIA'];
-      const NAVIERAS = ['LOG-IN', 'MAERSK', 'HAPAG'];
-      const matchesCountry = c => !!c && PAISES.includes(String(c).toUpperCase().trim());
-      const matchesNaviera = s => {
-        if(!s) return false;
-        const u = String(s).toUpperCase();
-        return NAVIERAS.some(n => u.includes(n));
-      };
-
+      // Sin filtro de países/navieras al guardar — la DB es fuente única;
+      // los filtros de DEFAULT_COUNTRIES y navieras se aplican en _doApplyDetFilter.
       const todayIso = new Date().toISOString().slice(0,10);
       const nowIso   = new Date().toISOString();
       const intCols  = ['combined_days', 'demurrage_days', 'detention_days'];
       const decCols  = ['per_diem_dry_usd', 'per_diem_reefer_usd'];
 
       const rows = [];
+      let descartadas = 0;
       for(const r of data) {
         const rec = { tipo: tipo, source_date: todayIso, updated_at: nowIso };
         for(const src of Object.keys(COLMAP)) {
@@ -5578,14 +5572,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
           else if(decCols.includes(dst)) rec[dst] = coerceDecimal(v);
           else                           rec[dst] = coerceStr(v);
         }
-        if(!rec.supplier || !rec.country) continue;
-        if(!matchesCountry(rec.country))  continue;
-        if(!matchesNaviera(rec.supplier)) continue;
+        // Único guard: supplier o country vacíos → descartar fila
+        if(!rec.supplier || !rec.country) { descartadas++; continue; }
         rows.push(rec);
       }
 
+      console.log('[Detention upload] tipo=' + tipo + ' · filas leídas=' + data.length + ' · descartadas=' + descartadas + ' · a upsertar=' + rows.length);
+
       if(!rows.length) {
-        setDetStatus('err', '❌ Sin filas válidas tras filtros (países/navieras)');
+        setDetStatus('err', '❌ Sin filas válidas (Supplier o Destination Country vacíos en todas las filas)');
         input.value = '';
         return;
       }
