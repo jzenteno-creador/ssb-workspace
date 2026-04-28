@@ -24,3 +24,8 @@ node_modules/
 __pycache__/
 *.pyc
 *.pyo
+
+# Datos contractuales — no van al repo público
+data/*.xlsx
+data/*.xlsm
+data/*.xls
