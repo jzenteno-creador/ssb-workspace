@@ -6205,6 +6205,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _ttPendingNew     = [];       // tarifas nuevas en sesión, con _tempId 'tmp-N'
   let _ttPendingNewSeq  = 0;        // contador secuencial para _tempId (tarifas)
   let _ttModalCallback  = null;     // función a ejecutar al confirmar el modal
+  let _ttEditSort       = { col: 'carrier', dir: 'asc' };  // ordenamiento de la tabla de Edición
 
   // State del modo Edición · Carriers
   let _ttPendingCarrierChanges = {};  // { id → { field: newValue, ... } } sobre carriers existentes
@@ -6850,6 +6851,35 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     </div>`;
   }
 
+  // Helper para el header sortable: agrega clase activa + indicador ↕/↑/↓.
+  function _sortableTh(col, label){
+    const active = (_ttEditSort.col === col);
+    const desc   = active && _ttEditSort.dir === 'desc';
+    const cls = 'sth tt-sortable' + (active ? ' tt-sort-active' : '') + (desc ? ' tt-sort-desc' : '');
+    const ind = '<svg class="tt-sort-ind" viewBox="0 0 8 8" aria-hidden="true"><path d="M4 1L7.5 6h-7z" fill="currentColor"/></svg>';
+    return `<span class="${cls}" data-action="tt-edit-sort" data-sort-col="${esc(col)}" role="button" aria-label="Ordenar por ${esc(label)}" tabindex="0">${esc(label)}${ind}</span>`;
+  }
+
+  // Comparator estable con tiebreakers fijos (carrier → departure → destination).
+  // Se aplica sobre objetos {data,...} preservando el wrapper para no perder origen.
+  function _editRowComparator(a, b){
+    const { col, dir } = _ttEditSort;
+    const mult = dir === 'asc' ? 1 : -1;
+    const da = a.data || a, db = b.data || b;
+    let primary;
+    if(col === 'freight_usd'){
+      primary = (Number(da.freight_usd) || 0) - (Number(db.freight_usd) || 0);
+    } else {
+      primary = String(da[col] || '').localeCompare(String(db[col] || ''), 'es');
+    }
+    if(primary) return primary * mult;
+    const t1 = String(da.carrier   || '').localeCompare(String(db.carrier   || ''), 'es');
+    if(t1) return t1;
+    const t2 = String(da.departure || '').localeCompare(String(db.departure || ''), 'es');
+    if(t2) return t2;
+    return String(da.destination   || '').localeCompare(String(db.destination || ''), 'es');
+  }
+
   function _renderEdit(){
     const el = document.getElementById('tt-edit-table');
     const ct = document.getElementById('tt-edit-ct');
@@ -6857,24 +6887,45 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _populateDatalists();
     const COLS = '1.2fr 1.4fr 1.4fr 1.1fr 1.4fr .9fr .55fr';
     const head = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
-      <span class="sth">Carrier</span>
-      <span class="sth">Departure</span>
-      <span class="sth">Destination</span>
-      <span class="sth">País destino</span>
-      <span class="sth">Aduana</span>
-      <span class="sth">Flete USD</span>
+      ${_sortableTh('carrier',      'Carrier')}
+      ${_sortableTh('departure',    'Departure')}
+      ${_sortableTh('destination',  'Destination')}
+      ${_sortableTh('pais_destino', 'País destino')}
+      ${_sortableTh('customs_exit', 'Aduana')}
+      ${_sortableTh('freight_usd',  'Flete USD')}
       <span class="sth"></span>
     </div>`;
-    const rowsExist = _ttData.map(orig => {
-      const r = _getMergedRow(orig);
-      const cls = _ttPendingChanges[orig.id] ? 'tt-row-changed' : '';
-      return _renderEditableRow(r, orig.id, null, cls);
+    // Combinamos existentes mergeadas + nuevas en un solo array, anotando origen
+    // para no perder la referencia de id/tempId al ordenar.
+    const merged = [];
+    for(const orig of _ttData){
+      const m = _getMergedRow(orig);
+      merged.push({ data: m, _origId: orig.id, _origTemp: null, _hasChanges: !!_ttPendingChanges[orig.id] });
+    }
+    for(const r of _ttPendingNew){
+      merged.push({ data: r, _origId: null, _origTemp: r._tempId, _hasChanges: false });
+    }
+    merged.sort(_editRowComparator);
+    const rowsHtml = merged.map(m => {
+      const cls = m._origTemp ? 'tt-row-new' : (m._hasChanges ? 'tt-row-changed' : '');
+      return _renderEditableRow(m.data, m._origId, m._origTemp, cls);
     }).join('');
-    const rowsNew = _ttPendingNew.map(r => _renderEditableRow(r, null, r._tempId, 'tt-row-new')).join('');
-    el.innerHTML = head + rowsExist + rowsNew;
+    el.innerHTML = head + rowsHtml;
     if(ct) ct.textContent = (_ttData.length + _ttPendingNew.length) + ' filas en total';
     _updatePendingPill();
   }
+
+  // Toggle de ordenamiento al hacer click en un header sortable.
+  window.toggleTTEditSort = function(col){
+    if(!col) return;
+    if(_ttEditSort.col === col){
+      _ttEditSort.dir = _ttEditSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      _ttEditSort.col = col;
+      _ttEditSort.dir = 'asc';
+    }
+    _renderEdit();
+  };
 
   function _onCellChange(input){
     const wrap = input.closest('.sched-row-wrap');
@@ -7946,6 +7997,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Modal Carrier
     if(e.target.closest('[data-action="tt-carrier-modal-cancel"]')){ _closeCarrierModal(); return; }
     if(e.target.closest('[data-action="tt-carrier-modal-confirm"]')){ _confirmCarrierModal(); return; }
+    // Sort Edición → Tarifas
+    const sortBtn = e.target.closest('[data-action="tt-edit-sort"]');
+    if(sortBtn){ toggleTTEditSort(sortBtn.dataset.sortCol); return; }
     // Filtros del modo Consulta
     const tog = e.target.closest('[data-action="tt-multi-tog"]');
     if(tog){ e.preventDefault(); _togFilter(tog.dataset.kind, tog.dataset.value); return; }
