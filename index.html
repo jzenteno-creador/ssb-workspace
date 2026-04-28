@@ -5897,14 +5897,422 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 <!-- ═══════════ INICIO TARIFAS TERRESTRES DOW ═══════════ -->
 <script>
 (function(){
-  // IIFE — segmented control de modos. La lógica de datos (loadTT, render,
-  // edición, historial) se completa en commits subsiguientes.
-  let _ttMode = 'consulta';
-  let _ttEditSubtab = 'tarifas';
+  // ────────────────────────────────────────────────────────────────
+  // Tarifas Terrestres Dow — IIFE
+  // Patrón: cliente Supabase propio (3er del proyecto, mismo que
+  // Detention y Schedule Realtime). State con prefijo _tt.
+  // Listener click delegado único al final.
+  // ────────────────────────────────────────────────────────────────
+  const SUPA_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const CACHE_TTL = 10 * 60 * 1000;
 
-  window.switchTTMode = function(mode) {
+  // ── State global del módulo ──
+  let _ttData       = null;   // filas de v_tarifas_terrestres
+  let _ttCarriers   = null;   // carriers (id, nombre, seguro_pct, activo, ...)
+  let _ttLastFetch  = 0;
+  let _ttOpenKind   = null;   // cuál dropdown está abierto
+
+  // Sets de selección por filtro (null hasta primer fetch)
+  let _ttSelPaises       = null;
+  let _ttSelCarriers     = null;
+  let _ttSelDepartures   = null;
+  let _ttSelAduanas      = null;
+  let _ttSelDestinations = null;
+
+  const STORAGE = {
+    paises:       'tt_filtro_paises',
+    carriers:     'tt_filtro_carriers',
+    departures:   'tt_filtro_departures',
+    aduanas:      'tt_filtro_aduanas',
+    destinations: 'tt_filtro_destinations'
+  };
+
+  // ── Helpers locales ──
+  // esc local cubre comilla simple (a diferencia del esc global), defensivo
+  // si en el futuro se usa en atributos con apostrofe.
+  function esc(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function fmtUSD(v){
+    if(v == null || isNaN(Number(v))) return '—';
+    return 'USD ' + Number(v).toLocaleString('es-AR');
+  }
+  function fmtPctFromDecimal(v){
+    if(!v || Number(v) === 0) return '—';
+    const pct = Number(v) * 100;
+    return pct.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '% s/FOB/FCA';
+  }
+  function debounce(fn, ms){
+    let t;
+    return function(...a){ clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); };
+  }
+
+  // País → ISO 3166-1 alpha-2 para flagcdn (Latam relevantes a Dow).
+  const TT_COUNTRY_ISO = {
+    'CHILE':'cl', 'BRASIL':'br', 'BRAZIL':'br',
+    'URUGUAY':'uy', 'BOLIVIA':'bo',
+    'ARGENTINA':'ar', 'PERU':'pe', 'COLOMBIA':'co', 'PARAGUAY':'py'
+  };
+  function countryFlag(country, size){
+    if(!country) return '';
+    size = size || '16x12';
+    const code = TT_COUNTRY_ISO[String(country).toUpperCase().trim()];
+    if(!code) return '';
+    const dim = size.split('x');
+    const cEsc = esc(country);
+    return `<img src="https://flagcdn.com/${size}/${code}.png" width="${dim[0]}" height="${dim[1]}" alt="${cEsc}" title="${cEsc}" style="display:inline;vertical-align:middle;margin-right:4px;border-radius:2px">`;
+  }
+
+  // ── Bloque copiable: una línea con middle dot ──
+  function buildTTMailLine(r){
+    const flete = `USD ${Number(r.freight_usd).toLocaleString('es-AR')}`;
+    const seguro = (Number(r.seguro_pct) > 0)
+      ? ` + ${(Number(r.seguro_pct) * 100).toLocaleString('es-AR', { maximumFractionDigits: 2 })}% s/FOB/FCA`
+      : '';
+    return `${r.departure} → ${r.destination} (${r.pais_destino}) · Aduana: ${r.customs_exit} · Carrier: ${r.carrier} · Flete: ${flete}${seguro}`;
+  }
+
+  async function _copyRowMail(btn, id){
+    if(!_ttData) return;
+    const r = _ttData.find(x => x.id === id);
+    if(!r || !btn) return;
+    const text = buildTTMailLine(r);
+    const orig = btn.innerHTML;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.innerHTML = '✓ Copiado';
+    } catch(_) {
+      btn.innerHTML = '⚠ Error';
+    }
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  }
+
+  // ── Storage helpers (Set ↔ localStorage) ──
+  function _loadSet(key){
+    try {
+      const raw = localStorage.getItem(key);
+      if(!raw) return null;
+      const arr = JSON.parse(raw);
+      if(!Array.isArray(arr)) return null;
+      return new Set(arr.filter(x => typeof x === 'string' && x.length));
+    } catch(_) { return null; }
+  }
+  function _saveSet(key, set){
+    try { localStorage.setItem(key, JSON.stringify([...set])); } catch(_) {}
+  }
+
+  // Inicializa todos los sets desde storage. Default: vacío (= mostrar todo).
+  function _initSelections(){
+    if(_ttSelPaises === null)       _ttSelPaises       = _loadSet(STORAGE.paises)       || new Set();
+    if(_ttSelCarriers === null)     _ttSelCarriers     = _loadSet(STORAGE.carriers)     || new Set();
+    if(_ttSelDepartures === null)   _ttSelDepartures   = _loadSet(STORAGE.departures)   || new Set();
+    if(_ttSelAduanas === null)      _ttSelAduanas      = _loadSet(STORAGE.aduanas)      || new Set();
+    if(_ttSelDestinations === null) _ttSelDestinations = _loadSet(STORAGE.destinations) || new Set();
+  }
+
+  function _getSetByKind(kind){
+    return ({
+      paises:       _ttSelPaises,
+      carriers:     _ttSelCarriers,
+      departures:   _ttSelDepartures,
+      aduanas:      _ttSelAduanas,
+      destinations: _ttSelDestinations
+    })[kind] || null;
+  }
+
+  // Devuelve todas las opciones únicas para un kind, sorted alfabéticamente.
+  function _getAllOptionsByKind(kind){
+    const set = new Set();
+    for(const r of (_ttData || [])){
+      let v;
+      if(kind === 'paises')            v = (r.pais_destino || '').trim();
+      else if(kind === 'carriers')     v = (r.carrier || '').trim();
+      else if(kind === 'departures')   v = (r.departure || '').trim();
+      else if(kind === 'aduanas')      v = (r.customs_exit || '').trim();
+      else if(kind === 'destinations') v = (r.destination || '').trim();
+      if(v) set.add(v);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  const MAX_VISIBLE_CHIPS = 3;
+
+  function _renderChips(kind){
+    const wrap   = document.getElementById('tt-' + kind + '-input');
+    const search = document.getElementById('tt-' + kind + '-search');
+    if(!wrap || !search) return;
+    const sel = _getSetByKind(kind);
+    if(!sel) return;
+    wrap.querySelectorAll('.tt-chip').forEach(el => el.remove());
+    const sorted  = [...sel].sort((a, b) => a.localeCompare(b, 'es'));
+    const visible = sorted.slice(0, MAX_VISIBLE_CHIPS);
+    const moreN   = sorted.length - visible.length;
+    for(let i = visible.length - 1; i >= 0; i--){
+      const v = visible[i];
+      const chip = document.createElement('span');
+      chip.className = 'tt-chip';
+      const flag = (kind === 'paises') ? countryFlag(v, '16x12') : '';
+      chip.innerHTML = `${flag}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(v)}</span><button type="button" class="tt-chip-x" data-action="tt-multi-untog" data-kind="${esc(kind)}" data-value="${esc(v)}" aria-label="Quitar ${esc(v)}">×</button>`;
+      wrap.insertBefore(chip, search);
+    }
+    if(moreN > 0){
+      const more = document.createElement('span');
+      more.className = 'tt-chip';
+      more.style.cssText = 'background:var(--faint);border-color:var(--border);color:var(--muted)';
+      more.textContent = `+${moreN} más`;
+      wrap.insertBefore(more, search);
+    }
+  }
+
+  function _renderDropList(kind){
+    const drop = document.getElementById('tt-' + kind + '-drop');
+    if(!drop) return;
+    const sel = _getSetByKind(kind);
+    if(!sel) return;
+    const search = (document.getElementById('tt-' + kind + '-search')?.value || '').toUpperCase();
+    const opts = _getAllOptionsByKind(kind);
+    const filtered = search ? opts.filter(o => o.toUpperCase().includes(search)) : opts;
+    const checked   = filtered.filter(o => sel.has(o));
+    const unchecked = filtered.filter(o => !sel.has(o));
+    const items = [...checked, ...unchecked];
+    if(!items.length){
+      drop.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:var(--muted);font-style:italic">Sin resultados</div>';
+      return;
+    }
+    drop.innerHTML = items.map((v, i) => {
+      const on   = sel.has(v);
+      const flag = (kind === 'paises') ? countryFlag(v, '16x12') : '';
+      const sep  = (i === checked.length - 1 && unchecked.length) ? 'border-bottom:2px solid var(--border)' : 'border-bottom:1px solid var(--border)';
+      return `<div data-action="tt-multi-tog" data-kind="${esc(kind)}" data-value="${esc(v)}" role="option" aria-selected="${on}" style="display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;${sep};font-size:13px;color:var(--text);user-select:none">
+        <input type="checkbox" ${on ? 'checked' : ''} tabindex="-1" style="margin:0;pointer-events:none" aria-hidden="true">
+        ${flag}<span style="flex:1">${esc(v)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function _renderUI(kind){ _renderChips(kind); _renderDropList(kind); }
+
+  function _highlightInputOpen(kind, on){
+    const inp = document.getElementById('tt-' + kind + '-input');
+    if(!inp) return;
+    if(on){
+      inp.style.borderColor = 'var(--blue)';
+      inp.style.background  = 'var(--surface)';
+      inp.setAttribute('aria-expanded', 'true');
+    } else {
+      inp.style.borderColor = '';
+      inp.style.background  = '';
+      inp.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  function _closeDrop(kind){
+    const drop = document.getElementById('tt-' + kind + '-drop');
+    if(drop) drop.classList.remove('open');
+    _highlightInputOpen(kind, false);
+    if(_ttOpenKind === kind) _ttOpenKind = null;
+  }
+
+  window.openTTDrop = function(kind){
+    if(_ttOpenKind && _ttOpenKind !== kind) _closeDrop(_ttOpenKind);
+    const drop = document.getElementById('tt-' + kind + '-drop');
+    if(!drop) return;
+    _renderDropList(kind);
+    drop.classList.add('open');
+    _highlightInputOpen(kind, true);
+    _ttOpenKind = kind;
+    const search = document.getElementById('tt-' + kind + '-search');
+    if(search && document.activeElement !== search) search.focus();
+  };
+
+  window.filterTTDrop = function(kind){
+    if(_ttOpenKind !== kind) openTTDrop(kind);
+    else _renderDropList(kind);
+  };
+
+  window.onTTDropKey = function(e, kind){
+    if(e.key === 'Escape'){
+      _closeDrop(kind);
+      const inp = document.getElementById('tt-' + kind + '-search');
+      if(inp) inp.blur();
+    }
+  };
+
+  function _togFilter(kind, value){
+    const sel = _getSetByKind(kind);
+    if(!sel) return;
+    const k = String(value || '');
+    if(sel.has(k)) sel.delete(k); else sel.add(k);
+    _saveSet(STORAGE[kind], sel);
+    _renderUI(kind);
+    _doApplyTTFilter();
+  }
+
+  window.resetTTFilters = function(){
+    for(const kind of ['paises','carriers','departures','aduanas','destinations']){
+      const sel = _getSetByKind(kind);
+      if(sel) sel.clear();
+      try { localStorage.removeItem(STORAGE[kind]); } catch(_) {}
+      const search = document.getElementById('tt-' + kind + '-search');
+      if(search) search.value = '';
+      _renderUI(kind);
+    }
+    _doApplyTTFilter();
+  };
+
+  // ── Filtrado y render de tabla ──
+  function _filterRows(){
+    if(!_ttData) return [];
+    const F = {
+      paises:       _ttSelPaises,
+      carriers:     _ttSelCarriers,
+      departures:   _ttSelDepartures,
+      aduanas:      _ttSelAduanas,
+      destinations: _ttSelDestinations
+    };
+    return _ttData.filter(r => {
+      if(F.paises.size       && !F.paises.has(r.pais_destino))       return false;
+      if(F.carriers.size     && !F.carriers.has(r.carrier))          return false;
+      if(F.departures.size   && !F.departures.has(r.departure))      return false;
+      if(F.aduanas.size      && !F.aduanas.has(r.customs_exit))      return false;
+      if(F.destinations.size && !F.destinations.has(r.destination))  return false;
+      return true;
+    });
+  }
+
+  function _renderConsulta(rows){
+    const el = document.getElementById('tt-results');
+    if(!el) return;
+    if(!rows.length){
+      el.innerHTML = '<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No encontré tarifas que coincidan</div><div class="empty-sub">Probá con otro país, carrier o destino, o tocá Resetear para volver a verlas todas.</div></div>';
+      return;
+    }
+    rows.sort((a, b) => {
+      let k = (a.pais_destino || '').localeCompare(b.pais_destino || '', 'es'); if(k) return k;
+      k = (a.carrier || '').localeCompare(b.carrier || '', 'es');                if(k) return k;
+      k = (a.departure || '').localeCompare(b.departure || '', 'es');             if(k) return k;
+      return (a.destination || '').localeCompare(b.destination || '', 'es');
+    });
+    const COLS = '1.1fr 2.2fr 1fr 1.4fr .9fr 1.4fr .9fr';
+    const head = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
+      <span class="sth">Carrier</span>
+      <span class="sth">Origen → Destino</span>
+      <span class="sth">País</span>
+      <span class="sth">Aduana</span>
+      <span class="sth">Flete USD</span>
+      <span class="sth">Seguro</span>
+      <span class="sth">Acción</span>
+    </div>`;
+    const body = rows.map(r => {
+      const seguroTxt = (Number(r.seguro_pct) > 0) ? fmtPctFromDecimal(r.seguro_pct) : '—';
+      const flag = countryFlag(r.pais_destino, '16x12');
+      const idEsc = esc(r.id);
+      return `<div class="sched-row-wrap">
+        <div class="sched-main-row" style="grid-template-columns:${COLS}">
+          <div><span class="badge--carrier">${esc(r.carrier)}</span></div>
+          <div class="sr"><strong>${esc(r.departure)}</strong> → ${esc(r.destination)}</div>
+          <div class="sr">${flag}<span class="badge--neutral" style="margin-left:2px">${esc(r.pais_destino)}</span></div>
+          <div class="sr">${esc(r.customs_exit)}</div>
+          <div class="sr mono">${fmtUSD(r.freight_usd)}</div>
+          <div class="sr">${(Number(r.seguro_pct) > 0) ? `<span class="badge--purple">${esc(seguroTxt)}</span>` : '<span style="color:var(--muted)">—</span>'}</div>
+          <div class="sr"><button type="button" class="btn-clear" data-action="tt-copy-row" data-id="${idEsc}" title="Copiar línea para mail/Slack" style="padding:5px 9px;font-size:11px"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-clipboard"/></svg> Copiar</button></div>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = head + body;
+  }
+
+  function _doApplyTTFilterImpl(){
+    if(!_ttData) return;
+    _initSelections();
+    const ct  = document.getElementById('tt-ct');
+    const rows = _filterRows();
+    if(ct) ct.textContent = rows.length + ' tarifa' + (rows.length !== 1 ? 's' : '') + ' encontrada' + (rows.length !== 1 ? 's' : '');
+    _renderConsulta(rows);
+  }
+  const _doApplyTTFilter = debounce(_doApplyTTFilterImpl, 250);
+
+  // ── Build de los 5 dropdowns + botón Resetear ──
+  function _buildFilterRow(){
+    const row = document.getElementById('tt-filter-row');
+    if(!row) return;
+    const kinds = [
+      { id: 'paises',       label: 'País destino' },
+      { id: 'carriers',     label: 'Carrier' },
+      { id: 'departures',   label: 'Departure' },
+      { id: 'aduanas',      label: 'Aduana' },
+      { id: 'destinations', label: 'Destination' }
+    ];
+    row.innerHTML = kinds.map(k => `
+      <div class="ac-wrap" id="tt-${k.id}-wrap" style="flex:1 1 200px;min-width:180px;max-width:280px">
+        <div class="ac-in" id="tt-${k.id}-input" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtro ${esc(k.label)}"
+             style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-height:34px;padding:4px 8px;cursor:text;width:auto"
+             onclick="openTTDrop('${k.id}')">
+          <input type="text" id="tt-${k.id}-search" placeholder="${esc(k.label)}…" autocomplete="off"
+                 style="border:none;outline:none;background:transparent;flex:1;min-width:80px;font-family:var(--font);font-size:13px;padding:2px;color:var(--text)"
+                 oninput="filterTTDrop('${k.id}')" onfocus="openTTDrop('${k.id}')" onkeydown="onTTDropKey(event,'${k.id}')">
+        </div>
+        <div class="ac-drop" id="tt-${k.id}-drop" role="listbox" aria-label="Lista de ${esc(k.label)}" style="left:0;right:auto;min-width:240px;max-height:240px"></div>
+      </div>`).join('') +
+      `<button class="btn-clear" type="button" onclick="resetTTFilters()" title="Limpiar todos los filtros" aria-label="Resetear filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg> Resetear</button>`;
+    for(const k of kinds) _renderUI(k.id);
+  }
+
+  // ── Fetch principal ──
+  window.loadTT = async function(){
+    const el = document.getElementById('tt-results');
+    if(!el) return;
+    const now = Date.now();
+    if(_ttData && (now - _ttLastFetch) < CACHE_TTL){
+      _doApplyTTFilterImpl();
+      return;
+    }
+    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando tarifas terrestres"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
+
+    const PAGE = 1000, MAX = 20;
+    const all = [];
+    let pageErr = null;
+    for(let p = 0; p < MAX; p++){
+      const from = p * PAGE, to = from + PAGE - 1;
+      const { data: chunk, error: err } = await supa
+        .from('v_tarifas_terrestres')
+        .select('*')
+        .order('pais_destino', { ascending: true })
+        .range(from, to);
+      if(err){ pageErr = err; break; }
+      if(!chunk || !chunk.length) break;
+      all.push(...chunk);
+      if(chunk.length < PAGE) break;
+    }
+    if(pageErr){
+      el.innerHTML = '<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar tarifas</div><div class="empty-sub">' + esc(pageErr.message) + '</div></div>';
+      const ct = document.getElementById('tt-ct'); if(ct) ct.textContent = 'Error de conexión';
+      return;
+    }
+
+    // Cargar también carriers (modo Edición los necesita; lo prefetcheo
+    // para evitar ir/volver al cambiar de modo).
+    const { data: cs, error: cErr } = await supa
+      .from('tarifas_terrestres_carriers')
+      .select('id, nombre, seguro_pct, activo, updated_at, updated_by, update_reason')
+      .order('nombre', { ascending: true });
+    if(cErr) console.warn('[TT] No pude cargar carriers:', cErr.message);
+
+    _ttData = all;
+    _ttCarriers = cs || [];
+    _ttLastFetch = now;
+    console.log('[TT] ' + all.length + ' tarifas + ' + _ttCarriers.length + ' carriers cargados.');
+
+    _buildFilterRow();
+    _initSelections();
+    _doApplyTTFilterImpl();
+  };
+
+  // ── Modos (segmented controls) ──
+  window.switchTTMode = function(mode){
     if(!['consulta','edicion','historial'].includes(mode)) return;
-    _ttMode = mode;
     document.querySelectorAll('#panel-tt-dow .tt-mode-btn').forEach(btn => {
       const on = btn.dataset.mode === mode;
       btn.classList.toggle('tt-mode-btn--active', on);
@@ -5915,9 +6323,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     });
   };
 
-  window.switchTTEditSubtab = function(sub) {
+  window.switchTTEditSubtab = function(sub){
     if(!['tarifas','carriers'].includes(sub)) return;
-    _ttEditSubtab = sub;
     document.querySelectorAll('#panel-tt-dow .tt-sub-tab').forEach(btn => {
       btn.classList.toggle('tt-sub-tab--active', btn.dataset.subtab === sub);
     });
@@ -5926,17 +6333,35 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     });
   };
 
-  window.loadTT = async function() {
-    // Stub — fetch + render se completa en el próximo commit.
-    console.log('[TT] loadTT() — pendiente de implementación.');
-  };
-
-  // Listener delegado: captura clicks de los segmented controls.
+  // ── Listener delegado único ──
   document.addEventListener('click', (e) => {
+    // Modos
     const m = e.target.closest('[data-action="tt-mode"]');
-    if(m) { switchTTMode(m.dataset.mode); return; }
+    if(m){ switchTTMode(m.dataset.mode); return; }
     const s = e.target.closest('[data-action="tt-subtab"]');
-    if(s) { switchTTEditSubtab(s.dataset.subtab); return; }
+    if(s){ switchTTEditSubtab(s.dataset.subtab); return; }
+    // Toggle item del drop
+    const tog = e.target.closest('[data-action="tt-multi-tog"]');
+    if(tog){
+      e.preventDefault();
+      _togFilter(tog.dataset.kind, tog.dataset.value);
+      return;
+    }
+    // Quitar chip (×)
+    const untog = e.target.closest('[data-action="tt-multi-untog"]');
+    if(untog){
+      e.stopPropagation();
+      _togFilter(untog.dataset.kind, untog.dataset.value);
+      return;
+    }
+    // Copy mail line
+    const copy = e.target.closest('[data-action="tt-copy-row"]');
+    if(copy){ _copyRowMail(copy, copy.dataset.id); return; }
+    // Outside-click: cerrar drop abierto si el click fue afuera del wrap
+    if(_ttOpenKind){
+      const wrap = document.getElementById('tt-' + _ttOpenKind + '-wrap');
+      if(wrap && !wrap.contains(e.target)) _closeDrop(_ttOpenKind);
+    }
   });
 })();
 </script>
