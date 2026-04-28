@@ -756,6 +756,36 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   /* Card hover translate: no lift for reduced-motion users */
   .card:hover{transform:none !important}
 }
+
+/* ── Tarifas Terrestres Dow ── */
+.tt-mode-bar{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:8px;padding:3px}
+.tt-mode-btn{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.tt-mode-btn:hover{color:var(--text)}
+.tt-mode-btn--active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.tt-mode-section{display:none}
+.tt-mode-section.active{display:block}
+.tt-sub-tabs{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:6px;padding:2px;margin-bottom:14px}
+.tt-sub-tab{padding:5px 12px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;border-radius:4px;transition:all .12s}
+.tt-sub-tab--active{background:var(--surface);color:var(--text)}
+.tt-pill-info{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue);border-radius:14px;font-size:11px;font-weight:500}
+.tt-row-changed{background:var(--changed)!important;box-shadow:inset 3px 0 0 var(--changed-bd)}
+.tt-row-new{background:var(--green-bg)!important;box-shadow:inset 3px 0 0 var(--green)}
+.tt-cell-edit{padding:4px 6px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);font:inherit;color:var(--text);width:100%;box-sizing:border-box}
+.tt-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.tt-modal-content{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;max-width:520px;width:100%;box-shadow:var(--shadow);max-height:80vh;overflow:auto}
+.tt-modal-content h3{margin:0 0 12px;font-size:var(--fs-lg);color:var(--text)}
+.tt-modal-content p{margin:0 0 14px;font-size:var(--fs-md);color:var(--muted);line-height:1.5}
+.tt-modal-content label{display:block;font-size:var(--fs-sm);color:var(--muted);margin-bottom:6px;font-weight:500}
+.tt-modal-content textarea,.tt-modal-content input[type="text"]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;box-sizing:border-box}
+.tt-modal-content textarea:focus,.tt-modal-content input[type="text"]:focus{border-color:var(--blue);outline:none}
+.tt-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.tt-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 4px 2px 6px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:10px;font-size:11px;color:var(--blue);font-weight:500;line-height:1.3;max-width:160px;overflow:hidden}
+.tt-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);padding:0 2px;font-size:13px;line-height:1}
+.tt-diff-panel{margin-top:6px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--text);white-space:pre-wrap}
+.tt-diff-line .tt-diff-key{color:var(--muted);margin-right:8px}
+.tt-diff-line .tt-diff-old{color:var(--red);text-decoration:line-through;margin-right:6px}
+.tt-diff-line .tt-diff-arrow{color:var(--muted);margin-right:6px}
+.tt-diff-line .tt-diff-new{color:var(--green)}
 </style>
 </head>
 <body>
@@ -791,6 +821,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
   </defs>
 </svg>
 
@@ -863,6 +894,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
   <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
   <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
+  <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -1286,6 +1318,97 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   </div>
 </div>
 
+<!-- ═══════════ TAB: TARIFAS TERRESTRES DOW ═══════════ -->
+<div class="tab-panel" id="panel-tt-dow">
+
+  <!-- Header del módulo: título + editor pill + segmented control de modos -->
+  <div class="sched-filter-bar">
+    <div class="sched-filter-row" style="align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:240px">
+        <svg class="ic ic-md" aria-hidden="true" style="color:var(--teal)"><use href="#i-truck"/></svg>
+        <span style="font-size:14px;font-weight:600;color:var(--text)">Tarifas Terrestres Dow</span>
+        <span class="tt-pill-info" id="tt-editor-pill" style="display:none">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg>
+          <span id="tt-editor-pill-name"></span>
+          <button type="button" class="tt-chip-x" data-action="tt-change-editor" title="Cambiar editor" aria-label="Cambiar editor">↻</button>
+        </span>
+      </div>
+      <div class="tt-mode-bar" role="tablist" aria-label="Modo de la solapa">
+        <button type="button" class="tt-mode-btn tt-mode-btn--active" data-action="tt-mode" data-mode="consulta" role="tab" aria-selected="true">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg> Consulta
+        </button>
+        <button type="button" class="tt-mode-btn" data-action="tt-mode" data-mode="edicion" role="tab" aria-selected="false">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg> Edición
+        </button>
+        <button type="button" class="tt-mode-btn" data-action="tt-mode" data-mode="historial" role="tab" aria-selected="false">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-history"/></svg> Historial
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODO CONSULTA ═══ -->
+  <div class="tt-mode-section active" data-mode="consulta">
+    <div class="sched-filter-bar" style="background:transparent;border:none;padding:.85rem 2rem">
+      <div class="sched-filter-row" id="tt-filter-row" style="align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);font-style:italic">Los filtros se cargan al abrir la solapa…</span>
+      </div>
+    </div>
+    <div class="sched-module" id="tt-consulta-module">
+      <div class="results-bar" style="display:flex;align-items:center;gap:12px">
+        <span class="results-title">Tarifas terrestres</span>
+        <span class="results-ct" id="tt-ct"></span>
+      </div>
+      <div id="tt-results">
+        <div class="skel-group" aria-busy="true" aria-label="Cargando tarifas terrestres">
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+          <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODO EDICIÓN ═══ -->
+  <div class="tt-mode-section" data-mode="edicion">
+    <div style="padding:1.2rem 2rem">
+      <div class="tt-sub-tabs" role="tablist" aria-label="Sub-tab del modo edición">
+        <button type="button" class="tt-sub-tab tt-sub-tab--active" data-action="tt-subtab" data-subtab="tarifas">Tarifas</button>
+        <button type="button" class="tt-sub-tab" data-action="tt-subtab" data-subtab="carriers">Carriers</button>
+      </div>
+      <div id="tt-edicion-tarifas" data-subtab="tarifas">
+        <div class="empty">
+          <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg></div>
+          <div class="empty-ttl">Modo Edición · Tarifas</div>
+          <div class="empty-sub">La edición inline se habilita en el próximo commit.</div>
+        </div>
+      </div>
+      <div id="tt-edicion-carriers" data-subtab="carriers" style="display:none">
+        <div class="empty">
+          <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-package"/></svg></div>
+          <div class="empty-ttl">Modo Edición · Carriers</div>
+          <div class="empty-sub">La edición inline se habilita en el próximo commit.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODO HISTORIAL ═══ -->
+  <div class="tt-mode-section" data-mode="historial">
+    <div style="padding:1.2rem 2rem">
+      <div class="empty">
+        <div class="empty-ico"><svg viewBox="0 0 24 24"><use href="#i-history"/></svg></div>
+        <div class="empty-ttl">Modo Historial</div>
+        <div class="empty-sub">El log con diff inline se habilita en el próximo commit.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ═══════════ FIN TAB: TARIFAS TERRESTRES DOW ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1345,7 +1468,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -1356,6 +1479,7 @@ function switchTab(name) {
   if(name==='schedule-rt'){ loadScheduleRT(); setupScheduleRT(); }
   else if(window.cleanupScheduleRT){ window.cleanupScheduleRT(); }
   if(name==='detention' && window.loadDetention){ loadDetention(); }
+  if(name==='tt-dow' && window.loadTT){ loadTT(); }
 }
 
 // ── BELL ──
@@ -5769,6 +5893,54 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 })();
 </script>
 <!-- ═══════════ FIN DETENTION ═══════════ -->
+
+<!-- ═══════════ INICIO TARIFAS TERRESTRES DOW ═══════════ -->
+<script>
+(function(){
+  // IIFE — segmented control de modos. La lógica de datos (loadTT, render,
+  // edición, historial) se completa en commits subsiguientes.
+  let _ttMode = 'consulta';
+  let _ttEditSubtab = 'tarifas';
+
+  window.switchTTMode = function(mode) {
+    if(!['consulta','edicion','historial'].includes(mode)) return;
+    _ttMode = mode;
+    document.querySelectorAll('#panel-tt-dow .tt-mode-btn').forEach(btn => {
+      const on = btn.dataset.mode === mode;
+      btn.classList.toggle('tt-mode-btn--active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('#panel-tt-dow .tt-mode-section').forEach(sec => {
+      sec.classList.toggle('active', sec.dataset.mode === mode);
+    });
+  };
+
+  window.switchTTEditSubtab = function(sub) {
+    if(!['tarifas','carriers'].includes(sub)) return;
+    _ttEditSubtab = sub;
+    document.querySelectorAll('#panel-tt-dow .tt-sub-tab').forEach(btn => {
+      btn.classList.toggle('tt-sub-tab--active', btn.dataset.subtab === sub);
+    });
+    document.querySelectorAll('#panel-tt-dow [data-subtab][id^="tt-edicion-"]').forEach(div => {
+      div.style.display = (div.dataset.subtab === sub) ? '' : 'none';
+    });
+  };
+
+  window.loadTT = async function() {
+    // Stub — fetch + render se completa en el próximo commit.
+    console.log('[TT] loadTT() — pendiente de implementación.');
+  };
+
+  // Listener delegado: captura clicks de los segmented controls.
+  document.addEventListener('click', (e) => {
+    const m = e.target.closest('[data-action="tt-mode"]');
+    if(m) { switchTTMode(m.dataset.mode); return; }
+    const s = e.target.closest('[data-action="tt-subtab"]');
+    if(s) { switchTTEditSubtab(s.dataset.subtab); return; }
+  });
+})();
+</script>
+<!-- ═══════════ FIN TARIFAS TERRESTRES DOW ═══════════ -->
 
 </body>
 </html>
