@@ -89,6 +89,13 @@ CREATE TRIGGER trg_tarifas_terrestres_log
 AFTER INSERT OR UPDATE OR DELETE ON tarifas_terrestres
 FOR EACH ROW EXECUTE FUNCTION fn_tarifas_terrestres_log();
 
+-- Migración correctiva tt_log_security_definer (mismo día):
+-- Sin SECURITY DEFINER, el INSERT desde el trigger usa los privilegios
+-- del invocador (anon en producción) y es rechazado por la RLS del log.
+-- Con SECURITY DEFINER la función corre como su owner y bypasea RLS —
+-- patrón estándar para audit logs.
+ALTER FUNCTION fn_tarifas_terrestres_log() SECURITY DEFINER;
+
 -- ════════════════════════════════════════════════════════════════
 -- 5. VIEW para consulta del frontend
 -- ════════════════════════════════════════════════════════════════
