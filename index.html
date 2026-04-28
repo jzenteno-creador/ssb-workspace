@@ -758,34 +758,203 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 }
 
 /* ── Tarifas Terrestres Dow ── */
-.tt-mode-bar{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:8px;padding:3px}
-.tt-mode-btn{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;border-radius:6px;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+
+/* Header del módulo: contenedor con un poquito más de aire vertical y separadores
+   internos, para que el nombre del módulo + pill de editor + segmented bar de modos
+   no se sientan apelmazados como una sola fila. */
+#panel-tt-dow .sched-filter-bar{padding-top:1rem;padding-bottom:1rem}
+#panel-tt-dow .tt-header-title{display:flex;align-items:center;gap:10px;flex:1;min-width:240px}
+#panel-tt-dow .tt-header-title .tt-title{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+#panel-tt-dow .tt-header-title .ic{color:var(--teal)}
+
+/* Pill de editor: micro-card con avatar inicial + nombre + botón cambiar.
+   Reusa .tt-pill-info (sigue usándose como ID hook) pero le subimos el peso visual. */
+.tt-pill-info{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue);border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.005em}
+.tt-pill-info .ic{color:var(--blue)}
+.tt-pill-info .tt-chip-x{background:rgba(91,155,245,.18);border:none;cursor:pointer;color:var(--blue);width:18px;height:18px;border-radius:999px;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:background .12s,transform .12s}
+.tt-pill-info .tt-chip-x:hover{background:rgba(91,155,245,.32);transform:rotate(90deg)}
+
+/* Segmented control de modos — más cockpit, menos genérico.
+   Inspirado en .tab-btn pero compacto. Glow azul cuando está activo. */
+.tt-mode-bar{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:3px;box-shadow:inset 0 1px 0 rgba(0,0,0,.04)}
+.tt-mode-btn{padding:7px 14px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border-radius:6px;transition:color .12s,background .12s,box-shadow .12s,transform .04s;display:inline-flex;align-items:center;gap:6px;letter-spacing:.005em;white-space:nowrap}
+.tt-mode-btn .ic{color:currentColor}
 .tt-mode-btn:hover{color:var(--text)}
-.tt-mode-btn--active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.tt-mode-btn:active{transform:translateY(.5px)}
+.tt-mode-btn--active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.18),0 0 0 1px var(--border)}
+body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.04)}
 .tt-mode-section{display:none}
-.tt-mode-section.active{display:block}
-.tt-sub-tabs{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:6px;padding:2px;margin-bottom:14px}
-.tt-sub-tab{padding:5px 12px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;border-radius:4px;transition:all .12s}
-.tt-sub-tab--active{background:var(--surface);color:var(--text)}
-.tt-pill-info{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue);border-radius:14px;font-size:11px;font-weight:500}
-.tt-row-changed{background:var(--changed)!important;box-shadow:inset 3px 0 0 var(--changed-bd)}
-.tt-row-new{background:var(--green-bg)!important;box-shadow:inset 3px 0 0 var(--green)}
-.tt-cell-edit{padding:4px 6px;border:1px solid var(--blue);border-radius:4px;background:var(--surface);font:inherit;color:var(--text);width:100%;box-sizing:border-box}
-.tt-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-.tt-modal-content{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;max-width:520px;width:100%;box-shadow:var(--shadow);max-height:80vh;overflow:auto}
-.tt-modal-content h3{margin:0 0 12px;font-size:var(--fs-lg);color:var(--text)}
-.tt-modal-content p{margin:0 0 14px;font-size:var(--fs-md);color:var(--muted);line-height:1.5}
-.tt-modal-content label{display:block;font-size:var(--fs-sm);color:var(--muted);margin-bottom:6px;font-weight:500}
-.tt-modal-content textarea,.tt-modal-content input[type="text"]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;box-sizing:border-box}
-.tt-modal-content textarea:focus,.tt-modal-content input[type="text"]:focus{border-color:var(--blue);outline:none}
-.tt-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-.tt-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 4px 2px 6px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:10px;font-size:11px;color:var(--blue);font-weight:500;line-height:1.3;max-width:160px;overflow:hidden}
-.tt-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);padding:0 2px;font-size:13px;line-height:1}
-.tt-diff-panel{margin-top:6px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--text);white-space:pre-wrap}
-.tt-diff-line .tt-diff-key{color:var(--muted);margin-right:8px}
-.tt-diff-line .tt-diff-old{color:var(--red);text-decoration:line-through;margin-right:6px}
-.tt-diff-line .tt-diff-arrow{color:var(--muted);margin-right:6px}
-.tt-diff-line .tt-diff-new{color:var(--green)}
+.tt-mode-section.active{display:block;animation:tt-fade-in .18s ease-out}
+@keyframes tt-fade-in{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:none}}
+
+/* Sub-tabs del modo Edición: más fino que tt-mode-bar (jerarquía secundaria). */
+.tt-sub-tabs{display:inline-flex;gap:0;background:var(--faint);border:1px solid var(--border);border-radius:7px;padding:2px;margin-bottom:14px}
+.tt-sub-tab{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;border-radius:5px;transition:all .12s;letter-spacing:.02em;text-transform:uppercase}
+.tt-sub-tab:hover{color:var(--text)}
+.tt-sub-tab--active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+
+/* Tabla de Consulta: subimos densidad y separación entre filas con zebra sutil.
+   Estos selectores son específicos del panel — no contaminan otras solapas que
+   también usan .sched-table-head / .sched-row-wrap. */
+#panel-tt-dow .sched-table-head{background:var(--header-bg);color:#fff;border-radius:10px 10px 0 0;padding:10px 14px}
+#panel-tt-dow .sched-table-head .sth{color:rgba(255,255,255,.78);font-size:10px;letter-spacing:.08em}
+#panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:var(--shadow)}
+#panel-tt-dow #tt-results > .empty,#panel-tt-dow #tt-hist-list > .empty,#panel-tt-dow #tt-edit-table > .empty{border-radius:10px}
+#panel-tt-dow .sched-row-wrap{border-bottom:1px solid var(--row-border);transition:background .12s}
+#panel-tt-dow .sched-row-wrap:nth-child(odd of .sched-row-wrap){background:transparent}
+#panel-tt-dow .sched-row-wrap:hover{background:var(--surface-hv)}
+#panel-tt-dow .sched-row-wrap:last-child{border-bottom:none}
+#panel-tt-dow .sched-main-row{padding:9px 14px}
+#panel-tt-dow .sr.mono{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+
+/* Pills/chips del modo Consulta: bandera del país + nombre, alineado y respirado. */
+#panel-tt-dow .badge--carrier{font-size:11px;font-weight:600;letter-spacing:.01em;padding:3px 9px;border-radius:6px}
+#panel-tt-dow .badge--neutral{font-size:11px;padding:2px 7px;border-radius:5px;font-weight:500}
+#panel-tt-dow .badge--purple{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px}
+
+/* Botón "Copiar para mail": estado idle + estado "copiado" con check verde.
+   La JS actual cambia .innerHTML del botón al hacer click — ya tiene feedback de
+   contenido. Sumamos el background y border verde via clase .tt-copied que el JS
+   ya no necesita aplicar (lo hacemos via :has dentro del propio botón
+   inspeccionando el ✓ del innerHTML). Si :has no está disponible (browser muy
+   viejo), no rompe nada — solo no pinta verde. */
+#panel-tt-dow .sr [data-action="tt-copy-row"]{padding:5px 11px !important;font-size:11px !important;font-weight:600;border-radius:6px;letter-spacing:.005em;display:inline-flex;align-items:center;gap:5px;transition:all .15s ease;background:var(--blue-lt);border-color:transparent;color:var(--blue)}
+#panel-tt-dow .sr [data-action="tt-copy-row"]:hover{background:var(--blue);color:#fff;border-color:transparent;transform:translateY(-.5px);box-shadow:0 2px 6px rgba(91,155,245,.28)}
+#panel-tt-dow .sr [data-action="tt-copy-row"]:active{transform:none;box-shadow:none}
+#panel-tt-dow .sr [data-action="tt-copy-row"]:has(svg use[href="#i-check"]){background:var(--green-bg);color:var(--green);border-color:transparent}
+#panel-tt-dow .sr [data-action="tt-copy-row"]:has(svg use[href="#i-check"]):hover{background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(62,207,142,.32)}
+
+/* Inputs editables: alineados con .ac-in del resto de la app (1.5px border, focus
+   ring azul, transición). Antes era 1px border y se sentía cramped. */
+.tt-cell-edit{padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--faint);font:inherit;font-size:12px;color:var(--text);width:100%;box-sizing:border-box;transition:border-color .12s,background .12s,box-shadow .12s}
+.tt-cell-edit:hover{border-color:var(--muted);background:var(--surface)}
+.tt-cell-edit:focus{outline:none;border-color:var(--blue);background:var(--surface);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent)}
+.tt-cell-edit::placeholder{color:var(--muted);opacity:.7}
+/* Numeric input — mono y alineado a la derecha como cualquier USD del resto */
+.tt-cell-edit[type="number"]{font-family:var(--mono);text-align:right}
+
+/* Filas con estado: cambiada (amber inset) y nueva (green inset) — manteniendo
+   las mismas clases que usa el JS (`tt-row-changed`, `tt-row-new`). Subimos el
+   ancho del rail lateral a 4px para que sea claro de un vistazo. */
+.tt-row-changed{background:var(--changed) !important;box-shadow:inset 4px 0 0 var(--changed-bd)}
+.tt-row-changed:hover{background:color-mix(in srgb,var(--changed) 75%,var(--surface-hv) 25%) !important}
+.tt-row-new{background:var(--green-bg) !important;box-shadow:inset 4px 0 0 var(--green)}
+.tt-row-new:hover{background:color-mix(in srgb,var(--green-bg) 80%,var(--surface-hv) 20%) !important}
+
+/* Botón "Guardar" del modo Edición: pasa de un .btn-clear forzado por inline
+   styles a un primario real cuando hay cambios pendientes. NO se cambia HTML —
+   solo lo pintamos via override del estilo inline (que el navegador respeta
+   porque seguimos siendo más específicos: ID + clase). */
+#panel-tt-dow #tt-btn-save,
+#panel-tt-dow #tt-btn-csave{
+  background:var(--blue) !important;color:#fff !important;border-color:var(--blue) !important;
+  box-shadow:0 1px 0 rgba(0,0,0,.04),0 4px 10px rgba(91,155,245,.22);
+  transition:transform .08s,box-shadow .15s,filter .12s;
+}
+#panel-tt-dow #tt-btn-save:hover,
+#panel-tt-dow #tt-btn-csave:hover{filter:brightness(1.06);box-shadow:0 1px 0 rgba(0,0,0,.04),0 6px 14px rgba(91,155,245,.32)}
+#panel-tt-dow #tt-btn-save:active,
+#panel-tt-dow #tt-btn-csave:active{transform:translateY(.5px)}
+#panel-tt-dow #tt-btn-discard:hover,
+#panel-tt-dow #tt-btn-cdiscard:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+
+/* Indicador "X cambios pendientes" — antes era un span amber sin estructura.
+   Ahora es una pillita amber con un punto pulsante para que se note en
+   peripheral vision al estar editando. */
+#panel-tt-dow #tt-edit-pending,
+#panel-tt-dow #tt-edit-carriers-pending{
+  display:none;align-items:center;gap:6px;padding:3px 10px;background:var(--amber-bg);
+  border:1px solid var(--amber-bd);border-radius:999px;font-size:11px;font-weight:600;
+  color:var(--amber);letter-spacing:.005em;
+}
+#panel-tt-dow #tt-edit-pending.show,
+#panel-tt-dow #tt-edit-carriers-pending.show{display:inline-flex}
+#panel-tt-dow #tt-edit-pending::before,
+#panel-tt-dow #tt-edit-carriers-pending::before{
+  content:"";width:6px;height:6px;border-radius:999px;background:var(--amber);
+  box-shadow:0 0 0 0 color-mix(in srgb,var(--amber) 60%,transparent);
+  animation:tt-pulse 1.6s ease-out infinite;
+}
+@keyframes tt-pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--amber) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){
+  #panel-tt-dow #tt-edit-pending::before,
+  #panel-tt-dow #tt-edit-carriers-pending::before{animation:none}
+  .tt-mode-section.active{animation:none}
+}
+
+/* Chips multi-select del modo Historial (filtro de editor) — estilo coherente
+   con .tt-pill-info. */
+.tt-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 9px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:999px;font-size:11px;color:var(--blue);font-weight:600;max-width:140px;line-height:1.4}
+.tt-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);padding:0 4px;font-size:13px;line-height:1;border-radius:999px;transition:background .12s}
+.tt-chip-x:hover{background:rgba(91,155,245,.2)}
+
+/* Filas de op (INSERT/UPDATE/DELETE) en filtro de Historial — los inline styles
+   en el HTML las hacen muy chiquitas; las dejamos pero subimos el contraste. */
+#panel-tt-dow [data-action="tt-hist-op"]{padding:5px 8px !important}
+#panel-tt-dow [data-action="tt-hist-op"] .badge--success,
+#panel-tt-dow [data-action="tt-hist-op"] .badge--warning,
+#panel-tt-dow [data-action="tt-hist-op"] .badge--danger{font-weight:700;letter-spacing:.05em;font-size:10px}
+#panel-tt-dow [data-action="tt-hist-op"]:not(.tt-mode-btn--active){opacity:.65}
+#panel-tt-dow [data-action="tt-hist-op"]:hover{opacity:1}
+
+/* Histórico — filas con un poco más de aire y diff inline más legible. */
+#panel-tt-dow #tt-hist-list .sched-main-row{padding:11px 14px;align-items:start}
+#panel-tt-dow #tt-hist-list .sr.mono{font-size:11px;color:var(--muted);line-height:1.5;padding-top:1px}
+#panel-tt-dow [data-action="tt-hist-toggle-diff"]{padding:5px 11px !important;font-size:11px !important;font-weight:600;border-radius:6px;background:var(--faint);border-color:var(--border);color:var(--muted);transition:all .12s}
+#panel-tt-dow [data-action="tt-hist-toggle-diff"]:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+
+/* Diff panel — caja con fondo elevado, monospace cómodo, separadores claros. */
+.tt-diff-panel{margin:4px 14px 12px;padding:12px 14px;background:var(--faint);border:1px solid var(--border);border-radius:8px;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--text);white-space:pre-wrap;display:grid;gap:3px}
+.tt-diff-line{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.tt-diff-line .tt-diff-key{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:10px;min-width:110px}
+.tt-diff-line .tt-diff-old{color:var(--red);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--red) 60%,transparent)}
+.tt-diff-line .tt-diff-arrow{color:var(--muted);opacity:.6}
+.tt-diff-line .tt-diff-new{color:var(--green);font-weight:600}
+
+/* Paginación del Historial — fonts y radio coherentes. */
+#panel-tt-dow #tt-hist-pagination .btn-clear{padding:6px 14px !important;font-size:11px !important;font-weight:600;border-radius:7px}
+#panel-tt-dow #tt-hist-pagination .btn-clear[disabled]{opacity:.4;cursor:not-allowed}
+#panel-tt-dow #tt-hist-pagination span{font-family:var(--mono);font-size:11px}
+
+/* Inputs de fecha del historial — alineados con .ac-in. */
+#panel-tt-dow #tt-hist-from,
+#panel-tt-dow #tt-hist-to{padding:7px 10px !important;border:1.5px solid var(--border) !important;border-radius:7px !important;background:var(--faint) !important;font-size:12px !important;font-family:var(--mono);transition:border-color .12s,background .12s,box-shadow .12s}
+#panel-tt-dow #tt-hist-from:focus,
+#panel-tt-dow #tt-hist-to:focus{border-color:var(--blue) !important;background:var(--surface) !important;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent);outline:none}
+#panel-tt-dow #tt-hist-search{padding:8px 12px !important;border:1.5px solid var(--border) !important;border-radius:8px !important;background:var(--faint) !important;font-size:12px !important;transition:all .12s}
+#panel-tt-dow #tt-hist-search:focus{border-color:var(--blue) !important;background:var(--surface) !important;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent);outline:none}
+
+/* Modales — radio + sombra alineados con cards del resto de la app + animación
+   de entrada. Mantenemos las mismas clases (.tt-modal-overlay, .tt-modal-content)
+   que el JS usa. */
+.tt-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;animation:tt-overlay-in .18s ease-out}
+@keyframes tt-overlay-in{from{opacity:0}to{opacity:1}}
+.tt-modal-content{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 26px;max-width:540px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.45),0 4px 14px rgba(0,0,0,.25);max-height:80vh;overflow:auto;animation:tt-modal-in .22s cubic-bezier(.2,.85,.4,1.05)}
+@keyframes tt-modal-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.tt-modal-content h3{margin:0 0 6px;font-size:var(--fs-lg);font-weight:600;color:var(--text);letter-spacing:-.01em}
+.tt-modal-content p{margin:0 0 16px;font-size:var(--fs-md);color:var(--muted);line-height:1.55}
+.tt-modal-content label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:700}
+.tt-modal-content textarea,
+.tt-modal-content input[type="text"]{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--faint);color:var(--text);font:inherit;font-size:13px;box-sizing:border-box;transition:border-color .12s,background .12s,box-shadow .12s}
+.tt-modal-content textarea{resize:vertical;min-height:80px;font-family:inherit}
+.tt-modal-content textarea:focus,
+.tt-modal-content input[type="text"]:focus{border-color:var(--blue);background:var(--surface);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent)}
+.tt-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.tt-modal-actions .btn-clear{padding:8px 16px;font-size:12px;font-weight:600;border-radius:8px}
+#tt-modal-confirm{background:var(--blue) !important;color:#fff !important;border-color:var(--blue) !important;box-shadow:0 1px 0 rgba(0,0,0,.04),0 4px 10px rgba(91,155,245,.22)}
+#tt-modal-confirm:hover{filter:brightness(1.06)}
+
+/* Empty state dentro del scope — un poquito más respirado y sin doble fondo
+   (la card padre ya tiene fondo). */
+#panel-tt-dow .empty{padding:3rem 2rem;background:transparent;border-radius:0;box-shadow:none}
+#panel-tt-dow #tt-results > .empty,
+#panel-tt-dow #tt-hist-list > .empty,
+#panel-tt-dow #tt-edit-table > .empty{background:var(--surface);border-radius:10px}
+
+/* Skeletons del scope — sin doble border (la card padre ya lo tiene). */
+#panel-tt-dow .skel-group{padding:0}
+#panel-tt-dow .skel-row{border:none;border-bottom:1px solid var(--row-border);border-radius:0;margin-bottom:0;background:var(--surface)}
+#panel-tt-dow .skel-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -1324,9 +1493,9 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   <!-- Header del módulo: título + editor pill + segmented control de modos -->
   <div class="sched-filter-bar">
     <div class="sched-filter-row" style="align-items:center;gap:14px;flex-wrap:wrap">
-      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:240px">
-        <svg class="ic ic-md" aria-hidden="true" style="color:var(--teal)"><use href="#i-truck"/></svg>
-        <span style="font-size:14px;font-weight:600;color:var(--text)">Tarifas Terrestres Dow</span>
+      <div class="tt-header-title">
+        <svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>
+        <span class="tt-title">Tarifas Terrestres Dow</span>
         <span class="tt-pill-info" id="tt-editor-pill" style="display:none">
           <svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg>
           <span id="tt-editor-pill-name"></span>
@@ -1382,7 +1551,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
           <span class="results-title">Tarifas — edición</span>
           <span class="results-ct" id="tt-edit-ct"></span>
-          <span id="tt-edit-pending" style="display:none;font-size:11px;font-weight:500;color:var(--amber)"></span>
+          <span id="tt-edit-pending"></span>
           <div style="margin-left:auto;display:flex;gap:8px">
             <button type="button" class="btn-clear" data-action="tt-add-row" title="Agregar nueva tarifa"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg> Nueva tarifa</button>
             <button type="button" class="btn-clear" data-action="tt-discard" title="Descartar todos los cambios pendientes" style="display:none" id="tt-btn-discard">Descartar</button>
@@ -1401,7 +1570,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
           <span class="results-title">Carriers — edición</span>
           <span class="results-ct" id="tt-edit-carriers-ct"></span>
-          <span id="tt-edit-carriers-pending" style="display:none;font-size:11px;font-weight:500;color:var(--amber)"></span>
+          <span id="tt-edit-carriers-pending"></span>
           <div style="margin-left:auto;display:flex;gap:8px">
             <button type="button" class="btn-clear" data-action="tt-add-carrier" title="Agregar nuevo carrier"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg> Nuevo carrier</button>
             <button type="button" class="btn-clear" data-action="tt-discard-carriers" title="Descartar cambios de carriers" style="display:none" id="tt-btn-cdiscard">Descartar</button>
@@ -6407,15 +6576,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const btnSave = document.getElementById('tt-btn-save');
     const btnDis  = document.getElementById('tt-btn-discard');
     const n = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
-    if(n > 0){
-      if(pill){ pill.style.display = ''; pill.textContent = n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':''); }
-      if(btnSave) btnSave.style.display = '';
-      if(btnDis)  btnDis.style.display = '';
-    } else {
-      if(pill) pill.style.display = 'none';
-      if(btnSave) btnSave.style.display = 'none';
-      if(btnDis)  btnDis.style.display = 'none';
+    // pill: classList.toggle('show') porque la regla CSS base es display:none.
+    if(pill){
+      pill.classList.toggle('show', n > 0);
+      pill.textContent = n > 0 ? (n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':'')) : '';
     }
+    if(btnSave) btnSave.style.display = n > 0 ? '' : 'none';
+    if(btnDis)  btnDis.style.display  = n > 0 ? '' : 'none';
   }
   function _getMergedRow(orig){
     const ch = _ttPendingChanges[orig.id];
@@ -6717,15 +6884,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const btnSave = document.getElementById('tt-btn-csave');
     const btnDis  = document.getElementById('tt-btn-cdiscard');
     const n = Object.keys(_ttPendingCarrierChanges).length + _ttPendingCarrierNew.length;
-    if(n > 0){
-      if(pill){ pill.style.display = ''; pill.textContent = n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':''); }
-      if(btnSave) btnSave.style.display = '';
-      if(btnDis)  btnDis.style.display = '';
-    } else {
-      if(pill) pill.style.display = 'none';
-      if(btnSave) btnSave.style.display = 'none';
-      if(btnDis)  btnDis.style.display = 'none';
+    if(pill){
+      pill.classList.toggle('show', n > 0);
+      pill.textContent = n > 0 ? (n + ' cambio' + (n!==1?'s':'') + ' pendiente' + (n!==1?'s':'')) : '';
     }
+    if(btnSave) btnSave.style.display = n > 0 ? '' : 'none';
+    if(btnDis)  btnDis.style.display  = n > 0 ? '' : 'none';
   }
   function _getMergedCarrier(orig){
     const ch = _ttPendingCarrierChanges[orig.id];
