@@ -1,187 +1,301 @@
 # Handoff de sesión — 2026-04-28 · tarifa-schedule
 
-## Resumen
+## Resumen ejecutivo
 
-Sesión completa de construcción del **módulo Detention / Free Time** desde cero
-en `index.html`. Tab nuevo (6º del proyecto), backed by Supabase
-`detention_freetime` (tabla creada hoy via MCP migration). Cliente UI con
-filtros dropdown multi-select, búsqueda inline, chips, persistencia en
-localStorage, upload de Excel client-side, mail block con copy-to-clipboard
-por país. **8 commits** pusheados a `origin/master`. Netlify auto-deployó cada
-push. Diff total ~+1100 / −300 líneas en `index.html`.
+Sesión completa de construcción del **módulo Tarifas Terrestres Dow** — flete
+terrestre por contrato Dow con 4 transportistas (PETROLERA, AGUILUCHO, DON PEDRO,
+MOYA), 48 destinos en 4 países (Chile, Brasil, Uruguay, Bolivia). Tab nuevo
+(7º del proyecto) en `index.html`, backed by Supabase con 3 tablas nuevas,
+trigger de auditoría y vista de consulta.
+
+Tres modos internos en la solapa: **Consulta** (default, lectura con 5
+dropdowns multi-select y bloque copiable), **Edición** (Tarifas + Carriers
+con audit trail e inline editing), **Historial** (log con filtros y diff
+inline). Carriers son lista cerrada (defensa contra typos); país/departure/
+aduana permiten "+ Agregar nuevo" con validación case-insensitive.
+
+**14 commits** sobre `master`. Mergeado y pusheado — Netlify auto-deploy en
+producción. Diff total: +2999 / −113 líneas.
 
 ## Cambios realizados
 
-### Supabase
-- **Tabla nueva** `public.detention_freetime` (migration `create_detention_freetime`):
-  `id, supplier, country, tipo (CHECK ORIGIN/DESTINATION), combined_days,
-  demurrage_days, detention_days, per_diem_dry_usd, per_diem_reefer_usd,
-  source_date, updated_at`. UNIQUE(supplier, country, tipo).
-- RLS policies: `SELECT USING(true)`, `INSERT/UPDATE WITH CHECK(true)`
-  (mismo patrón que `schedules_master`, sin `auth.role()`).
-- Datos cargados via UI: **1441 filas, 103 países, 33 navieras**, todas
-  tipo DESTINATION (Excel `_04-23-2026_Destination_Free_time.xlsx`).
+### Supabase (proyecto `xkppkzfxgtfsmfooozsm`)
+
+- **3 tablas nuevas** (migración `create_tarifas_terrestres`):
+  - `tarifas_terrestres_carriers (id, nombre UNIQUE, seguro_pct, activo,
+    updated_by, update_reason, created_at, updated_at)`.
+  - `tarifas_terrestres (id, carrier_id FK, departure, destination,
+    pais_destino, customs_exit, freight_usd CHECK >0, activo, updated_by,
+    update_reason, created_at, updated_at)` con UNIQUE
+    `(carrier_id, departure, destination, customs_exit)`.
+  - `tarifas_terrestres_log (id, tarifa_id, operacion CHECK
+    INSERT|UPDATE|DELETE, valores_anteriores jsonb, valores_nuevos jsonb,
+    changed_by, change_reason, changed_at)` con índices.
+- **Trigger AFTER** `trg_tarifas_terrestres_log` sobre tarifas. Función
+  `fn_tarifas_terrestres_log()` con `SECURITY DEFINER` (corrección
+  encontrada en runtime — sin esto la RLS del log bloquea el INSERT).
+- **Vista** `v_tarifas_terrestres` (JOIN con carriers, filtra `activo=true`
+  ambos lados).
+- **RLS abierta** (`USING(true) WITH CHECK(true)`) en las 3 tablas — patrón
+  uniforme del proyecto.
+- **Datos**: 4 carriers (AGUILUCHO con seguro_pct=0.0050) + 48 tarifas + 48
+  entries de auditoría con `changed_by='SEED'`.
 
 ### Frontend (`index.html`)
-- Tab `#tab-detention` (icono `i-clock`) + panel `#panel-detention`.
-  `switchTab` extendido para invocar `loadDetention()` al entrar.
-- Layout final por país: header (bandera 24x18 + nombre + N navieras) +
-  body grid 2 columnas:
-  - **Izquierda**: bloque mail en `<pre>` monoespacio + botón Copiar
-    (clipboard async + feedback "✓ Copiado" 2s)
-  - **Derecha**: tabla 3 columnas (Naviera | Días libres | Costo/día)
-- **Filtros (versión final, commit `89e360f`)**: 2 dropdowns compactos
-  con búsqueda inline. Chips dentro del input (max 3 + "+N más").
-  Botón Resetear externo por dropdown. Mutex (solo uno abierto a la vez).
-  Outside-click cierra. Reusa CSS `.ac-wrap`/`.ac-in`/`.ac-drop` existente.
-- **Persistencia**: localStorage `det_selected_countries` y
-  `det_selected_navieras` (try/catch + Array.isArray guard).
-- **Upload**: botón en `.results-bar` alineado a la derecha. Lee xlsx
-  client-side via SheetJS, valida filename (Origin/Destination) +
-  columna Supplier, upsert directo a Supabase con `onConflict`.
-  Guarda TODO el Excel sin pre-filtrar (filtros son solo UI).
-- **Banderas**: `countryFlag(country, size)` con ~36 entries en
-  `COUNTRY_ISO`, render `<img src="https://flagcdn.com/{size}/{iso}.png">`
-  (mismo CDN que `portFlag` de Schedule). Fallback `''` si no en mapeo.
-- **Paginación**: PostgREST en Supabase Cloud cortea responses a 1000
-  filas server-side. Resuelto con `.range(from, to)` iterativo (cap
-  20 páginas = 20k filas máx). 1441 filas → 2 requests.
+
+- Tab `#tab-tt-dow` con sprite SVG `i-truck` agregado al `<defs>`.
+- Panel `#panel-tt-dow` con 3 modos toggleables (`tt-mode-bar`).
+- IIFE propio (3er cliente Supabase del archivo, ~1700 líneas en el bloque)
+  con state `_tt*` y listeners delegados.
+- 5 filtros multi-select estilo Detention en Consulta + bloque copiable
+  formato 1 línea con middle dot.
+- Modo Edición: editor name persistente (`localStorage tt_editor_name`),
+  modal "¿Quién está editando?" la primera vez. Tabla editable inline para
+  tarifas (selects + inputs) y carriers (input/checkbox). Pill amber
+  pulsante con cantidad de cambios pendientes. Botones Guardar/Descartar
+  visibles solo cuando hay cambios.
+- Modo Historial: filtros (rango fechas, op, editor, búsqueda libre), tabla
+  paginada (50/page), diff inline expandible.
+- Rediseño visual aplicado por Claude Design (commit `19cd3a9`) — mejora
+  jerarquía, contraste, microinteracciones, sin tocar lógica.
+- Ordenamiento por columna en modo Edición · Tarifas (commit `f9b5347`).
+- Carriers como lista cerrada (commit `8d10f21`): nombre como `<span>`,
+  modal dedicado para crear con validación case-insensitive. País/Departure/
+  Aduana siguen flexibles via "+ Agregar nuevo" + sentinel `__NEW__`.
 
 ### Backend / Scripts
-- `upload_detention.py` en raíz del repo: respaldo desde terminal con
-  pandas + supabase-py. Read-back tras upsert.
-- `.env.example` con `SUPA_URL` y `SUPA_SERVICE_KEY` placeholder.
-- `.gitignore` extendido con `__pycache__/`, `*.pyc`, `*.pyo`.
+
+- `scripts/seed-tarifas-terrestres.js`: lee Excel con xlsx, mapea
+  ciudad→país explícitamente (aborta si encuentra ciudad nueva), upsert
+  carriers + tarifas con audit trail `updated_by='SEED'`. Idempotente con
+  flag `--force`.
+- `scripts/package.json`: deps `xlsx@^0.18.5`, `@supabase/supabase-js@^2`.
+  Lockfile migrado de npm a bun.
+- `.gitignore`: `data/*.xlsx` (info contractual de Dow no va al repo).
+- `migrations/2026-04-28-tarifas-terrestres/`: snapshot versionado
+  (`README.md`, `before.sql`, `applied.sql`, `rollback.sql`).
+- `tarifa-schedule/CLAUDE.md` actualizado con sección "Tarifas Terrestres
+  Dow — arquitectura" (modelo, reglas inamovibles, convenciones, caveats).
 
 ### Bugs corregidos en el camino
-- **BUG-9**: `esc(r.OBSERVACIONES)` en `renderSchedInTarifa()`
-  (línea ~3439). El note de CLAUDE.md tarifa-schedule decía "línea ~3329"
-  pero la única OBSERVACIONES sin escape estaba en otra función a
-  línea 3439 — corregir el note en CLAUDE.md tarifa.
-- **BUG-1**: `esc(q)` en `buildCarrierBtns()` para options del select
-  Quarter (línea ~1537). El `q` era el único valor solicitado.
-- **BUG-6**: confirmado **no-op** — `exportSchedPDF`/`exportSchedExcel`
-  ya usan `r.ORIGEN` crudo, sin pasar por `displayOrigen()`.
+
+- **Trigger sin SECURITY DEFINER**: el INSERT del trigger al log fallaba
+  con la RLS solo SELECT. Fix: `ALTER FUNCTION fn_tarifas_terrestres_log()
+  SECURITY DEFINER`. Documentado en `applied.sql`.
+- **switchTTMode no renderizaba Edición**: faltaba hook a
+  `switchTTEditSubtab` + `_ensureEditor` al entrar al modo. Encontrado en
+  VERIFY automatizado, fix en commit `208834a`.
+- **Pill amber siempre invisible** post-rediseño: el CSS declaraba
+  `display:none` base + `display:inline-flex` solo en `.show`, pero el JS
+  togglaba via `style.display=''`. Cambio mecánico de 4 líneas a
+  `classList.toggle('show', n>0)`. Documentado en commit `19cd3a9`.
 
 ## Decisiones tomadas
 
-- **2 IIFE separados con sus propios `supa` clients** (Schedule Realtime +
-  Detention) — genera warning "Multiple GoTrueClient instances" en
-  consola, no crítico. Patrón intencional del proyecto.
-- **PostgREST max-rows hard cap a 1000** en Supabase Cloud. `.limit(N)`
-  no override. Solución: `.range(from, to)` con paginación manual.
-- **Filtros UI ≠ filtros DB**: la DB guarda todo lo del Excel (1441
-  filas), el filtro de "los 4 países default + 3 navieras default"
-  vive solo en `_doApplyDetFilter`. Permite agregar/sacar países y
-  navieras sin re-uploadear.
-- **Banderas via flagcdn.com**: dependencia externa de imágenes (16x12,
-  24x18). Si quisieran zero-deps, habría que migrar a SVG sprite o
-  emojis Unicode (probado, descartado por look inconsistente Win<10).
-- **Patrón pill `.tog/.on` descartado** para 103 países: ocupa 4 filas.
-  Se reemplazó por dropdown+checkbox+search en commit `89e360f`.
+### Del PLAN inicial (16 decisiones que NO estaban en el prompt original)
+
+1. **Identificadores HTML**: prefijo `tt-` (`tab-tt-dow`, `panel-tt-dow`,
+   `tt-paises-wrap`, etc.). Coherente con `det-` de Detention.
+2. **Variables JS**: prefijo `_tt` (`_ttData`, `_ttSelPaises`,
+   `_ttPendingChanges`, etc.).
+3. **localStorage keys**: `tt_filtro_paises | _carriers | _departures |
+   _aduanas | _destinations` + `tt_editor_name`.
+4. **Toggle de modos**: segmented control con 3 botones (`.tt-mode-bar`)
+   reusando `.btn-clear` con un mod active.
+5. **Sub-tabs Tarifas/Carriers**: misma técnica.
+6. **Modal de motivo**: `<div class="tt-modal-overlay" position:fixed>`,
+   no `<dialog>` HTML5 (sin precedente en el repo).
+7. **Defaults de filtros vacíos** = mostrar todo al primer load (decisión
+   que el usuario validó explícitamente — distinto a Detention que tiene
+   defaults hard-coded).
+8. **Pre-check de duplicado en cliente** contra `_ttData + _ttPendingNew`
+   antes del UPSERT. UNIQUE de Postgres como respaldo.
+9. **Manejo error FK al borrar carrier**: catch error code `23503` con
+   mensaje en español. (En la práctica nunca dispara porque hacemos soft
+   delete; el guard espejo vive en cliente).
+10. **Editor name validación**: trim no vacío, máx 50 chars, sin formato.
+11. **Posición de la tab nueva**: 7º (último).
+12. **Empty states**: reuso `.empty / .empty-ico / .empty-ttl /
+    .empty-sub` con copy humanizado.
+13. **Skeletons**: 5 filas igual que Detention.
+14. **`updated_by` y `update_reason` en INSERT**: el frontend los setea
+    explícitamente para que el trigger los capture en el log también para
+    creaciones (no solo updates).
+15. **Borrado físico nunca**: solo soft delete (`activo=false`) con motivo.
+16. **Búsqueda en filtros**: substring case-insensitive con `.includes()`.
+
+### Del ajuste post-rediseño (las 2 funcionalidades pedidas + sub-decisiones)
+
+**A — Carriers inmutables + dropdowns estrictos en tarifas (commit `8d10f21`)**
+
+- A.1. Carrier nuevo = INSERT directo via modal dedicado (no pasa por
+  pending). Distinto a tarifas. Cada carrier nuevo lleva su propio motivo.
+- A.2. Modal multi-campo dedicado (`#tt-carrier-modal-overlay`) en lugar
+  de extender el genérico — más claro para 4 campos.
+- A.3. Carrier inactivo en `<select>`: aparece como `<option disabled>`
+  conservando el valor (no se pierde el dato pero impide reasignar).
+- A.4. Sentinel `__NEW__` en selects de país/departure/aduana —
+  typográficamente imposible de tipear como valor real.
+- A.5. Validación case-insensitive en cliente para país/departure/aduana
+  (espejo de la UNIQUE case-sensitive del DB para carriers).
+- A.6. Destination y Freight USD siguen como inputs libres
+  (más volátiles).
+
+**B — Sort de columnas en modo Edición · Tarifas (commit `f9b5347`)**
+
+- B.1. Comparator estable con tiebreakers fijos (carrier → departure →
+  destination) para orden determinístico.
+- B.2. Filas nuevas y existentes se ordenan juntas (no separar `_ttPendingNew`
+  al final). Razón: si el operador agrega 3 PETROLERA y ordena por carrier,
+  esperan verlas agrupadas.
+- B.3. Default sort: `Carrier ASC`. Toggle ASC↔DESC al re-clickear la
+  misma col; cambiar de col vuelve a ASC.
+- B.4. Indicador SVG inline triangular (no agrega símbolo al sprite).
+
+### Decisiones técnicas adicionales surgidas en runtime
+
+- **C.1. SECURITY DEFINER en `fn_tarifas_terrestres_log`** — única forma de
+  permitir que el trigger inserte en el log con RLS solo SELECT (patrón
+  estándar para audit logs). Aplicada como migración correctiva
+  `tt_log_security_definer` el mismo día.
+- **C.2. Anon key como fallback en seed script**: el script usa la anon key
+  (que ya está en index.html, pública por design) como default si no hay
+  `SUPA_SERVICE_KEY` en `.env`. Permite correr el script sin secretos
+  adicionales para uso interno.
+- **C.3. Idempotencia con `--force`**: el seed aborta si ya hay tarifas en
+  DB; pasar `--force` re-ejecuta (los UPSERT no duplican filas pero sí
+  generan UPDATE entries en log si hay diferencias).
+- **C.4. Bloque copiable formato 1 línea con middle dot** — decidido por
+  el usuario tras discutir tres opciones (alineación texto plano fallaba
+  en Gmail; HTML al clipboard era complejo; opción "una línea" funciona
+  en cualquier cliente).
+- **C.5. `classList.toggle('show', n>0)`** para pills pendientes — fix del
+  conflicto entre el CSS de Claude Design y el JS original.
+- **C.6. Hook `switchTTEditSubtab` + `_ensureEditor` en `switchTTMode`**
+  para que el modo Edición renderice y pida editor al entrar
+  (encontrado en VERIFY).
+- **C.7. Migración versionada en `migrations/2026-04-28-*/`** con before/
+  applied/rollback — pedido del usuario en el ajuste 3 del PLAN inicial.
+- **C.8. Auditoría con skills `security-review` + `vanilla-js-auditor`**
+  antes del push final — pedido del usuario en el ajuste 2 del PLAN
+  inicial. 0 findings altos o críticos.
 
 ## Estado actual
 
-- Branch: `master`, sin cambios sin commitear
-- HEAD: `89e360f refactor(detention): filtros dropdown+checkbox con búsqueda y chips`
-- Producción: Netlify auto-deploy verificado en cada push
-- Supabase `detention_freetime`: 1441 filas activas, todas DESTINATION
-- Tab Detention: funcional end-to-end (verificado con Playwright headless
-  + smoke test live por usuario)
+- **Branch**: `master`, sin cambios sin commitear. HEAD =
+  `f9b5347 feat(tarifas-terrestres): ordenamiento de columnas en modo edición`.
+- **Producción**: Netlify auto-deploy disparado por el push a master.
+- **Branch de feature**: `feature/tarifas-terrestres-dow` ya mergeada,
+  preservada en `origin` como histórico (14 commits).
+- **Supabase**:
+  - 3 tablas activas (`tarifas_terrestres_carriers`, `tarifas_terrestres`,
+    `tarifas_terrestres_log`).
+  - 4 carriers (AGUILUCHO con seguro_pct=0.0050, resto en 0).
+  - 48 tarifas activas (35 Chile, 7 Brasil, 5 Uruguay, 1 Bolivia).
+  - 48 entries SEED en log (`changed_by='SEED'`).
+  - Trigger + función + view + RLS verificados.
+- **Tab Tarifas Terrestres Dow**: funcional end-to-end (smoke tested con
+  Playwright headless: 8 chequeos del flujo principal + 9 chequeos de
+  defensas + 5 chequeos de sort).
+- **CLAUDE.md** del proyecto actualizado con la nueva sección.
 
-## Bugs pendientes conocidos — XSS pre-existentes fuera de scope
+## Recordatorio sobre n8n
 
-Estos NO son del módulo Detention sino del código preexistente. Quedaron
-flageados pero sin tocar para mantener el scope acotado:
+Verificación de los 2 workflows activos del usuario:
 
-1. **`buildCarrierBtns()` línea ~1542** — `<button class="tog ${...}"
-   onclick="togC('${c}')">${c}</button>`. El `c` (nombre del carrier)
-   se interpola sin escape en el atributo `onclick="togC('...')"` que
-   usa comillas simples. CLAUDE.md tarifa señala que `esc()` no escapa
-   `'`. Solución: refactor a `data-action` + event delegation, o
-   `createElement` + `.onclick = () => togC(c)` programático.
-2. **`buildSchedCarrierBtns()` línea ~3823** — mismo patrón unsafe con
-   `togSC('${b}')`.
-3. **`renderSchedInTarifa()` líneas ~3430–3436** — `r.VESSEL`,
-   `r.NAVIERA`, `r.TRANSITO`, `r.TRASBORDOS` interpolados sin `esc()`.
-   Solo se arregló `r.OBSERVACIONES` (era el flageado por CLAUDE.md).
-4. **`renderSchedModule()` línea ~3304** y otros renderers — innerHTML
-   con interpolación de variables de Sheet sin escape (ya documentado
-   en CLAUDE.md tarifa como deuda técnica).
+| Workflow | ID | ¿Depende de tarifas terrestres? |
+|---|---|---|
+| `control de bill of lading` | `WVt6gvghL2nFVbt6` | ❌ NO. Procesa PDFs de BLs vía Watch Drive → normalizador. Cero referencias a `tarifas_terrestres*` ni a tablas/URLs relacionadas. |
+| `Descarga de pdf, clasificacion y subida a drive` | `pBN4Wd1lcTSHNkFg` | ❌ NO. Extract from File → Clasificar Documento → upload Drive. No toca Supabase de tarifas. |
+
+**Conclusión**: NO se requiere actualización de workflows existentes. Si en
+algún momento se quiere notificar al equipo de un cambio en tarifas
+terrestres (mail/Slack al cargar un cambio en el log), se puede sumar un
+workflow nuevo escuchando `postgres_changes` sobre `tarifas_terrestres_log`
+— ver "Próximos pasos" abajo.
+
+## Próximos pasos sugeridos (no obligatorios)
+
+### Cortos
+1. **Smoke test en Live Server con datos reales** — validar visualmente
+   con dark/light mode, probar el flujo end-to-end de un cambio (insertar
+   → editar → guardar → ver historial → diff inline) con un editor real.
+2. **Confirmar copy del bloque copiable en Gmail real** — el operador
+   pega en un mail al cliente y verifica que se ve bien en el cliente
+   destinatario.
+
+### Medianos (1–2 hs cada uno)
+3. **Search dentro de los `<select>` de Edición** — si los dropdowns
+   crecen a >50 valores únicos (ej. muchas aduanas), agregar un input
+   de búsqueda inline. Hoy con 16 destinos y 7 aduanas no hace falta.
+4. **UNIQUE LOWER en carriers** — la UNIQUE actual del DB es
+   case-sensitive sobre `nombre`. La validación case-insensitive vive en
+   cliente. Si dos editores en simultáneo intentan crear "AGUILUCHO" y
+   "aguilucho", la DB acepta ambas. Solución: agregar
+   `CREATE UNIQUE INDEX ON tarifas_terrestres_carriers (lower(nombre))`.
+   Prioridad baja porque el espacio de carriers es chico y los editores
+   son pocos.
+5. **Locking optimista para concurrencia** — last-write-wins acepta hoy.
+   Si en algún momento se vuelve relevante, agregar columna `version int`
+   en `tarifas_terrestres` y validar en cada UPDATE.
+6. **n8n notificación de cambios** — workflow nuevo escuchando
+   `tarifas_terrestres_log` (postgres_changes Realtime) → Slack/mail al
+   equipo cuando hay un cambio. Útil si Dow informa actualizaciones por
+   fuera de canales formales.
+
+### Largos
+7. **Modularizar `index.html`** — el archivo tiene ~8.000 líneas y crece.
+   Deuda técnica conocida (CLAUDE.md la flagea desde antes). Candidato
+   cuando haya pausa de features.
+8. **Mobile responsive** — el módulo es desktop-only (alineado con
+   decisión del proyecto). Si se necesita en algún momento, los filtros
+   y tabla deben adaptarse a viewport <1024px.
+9. **Realtime en modo Consulta** — sumar canal Supabase Realtime para que
+   cuando un editor guarde cambios, otros usuarios viendo Consulta los
+   vean al instante sin recargar.
+
+## Contexto no obvio
+
+- **El cliente Supabase con anon key hace INSERT/UPDATE/DELETE en
+  producción desde el navegador**. RLS abierta `USING(true) WITH CHECK(true)`
+  lo permite. No es nuevo riesgo introducido por este módulo — es el patrón
+  uniforme del proyecto (`schedules_master`, `detention_freetime`).
+  Documentado en CLAUDE.md como deuda técnica.
+- **3 clientes Supabase coexisten en el archivo** (Schedule Realtime +
+  Detention + Tarifas Terrestres). Genera warning "Multiple GoTrueClient
+  instances" en consola — aceptado por el patrón del proyecto.
+- **El sentinel `__NEW__` en los `<select>` es typográficamente imposible
+  de tipear** como valor real. Si algún día se introduce un país literal
+  llamado "__NEW__" (improbable), el sentinel choca. Si pasa, cambiar a
+  `__TT_ADD_NEW__`.
+- **El `fn_tarifas_terrestres_log()` corre con `SECURITY DEFINER`**. Si en
+  algún momento se aplica una migración que recrea la función (ej.
+  `CREATE OR REPLACE`), hay que volver a aplicar `ALTER FUNCTION ...
+  SECURITY DEFINER`. Si no, los cambios desde el frontend dejarían de
+  loguearse silenciosamente.
+- **El Excel original de Dow** (`data/TARIFAS TERERSTRES - DOW.xlsx`) está
+  en `data/` y se ignora por `.gitignore` (`data/*.xlsx`). NO va al repo
+  por ser info contractual.
+- **Smoke test automatizado** vive en `/tmp/tt-smoke*.mjs` (no commiteado
+  — son tests de validación de la sesión). Si querés re-ejecutarlos, hay
+  que regenerarlos o commitearlos a futuro.
 
 ## Commits de la sesión (orden cronológico)
 
 ```
-6b93857  feat: módulo Detention + upload_detention.py + fix BUG-1/9/6
-6c22fc8  feat(detention): read-back + skeleton 5 filas + ícono clock
-ecc4c2d  feat(detention): subir Excel desde el panel — upsert directo a Supabase
-aa6c53b  feat(detention): banderas + agrupación por país + toggle mostrar todos
-7c9c55e  feat(detention): layout 2col + copiar mail + banderas flagcdn + países persistentes
-b54551a  fix(detention): upload sin filtro — guardar todo en DB, filtrar solo en UI
-231fdc2  refactor(detention): pills multi-select países+navieras + paginación 1k
-89e360f  refactor(detention): filtros dropdown+checkbox con búsqueda y chips  ← HEAD
+6d691a0  chore(tarifas-terrestres): gitignore + deps de seed + migration snapshot
+5aa2e8a  feat(tarifas-terrestres): script de seed desde Excel
+894b77f  feat(tarifas-terrestres): sprite truck + tab + panel + segmented control
+4fd0981  feat(tarifas-terrestres): modo Consulta funcional
+3b53b4f  feat(tarifas-terrestres): modo Edición — tarifas (inline + audit)
+0c129d7  feat(tarifas-terrestres): modo Edición — carriers (FK guard + audit)
+a3c5f9a  feat(tarifas-terrestres): modo Historial — log + filtros + diff inline
+84b3937  feat(tarifas-terrestres): módulo funcional completo (pre-rediseño)
+19cd3a9  style(tarifas-terrestres): rediseño visual (Claude Design)
+208834a  fix(tarifas-terrestres): renderizar Edición y pedir editor al entrar al modo
+8d10f21  feat(tarifas-terrestres): carriers inmutables + dropdowns estrictos en tarifas
+f9b5347  feat(tarifas-terrestres): ordenamiento de columnas en modo edición  ← HEAD master
 ```
-
-## Próximos pasos sugeridos
-
-### Cortos (≤30 min cada uno)
-1. **Actualizar `tarifa-schedule/CLAUDE.md`** — agregar la sección
-   "Detention — arquitectura" con: claves localStorage, paginación
-   PostgREST, COUNTRY_ISO map, listener delegado, layout 2col, mail
-   build. Y corregir el note de BUG-9 de "línea ~3329" a "~3439 en
-   renderSchedInTarifa".
-2. **Documentar `upload_detention.py`** — agregar al CLAUDE.md tarifa
-   o un README mínimo: pip install, .env, uso CLI. Sigue siendo
-   respaldo válido aunque haya UI upload.
-3. **Smoke test responsive básico**: el módulo usa flex/grid pero
-   `min-width:240px` en wrappers de dropdown. Verificar en pantallas
-   1366x768 (notebooks típicos).
-
-### Medianos (1-2 hs)
-4. **Fix XSS `togC`/`togSC`** — refactor a event delegation con
-   `data-action`/`data-value` (mismo patrón que el delegate del IIFE
-   Detention). Cubre puntos 1 y 2 de "Bugs pendientes". Bajo riesgo
-   porque carrier names en datos reales no tienen apóstrofes.
-5. **Fix XSS `renderSchedInTarifa`** — wrapping con `esc()` en VESSEL/
-   NAVIERA/TRANSITO/TRASBORDOS. Mismo patrón que ya se aplicó en
-   `renderSchedModule()`.
-6. **Confirmar con equipo de operaciones** los 4 países default y las
-   3 navieras default. Si cambian (ej. +ARGENTINA, +ZIM), actualizar
-   `DEFAULT_PAISES` y `DEFAULT_NAV_TARGETS` en el IIFE Detention.
-
-### Largos (futuro)
-7. **n8n workflow para Detention upload** — automatizar el upsert
-   cuando llega un Excel nuevo a Drive (similar al de schedules
-   `LI5dLhoYdM1jLXDo`). Reusaría el patrón Drive watch → Parse Excel
-   → Map → Insert/Upsert.
-8. **Realtime opcional** — si los Excel se actualizan con frecuencia,
-   sumar canal Supabase Realtime a `detention_freetime` (mismo patrón
-   que Schedule Realtime). Bajo prioridad: los free time cambian
-   trimestralmente.
-9. **Modularizar `index.html`** (>5500 líneas) — deuda técnica
-   conocida. Candidato cuando haya pausa de features.
-
-## Contexto no obvio
-
-- **El upload del Excel es CLIENT-SIDE**: SheetJS lee el archivo
-  localmente, parsea, mapea columnas, y manda upsert directo a Supabase
-  con la **anon key**. Esto solo es seguro porque las RLS policies
-  permiten INSERT/UPDATE desde anon. Si en algún momento se restringe
-  la RLS, hay que mover el upload a un endpoint del backend.
-- **`COUNTRY_ISO` es defensivo, no exhaustivo**: cubre los ~36 países
-  más comunes para SSB. Países raros del Excel (ej. "U.A.E DPW Hub",
-  "PAP. NEW GUINEA") caen al fallback sin bandera. Ampliar el mapa
-  cuando aparezcan en operaciones reales.
-- **`_detData` se cachea 10 min** dentro del IIFE. Después de un
-  upload exitoso, `loadDetention()` se vuelve a llamar con cache
-  invalidado (`_detData = null`). Pero si en una pestaña distinta se
-  sube otro Excel, esta sesión no se entera por 10 min.
-- **El log `[Detention upload]` aparece en console** con conteo de
-  filas leídas / descartadas / upserteadas — útil para debug post-upload.
-- **Multiple GoTrueClient warning**: ignorar. Causa: dos IIFE crean
-  dos clients Supabase con la misma anon key. Sin impacto funcional.
-- **El proyecto es desktop-only por design** (CLAUDE.md tarifa).
-  Las decisiones de UI no consideran responsive < 1024px.
 
 ## Comandos útiles para el próximo chat
 
@@ -190,13 +304,18 @@ b54551a  fix(detention): upload sin filtro — guardar todo en DB, filtrar solo 
 git log --oneline -10
 git status
 
-# Verificar Detention en Supabase (via MCP supabase tool)
-SELECT COUNT(*), COUNT(DISTINCT country), COUNT(DISTINCT supplier)
-FROM public.detention_freetime;
+# Verificar tarifas en Supabase (via MCP supabase)
+SELECT carrier, departure, destination, pais_destino, freight_usd, seguro_pct
+FROM v_tarifas_terrestres
+ORDER BY pais_destino, carrier;
 
-# Live Server (VS Code)
-# right-click en index.html → "Open with Live Server"
+# Ver últimos cambios del log (con motivo)
+SELECT changed_at, operacion, changed_by, change_reason
+FROM tarifas_terrestres_log
+ORDER BY changed_at DESC LIMIT 20;
 
-# Smoke test headless (requiere chromium en cache + node)
-node /tmp/det-diag/diag5.js
+# Re-correr el seed (idempotente con --force)
+cd scripts && bun run seed-tarifas-terrestres.js -- --force
+
+# Live Server (VS Code) → click derecho en index.html
 ```
