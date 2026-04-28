@@ -1231,26 +1231,20 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 <div class="tab-panel" id="panel-detention">
 
   <div class="sched-filter-bar">
-    <div class="sched-filter-row">
-      <div>
-        <span class="flbl">País</span>
-        <input class="ac-in w140" type="text" id="det-pais" placeholder="Brasil, Chile, ..." autocomplete="off" oninput="applyDetFilter()">
-      </div>
-      <div>
-        <span class="flbl">Naviera</span>
-        <input class="ac-in w140" type="text" id="det-naviera" placeholder="Log-In, Maersk, ..." autocomplete="off" oninput="applyDetFilter()">
-      </div>
-      <button class="btn-clear" onclick="clearDetFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
-      <span aria-hidden="true" style="width:1px;background:var(--border);align-self:stretch;margin:0 6px"></span>
+    <div class="sched-filter-row" style="align-items:center;flex-wrap:wrap;gap:8px">
+      <span class="flbl" style="margin-right:4px">Países:</span>
+      <div id="det-pills-paises" style="display:inline-flex;flex-wrap:wrap;gap:6px;flex:1;min-width:200px"></div>
+      <button class="btn-clear" type="button" onclick="resetDetPaises()" title="Restaurar países por default (BRAZIL/CHILE/COLOMBIA/PERU)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg> Resetear</button>
+    </div>
+    <div class="sched-filter-row" style="align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px">
+      <span class="flbl" style="margin-right:4px">Navieras:</span>
+      <div id="det-pills-navieras" style="display:inline-flex;flex-wrap:wrap;gap:6px;flex:1;min-width:200px"></div>
+      <button class="btn-clear" type="button" onclick="resetDetNavieras()" title="Restaurar navieras default (las que contienen LOG-IN, MAERSK o HAPAG)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-rotate"/></svg> Resetear</button>
+      <span aria-hidden="true" style="width:1px;background:var(--border);align-self:stretch;margin:0 4px"></span>
       <label class="btn-clear" style="cursor:pointer;border-color:rgba(0,201,167,.5);color:var(--teal,#00c9a7)" title="Subir Excel de free time (.xlsx)">
         <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg> Subir Excel
         <input type="file" id="det-file-input" accept=".xlsx" style="display:none" onchange="handleDetentionUpload(this)">
       </label>
-      <button class="tog" type="button" id="det-toggle-all" aria-pressed="false" onclick="toggleDetShowAll()" title="Por default solo se muestran Brasil, Chile, Perú y Colombia. Activá para incluir todos los países cargados.">Mostrar todos</button>
-      <div id="det-add-wrap" style="position:relative;display:inline-block">
-        <button class="tog" type="button" id="det-add-btn" onclick="toggleDetAddDrop()" title="Agregar país a la vista por default" aria-haspopup="true" aria-expanded="false">＋ País</button>
-        <div class="ac-drop" id="det-add-drop" style="min-width:220px;max-height:240px;left:auto;right:0"></div>
-      </div>
     </div>
     <div id="det-updated" style="display:none;padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500">
       <svg class="ic ic-sm" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><use href="#i-clock"/></svg>
@@ -1258,7 +1252,6 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     </div>
     <div id="det-upload-status" role="status" aria-live="polite" style="display:none;padding:6px 4px 0;font-size:11px;font-weight:500"></div>
   </div>
-  <div id="det-extra-chips" style="display:none;padding:10px 24px 0;flex-wrap:wrap;gap:6px"></div>
 
   <div class="sched-module" id="det-module">
     <div class="results-bar">
@@ -5078,7 +5071,6 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const CACHE_TTL = 10 * 60 * 1000;
   let _detData = null;
   let _detLastFetch = 0;
-  let _detFilterTimer = null;
 
   function esc(s) {
     return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -5131,149 +5123,123 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return `<img src="https://flagcdn.com/${size}/${code}.png" width="${dim[0]}" height="${dim[1]}" alt="${cEsc}" title="${cEsc}" style="display:inline;vertical-align:middle;margin-right:4px;border-radius:2px">`;
   }
 
-  // Set de membership para el filtro default (toggle OFF + input vacío).
-  const DEFAULT_COUNTRIES = ['brazil','chile','peru','colombia'];
   // Orden visual de los grupos (BRAZIL → CHILE → COLOMBIA → PERU → resto alfabético).
-  const DISPLAY_ORDER     = ['brazil','chile','colombia','peru'];
-  const PLACEHOLDER_DEF   = 'Brasil, Chile, ...';
-  const PLACEHOLDER_ALL   = 'Todos los países...';
-  const STORAGE_KEY       = 'det_extra_countries';
+  const DISPLAY_ORDER       = ['brazil','chile','colombia','peru'];
+  const DEFAULT_PAISES      = ['BRAZIL','CHILE','COLOMBIA','PERU'];
+  const DEFAULT_NAV_TARGETS = ['LOG-IN','MAERSK','HAPAG'];
+  const STORAGE_PAISES      = 'det_selected_countries';
+  const STORAGE_NAVIERAS    = 'det_selected_navieras';
 
-  // Persistencia de países extra que el usuario agrega a la vista default.
-  let _detExtra = _loadExtraCountries();   // array UPPERCASE
-  let _detDropdownOpen = false;
+  // Estado de selección. null hasta el primer fetch (se inicializa en _initSelections).
+  let _detSelPaises   = null;
+  let _detSelNavieras = null;
   const _detMailCache = {};                // country UPPER → texto plano para clipboard
 
-  function _loadExtraCountries() {
+  function _loadStoredSet(key) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return [];
+      const raw = localStorage.getItem(key);
+      if(!raw) return null;
       const arr = JSON.parse(raw);
-      if(!Array.isArray(arr)) return [];
-      return arr.map(s => String(s).toUpperCase().trim()).filter(Boolean);
-    } catch(_) { return []; }
+      if(!Array.isArray(arr)) return null;
+      return new Set(arr.filter(x => typeof x === 'string' && x.length));
+    } catch(_) { return null; }
   }
 
-  function _saveExtraCountries() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_detExtra)); } catch(_) {}
+  function _saveStoredSet(key, set) {
+    try { localStorage.setItem(key, JSON.stringify([...set])); } catch(_) {}
   }
 
-  function getActiveCountries() {
-    const set = new Set(DEFAULT_COUNTRIES);
-    for(const c of _detExtra) set.add(c.toLowerCase());
-    return set;
+  function _computeDefaultNavieras(data) {
+    const out = new Set();
+    for(const r of (data || [])) {
+      const s = String(r.supplier || '');
+      const u = s.toUpperCase();
+      if(DEFAULT_NAV_TARGETS.some(t => u.includes(t))) out.add(s);
+    }
+    return out;
   }
 
-  function isToggleAllOn() {
-    const btn = document.getElementById('det-toggle-all');
-    return !!(btn && btn.classList.contains('on'));
+  // Inicializa _detSelPaises y _detSelNavieras desde localStorage o defaults.
+  // Si en la DB aparecen suppliers nuevos, NO se agregan automáticamente al stored set;
+  // el reset manual del usuario los recalcula.
+  function _initSelections() {
+    if(_detSelPaises === null) {
+      _detSelPaises = _loadStoredSet(STORAGE_PAISES) || new Set(DEFAULT_PAISES);
+    }
+    if(_detSelNavieras === null) {
+      _detSelNavieras = _loadStoredSet(STORAGE_NAVIERAS) || _computeDefaultNavieras(_detData);
+    }
   }
 
-  window.applyDetFilter = function() {
-    clearTimeout(_detFilterTimer);
-    _detFilterTimer = setTimeout(_doApplyDetFilter, 250);
+  window.togDetPais = function(c) {
+    if(!_detSelPaises) return;
+    const k = String(c || '');
+    if(_detSelPaises.has(k)) _detSelPaises.delete(k); else _detSelPaises.add(k);
+    _saveStoredSet(STORAGE_PAISES, _detSelPaises);
+    _renderDetPills();
+    _doApplyDetFilter();
   };
 
-  window.toggleDetShowAll = function() {
-    const btn = document.getElementById('det-toggle-all');
-    const inp = document.getElementById('det-pais');
-    if(!btn) return;
-    const next = !btn.classList.contains('on');
-    btn.classList.toggle('on', next);
-    btn.setAttribute('aria-pressed', String(next));
-    if(inp) inp.placeholder = next ? PLACEHOLDER_ALL : PLACEHOLDER_DEF;
-    applyDetFilter();
+  window.togDetNaviera = function(s) {
+    if(!_detSelNavieras) return;
+    const k = String(s || '');
+    if(_detSelNavieras.has(k)) _detSelNavieras.delete(k); else _detSelNavieras.add(k);
+    _saveStoredSet(STORAGE_NAVIERAS, _detSelNavieras);
+    _renderDetPills();
+    _doApplyDetFilter();
   };
 
-  // clearDetFilters NO toca _detExtra ni el localStorage — solo inputs y toggle.
-  window.clearDetFilters = function() {
-    ['det-pais','det-naviera'].forEach(id => {
-      const el = document.getElementById(id);
-      if(el) el.value = '';
+  window.resetDetPaises = function() {
+    try { localStorage.removeItem(STORAGE_PAISES); } catch(_) {}
+    _detSelPaises = new Set(DEFAULT_PAISES);
+    _renderDetPills();
+    _doApplyDetFilter();
+  };
+
+  window.resetDetNavieras = function() {
+    try { localStorage.removeItem(STORAGE_NAVIERAS); } catch(_) {}
+    _detSelNavieras = _computeDefaultNavieras(_detData);
+    _renderDetPills();
+    _doApplyDetFilter();
+  };
+
+  function _renderDetPills() {
+    if(!_detData || !_detSelPaises || !_detSelNavieras) return;
+    const elP = document.getElementById('det-pills-paises');
+    const elN = document.getElementById('det-pills-navieras');
+    if(!elP || !elN) return;
+
+    const paisesSet   = new Set();
+    const navierasSet = new Set();
+    for(const r of _detData) {
+      const c = (r.country  || '').toUpperCase().trim();
+      const s = r.supplier  || '';
+      if(c) paisesSet.add(c);
+      if(s) navierasSet.add(s);
+    }
+
+    const paises = [...paisesSet].sort((a, b) => {
+      let ia = DEFAULT_PAISES.indexOf(a); if(ia === -1) ia = 999;
+      let ib = DEFAULT_PAISES.indexOf(b); if(ib === -1) ib = 999;
+      if(ia !== ib) return ia - ib;
+      return a.localeCompare(b);
     });
-    const btn = document.getElementById('det-toggle-all');
-    if(btn) {
-      btn.classList.remove('on');
-      btn.setAttribute('aria-pressed', 'false');
-    }
-    const inp = document.getElementById('det-pais');
-    if(inp) inp.placeholder = PLACEHOLDER_DEF;
-    applyDetFilter();
-  };
+    const navieras = [...navierasSet].sort((a, b) => a.localeCompare(b));
 
-  function _closeDetAddDrop() {
-    const drop = document.getElementById('det-add-drop');
-    const btn  = document.getElementById('det-add-btn');
-    if(drop) drop.classList.remove('open');
-    if(btn) btn.setAttribute('aria-expanded', 'false');
-    _detDropdownOpen = false;
+    elP.innerHTML = paises.map(c => {
+      const on = _detSelPaises.has(c);
+      return `<button class="tog${on ? ' on' : ''}" type="button" aria-pressed="${on}" data-action="tog-pais" data-value="${esc(c)}" style="font-size:12px;padding:5px 10px">${esc(c)}</button>`;
+    }).join('');
+
+    elN.innerHTML = navieras.map(s => {
+      const on = _detSelNavieras.has(s);
+      return `<button class="tog${on ? ' on' : ''}" type="button" aria-pressed="${on}" data-action="tog-naviera" data-value="${esc(s)}" style="font-size:12px;padding:5px 10px">${esc(s)}</button>`;
+    }).join('');
   }
 
-  function _renderAddDropdown() {
-    const drop = document.getElementById('det-add-drop');
-    if(!drop) return;
-    const data = _detData || [];
-    const active = getActiveCountries();
-    const candidatos = [...new Set(
-      data.map(r => (r.country||'').toUpperCase().trim()).filter(Boolean)
-    )].filter(c => !active.has(c.toLowerCase())).sort();
-
-    if(!candidatos.length) {
-      drop.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--muted)">No hay países adicionales para agregar.</div>`;
-      return;
-    }
-    drop.innerHTML = candidatos.map(c =>
-      `<div data-action="add-country" data-country="${esc(c)}" role="option" tabindex="0" style="cursor:pointer;padding:8px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)">${countryFlag(c,'16x12')}<span>${esc(c)}</span></div>`
-    ).join('');
-  }
-
-  window.toggleDetAddDrop = function() {
-    const drop = document.getElementById('det-add-drop');
-    const btn  = document.getElementById('det-add-btn');
-    if(!drop) return;
-    if(_detDropdownOpen) { _closeDetAddDrop(); return; }
-    _renderAddDropdown();
-    drop.classList.add('open');
-    if(btn) btn.setAttribute('aria-expanded', 'true');
-    _detDropdownOpen = true;
+  // Stub para compatibilidad: si algún caller residual lo invoca, lo encadena bien.
+  window.applyDetFilter = function() { _doApplyDetFilter();
   };
-
-  window.addDetCountry = function(c) {
-    if(!c) return;
-    const upper = String(c).toUpperCase().trim();
-    if(!upper) return;
-    if(DEFAULT_COUNTRIES.includes(upper.toLowerCase())) { _closeDetAddDrop(); return; }
-    if(!_detExtra.includes(upper)) {
-      _detExtra.push(upper);
-      _saveExtraCountries();
-    }
-    _closeDetAddDrop();
-    _renderExtraChips();
-    applyDetFilter();
-  };
-
-  window.removeDetExtraCountry = function(c) {
-    if(!c) return;
-    const upper = String(c).toUpperCase().trim();
-    _detExtra = _detExtra.filter(x => x !== upper);
-    _saveExtraCountries();
-    _renderExtraChips();
-    applyDetFilter();
-  };
-
-  function _renderExtraChips() {
-    const el = document.getElementById('det-extra-chips');
-    if(!el) return;
-    if(!_detExtra.length) {
-      el.style.display = 'none';
-      el.innerHTML = '';
-      return;
-    }
-    el.style.display = 'flex';
-    el.innerHTML = _detExtra.map(c =>
-      `<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;background:var(--faint);border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--muted);font-weight:500">${countryFlag(c,'16x12')}<span>${esc(c)}</span><button type="button" data-action="remove-country" data-country="${esc(c)}" aria-label="Quitar ${esc(c)}" title="Quitar de la vista por default" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 4px">×</button></span>`
-    ).join('');
-  }
 
   function buildMailText(country, rows) {
     const lines = [`${String(country||'').toUpperCase()} — Destination free time`];
@@ -5304,44 +5270,41 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   function _doApplyDetFilter() {
     if(!_detData) return;
-    const paisVal = ((document.getElementById('det-pais')   ||{}).value || '').trim().toLowerCase();
-    const navVal  = ((document.getElementById('det-naviera')||{}).value || '').trim().toLowerCase();
-    const showAll = isToggleAllOn();
-    const active  = getActiveCountries();
+    if(_detSelPaises === null || _detSelNavieras === null) _initSelections();
 
-    let rows = _detData.slice();
+    const ct = document.getElementById('det-ct');
+    const el = document.getElementById('det-results');
 
-    if(navVal) {
-      rows = rows.filter(r => (r.supplier||'').toLowerCase().includes(navVal));
-    }
-    if(paisVal) {
-      rows = rows.filter(r => (r.country||'').toLowerCase().includes(paisVal));
-    } else if(!showAll) {
-      rows = rows.filter(r => active.has((r.country||'').toLowerCase().trim()));
+    if(_detSelPaises.size === 0 || _detSelNavieras.size === 0) {
+      if(ct) ct.textContent = '0 registros encontrados';
+      if(el) el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">Seleccioná al menos un país y una naviera</div><div class="empty-sub">Tildá pills en los filtros de arriba o tocá "Resetear" para volver a los defaults.</div></div>`;
+      return;
     }
 
-    rows.sort((a,b) => {
-      const ca = (a.country||'').toLowerCase().trim();
-      const cb = (b.country||'').toLowerCase().trim();
+    const rows = _detData.filter(r => {
+      const c = (r.country || '').toUpperCase().trim();
+      return _detSelPaises.has(c) && _detSelNavieras.has(r.supplier);
+    });
+
+    rows.sort((a, b) => {
+      const ca = (a.country || '').toLowerCase().trim();
+      const cb = (b.country || '').toLowerCase().trim();
       let ia = DISPLAY_ORDER.indexOf(ca); if(ia === -1) ia = 999;
       let ib = DISPLAY_ORDER.indexOf(cb); if(ib === -1) ib = 999;
       if(ia !== ib) return ia - ib;
       if(ca !== cb) return ca.localeCompare(cb);
-      return (a.supplier||'').localeCompare(b.supplier||'');
+      return (a.supplier || '').localeCompare(b.supplier || '');
     });
 
     // Agrupar por país preservando orden de inserción del Map.
     const groups = new Map();
     for(const r of rows) {
-      const key = (r.country||'').toUpperCase().trim();
+      const key = (r.country || '').toUpperCase().trim();
       if(!groups.has(key)) groups.set(key, { country: r.country, key: key, rows: [] });
       groups.get(key).rows.push(r);
     }
 
-    const ct = document.getElementById('det-ct');
     if(ct) ct.textContent = rows.length + ' registro' + (rows.length!==1?'s':'') + ' encontrado' + (rows.length!==1?'s':'');
-
-    _renderExtraChips();
     renderDetention([...groups.values()]);
   }
 
@@ -5412,21 +5375,37 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando free time"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
 
-    const { data, error } = await supa
-      .from('detention_freetime')
-      .select('supplier,country,tipo,combined_days,demurrage_days,detention_days,per_diem_dry_usd,per_diem_reefer_usd,source_date,updated_at')
-      .order('supplier', { ascending: true })
-      .order('country', { ascending: true });
+    // PostgREST en Supabase Cloud cortea responses a 1000 filas. Paginamos manualmente
+    // hasta agotar el dataset (cap defensivo en 20 páginas = 20k filas).
+    const PAGE_SIZE = 1000, MAX_PAGES = 20;
+    const all = [];
+    let pageErr = null;
+    for(let page = 0; page < MAX_PAGES; page++) {
+      const from = page * PAGE_SIZE;
+      const to   = from + PAGE_SIZE - 1;
+      const { data: chunk, error: err } = await supa
+        .from('detention_freetime')
+        .select('supplier,country,tipo,combined_days,demurrage_days,detention_days,per_diem_dry_usd,per_diem_reefer_usd,source_date,updated_at')
+        .order('supplier', { ascending: true })
+        .order('country', { ascending: true })
+        .range(from, to);
+      if(err) { pageErr = err; break; }
+      if(!chunk || !chunk.length) break;
+      all.push(...chunk);
+      if(chunk.length < PAGE_SIZE) break;
+    }
 
-    if(error) {
-      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar free time</div><div class="empty-sub">${esc(error.message)}</div></div>`;
+    if(pageErr) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar free time</div><div class="empty-sub">${esc(pageErr.message)}</div></div>`;
       const ct = document.getElementById('det-ct');
       if(ct) ct.textContent = 'Error de conexión';
       return;
     }
 
-    _detData = data || [];
+    _detData = all;
     _detLastFetch = now;
+    _initSelections();
+    _renderDetPills();
 
     const upd = document.getElementById('det-updated');
     const updTxt = document.getElementById('det-updated-text');
@@ -5555,7 +5534,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const COLMAP = tipo === 'DESTINATION' ? COLMAP_DEST : COLMAP_ORIG;
 
       // Sin filtro de países/navieras al guardar — la DB es fuente única;
-      // los filtros de DEFAULT_COUNTRIES y navieras se aplican en _doApplyDetFilter.
+      // los filtros (pills _detSelPaises / _detSelNavieras) se aplican en _doApplyDetFilter.
       const todayIso = new Date().toISOString().slice(0,10);
       const nowIso   = new Date().toISOString();
       const intCols  = ['combined_days', 'demurrage_days', 'detention_days'];
@@ -5607,23 +5586,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     reader.readAsArrayBuffer(file);
   };
 
-  // Listener delegado único — outside-click closure + acciones del módulo.
-  // Una sola registración a nivel document → no leak de listeners.
+  // Listener delegado único — pills + copy-mail. Una sola registración → sin leak.
   document.addEventListener('click', (e) => {
-    if(_detDropdownOpen) {
-      const wrap = document.getElementById('det-add-wrap');
-      if(wrap && !wrap.contains(e.target)) _closeDetAddDrop();
-    }
-    const addOpt = e.target.closest('[data-action="add-country"]');
-    if(addOpt) { addDetCountry(addOpt.dataset.country); return; }
-    const remBtn = e.target.closest('[data-action="remove-country"]');
-    if(remBtn) { removeDetExtraCountry(remBtn.dataset.country); return; }
+    const tp = e.target.closest('[data-action="tog-pais"]');
+    if(tp) { togDetPais(tp.dataset.value); return; }
+    const tn = e.target.closest('[data-action="tog-naviera"]');
+    if(tn) { togDetNaviera(tn.dataset.value); return; }
     const copyBtn = e.target.closest('[data-action="copy-mail"]');
     if(copyBtn) { copyDetCountryMail(copyBtn, copyBtn.dataset.country); return; }
   });
-
-  // Render inicial de chips persistidos en localStorage (antes del primer fetch).
-  _renderExtraChips();
 })();
 </script>
 <!-- ═══════════ FIN DETENTION ═══════════ -->
