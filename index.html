@@ -1246,6 +1246,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
         <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg> Subir Excel
         <input type="file" id="det-file-input" accept=".xlsx" style="display:none" onchange="handleDetentionUpload(this)">
       </label>
+      <button class="tog" type="button" id="det-toggle-all" aria-pressed="false" onclick="toggleDetShowAll()" title="Por default solo se muestran Brasil, Chile, Perú y Colombia. Activá para incluir todos los países cargados.">Mostrar todos</button>
     </div>
     <div id="det-updated" style="display:none;padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500">
       <svg class="ic ic-sm" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><use href="#i-clock"/></svg>
@@ -5101,9 +5102,35 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return 'USD ' + num.toFixed(2);
   }
 
+  // Banderas Unicode hardcoded (cero dependencias). Solo los 4 países default.
+  // Para cualquier otro país: sin bandera, solo texto.
+  const FLAG = { BRAZIL:'🇧🇷', CHILE:'🇨🇱', PERU:'🇵🇪', COLOMBIA:'🇨🇴' };
+  // Set de membership para el filtro default (toggle OFF + input vacío).
+  const DEFAULT_COUNTRIES = ['brazil','chile','peru','colombia'];
+  // Orden visual de los grupos (BRAZIL → CHILE → COLOMBIA → PERU → resto alfabético).
+  const DISPLAY_ORDER     = ['brazil','chile','colombia','peru'];
+  const PLACEHOLDER_DEF   = 'Brasil, Chile, ...';
+  const PLACEHOLDER_ALL   = 'Todos los países...';
+
+  function isToggleAllOn() {
+    const btn = document.getElementById('det-toggle-all');
+    return !!(btn && btn.classList.contains('on'));
+  }
+
   window.applyDetFilter = function() {
     clearTimeout(_detFilterTimer);
     _detFilterTimer = setTimeout(_doApplyDetFilter, 250);
+  };
+
+  window.toggleDetShowAll = function() {
+    const btn = document.getElementById('det-toggle-all');
+    const inp = document.getElementById('det-pais');
+    if(!btn) return;
+    const next = !btn.classList.contains('on');
+    btn.classList.toggle('on', next);
+    btn.setAttribute('aria-pressed', String(next));
+    if(inp) inp.placeholder = next ? PLACEHOLDER_ALL : PLACEHOLDER_DEF;
+    applyDetFilter();
   };
 
   window.clearDetFilters = function() {
@@ -5111,56 +5138,96 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const el = document.getElementById(id);
       if(el) el.value = '';
     });
+    const btn = document.getElementById('det-toggle-all');
+    if(btn) {
+      btn.classList.remove('on');
+      btn.setAttribute('aria-pressed', 'false');
+    }
+    const inp = document.getElementById('det-pais');
+    if(inp) inp.placeholder = PLACEHOLDER_DEF;
     applyDetFilter();
   };
 
   function _doApplyDetFilter() {
     if(!_detData) return;
-    const vP = (document.getElementById('det-pais')   ||{}).value || '';
-    const vN = (document.getElementById('det-naviera')||{}).value || '';
-    const rows = _detData.filter(r => {
-      if(vP && !(r.country ||'').toUpperCase().includes(vP.toUpperCase())) return false;
-      if(vN && !(r.supplier||'').toUpperCase().includes(vN.toUpperCase())) return false;
-      return true;
+    const paisVal = ((document.getElementById('det-pais')   ||{}).value || '').trim().toLowerCase();
+    const navVal  = ((document.getElementById('det-naviera')||{}).value || '').trim().toLowerCase();
+    const showAll = isToggleAllOn();
+
+    let rows = _detData.slice();
+
+    if(navVal) {
+      rows = rows.filter(r => (r.supplier||'').toLowerCase().includes(navVal));
+    }
+    if(paisVal) {
+      rows = rows.filter(r => (r.country||'').toLowerCase().includes(paisVal));
+    } else if(!showAll) {
+      rows = rows.filter(r => DEFAULT_COUNTRIES.includes((r.country||'').toLowerCase().trim()));
+    }
+
+    rows.sort((a,b) => {
+      const ca = (a.country||'').toLowerCase().trim();
+      const cb = (b.country||'').toLowerCase().trim();
+      let ia = DISPLAY_ORDER.indexOf(ca); if(ia === -1) ia = 999;
+      let ib = DISPLAY_ORDER.indexOf(cb); if(ib === -1) ib = 999;
+      if(ia !== ib) return ia - ib;
+      if(ca !== cb) return ca.localeCompare(cb);
+      return (a.supplier||'').localeCompare(b.supplier||'');
     });
+
+    // Agrupar por país preservando orden de inserción del Map.
+    const groups = new Map();
+    for(const r of rows) {
+      const key = (r.country||'').toUpperCase().trim();
+      if(!groups.has(key)) groups.set(key, { country: r.country, rows: [] });
+      groups.get(key).rows.push(r);
+    }
+
     const ct = document.getElementById('det-ct');
     if(ct) ct.textContent = rows.length + ' registro' + (rows.length!==1?'s':'') + ' encontrado' + (rows.length!==1?'s':'');
-    renderDetention(rows);
+
+    renderDetention([...groups.values()]);
   }
 
-  function renderDetention(rows) {
+  function renderDetention(groups) {
     const el = document.getElementById('det-results');
     if(!el) return;
 
-    if(!rows.length) {
-      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay registros que coincidan</div><div class="empty-sub">Probá con otro país o naviera, o limpiá los filtros.</div></div>`;
+    if(!groups.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay registros que coincidan</div><div class="empty-sub">Probá con otro país o naviera, activá "Mostrar todos" o limpiá los filtros.</div></div>`;
       return;
     }
 
-    const COLS = '1.2fr .9fr .9fr 1.1fr 1fr 1fr';
-    el.innerHTML = `<div class="sched-table-wrap">
-      <div class="sched-table-head" style="grid-template-columns:${COLS}">
+    // 4 columnas: Naviera | Tipo | Combined Free Time | Per Diem (sin "País", la columna se reemplaza por el header de grupo)
+    const COLS = '1.4fr .9fr 1.2fr 1.1fr';
+
+    el.innerHTML = '<div class="sched-table-wrap">' + groups.map(g => {
+      const cKey = (g.country||'').toUpperCase().trim();
+      const flag = FLAG[cKey] || '';
+      const groupHdr = `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;color:var(--text);background:var(--faint);margin-top:14px;border-radius:8px 8px 0 0">
+        ${flag ? `<span style="font-size:22px;line-height:1" aria-hidden="true">${esc(flag)}</span>` : ''}
+        <span>${esc(g.country||'—')}</span>
+        <span style="font-size:11px;font-weight:500;color:var(--muted);margin-left:auto">${g.rows.length} ${g.rows.length===1?'registro':'registros'}</span>
+      </div>`;
+      const tableHead = `<div class="sched-table-head" style="grid-template-columns:${COLS}">
         <span class="sth">Naviera</span>
-        <span class="sth">País</span>
         <span class="sth">Tipo</span>
-        <span class="sth">Free Time (días)</span>
-        <span class="sth">Per Diem Dry (USD)</span>
-        <span class="sth">Per Diem Reefer (USD)</span>
-      </div>
-      ${rows.map(r => {
+        <span class="sth">Combined Free Time (días)</span>
+        <span class="sth">Per Diem (USD/día)</span>
+      </div>`;
+      const rowsHtml = g.rows.map(r => {
         const tipoCls = r.tipo === 'ORIGIN' ? 'one' : 'dir';
         return `<div class="sched-row-wrap">
           <div class="sched-main-row" style="grid-template-columns:${COLS}">
             <div><span class="naviera-badge">${esc(r.supplier||'—')}</span></div>
-            <div class="sr">${esc(r.country||'—')}</div>
             <div class="sr"><span class="tras-badge ${tipoCls}">${esc(r.tipo||'—')}</span></div>
             <div class="sr mono">${esc(fmtFreeTime(r))}</div>
             <div class="sr mono">${esc(fmtPerDiem(r.per_diem_dry_usd))}</div>
-            <div class="sr mono">${esc(fmtPerDiem(r.per_diem_reefer_usd))}</div>
           </div>
         </div>`;
-      }).join('')}
-    </div>`;
+      }).join('');
+      return groupHdr + tableHead + rowsHtml;
+    }).join('') + '</div>';
   }
 
   window.loadDetention = async function() {
