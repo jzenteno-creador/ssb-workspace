@@ -182,6 +182,18 @@ def main():
     for r in rows:
         print(f"  - {r['supplier']:30s} | {r['country']:15s} | {r['tipo']}")
 
+    # Read-back: contar filas con source_date=today para detectar discrepancias.
+    rb = supa.table('detention_freetime').select('id', count='exact') \
+        .eq('source_date', today_iso).execute()
+    db_count = rb.count if rb.count is not None else len(rb.data or [])
+    if db_count != len(rows):
+        print(
+            f"⚠️  WARNING: discrepancia — upserteamos {len(rows)} filas pero la DB "
+            f"tiene {db_count} con source_date={today_iso}. Revisar manualmente."
+        )
+    else:
+        print(f"✓ Read-back OK: {db_count} filas con source_date={today_iso}")
+
 
 if __name__ == '__main__':
     main()

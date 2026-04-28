@@ -19,3 +19,8 @@ Thumbs.db
 temp/
 .claude/settings.local.json
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

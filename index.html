@@ -1242,7 +1242,10 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
       </div>
       <button class="btn-clear" onclick="clearDetFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
     </div>
-    <div id="det-updated" style="padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500"></div>
+    <div id="det-updated" style="display:none;padding:6px 4px 0;font-size:11px;color:var(--muted);font-weight:500">
+      <svg class="ic ic-sm" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><use href="#i-clock"/></svg>
+      <span id="det-updated-text"></span>
+    </div>
   </div>
 
   <div class="sched-module" id="det-module">
@@ -1252,6 +1255,8 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
     </div>
     <div id="det-results">
       <div class="skel-group" aria-busy="true" aria-label="Cargando free time">
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
+        <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
         <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
         <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
         <div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div>
@@ -5162,7 +5167,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
 
-    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando free time"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
+    el.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando free time"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
 
     const { data, error } = await supa
       .from('detention_freetime')
@@ -5181,12 +5186,19 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _detLastFetch = now;
 
     const upd = document.getElementById('det-updated');
-    if(upd) {
+    const updTxt = document.getElementById('det-updated-text');
+    if(upd && updTxt) {
       const maxUpd = _detData.reduce((m, r) => {
         if(!r.updated_at) return m;
         return (!m || r.updated_at > m) ? r.updated_at : m;
       }, null);
-      upd.textContent = maxUpd ? 'Actualizado: ' + fmtDate(maxUpd) : '';
+      if(maxUpd) {
+        updTxt.textContent = 'Actualizado: ' + fmtDate(maxUpd);
+        upd.style.display = '';
+      } else {
+        updTxt.textContent = '';
+        upd.style.display = 'none';
+      }
     }
 
     _doApplyDetFilter();
