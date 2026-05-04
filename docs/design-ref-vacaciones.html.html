@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="es">
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  DECISIONES DE DISEÑO  (Vacaciones · solapa nativa de tarifa-schedule)
+  ════════════════════════════════════════════════════════════════════════
+
+  PALETA — Tomada literal del :root + body.light de tarifa-schedule (index.html)
+    • Light (default):  --bg #f7f8fa  --surface #fff  --text #0b0f17
+                        --header-bg #0b0f17 (cockpit dark, ambos modos)
+                        --blue #2563eb  --teal #06b6d4  --purple #6d28d9
+                        --green #0d9e80  --amber #c87a00  --red #c0392b
+    • Dark (toggle .light off):  --bg #0b0f17  --surface #141925 ...
+    Status colors (vacación / feriado / pendiente) re-mapeados:
+      vacación aprobada → --green (#0d9e80)
+      tentativa         → --green pero con pattern stripes
+      pendiente aprob.  → --amber (cockpit warn, no naranja brand)
+      feriado nacional  → --red
+      día no laborable  → --amber-bg (más sutil que feriado)
+
+  TIPOGRAFÍA — Inter + JetBrains Mono (idéntico a tarifa-schedule).
+    Reemplacé Instrument Serif (mockup) → Inter peso 700 con tracking
+    cerrado para títulos. Cockpit es data-dense, no editorial: serifa
+    chocaba con la densidad del resto de la app.
+
+  ESTILO — Replica la gramática del index:
+    • topbar dark fija (60px) con sync-pill teal y bell.
+    • .tab-bar de pestañas principales con underline azul.
+    • Sub-tabs estilo segmented control (.tt-mode-bar del index).
+    • Panels con .surface + 1px border + sombra sutil.
+    • Buttons .btn-top / .btn-primary purple cockpit.
+    • Densidad: padding reducido vs mockup (16/20 → 10/14), --fs-sm.
+
+  ────────────────────────────────────────────────────────────────────────
+  EQUIPO — Rediseño completo (más allá del brief)
+  ────────────────────────────────────────────────────────────────────────
+  Cambios pedidos:
+    ✓ Vista por día (no por tercios). Mes en curso primero, centrado.
+    ✓ Indicador vertical "hoy".
+    ✓ Drag horizontal con mouse (cursor grab/grabbing).
+    ✓ Wheel horizontal (vertical wheel se traduce a scroll-X dentro del cal).
+    ✓ Snap suave al inicio del mes al soltar drag.
+    ✓ Mini-timeline arriba: 12 meses Oct'25→Oct'26 con barras densificadas
+      por empleado, click teleporta al mes en el calendario grande.
+    ✓ Período Oct 2025 → Oct 2026 (no Ene-Sep).
+    ✓ Resolución por día, barras posicionadas en pixeles exactos.
+    ✓ Sticky: columna nombres a la izquierda, columna estado a la derecha.
+
+  Decisiones extra (no pedidas):
+    • Brushed viewport handle en mini-timeline (cockpit pattern).
+    • Tooltip al hover en cualquier barra (rango + nota + estado).
+    • Hairlines de fines de semana (sat/sun bg sutil) y línea divisoria
+      gruesa al inicio de cada mes — facilita lectura rápida.
+    • Indicador "hoy" propagado al mini-timeline también (línea naranja).
+    • Atajo: arrastrar la mini-timeline también re-encuadra el calendario.
+    • Header de fechas pegajoso al hacer scroll horizontal.
+    • Performance: días renderizados como divs con grid-template-columns
+      dinámico — 365 columnas no es problema en navegadores modernos.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacaciones · SSB International</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═════════════════════ TOKENS — copied from tarifa-schedule ═════════════════════ */
+:root {
+  /* Default = LIGHT (matches body.light in tarifa-schedule). */
+  --bg:#f7f8fa; --surface:#ffffff; --surface-hv:#f0f2f6; --faint:#f0f3f8;
+  --header-bg:#0b0f17;          /* cockpit constant — dark in both modes */
+  --border:#e4e7ec; --border-strong:#d4d9e1;
+  --text:#0b0f17; --muted:#5b6478;
+  --blue:#2563eb; --blue-lt:#e8f0fe;
+  --teal:#06b6d4;
+  --purple:#6d28d9; --purple-bg:#f3f0ff; --purple-bd:#c4b5fd;
+  --green:#0d9e80; --green-bg:#e6f9f4; --green-bd:#b2e8d8;
+  --amber:#c87a00; --amber-bg:#fff8e6; --amber-bd:#f4d98a;
+  --red:#c0392b;   --red-bg:#fff0f0;   --red-bd:#f5c0bb;
+  --orange:#d14d00; --orange-bg:#fff4ee;
+
+  --naviera-default:#475569;
+  --total-bg:#0b0f17;
+
+  --font: 'Inter','system-ui',sans-serif;
+  --mono: 'JetBrains Mono','SFMono-Regular',monospace;
+  --fs-2xs:10px; --fs-xs:11px; --fs-sm:12px; --fs-md:13px; --fs-base:14px; --fs-lg:15px; --fs-xl:17px; --fs-2xl:22px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.06);
+}
+body.dark {
+  --bg:#0b0f17; --surface:#141925; --surface-hv:#1a2132; --faint:#10151f;
+  --border:#1f2634; --border-strong:#2a3346;
+  --text:#e8ecf3; --muted:#8b94a8;
+  --blue:#5b9bf5; --blue-lt:#1d2742;
+  --teal:#5eead4;
+  --purple:#a78bfa; --purple-bg:#1c1533; --purple-bd:#4d3a8a;
+  --green:#3ecf8e; --green-bg:#0f2a1d; --green-bd:#1e5c3a;
+  --amber:#f5a623; --amber-bg:#2a1f0a; --amber-bd:#6b4a12;
+  --red:#ef6461;   --red-bg:#2a1515;   --red-bd:#5a2020;
+  --orange:#fb923c; --orange-bg:#2a1a0e;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+.mono { font-family: var(--mono); }
+
+/* ═════════════════════ TOPBAR — clone of index.html ═════════════════════ */
+.topbar {
+  background: var(--header-bg);
+  color: #fff;
+  height: 60px;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 200;
+}
+.logo-wrap { display:flex; align-items:center; gap:12px; font-size:var(--fs-base); font-weight:700; letter-spacing:-.3px; }
+.logo-ico {
+  width:34px; height:34px; background:var(--blue); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:13px; color:#fff;
+  letter-spacing:-0.04em;
+}
+.topbar-right { display:flex; align-items:center; gap:14px; }
+.sync-pill { display:flex; align-items:center; gap:7px; font-size:var(--fs-sm); color:rgba(255,255,255,.55); font-family:var(--mono); }
+.dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.2); }
+.dot.ok { background:#5eead4; box-shadow:0 0 6px #5eead4; }
+.bell-ico {
+  width:34px; height:34px; border-radius:8px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  color:#fff; cursor:pointer; position:relative;
+  display:grid; place-items:center;
+}
+.bell-ico:hover { background: rgba(255,255,255,.14); }
+.bell-badge { position:absolute; top:-4px; right:-4px; width:16px; height:16px; border-radius:50%; background:#f5a623; color:#0b0f17; font-size:9px; font-weight:700; display:grid; place-items:center; }
+.user-chip { display:flex; align-items:center; gap:10px; font-size:var(--fs-sm); color:rgba(255,255,255,.85); }
+.user-avatar {
+  width:30px; height:30px; border-radius:50%;
+  background: var(--purple); display:grid; place-items:center;
+  font-weight:700; font-size:11px; color:#fff; letter-spacing:.02em;
+}
+.user-email { color:rgba(255,255,255,.55); font-family:var(--mono); font-size:var(--fs-xs); }
+.btn-top {
+  font-family: var(--font); font-size:var(--fs-sm); font-weight:500;
+  padding: 7px 13px; border-radius:7px; cursor:pointer;
+  border:1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.09);
+  transition: all .15s cubic-bezier(.4,0,.2,1);
+}
+.btn-top:hover { background: rgba(255,255,255,.18); }
+
+/* ═════════════════════ MAIN TABS — clone of .tab-bar ═════════════════════ */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.tab-btn {
+  padding:12px 18px; font-family:var(--font); font-size:var(--fs-md); font-weight:500;
+  color:var(--muted); background:none; border:none;
+  border-bottom:2px solid transparent;
+  cursor:pointer;
+  transition:color .15s;
+  display:flex; align-items:center; gap:6px;
+  letter-spacing:-.005em;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight:600; }
+.tab-btn .ic { width:16px; height:16px; }
+
+/* ═════════════════════ DISCLAIMER ═════════════════════ */
+.disclaimer {
+  background: var(--purple-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 2rem;
+  font-size: var(--fs-sm);
+  color: var(--purple);
+  display:flex; align-items:center; gap:10px;
+}
+.disclaimer-ico {
+  width:14px; height:14px; flex-shrink:0;
+  background: var(--purple); color:#fff; border-radius:50%;
+  display:grid; place-items:center;
+  font-size:9px; font-weight:700;
+}
+
+/* ═════════════════════ PAGE CONTAINER ═════════════════════ */
+.container { max-width: 1500px; margin: 0 auto; padding: 22px 2rem 80px; width:100%; }
+
+/* ═════════════════════ APPROVAL BANNER ═════════════════════ */
+.approval-banner {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:11px 16px; margin-bottom:18px;
+  background: var(--amber-bg);
+  border:1px solid var(--amber-bd);
+  border-radius:8px;
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+.approval-banner .ico {
+  width:24px; height:24px; border-radius:6px;
+  background: var(--amber); color:#0b0f17;
+  display:grid; place-items:center; font-weight:700; font-size:13px;
+  flex-shrink:0;
+}
+.approval-text strong { color: var(--text); font-weight:700; }
+body.dark .approval-banner { color: var(--amber); }
+body.dark .approval-text strong { color: var(--amber); }
+
+/* ═════════════════════ PAGE HEADER ═════════════════════ */
+.page-header {
+  display:flex; justify-content:space-between; align-items:flex-end;
+  padding-bottom:16px; margin-bottom:18px;
+  border-bottom:1px solid var(--border);
+}
+.page-title {
+  font-family: var(--font);
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  line-height:1;
+}
+.page-title .badge-year {
+  font-family: var(--mono);
+  font-size:12px;
+  font-weight:500;
+  color:var(--muted);
+  margin-left:10px;
+  letter-spacing:0;
+  vertical-align:middle;
+  padding:3px 8px;
+  background:var(--faint);
+  border:1px solid var(--border);
+  border-radius:5px;
+}
+.page-subtitle { color:var(--muted); font-size:var(--fs-sm); margin-top:6px; }
+
+/* ═════════════════════ SUB-TABS — segmented control ═════════════════════ */
+.sub-tabs {
+  display:inline-flex; gap:0;
+  background: var(--faint);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:3px;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,.04);
+}
+.sub-tab {
+  padding:7px 14px;
+  border:none; background:transparent;
+  color: var(--muted);
+  font-family: var(--font); font-size:var(--fs-sm); font-weight:600;
+  cursor:pointer; border-radius:6px;
+  transition: color .12s, background .12s, box-shadow .12s;
+  letter-spacing:-.005em;
+}
+.sub-tab:hover { color: var(--text); }
+.sub-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04);
+}
+body.dark .sub-tab.active { box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 0 0 1px var(--border); }
+
+/* ═════════════════════ STATS STRIP ═════════════════════ */
+.stats-strip {
+  display:grid; grid-template-columns: repeat(4, 1fr);
+  gap:1px; background: var(--border);
+  border:1px solid var(--border); border-radius:8px;
+  overflow:hidden; margin-bottom:20px;
+}
+.stat { background: var(--surface); padding:14px 18px; }
+.stat-label {
+  font-size:var(--fs-2xs); text-transform:uppercase; letter-spacing:.1em;
+  color:var(--muted); margin-bottom:6px; font-weight:600;
+  font-family: var(--mono);
+}
+.stat-value {
+  font-family: var(--font);
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  line-height:1;
+}
+.stat-unit { font-size:var(--fs-sm); color:var(--muted); margin-left:5px; font-weight:500; }
+
+/* ═════════════════════ PANELS ═════════════════════ */
+.panel {
+  background: var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow: var(--shadow-sm);
+}
+.panel-header {
+  padding:13px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  background: var(--surface);
+}
+.panel-title { font-size:var(--fs-md); font-weight:700; letter-spacing:-.005em; }
+
+/* ═════════════════════ MI CALENDARIO ═════════════════════ */
+.cal-layout { display:grid; grid-template-columns: 1fr 320px; gap:20px; }
+
+.month-nav { display:flex; gap:6px; align-items:center; }
+.nav-btn {
+  width:28px; height:28px; border-radius:6px;
+  background: var(--faint); border:1px solid var(--border);
+  cursor:pointer; display:grid; place-items:center;
+  color: var(--text); font-family:var(--font);
+}
+.nav-btn:hover { background: var(--surface-hv); border-color: var(--border-strong); }
+.month-label {
+  font-family: var(--font); font-weight:700;
+  font-size:var(--fs-lg); min-width:160px; text-align:center; letter-spacing:-.01em;
+}
+
+.calendar { padding:14px; }
+.cal-grid { display:grid; grid-template-columns: repeat(7,1fr); gap:3px; }
+.cal-dow {
+  font-size:var(--fs-2xs); text-transform:uppercase; letter-spacing:.1em;
+  color: var(--muted); text-align:center; padding:6px 0;
+  font-weight:700; font-family: var(--mono);
+}
+.cal-day {
+  aspect-ratio: 1.25 / 1;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 8px;
+  font-size:var(--fs-sm);
+  background: var(--surface);
+  position:relative;
+  display:flex; flex-direction:column;
+}
+.cal-day.muted { opacity:.35; }
+.cal-day.today { border:2px solid var(--blue); }
+.cal-day.today .cal-day-num { color: var(--blue); font-weight:700; }
+.cal-day-num { font-weight:600; font-variant-numeric:tabular-nums; }
+.cal-day-dow {
+  display:block;
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:2px;
+  font-variant-numeric:tabular-nums;
+}
+.cal-day.today .cal-day-dow { color: var(--blue); }
+.cal-day.vacation .cal-day-dow,
+.cal-day.tentativa .cal-day-dow { color: var(--green); opacity:.85; }
+.cal-day.holiday .cal-day-dow { color: var(--red); opacity:.85; }
+.cal-day.no-laborable .cal-day-dow { color: var(--amber); opacity:.85; }
+.cal-day.muted .cal-day-dow { opacity:.5; }
+.cal-day.vacation {
+  background: var(--green-bg); border-color: var(--green-bd);
+}
+.cal-day.vacation .cal-day-num { color: var(--green); font-weight:700; }
+.cal-day.tentativa {
+  background: repeating-linear-gradient(45deg, var(--green-bg), var(--green-bg) 4px, var(--surface) 4px, var(--surface) 8px);
+  border-color: var(--green-bd);
+  border-style: dashed;
+}
+.cal-day.tentativa .cal-day-num { color: var(--green); }
+.cal-day.holiday {
+  background: var(--red-bg); border-color: var(--red-bd);
+}
+.cal-day.holiday .cal-day-num { color: var(--red); font-weight:700; }
+.cal-day.no-laborable {
+  background: var(--amber-bg); border-color: var(--amber-bd);
+}
+.cal-day-tag {
+  font-size:9px; color: var(--muted); margin-top:auto;
+  text-transform:uppercase; letter-spacing:.05em; font-weight:600;
+  font-family: var(--mono);
+  line-height:1.1;
+}
+.cal-day.holiday .cal-day-tag { color: var(--red); }
+.cal-day.tentativa .cal-day-tag { color: var(--green); }
+
+/* Side panel */
+.side-section { padding:14px 18px; border-bottom:1px solid var(--border); }
+.side-section:last-child { border-bottom:none; }
+.side-title {
+  font-size:var(--fs-2xs); text-transform:uppercase; letter-spacing:.1em;
+  color: var(--muted); font-weight:700; margin-bottom:11px;
+  font-family: var(--mono);
+}
+.vac-item {
+  background: var(--faint);
+  border:1px solid var(--border);
+  border-left:3px solid var(--green);
+  border-radius:6px;
+  padding:9px 12px;
+  margin-bottom:7px;
+}
+.vac-item.tentativa { border-left-style: dashed; }
+.vac-item.pendiente { border-left-color: var(--amber); }
+.vac-dates { font-family: var(--mono); font-size:var(--fs-xs); font-weight:600; }
+.vac-meta { font-size:var(--fs-xs); color: var(--muted); margin-top:3px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.vac-status {
+  font-size:9px; padding:2px 6px; border-radius:3px;
+  text-transform:uppercase; letter-spacing:.05em; font-weight:700;
+  font-family: var(--mono);
+}
+.vac-status.confirmada { background: var(--green-bg); color: var(--green); border:1px solid var(--green-bd); }
+.vac-status.pendiente { background: var(--amber-bg); color: var(--amber); border:1px solid var(--amber-bd); }
+
+.legend { display:flex; flex-direction:column; gap:7px; }
+.legend-item { display:flex; align-items:center; gap:8px; font-size:var(--fs-xs); }
+.legend-swatch { width:14px; height:14px; border-radius:3px; border:1px solid var(--border-strong); flex-shrink:0; }
+
+/* ═════════════════════ BUTTONS ═════════════════════ */
+.btn {
+  background: var(--text);
+  color: var(--bg);
+  border:none;
+  padding:9px 14px;
+  border-radius:6px;
+  font-size:var(--fs-sm);
+  font-weight:600;
+  cursor:pointer;
+  font-family: var(--font);
+  letter-spacing:-.005em;
+  transition: all .15s;
+}
+.btn:hover { opacity: .9; }
+.btn-primary { background: var(--purple); color:#fff; }
+.btn-primary:hover { background: var(--purple); filter:brightness(1.1); }
+.btn-ghost { background: transparent; color: var(--text); border:1px solid var(--border-strong); }
+.btn-ghost:hover { background: var(--faint); }
+.btn-danger-ghost {
+  background: transparent; color: var(--red); border:1px solid transparent;
+  padding:6px 10px; font-size:var(--fs-xs); cursor:pointer; font-family:inherit; font-weight:600;
+  border-radius:5px;
+}
+.btn-danger-ghost:hover { background: var(--red-bg); }
+
+.btn-floating {
+  position:fixed; bottom:22px; right:22px;
+  background: var(--purple); color:#fff;
+  padding:13px 20px; border-radius:999px; font-weight:600;
+  border:none; cursor:pointer; font-family: var(--font); font-size:var(--fs-md);
+  box-shadow: 0 6px 20px rgba(109,40,217,.4);
+  display:flex; align-items:center; gap:8px;
+}
+.btn-floating:hover { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(109,40,217,.5); }
+body.dark .btn-floating { box-shadow: 0 6px 20px rgba(167,139,250,.35); }
+
+/* ═════════════════════ EQUIPO ═════════════════════ */
+.equipo-wrap { display:flex; flex-direction:column; gap:12px; }
+
+/* ── Mini-timeline: 12 months strip ── */
+.mini-tl {
+  background: var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 14px;
+  position:relative;
+  user-select:none;
+}
+.mini-tl-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:6px;
+}
+.mini-tl-head-title {
+  font-size:var(--fs-2xs); text-transform:uppercase; letter-spacing:.1em;
+  color: var(--muted); font-weight:700; font-family: var(--mono);
+}
+.mini-tl-head-hint {
+  font-size:var(--fs-xs); color: var(--muted);
+  font-family: var(--mono);
+}
+.mini-tl-head-hint kbd {
+  display:inline-block;
+  background: var(--faint); border:1px solid var(--border);
+  border-radius:4px; padding:1px 5px; font-size:10px;
+  font-family: var(--mono); color: var(--text);
+  margin: 0 2px;
+}
+.mini-tl-track {
+  position:relative;
+  height:54px;
+  background: var(--faint);
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  cursor:pointer;
+}
+.mini-tl-month {
+  position:absolute; top:0; bottom:0;
+  border-right:1px solid var(--border);
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:3px;
+}
+.mini-tl-month:last-child { border-right:none; }
+.mini-tl-month-lbl {
+  font-size:9px; font-weight:700; font-family: var(--mono);
+  color: var(--muted); text-transform:uppercase; letter-spacing:.05em;
+  pointer-events:none;
+}
+/* densified vacation bars in mini-tl, stacked per row */
+.mini-tl-bar {
+  position:absolute;
+  height:3px;
+  border-radius:1px;
+  background: var(--green);
+}
+.mini-tl-bar.pendiente { background: var(--amber); }
+.mini-tl-bar.tentativa {
+  background: repeating-linear-gradient(90deg, var(--green), var(--green) 3px, transparent 3px, transparent 5px);
+}
+/* viewport handle (the part being viewed in big calendar) */
+.mini-tl-viewport {
+  position:absolute; top:-2px; bottom:-2px;
+  background: rgba(37,99,235,.10);
+  border: 2px solid var(--blue);
+  border-radius:5px;
+  pointer-events:none;
+  transition: left .12s ease, width .12s ease;
+}
+body.dark .mini-tl-viewport { background: rgba(91,155,245,.12); }
+/* today marker on mini-tl */
+.mini-tl-today {
+  position:absolute; top:0; bottom:0;
+  width:1px;
+  background: var(--orange);
+  pointer-events:none;
+  box-shadow: 0 0 4px var(--orange);
+}
+
+/* ── Calendar/Gantt big ── */
+.gantt-shell {
+  background: var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow: var(--shadow-sm);
+  position:relative;
+}
+.gantt-toolbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.gantt-toolbar-left { display:flex; align-items:center; gap:10px; }
+.gantt-month-jump {
+  font-family: var(--mono); font-size:var(--fs-md); font-weight:700;
+  color: var(--text); min-width:160px; letter-spacing:-.01em;
+}
+.gantt-month-jump-sub {
+  font-family: var(--mono); font-size:var(--fs-xs); color: var(--muted); font-weight:500;
+}
+.gantt-jump-btn {
+  height:30px; padding:0 12px; border-radius:6px;
+  background: var(--faint); border:1px solid var(--border);
+  color: var(--text); cursor:pointer;
+  font-family: var(--font); font-size:var(--fs-sm); font-weight:600;
+  display:flex; align-items:center; gap:5px;
+}
+.gantt-jump-btn:hover { background: var(--surface-hv); border-color: var(--border-strong); }
+.gantt-toolbar-right { display:flex; gap:8px; align-items:center; font-size:var(--fs-xs); color:var(--muted); font-family: var(--mono); }
+.gantt-toolbar-right .legend-row { display:flex; gap:14px; align-items:center; }
+
+/* New layout: 3 distinct flex columns. The middle one is the only
+   scroller. Names + Status are siblings — never affected by inner OR
+   page-level horizontal scroll. */
+:root {
+  --gantt-name-w: 220px;
+  --gantt-status-w: 130px;
+  --gantt-day-w: 22px;
+  --gantt-row-h: 40px;
+  --gantt-month-head-h: 26px;
+  --gantt-day-head-h: 32px;
+}
+.gantt-frame {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+}
+.gantt-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.gantt-col.names {
+  width: var(--gantt-name-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 2;
+  box-shadow: 4px 0 6px -3px rgba(0,0,0,.08);
+}
+body.dark .gantt-col.names { box-shadow: 4px 0 8px -3px rgba(0,0,0,.4); }
+.gantt-col.status {
+  width: var(--gantt-status-w);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 2;
+  box-shadow: -4px 0 6px -3px rgba(0,0,0,.08);
+}
+body.dark .gantt-col.status { box-shadow: -4px 0 8px -3px rgba(0,0,0,.4); }
+
+/* Middle scroller — the ONLY thing that scrolls horizontally */
+.gantt-scroller {
+  flex: 1 1 auto;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: grab;
+  scroll-behavior: auto;
+  min-width: 0;
+}
+.gantt-scroller.dragging { cursor: grabbing; }
+.gantt-scroller::-webkit-scrollbar { height: 10px; }
+.gantt-scroller::-webkit-scrollbar-track { background: var(--faint); }
+.gantt-scroller::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius:5px; }
+.gantt-scroller::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+.gantt-days-inner {
+  position: relative;
+  /* width set in JS */
+}
+
+/* Header rows for names/status */
+.gantt-col-head {
+  height: calc(var(--gantt-month-head-h) + var(--gantt-day-head-h));
+  background: var(--faint);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 14px;
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  font-weight: 700;
+  font-family: var(--mono);
+  position: sticky; top:0; z-index:3;
+}
+
+/* Day-level header (months on top, days on bottom) */
+.day-head {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--faint);
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column;
+}
+.day-head-months { display: flex; height: var(--gantt-month-head-h); }
+.day-head-month {
+  border-right: 1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--mono); font-size:var(--fs-xs); font-weight:700;
+  color: var(--text); letter-spacing:.04em; text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+.day-head-month:last-child { border-right:none; }
+.day-head-days { display: grid; height: var(--gantt-day-head-h); }
+.day-head-day {
+  font-family: var(--mono); font-size: 9px; color: var(--muted);
+  text-align:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  line-height:1.15;
+  display:flex; align-items:center; justify-content:center;
+  border-right:1px solid var(--border);
+  background: var(--faint);
+  font-weight:600;
+}
+.day-head-day.first-of-month { border-left: 2px solid var(--border-strong); }
+.day-head-day.weekend { color: var(--text); opacity:.6; }
+.day-head-day.today { color:#fff; background: var(--orange); font-weight:700; }
+.day-head-day.holiday { color: var(--red); font-weight:700; cursor: help; }
+.day-head-day .dh-dow { font-size:7.5px; opacity:.7; letter-spacing:.04em; text-transform:uppercase; margin-top:1px; }
+.day-head-day.today .dh-dow { opacity:.95; }
+.gantt-day-cell.holiday { cursor: help; }
+
+/* Rows */
+.gantt-row-name {
+  height: var(--gantt-row-h);
+  padding: 0 14px;
+  display: flex; flex-direction: column; justify-content: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.gantt-row-name.is-self { background: var(--purple-bg); }
+body.dark .gantt-row-name.is-self { background: var(--purple-bg); }
+.gantt-row-name strong { font-size:var(--fs-sm); font-weight:700; letter-spacing:-.01em; }
+.gantt-row-name-sub { font-size:var(--fs-2xs); color: var(--muted); font-family: var(--mono); margin-top:1px; }
+
+.gantt-row-days {
+  height: var(--gantt-row-h);
+  display: grid;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  background: var(--surface);
+}
+.gantt-day-cell {
+  border-right: 1px solid rgba(0,0,0,.04);
+  background: transparent;
+  position: relative;
+}
+body.dark .gantt-day-cell { border-right-color: rgba(255,255,255,.04); }
+.gantt-day-cell.weekend { background: rgba(0,0,0,.025); }
+body.dark .gantt-day-cell.weekend { background: rgba(255,255,255,.025); }
+.gantt-day-cell.first-of-month { border-left: 2px solid var(--border-strong); }
+.gantt-day-cell.holiday { background: var(--red-bg); }
+body.dark .gantt-day-cell.holiday { background: rgba(239,100,97,.10); }
+
+/* Today line — vertical indicator across all rows */
+.gantt-today-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--orange);
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: 0 0 6px rgba(209,77,0,.6);
+}
+body.dark .gantt-today-line { box-shadow: 0 0 8px rgba(251,146,60,.7); }
+.gantt-today-line::before {
+  content: 'HOY';
+  position: absolute; top: 0;
+  left: 50%; transform: translateX(-50%);
+  background: var(--orange); color:#fff;
+  font-family: var(--mono); font-size:8px; font-weight:700;
+  padding:2px 5px; border-radius:0 0 3px 3px;
+  letter-spacing:.05em;
+}
+
+/* Vacation bars */
+.gantt-bar {
+  position: absolute;
+  top: 6px; bottom: 6px;
+  background: var(--green);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 7px;
+  display: flex; align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: default;
+  z-index: 2;
+  font-family: var(--mono);
+  letter-spacing: .01em;
+  transition: filter .12s, transform .12s;
+}
+.gantt-bar:hover { filter: brightness(1.1); transform: translateY(-1px); z-index: 5; }
+.gantt-bar.tentativa {
+  background: repeating-linear-gradient(45deg, var(--green), var(--green) 6px, var(--green-bd) 6px, var(--green-bd) 12px);
+}
+.gantt-bar.pendiente { background: var(--amber); color:#0b0f17; }
+body.dark .gantt-bar.pendiente { color:#0b0f17; }
+
+/* Status column */
+.gantt-row-status {
+  height: var(--gantt-row-h);
+  padding: 0 14px;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+}
+.gantt-row-status.is-self { background: var(--purple-bg); }
+.gantt-row-status .num {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.gantt-row-status .num.disp { color: var(--green); }
+.gantt-row-status .num.pend { color: var(--amber); }
+.gantt-row-status-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* Tooltip */
+.gantt-tooltip {
+  position: fixed;
+  background: var(--header-bg);
+  color: #fff;
+  padding: 8px 11px;
+  border-radius: 6px;
+  font-size: var(--fs-xs);
+  font-family: var(--font);
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  white-space: nowrap;
+  display: none;
+  line-height: 1.4;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.gantt-tooltip strong { font-weight: 700; }
+.gantt-tooltip .meta { color: rgba(255,255,255,.65); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
+
+/* ═════════════════════ FORM (Cargar) ═════════════════════ */
+.form-container { max-width: 640px; margin: 0 auto; }
+.form-card { background: var(--surface); border:1px solid var(--border); border-radius:10px; padding:24px 28px; }
+.form-row { margin-bottom: 16px; }
+.form-label { display:block; font-size:var(--fs-2xs); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:700; margin-bottom:6px; font-family: var(--mono); }
+.form-input, .form-select, .form-textarea {
+  width:100%; padding:9px 11px;
+  border:1px solid var(--border-strong); border-radius:6px;
+  font-family:inherit; font-size:var(--fs-md);
+  background: var(--surface); color: var(--text);
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline:none; border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-lt);
+}
+.form-row-2 { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+.form-summary {
+  background: var(--faint); border:1px solid var(--border); border-radius:8px;
+  padding:14px 18px; margin: 20px 0; font-size: var(--fs-md);
+}
+.form-summary .big { font-family: var(--font); font-size:22px; font-weight:700; letter-spacing:-.02em; }
+.form-summary .balance.green { color: var(--green); }
+.form-warning {
+  background: var(--red-bg); border-left: 3px solid var(--red);
+  padding: 9px 14px; border-radius: 4px;
+  font-size: var(--fs-sm); color: var(--red); margin: 10px 0;
+}
+body.dark .form-warning { color: #fca5a5; }
+.form-actions {
+  display:flex; gap:10px; justify-content:flex-end;
+  margin-top:22px; padding-top:18px;
+  border-top:1px solid var(--border);
+}
+
+/* ═════════════════════ ADMIN TABLES ═════════════════════ */
+.admin-table { width:100%; border-collapse:collapse; font-size:var(--fs-md); }
+.admin-table th {
+  background: var(--faint);
+  padding: 10px 14px;
+  text-align:left;
+  font-size: var(--fs-2xs);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  font-weight: 700;
+  font-family: var(--mono);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top:0; z-index:2;
+}
+.admin-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.admin-table tr:hover td { background: var(--faint); }
+.badge {
+  display:inline-block;
+  background: var(--faint);
+  border:1px solid var(--border);
+  padding:2px 7px; border-radius:999px;
+  font-size:var(--fs-xs); color: var(--muted);
+  margin-right:3px; font-family: var(--mono); font-weight:500;
+}
+.badge.admin { background: var(--purple-bg); border-color: var(--purple-bd); color: var(--purple); font-weight:700; }
+.status-dot { font-size:var(--fs-sm); color: var(--green); font-family: var(--mono); }
+
+.hidden { display: none !important; }
+
+@media (max-width: 900px) {
+  .cal-layout { grid-template-columns: 1fr; }
+  .stats-strip { grid-template-columns: repeat(2,1fr); }
+  .form-row-2 { grid-template-columns: 1fr; }
+  :root { --gantt-name-w: 140px; --gantt-status-w: 100px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════ TOPBAR ═════════ -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-ico">SSB</div>
+    <span>SSB International</span>
+    <span style="font-family:var(--mono); font-size:11px; color:rgba(255,255,255,.5); letter-spacing:.05em;">· Tarifa Schedule</span>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-pill"><span class="dot ok"></span>sincronizado · 11:42</div>
+    <button class="bell-ico" aria-label="Notificaciones"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-badge">2</span></button>
+    <div class="user-chip">
+      <div style="text-align:right; line-height:1.15;">
+        <div>John Zenteno</div>
+        <div class="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4f25352a213b2a21200f3c3c2d26213b612c2022">[email&#160;protected]</a></div>
+      </div>
+      <div class="user-avatar">JZ</div>
+    </div>
+    <button class="btn-top">Salir</button>
+  </div>
+</div>
+
+<!-- ═════════ MAIN TABS ═════════ -->
+<div class="tab-bar">
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>Tarifas BID</button>
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>EFA</button>
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17l10 4 10-4"/><path d="M2 12l10 4 10-4"/><path d="M12 2 2 7l10 4 10-4z"/></svg>Schedule</button>
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Detention</button>
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="m16 8 4 0 3 5v3h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>Tarifas Terrestres Dow</button>
+  <button class="tab-btn active"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Vacaciones</button>
+  <button class="tab-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Administración</button>
+</div>
+
+<!-- ═════════ DISCLAIMER (period) ═════════ -->
+<div class="disclaimer">
+  <div class="disclaimer-ico">i</div>
+  <div><strong>Período vacacional:</strong> octubre a octubre. Los días disponibles se renuevan cada 1° de octubre.</div>
+</div>
+
+<div class="container">
+
+  <!-- ═════════ PENDING APPROVALS BANNER ═════════ -->
+  <div class="approval-banner">
+    <div style="display:flex; gap:11px; align-items:center;">
+      <div class="ico">!</div>
+      <div class="approval-text">
+        <strong>2 solicitudes pendientes de aprobación.</strong>
+        Aldana Izaguirre y Naara Ovejero esperan tu confirmación.
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="showTab('admin')">Revisar</button>
+  </div>
+
+  <!-- ═════════ PAGE HEADER ═════════ -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Vacaciones <span class="badge-year">Oct 2025 → Oct 2026</span></h1>
+      <div class="page-subtitle">Planificación y solicitudes del equipo de exportación</div>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="showTab('mi')">Mi calendario</button>
+      <button class="sub-tab" onclick="showTab('equipo')">Equipo</button>
+      <button class="sub-tab" onclick="showTab('cargar')">Cargar</button>
+      <button class="sub-tab" onclick="showTab('admin')">Administración</button>
+    </div>
+  </div>
+
+  <!-- ═════════ TAB: MI CALENDARIO ═════════ -->
+  <div id="tab-mi">
+    <div class="stats-strip">
+      <div class="stat"><div class="stat-label">Total anual</div><div class="stat-value">21<span class="stat-unit">días</span></div></div>
+      <div class="stat"><div class="stat-label">Confirmados</div><div class="stat-value" style="color:var(--green);">0<span class="stat-unit">días</span></div></div>
+      <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" style="color:var(--amber);">5<span class="stat-unit">días</span></div></div>
+      <div class="stat"><div class="stat-label">Restantes</div><div class="stat-value">16<span class="stat-unit">días</span></div></div>
+    </div>
+
+    <div class="cal-layout">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Mis vacaciones</div>
+          <div class="month-nav">
+            <button class="nav-btn" aria-label="Mes anterior">‹</button>
+            <div class="month-label">Mayo 2026</div>
+            <button class="nav-btn" aria-label="Mes siguiente">›</button>
+          </div>
+        </div>
+        <div class="calendar">
+          <div class="cal-grid">
+            <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mié</div><div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div><div class="cal-dow">Dom</div>
+
+            <!-- May 2026: 1 May = Friday. Pre-pad with Apr 27/28/29/30. Post-pad with Jun 1. -->
+            <div class="cal-day muted"><span class="cal-day-num">27</span></div>
+            <div class="cal-day muted"><span class="cal-day-num">28</span></div>
+            <div class="cal-day muted"><span class="cal-day-num">29</span></div>
+            <div class="cal-day muted"><span class="cal-day-num">30</span></div>
+            <div class="cal-day holiday"><span class="cal-day-num">1</span><span class="cal-day-tag">Día trabajador</span></div>
+            <div class="cal-day"><span class="cal-day-num">2</span></div>
+            <div class="cal-day"><span class="cal-day-num">3</span></div>
+
+            <div class="cal-day today"><span class="cal-day-num">4</span><span class="cal-day-tag" style="color:var(--blue);">Hoy</span></div>
+            <div class="cal-day"><span class="cal-day-num">5</span></div>
+            <div class="cal-day"><span class="cal-day-num">6</span></div>
+            <div class="cal-day"><span class="cal-day-num">7</span></div>
+            <div class="cal-day"><span class="cal-day-num">8</span></div>
+            <div class="cal-day"><span class="cal-day-num">9</span></div>
+            <div class="cal-day"><span class="cal-day-num">10</span></div>
+
+            <div class="cal-day"><span class="cal-day-num">11</span></div>
+            <div class="cal-day"><span class="cal-day-num">12</span></div>
+            <div class="cal-day"><span class="cal-day-num">13</span></div>
+            <div class="cal-day"><span class="cal-day-num">14</span></div>
+            <div class="cal-day"><span class="cal-day-num">15</span></div>
+            <div class="cal-day"><span class="cal-day-num">16</span></div>
+            <div class="cal-day"><span class="cal-day-num">17</span></div>
+
+            <div class="cal-day tentativa"><span class="cal-day-num">18</span><span class="cal-day-tag">Pend.</span></div>
+            <div class="cal-day tentativa"><span class="cal-day-num">19</span><span class="cal-day-tag">Pend.</span></div>
+            <div class="cal-day tentativa"><span class="cal-day-num">20</span><span class="cal-day-tag">Pend.</span></div>
+            <div class="cal-day tentativa"><span class="cal-day-num">21</span><span class="cal-day-tag">Pend.</span></div>
+            <div class="cal-day tentativa"><span class="cal-day-num">22</span><span class="cal-day-tag">Pend.</span></div>
+            <div class="cal-day"><span class="cal-day-num">23</span></div>
+            <div class="cal-day"><span class="cal-day-num">24</span></div>
+
+            <div class="cal-day no-laborable"><span class="cal-day-num">25</span><span class="cal-day-tag">No lab.</span></div>
+            <div class="cal-day"><span class="cal-day-num">26</span></div>
+            <div class="cal-day"><span class="cal-day-num">27</span></div>
+            <div class="cal-day"><span class="cal-day-num">28</span></div>
+            <div class="cal-day"><span class="cal-day-num">29</span></div>
+            <div class="cal-day"><span class="cal-day-num">30</span></div>
+            <div class="cal-day"><span class="cal-day-num">31</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="side-section">
+          <div class="side-title">Mis solicitudes</div>
+          <div class="vac-item pendiente">
+            <div class="vac-dates">18/05 — 22/05/2026</div>
+            <div class="vac-meta"><span>5 días · semana mayo</span><span class="vac-status pendiente">Pendiente</span></div>
+          </div>
+          <div class="vac-item" style="border-left-style:dashed; border-left-color:var(--border-strong); background:transparent;">
+            <div class="vac-dates" style="color:var(--muted); font-weight:500;">— sin más solicitudes —</div>
+          </div>
+        </div>
+        <div class="side-section">
+          <div class="side-title">Mi back-up</div>
+          <div style="font-size:var(--fs-md); font-weight:600;">Nadia Alicio · Jorge Rojas</div>
+          <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:3px;">Cuando solicites, se valida que estén disponibles</div>
+        </div>
+        <div class="side-section">
+          <div class="side-title">Referencias</div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--green-bg); border-color:var(--green-bd);"></div>Vacaciones aprobadas</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(45deg, var(--green-bg), var(--green-bg) 4px, var(--surface) 4px, var(--surface) 8px); border-color:var(--green-bd); border-style:dashed;"></div>Pendiente de aprobación</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--red-bg); border-color:var(--red-bd);"></div>Feriado nacional</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--amber-bg); border-color:var(--amber-bd);"></div>Día no laborable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════ TAB: EQUIPO  (REBUILT) ═════════ -->
+  <div id="tab-equipo" class="hidden">
+    <div class="equipo-wrap">
+
+      <!-- Mini timeline strip -->
+      <div class="mini-tl" id="mini-tl">
+        <div class="mini-tl-head">
+          <div class="mini-tl-head-title">Período Oct 2025 → Oct 2026</div>
+          <div class="mini-tl-head-hint">arrastrá <kbd>↔</kbd> el calendario · rueda <kbd>⇅</kbd> · click un mes acá para saltar</div>
+        </div>
+        <div class="mini-tl-track" id="mini-tl-track"></div>
+      </div>
+
+      <!-- Big calendar -->
+      <div class="gantt-shell">
+        <div class="gantt-toolbar">
+          <div class="gantt-toolbar-left">
+            <button class="gantt-jump-btn" id="prev-month" aria-label="Mes anterior">‹ mes anterior</button>
+            <div>
+              <div class="gantt-month-jump" id="current-month-label">—</div>
+              <div class="gantt-month-jump-sub" id="current-range-label">—</div>
+            </div>
+            <button class="gantt-jump-btn" id="next-month" aria-label="Mes siguiente">mes siguiente ›</button>
+            <button class="gantt-jump-btn" id="jump-today" style="margin-left:8px;">Hoy</button>
+          </div>
+          <div class="gantt-toolbar-right">
+            <div class="legend-row">
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--green); border:none;"></div>Aprobada</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(45deg, var(--green), var(--green) 6px, var(--green-bd) 6px, var(--green-bd) 12px); border:none;"></div>Tentativa</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:var(--amber); border:none;"></div>Pendiente</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gantt-frame">
+          <div class="gantt-col names" id="gantt-names"></div>
+          <div class="gantt-scroller" id="gantt-scroller">
+            <div class="gantt-days-inner" id="gantt-days-inner">
+              <!-- day-head + day rows rendered by JS -->
+            </div>
+          </div>
+          <div class="gantt-col status" id="gantt-status"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═════════ TAB: CARGAR ═════════ -->
+  <div id="tab-cargar" class="hidden">
+    <div class="form-container">
+      <div class="form-card">
+        <h2 style="font-size:20px; font-weight:700; letter-spacing:-.02em; margin-bottom:4px;">Solicitar vacaciones</h2>
+        <p style="color:var(--muted); font-size:var(--fs-sm); margin-bottom:20px;">Tu solicitud se enviará a Jorge Rojas y John Zenteno para aprobación.</p>
+
+        <div class="form-row">
+          <label class="form-label">Tipo de solicitud</label>
+          <select class="form-select"><option>Semana completa</option><option selected>Días específicos / rango</option></select>
+        </div>
+
+        <div class="form-row form-row-2">
+          <div><label class="form-label">Desde</label><input type="date" class="form-input" value="2026-05-18"></div>
+          <div><label class="form-label">Hasta</label><input type="date" class="form-input" value="2026-05-22"></div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Tipo</label>
+          <select class="form-select"><option selected>Confirmada</option><option>Tentativa (a confirmar después)</option></select>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Nota (opcional)</label>
+          <textarea class="form-textarea" rows="2" placeholder="Ej: vacaciones de invierno, cumple incluido, etc.">semana de mayo</textarea>
+        </div>
+
+        <div class="form-summary">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div>
+              <span class="big">5</span><span style="color:var(--muted);"> días corridos</span>
+              <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:3px; font-family:var(--mono);">18/05/2026 al 22/05/2026 inclusive</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:var(--fs-xs); color:var(--muted);">Saldo después de aprobación</div>
+              <span class="big balance green">16</span><span style="color:var(--muted); font-size:var(--fs-md);"> de 21 días</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-warning">
+          <strong>⚠ Atención:</strong> tu back-up Nadia Alicio también solicitó vacaciones del 18/05 al 25/05.
+          La solicitud se puede enviar igual, pero los aprobadores lo verán al revisar.
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost">Cancelar</button>
+          <button class="btn btn-primary">Enviar solicitud</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════════ TAB: ADMINISTRACIÓN ═════════ -->
+  <div id="tab-admin" class="hidden">
+
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="panel-header"><div class="panel-title">Solicitudes pendientes (2)</div></div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Empleado</th><th>Período</th><th>Días</th><th>Nota</th><th>Conflicto back-up</th><th style="text-align:right;">Acción</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Aldana Izaguirre</strong></td>
+            <td class="mono" style="font-size:var(--fs-sm);">18/05/26 — 25/05/26</td>
+            <td><span class="badge">7 días</span></td>
+            <td style="color:var(--muted);">vacaciones mayo</td>
+            <td><span class="status-dot">✓ OK</span></td>
+            <td style="text-align:right;">
+              <button class="btn btn-ghost" style="padding:6px 11px;">Ver</button>
+              <button class="btn btn-primary" style="padding:6px 11px;">Aprobar</button>
+              <button class="btn-danger-ghost">Rechazar</button>
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Naara Ovejero</strong></td>
+            <td class="mono" style="font-size:var(--fs-sm);">25/06/26 — 03/07/26</td>
+            <td><span class="badge">9 días</span></td>
+            <td style="color:var(--muted);">—</td>
+            <td><span style="color:var(--red); font-size:var(--fs-sm); font-family:var(--mono);">⚠ Jorge Rojas tentativo</span></td>
+            <td style="text-align:right;">
+              <button class="btn btn-ghost" style="padding:6px 11px;">Ver</button>
+              <button class="btn btn-primary" style="padding:6px 11px;">Aprobar</button>
+              <button class="btn-danger-ghost">Rechazar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Empleados</div>
+        <button class="btn btn-primary">+ Nuevo empleado</button>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Empleado</th><th>Email</th><th>Días anuales</th><th>Back-up(s)</th><th>Estado</th><th style="text-align:right;">Acción</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Jorge Rojas</strong> <span class="badge admin">Admin</span></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="016b72736e6b607241727263686f752f626e6c">[email&#160;protected]</a></td><td>28</td><td><span class="badge">John Zenteno</span><span class="badge">Caro Lopez</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+          <tr><td><strong>John Zenteno</strong> <span class="badge admin">Admin</span></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d4beaeb1baa0b1babb94a7a7b6bdbaa0fab7bbb9">[email&#160;protected]</a></td><td>21</td><td><span class="badge">Nadia Alicio</span><span class="badge">Jorge Rojas</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+          <tr><td><strong>Nadia Alicio</strong></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="127c737e7b717b7d526161707b7c663c717d7f">[email&#160;protected]</a></td><td>28</td><td><span class="badge">John Zenteno</span><span class="badge">Belen Ahumada</span><span class="badge">Aldana Izaguirre</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+          <tr><td><strong>Aldana Izaguirre</strong></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="38595142595f4d514a4a5d784b4b5a51564c165b5755">[email&#160;protected]</a></td><td>14</td><td><span class="badge">Nadia Alicio</span><span class="badge">Belen Ahumada</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+          <tr><td><strong>Belén Ahumada</strong></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7715161f021a161316370404151e19035914181a">[email&#160;protected]</a></td><td>21</td><td><span class="badge">Aldana Izaguirre</span><span class="badge">Nadia Alicio</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+          <tr><td><strong>Naara Ovejero</strong></td><td class="mono" style="font-size:var(--fs-xs); color:var(--muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="422c2d34272827302d023131202b2c366c212d2f">[email&#160;protected]</a></td><td>21</td><td><span class="badge">Jorge Rojas</span><span class="badge">Valentina Velez</span></td><td><span class="status-dot">● Activo</span></td><td style="text-align:right;"><button class="btn btn-ghost" style="padding:6px 11px;">Editar</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="margin-top:18px;">
+      <div class="panel-header">
+        <div class="panel-title">Feriados y días no laborables 2026</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" onclick="document.getElementById('bulk-modal').classList.remove('hidden')">⇪ Carga masiva</button>
+          <button class="btn btn-ghost">+ Agregar feriado</button>
+        </div>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>Fecha</th><th>Nombre</th><th>Tipo</th><th style="text-align:right;">Acción</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">01/01/2026</td><td>Año Nuevo</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+          <tr><td class="mono">16/02/2026</td><td>Carnaval</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+          <tr><td class="mono">17/02/2026</td><td>Carnaval</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+          <tr><td class="mono">24/03/2026</td><td>Día de la Memoria</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+          <tr><td class="mono">02/04/2026</td><td>Día del Veterano</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+          <tr><td class="mono">01/05/2026</td><td>Día del Trabajador</td><td><span class="badge" style="background:var(--red-bg); color:var(--red); border-color:var(--red-bd);">Nacional</span></td><td style="text-align:right;"><button class="btn-danger-ghost">Eliminar</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<button class="btn-floating" onclick="showTab('cargar')">+ Cargar vacaciones</button>
+
+<!-- ═════════ BULK HOLIDAY UPLOAD MODAL ═════════ -->
+<div id="bulk-modal" class="hidden" style="position:fixed; inset:0; background:rgba(11,15,23,.55); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; max-width:640px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.4);">
+    <div style="padding:18px 22px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:18px; font-weight:700; letter-spacing:-.01em;">Carga masiva de feriados</div>
+        <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:2px;">Pegá CSV o subí un archivo · campos: <span class="mono" style="color:var(--text);">fecha, motivo, tipo</span></div>
+      </div>
+      <button class="btn btn-ghost" style="padding:6px 11px;" onclick="document.getElementById('bulk-modal').classList.add('hidden')">✕</button>
+    </div>
+    <div style="padding:18px 22px;">
+      <div style="display:flex; gap:10px; margin-bottom:14px;">
+        <button class="btn btn-ghost" id="bulk-upload-btn" style="flex:1;">📁 Subir archivo (.csv / .xlsx)</button>
+        <input type="file" id="bulk-file-input" accept=".csv,.xlsx,.txt" style="display:none;">
+        <button class="btn btn-ghost" onclick="document.getElementById('bulk-csv').value = bulkExample(); previewBulk();">Usar ejemplo</button>
+      </div>
+
+      <label class="form-label" style="margin-bottom:6px;">CSV / TSV — una fila por feriado</label>
+      <textarea id="bulk-csv" class="form-textarea mono" rows="8" style="font-size:var(--fs-sm); line-height:1.55;" placeholder="2026-01-01, Año Nuevo, Nacional&#10;2026-02-16, Carnaval, Nacional&#10;2026-03-24, Día de la Memoria, Nacional"></textarea>
+
+      <div style="margin-top:14px;">
+        <div class="side-title" style="margin-bottom:8px;">Vista previa</div>
+        <div id="bulk-preview" style="background:var(--faint); border:1px solid var(--border); border-radius:6px; max-height:200px; overflow:auto;">
+          <div style="padding:14px; color:var(--muted); font-size:var(--fs-sm); text-align:center;">— pegá filas arriba para ver la preview —</div>
+        </div>
+      </div>
+
+      <div id="bulk-summary" style="margin-top:12px; font-size:var(--fs-sm); color:var(--muted);"></div>
+
+      <div class="form-actions" style="margin-top:18px;">
+        <button class="btn btn-ghost" onclick="document.getElementById('bulk-modal').classList.add('hidden')">Cancelar</button>
+        <button class="btn btn-primary" id="bulk-import-btn">Importar feriados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip element -->
+<div class="gantt-tooltip" id="gantt-tooltip"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+/* ═════════════════════════════════════════════════════════════════════
+   BULK HOLIDAY UPLOAD
+     Accepts CSV/TSV with rows: fecha, motivo, tipo
+       fecha: YYYY-MM-DD or DD/MM/YYYY
+       motivo: free text (e.g. "Año Nuevo")
+       tipo: Nacional | Provincial | Puente | No laborable
+   ═════════════════════════════════════════════════════════════════════ */
+function bulkExample() {
+  return [
+    '2026-01-01, Año Nuevo, Nacional',
+    '2026-02-16, Carnaval, Nacional',
+    '2026-02-17, Carnaval, Nacional',
+    '2026-03-24, Día de la Memoria, Nacional',
+    '2026-04-02, Día del Veterano y Caídos en Malvinas, Nacional',
+    '2026-04-03, Viernes Santo, Nacional',
+    '2026-05-01, Día del Trabajador, Nacional',
+    '2026-05-25, Día de la Revolución de Mayo, Nacional',
+    '2026-06-15, Paso a la Inmortalidad de Güemes, Nacional',
+    '2026-06-17, Paso a la Inmortalidad de Belgrano, Nacional',
+    '2026-07-09, Día de la Independencia, Nacional',
+    '2026-08-17, Paso a la Inmortalidad de San Martín, Nacional',
+    '2026-10-12, Día del Respeto a la Diversidad Cultural, Nacional',
+    '2026-12-08, Inmaculada Concepción, Nacional',
+    '2026-12-25, Navidad, Nacional',
+  ].join('\n');
+}
+
+function parseBulkRows(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const rows = [], errors = [];
+  lines.forEach((line, i) => {
+    if (line.startsWith('#') || /^fecha[ ,;\t]/i.test(line)) return; // skip header/comment
+    const parts = line.split(/[,;\t]/).map(p => p.trim()).filter(p => p.length > 0);
+    if (parts.length < 2) { errors.push(`Línea ${i+1}: faltan columnas`); return; }
+    const [rawDate, motivo, tipoRaw] = parts;
+    let d = null;
+    let m;
+    if ((m = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/))) {
+      d = new Date(+m[1], +m[2]-1, +m[3]);
+    } else if ((m = rawDate.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) {
+      d = new Date(+m[3], +m[2]-1, +m[1]);
+    } else {
+      errors.push(`Línea ${i+1}: fecha inválida “${rawDate}”`); return;
+    }
+    if (isNaN(d.getTime())) { errors.push(`Línea ${i+1}: fecha inválida`); return; }
+    const tipo = (tipoRaw || 'Nacional').replace(/^./, c => c.toUpperCase());
+    rows.push({ date: d, motivo: motivo || '(sin motivo)', tipo });
+  });
+  return { rows, errors };
+}
+
+function previewBulk() {
+  const text = document.getElementById('bulk-csv').value;
+  const { rows, errors } = parseBulkRows(text);
+  const preview = document.getElementById('bulk-preview');
+  const summary = document.getElementById('bulk-summary');
+  if (rows.length === 0 && errors.length === 0) {
+    preview.innerHTML = '<div style="padding:14px; color:var(--muted); font-size:var(--fs-sm); text-align:center;">— pegá filas arriba para ver la preview —</div>';
+    summary.innerHTML = '';
+    return;
+  }
+  let html = '<table class="admin-table" style="font-size:var(--fs-xs);"><thead><tr><th>Fecha</th><th>Motivo</th><th>Tipo</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    const tipoColor = r.tipo.toLowerCase() === 'nacional'
+      ? 'background:var(--red-bg); color:var(--red); border-color:var(--red-bd);'
+      : r.tipo.toLowerCase() === 'puente'
+      ? 'background:var(--amber-bg); color:var(--amber); border-color:var(--amber-bd);'
+      : 'background:var(--purple-bg); color:var(--purple); border-color:var(--purple-bd);';
+    html += `<tr>
+      <td class="mono">${String(r.date.getDate()).padStart(2,'0')}/${String(r.date.getMonth()+1).padStart(2,'0')}/${r.date.getFullYear()}</td>
+      <td>${r.motivo}</td>
+      <td><span class="badge" style="${tipoColor}">${r.tipo}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  preview.innerHTML = html;
+  let summaryHtml = `<span style="color:var(--green); font-weight:600;">✓ ${rows.length} feriado${rows.length===1?'':'s'} listo${rows.length===1?'':'s'} para importar</span>`;
+  if (errors.length) summaryHtml += ` · <span style="color:var(--red);">${errors.length} error${errors.length===1?'':'es'}: ${errors.slice(0,3).join('; ')}${errors.length>3?'…':''}</span>`;
+  summary.innerHTML = summaryHtml;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Inject weekday letter (Lu/Ma/Mi/Ju/Vi/Sa/Do) under each calendar day number.
+  // Grid is 7-wide, header row first, so each .cal-day's column index maps directly.
+  const dowLetters = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  document.querySelectorAll('.cal-grid').forEach(grid => {
+    const days = grid.querySelectorAll('.cal-day');
+    days.forEach((day, i) => {
+      if (day.querySelector('.cal-day-dow')) return; // idempotent
+      const span = document.createElement('span');
+      span.className = 'cal-day-dow';
+      span.textContent = dowLetters[i % 7];
+      // Insert right after the number for vertical stack: number → dow → tag
+      const num = day.querySelector('.cal-day-num');
+      if (num && num.nextSibling) day.insertBefore(span, num.nextSibling);
+      else day.appendChild(span);
+    });
+  });
+
+  const csv = document.getElementById('bulk-csv');
+  if (csv) csv.addEventListener('input', previewBulk);
+  const fileBtn = document.getElementById('bulk-upload-btn');
+  const fileIn = document.getElementById('bulk-file-input');
+  if (fileBtn && fileIn) {
+    fileBtn.onclick = () => fileIn.click();
+    fileIn.onchange = (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = (ev) => {
+        // Naive: read text content. .xlsx would need a library; here we accept tab/comma-separated text exports.
+        document.getElementById('bulk-csv').value = ev.target.result;
+        previewBulk();
+      };
+      r.readAsText(f);
+    };
+  }
+  const importBtn = document.getElementById('bulk-import-btn');
+  if (importBtn) importBtn.onclick = () => {
+    const { rows } = parseBulkRows(document.getElementById('bulk-csv').value);
+    if (!rows.length) return;
+    alert(`✓ ${rows.length} feriado${rows.length===1?'':'s'} importado${rows.length===1?'':'s'}.\n\n(En producción, esto persiste en la base y refresca el calendario del equipo.)`);
+    document.getElementById('bulk-modal').classList.add('hidden');
+  };
+});
+function showTab(name) {
+  ['mi','equipo','cargar','admin'].forEach(t => {
+    document.getElementById('tab-' + t).classList.add('hidden');
+  });
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  const map = { mi:0, equipo:1, cargar:2, admin:3 };
+  document.querySelectorAll('.sub-tab')[map[name]].classList.add('active');
+
+  // First time we open Equipo, render it (large DOM -> defer until needed).
+  if (name === 'equipo' && !window.__equipoRendered) {
+    renderEquipo();
+    window.__equipoRendered = true;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   EQUIPO — period: Oct 1 2025 → Oct 1 2026 (366 days)
+   ═════════════════════════════════════════════════════════════════════ */
+const PERIOD_START = new Date(2025, 9, 1);   // Oct 1 2025
+const PERIOD_END   = new Date(2026, 9, 1);   // Oct 1 2026 (exclusive)
+const TODAY        = new Date(2026, 4, 4);   // May 4 2026 — pinned for demo
+
+const MONTHS_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MONTHS_ES_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function daysBetween(a, b) {
+  return Math.round((b - a) / 86400000);
+}
+function dayIndex(date) {
+  return daysBetween(PERIOD_START, date);
+}
+function fmtDDMM(d) {
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+function isWeekend(d) { const w = d.getDay(); return w === 0 || w === 6; }
+function isSameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+const TOTAL_DAYS = daysBetween(PERIOD_START, PERIOD_END); // 365
+
+// Holidays falling within period (Oct 25 → Oct 26)
+const HOLIDAYS = [
+  { date: new Date(2025,10,17), name: 'Día Soberanía' },
+  { date: new Date(2025,10,24), name: 'Inmac. Concep. (puente)' },
+  { date: new Date(2025,11, 8), name: 'Inmaculada Concep.' },
+  { date: new Date(2025,11,25), name: 'Navidad' },
+  { date: new Date(2026, 0, 1), name: 'Año Nuevo' },
+  { date: new Date(2026, 1,16), name: 'Carnaval' },
+  { date: new Date(2026, 1,17), name: 'Carnaval' },
+  { date: new Date(2026, 2,24), name: 'Día de la Memoria' },
+  { date: new Date(2026, 3, 2), name: 'Día del Veterano' },
+  { date: new Date(2026, 3, 3), name: 'Viernes Santo' },
+  { date: new Date(2026, 4, 1), name: 'Día del Trabajador' },
+  { date: new Date(2026, 4,25), name: 'Revolución de Mayo' },
+  { date: new Date(2026, 5,15), name: 'Güemes' },
+  { date: new Date(2026, 5,17), name: 'Belgrano' },
+  { date: new Date(2026, 6, 9), name: 'Independencia' },
+  { date: new Date(2026, 7,17), name: 'San Martín' },
+  { date: new Date(2026, 9,12), name: 'Diversidad Cultural' },
+];
+const HOLIDAY_SET = new Set(HOLIDAYS.map(h => h.date.toDateString()));
+const HOLIDAY_NAMES = new Map(HOLIDAYS.map(h => [h.date.toDateString(), h.name]));
+const DOW_AR = ['Do','Lu','Ma','Mi','Ju','Vi','Sá']; // Sun..Sat — JS getDay() returns 0=Sun
+
+// Employees + vacation ranges (within Oct'25-Oct'26 period)
+const EMPLOYEES = [
+  { name: 'Jorge Rojas', sub: 'Líder · 28 días', total: 28, used: 21, status: 'disp',
+    vacs: [
+      { from: new Date(2025,11,22), to: new Date(2026,0,2),  state: 'aprobada', note: 'Fiestas' },
+      { from: new Date(2026,6,13),  to: new Date(2026,6,17), state: 'tentativa', note: 'Inv. tentativa' },
+    ]
+  },
+  { name: 'John Zenteno (vos)', sub: 'Supervisor · 21 días', total: 21, used: 16, status: 'pend', isSelf: true,
+    vacs: [
+      { from: new Date(2026,4,18), to: new Date(2026,4,22), state: 'pendiente', note: 'Mayo' },
+      { from: new Date(2026,6,20), to: new Date(2026,6,24), state: 'tentativa', note: 'Invierno' },
+    ]
+  },
+  { name: 'Nadia Alicio', sub: 'Coord · 28 días', total: 28, used: 14, status: 'disp',
+    vacs: [
+      { from: new Date(2026,0,5),  to: new Date(2026,0,16), state: 'aprobada', note: 'Verano' },
+      { from: new Date(2026,1,23), to: new Date(2026,1,27), state: 'aprobada', note: 'Carnaval+' },
+    ]
+  },
+  { name: 'Aldana Izaguirre', sub: 'Coord · 14 días', total: 14, used: 7, status: 'pend',
+    vacs: [
+      { from: new Date(2026,4,18), to: new Date(2026,4,25), state: 'pendiente', note: 'Mayo' },
+    ]
+  },
+  { name: 'Belén Ahumada', sub: 'Doc · 21 días', total: 21, used: 0, status: 'disp',
+    vacs: [
+      { from: new Date(2026,1,9),  to: new Date(2026,1,20), state: 'aprobada', note: 'Verano largo' },
+    ]
+  },
+  { name: 'Naara Ovejero', sub: 'Doc · 21 días', total: 21, used: 9, status: 'pend',
+    vacs: [
+      { from: new Date(2026,5,25), to: new Date(2026,6,3),  state: 'pendiente', note: 'Invierno' },
+    ]
+  },
+  { name: 'Cristian Bobadilla', sub: 'Coord · 28 días', total: 28, used: 28, status: 'disp',
+    vacs: [
+      { from: new Date(2025,10,3),  to: new Date(2025,10,7),  state: 'aprobada', note: 'Nov' },
+      { from: new Date(2026,1,18),  to: new Date(2026,1,18),  state: 'aprobada', note: 'Día' },
+      { from: new Date(2026,2,2),   to: new Date(2026,2,9),   state: 'aprobada', note: 'Marzo' },
+      { from: new Date(2026,3,13),  to: new Date(2026,3,30),  state: 'aprobada', note: 'Abril largo' },
+    ]
+  },
+  { name: 'Omar Pérez', sub: '21 días', total: 21, used: 21, status: 'disp',
+    vacs: [
+      { from: new Date(2026,0,29), to: new Date(2026,0,30), state: 'aprobada', note: 'Enero corto' },
+      { from: new Date(2026,7,10), to: new Date(2026,7,28), state: 'aprobada', note: 'Agosto' },
+    ]
+  },
+  { name: 'Dennis Bonfiglio', sub: '21 días', total: 21, used: 21, status: 'disp',
+    vacs: [
+      { from: new Date(2026,0,26), to: new Date(2026,0,29), state: 'aprobada', note: 'Enero' },
+      { from: new Date(2026,1,18), to: new Date(2026,1,18), state: 'aprobada', note: 'Día' },
+      { from: new Date(2026,8, 7), to: new Date(2026,8,18), state: 'aprobada', note: 'Sept' },
+    ]
+  },
+];
+
+/* ═════════════════════════════════════════════════════════════════════
+   EQUIPO — RENDER
+   ═════════════════════════════════════════════════════════════════════ */
+function renderEquipo() {
+  const namesRoot = document.getElementById('gantt-names');
+  const daysRoot = document.getElementById('gantt-days-inner');
+  const statusRoot = document.getElementById('gantt-status');
+  namesRoot.innerHTML = '';
+  daysRoot.innerHTML = '';
+  statusRoot.innerHTML = '';
+
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+  const totalW = TOTAL_DAYS * dayW;
+  daysRoot.style.width = totalW + 'px';
+
+  /* ── Build month spans for the day-head ── */
+  const monthSpans = [];
+  let cursor = new Date(PERIOD_START);
+  while (cursor < PERIOD_END) {
+    const yr = cursor.getFullYear(), mo = cursor.getMonth();
+    const start = dayIndex(cursor);
+    const next = new Date(yr, mo + 1, 1);
+    const end = Math.min(dayIndex(next), TOTAL_DAYS);
+    monthSpans.push({ yr, mo, startIdx: start, len: end - start });
+    cursor = next;
+  }
+
+  /* ── 1. Names column (separate, never scrolls) ── */
+  const namesHead = document.createElement('div');
+  namesHead.className = 'gantt-col-head';
+  namesHead.textContent = 'Empleado';
+  namesRoot.appendChild(namesHead);
+  EMPLOYEES.forEach(emp => {
+    const row = document.createElement('div');
+    row.className = 'gantt-row-name' + (emp.isSelf ? ' is-self' : '');
+    row.innerHTML = `<strong>${emp.name}</strong><span class="gantt-row-name-sub">${emp.sub}</span>`;
+    namesRoot.appendChild(row);
+  });
+
+  /* ── 2. Days inner (the only scrolling part) ── */
+  const dayHead = document.createElement('div');
+  dayHead.className = 'day-head';
+
+  const monthsRow = document.createElement('div');
+  monthsRow.className = 'day-head-months';
+  monthSpans.forEach(span => {
+    const cell = document.createElement('div');
+    cell.className = 'day-head-month';
+    cell.style.width = (span.len * dayW) + 'px';
+    cell.textContent = MONTHS_ES_LONG[span.mo] + ' ' + span.yr;
+    cell.style.cursor = 'pointer';
+    cell.onclick = () => scrollToDayIndex(span.startIdx, true);
+    monthsRow.appendChild(cell);
+  });
+  dayHead.appendChild(monthsRow);
+
+  const daysRow = document.createElement('div');
+  daysRow.className = 'day-head-days';
+  daysRow.style.gridTemplateColumns = `repeat(${TOTAL_DAYS}, ${dayW}px)`;
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const d = new Date(PERIOD_START);
+    d.setDate(d.getDate() + i);
+    const cell = document.createElement('div');
+    cell.className = 'day-head-day';
+    if (d.getDate() === 1) cell.classList.add('first-of-month');
+    if (isWeekend(d)) cell.classList.add('weekend');
+    if (isSameDay(d, TODAY)) cell.classList.add('today');
+    const holidayName = HOLIDAY_NAMES.get(d.toDateString());
+    if (holidayName) {
+      cell.classList.add('holiday');
+      cell.title = `${d.getDate()} ${MONTHS_ES_LONG[d.getMonth()]} — ${holidayName}`;
+    }
+    const numEl = document.createElement('span');
+    numEl.className = 'dh-num';
+    numEl.textContent = d.getDate();
+    const dowEl = document.createElement('span');
+    dowEl.className = 'dh-dow';
+    dowEl.textContent = DOW_AR[d.getDay()];
+    cell.appendChild(numEl);
+    cell.appendChild(dowEl);
+    daysRow.appendChild(cell);
+  }
+  dayHead.appendChild(daysRow);
+  daysRoot.appendChild(dayHead);
+
+  EMPLOYEES.forEach(emp => {
+    const row = document.createElement('div');
+    row.className = 'gantt-row-days';
+    row.style.gridTemplateColumns = `repeat(${TOTAL_DAYS}, ${dayW}px)`;
+
+    for (let i = 0; i < TOTAL_DAYS; i++) {
+      const d = new Date(PERIOD_START);
+      d.setDate(d.getDate() + i);
+      const cell = document.createElement('div');
+      cell.className = 'gantt-day-cell';
+      if (d.getDate() === 1) cell.classList.add('first-of-month');
+      if (isWeekend(d)) cell.classList.add('weekend');
+      const hName = HOLIDAY_NAMES.get(d.toDateString());
+      if (hName) {
+        cell.classList.add('holiday');
+        cell.title = `${d.getDate()} ${MONTHS_ES_LONG[d.getMonth()]} — ${hName}`;
+      }
+      row.appendChild(cell);
+    }
+
+    emp.vacs.forEach(v => {
+      const startIdx = dayIndex(v.from);
+      const endIdx = dayIndex(v.to);
+      if (endIdx < 0 || startIdx >= TOTAL_DAYS) return;
+      const s = Math.max(0, startIdx);
+      const e = Math.min(TOTAL_DAYS - 1, endIdx);
+      const days = (e - s) + 1;
+      const bar = document.createElement('div');
+      bar.className = 'gantt-bar' + (v.state === 'tentativa' ? ' tentativa' : v.state === 'pendiente' ? ' pendiente' : '');
+      bar.style.left = (s * dayW + 1) + 'px';
+      bar.style.width = (days * dayW - 2) + 'px';
+      const label = days <= 2 ? String(days) + 'd' : `${fmtDDMM(v.from)}–${fmtDDMM(v.to)}`;
+      bar.textContent = label;
+      bar.dataset.tooltip = `<strong>${emp.name}</strong> · ${v.state}\n` +
+        `${fmtDDMM(v.from)} → ${fmtDDMM(v.to)} · ${days} día${days===1?'':'s'}\n` +
+        (v.note ? `“${v.note}”` : '');
+      attachTooltip(bar);
+      row.appendChild(bar);
+    });
+
+    daysRoot.appendChild(row);
+  });
+
+  // Today vertical line
+  const todayIdx = dayIndex(TODAY);
+  if (todayIdx >= 0 && todayIdx < TOTAL_DAYS) {
+    const line = document.createElement('div');
+    line.className = 'gantt-today-line';
+    line.style.left = (todayIdx * dayW + dayW / 2) + 'px';
+    line.style.height = (EMPLOYEES.length * 40 + 50) + 'px';
+    line.style.top = '50px';
+    daysRoot.appendChild(line);
+  }
+
+  /* ── 3. Status column ── */
+  const statusHead = document.createElement('div');
+  statusHead.className = 'gantt-col-head';
+  statusHead.style.justifyContent = 'flex-end';
+  statusHead.textContent = 'Estado';
+  statusRoot.appendChild(statusHead);
+  EMPLOYEES.forEach(emp => {
+    const row = document.createElement('div');
+    row.className = 'gantt-row-status' + (emp.isSelf ? ' is-self' : '');
+    const numClass = emp.status === 'pend' ? 'pend' : 'disp';
+    row.innerHTML = `<div><span class="num ${numClass}">${emp.used}</span><span style="color:var(--muted); font-size:11px;"> / ${emp.total}</span></div>` +
+      `<div class="gantt-row-status-meta">${emp.status === 'pend' ? 'pendientes' : 'disponibles'}</div>`;
+    statusRoot.appendChild(row);
+  });
+
+  buildMiniTimeline(monthSpans);
+  wireGanttScroll();
+
+  const todayMonthSpan = monthSpans.find(s =>
+    TODAY.getFullYear() === s.yr && TODAY.getMonth() === s.mo
+  );
+  if (todayMonthSpan) {
+    requestAnimationFrame(() => scrollToDayIndex(todayMonthSpan.startIdx, false));
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   MINI-TIMELINE
+   ═════════════════════════════════════════════════════════════════════ */
+function buildMiniTimeline(monthSpans) {
+  const track = document.getElementById('mini-tl-track');
+  track.innerHTML = '';
+  const trackW = track.clientWidth;
+  // Width per day in mini-tl (px)
+  const miniDayW = trackW / TOTAL_DAYS;
+
+  // Month divisions + labels
+  monthSpans.forEach(span => {
+    const div = document.createElement('div');
+    div.className = 'mini-tl-month';
+    div.style.left = (span.startIdx * miniDayW) + 'px';
+    div.style.width = (span.len * miniDayW) + 'px';
+    div.dataset.startIdx = span.startIdx;
+    const lbl = document.createElement('span');
+    lbl.className = 'mini-tl-month-lbl';
+    lbl.textContent = MONTHS_ES[span.mo].slice(0,3);
+    div.appendChild(lbl);
+    div.onclick = () => scrollToDayIndex(span.startIdx, true);
+    track.appendChild(div);
+  });
+
+  // Vacation bars stacked per employee
+  const rowH = 3, rowGap = 1, topPad = 4;
+  EMPLOYEES.forEach((emp, ri) => {
+    emp.vacs.forEach(v => {
+      const startIdx = dayIndex(v.from);
+      const endIdx = dayIndex(v.to);
+      if (endIdx < 0 || startIdx >= TOTAL_DAYS) return;
+      const s = Math.max(0, startIdx), e = Math.min(TOTAL_DAYS - 1, endIdx);
+      const bar = document.createElement('div');
+      bar.className = 'mini-tl-bar' + (v.state === 'pendiente' ? ' pendiente' : v.state === 'tentativa' ? ' tentativa' : '');
+      bar.style.left = (s * miniDayW) + 'px';
+      bar.style.width = Math.max(2, (e - s + 1) * miniDayW) + 'px';
+      bar.style.top = (topPad + ri * (rowH + rowGap)) + 'px';
+      track.appendChild(bar);
+    });
+  });
+
+  // Today marker
+  const todayIdx = dayIndex(TODAY);
+  if (todayIdx >= 0 && todayIdx < TOTAL_DAYS) {
+    const today = document.createElement('div');
+    today.className = 'mini-tl-today';
+    today.style.left = (todayIdx * miniDayW) + 'px';
+    track.appendChild(today);
+  }
+
+  // Viewport handle (reflects current scroll position of big calendar)
+  const vp = document.createElement('div');
+  vp.className = 'mini-tl-viewport';
+  vp.id = 'mini-tl-viewport';
+  track.appendChild(vp);
+
+  // Click anywhere on track to teleport
+  track.addEventListener('click', (e) => {
+    if (e.target.classList.contains('mini-tl-month') || e.target.classList.contains('mini-tl-month-lbl')) return;
+    const r = track.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const dayIdx = Math.floor(x / miniDayW);
+    scrollToDayIndex(dayIdx, true);
+  });
+}
+
+function updateMiniViewport() {
+  const track = document.getElementById('mini-tl-track');
+  const vp = document.getElementById('mini-tl-viewport');
+  const sc = document.getElementById('gantt-scroller');
+  if (!track || !vp || !sc) return;
+  const trackW = track.clientWidth;
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+  const visiblePx = sc.clientWidth;
+  const visibleDays = visiblePx / dayW;
+  const startDays = sc.scrollLeft / dayW;
+  const miniDayW = trackW / TOTAL_DAYS;
+  vp.style.left = (startDays * miniDayW) + 'px';
+  vp.style.width = (visibleDays * miniDayW) + 'px';
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   SCROLL CONTROL — drag, wheel, snap, jump
+   ═════════════════════════════════════════════════════════════════════ */
+let smoothScrollAnim = null;
+
+function smoothScrollTo(scroller, target, ms = 320) {
+  if (smoothScrollAnim) cancelAnimationFrame(smoothScrollAnim);
+  const start = scroller.scrollLeft;
+  const distance = target - start;
+  if (Math.abs(distance) < 1) return;
+  const t0 = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - t0) / ms);
+    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+    scroller.scrollLeft = start + distance * eased;
+    if (t < 1) smoothScrollAnim = requestAnimationFrame(step);
+    else smoothScrollAnim = null;
+  }
+  smoothScrollAnim = requestAnimationFrame(step);
+}
+
+function scrollToDayIndex(dayIdx, smooth = true) {
+  const sc = document.getElementById('gantt-scroller');
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+  // We want this day to be at the start of the visible day-area.
+  const targetX = Math.max(0, dayIdx * dayW);
+  if (smooth) smoothScrollTo(sc, targetX, 350);
+  else sc.scrollLeft = targetX;
+  // Update labels post-scroll
+  setTimeout(updateMonthLabel, smooth ? 360 : 0);
+}
+
+function updateMonthLabel() {
+  const sc = document.getElementById('gantt-scroller');
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+  // The day at the leftmost visible position
+  const startDay = Math.round(sc.scrollLeft / dayW);
+  const d = new Date(PERIOD_START);
+  d.setDate(d.getDate() + startDay);
+  const yr = d.getFullYear(), mo = d.getMonth();
+  document.getElementById('current-month-label').textContent = MONTHS_ES_LONG[mo] + ' ' + yr;
+
+  const visibleDays = Math.round(sc.clientWidth / dayW);
+  const endDay = Math.min(TOTAL_DAYS - 1, startDay + visibleDays - 1);
+  const dEnd = new Date(PERIOD_START);
+  dEnd.setDate(dEnd.getDate() + endDay);
+  document.getElementById('current-range-label').textContent =
+    `${fmtDDMM(d)}/${String(d.getFullYear()).slice(2)} → ${fmtDDMM(dEnd)}/${String(dEnd.getFullYear()).slice(2)} · ${endDay - startDay + 1} días visibles`;
+
+  updateMiniViewport();
+}
+
+function snapToMonth() {
+  const sc = document.getElementById('gantt-scroller');
+  const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+  const startDay = sc.scrollLeft / dayW;
+  // Find the closest month start
+  let cursor = new Date(PERIOD_START);
+  let bestIdx = 0, bestDiff = Infinity;
+  while (cursor < PERIOD_END) {
+    const idx = dayIndex(cursor);
+    const diff = Math.abs(idx - startDay);
+    if (diff < bestDiff) { bestDiff = diff; bestIdx = idx; }
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+  // Only snap if we're within 4 days of a month start (otherwise leave it)
+  if (bestDiff < 5) smoothScrollTo(sc, bestIdx * dayW, 200);
+}
+
+function wireGanttScroll() {
+  const sc = document.getElementById('gantt-scroller');
+  if (!sc || sc.dataset.wired) return;
+  sc.dataset.wired = '1';
+
+  /* Drag-to-scroll */
+  let isDown = false;
+  let startX = 0;
+  let startScroll = 0;
+  let didMove = false;
+
+  sc.addEventListener('mousedown', (e) => {
+    // Only on day surface, not on bars (allow tooltip hover w/o drag interfering would be nicer; still allow drag)
+    isDown = true;
+    didMove = false;
+    startX = e.pageX;
+    startScroll = sc.scrollLeft;
+    sc.classList.add('dragging');
+    if (smoothScrollAnim) { cancelAnimationFrame(smoothScrollAnim); smoothScrollAnim = null; }
+  });
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    sc.classList.remove('dragging');
+    if (didMove) snapToMonth();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const dx = e.pageX - startX;
+    if (Math.abs(dx) > 3) didMove = true;
+    sc.scrollLeft = startScroll - dx;
+  });
+
+  /* Touch drag */
+  sc.addEventListener('touchstart', (e) => {
+    isDown = true; didMove = false;
+    startX = e.touches[0].pageX;
+    startScroll = sc.scrollLeft;
+  }, { passive: true });
+  sc.addEventListener('touchmove', (e) => {
+    if (!isDown) return;
+    const dx = e.touches[0].pageX - startX;
+    if (Math.abs(dx) > 3) didMove = true;
+    sc.scrollLeft = startScroll - dx;
+  }, { passive: true });
+  sc.addEventListener('touchend', () => {
+    if (!isDown) return;
+    isDown = false;
+    if (didMove) snapToMonth();
+  });
+
+  /* Wheel — translate Y wheel to X scroll. Shift+wheel also works (native). */
+  sc.addEventListener('wheel', (e) => {
+    // Always horizontal: prefer deltaX, fall back to deltaY
+    const delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY)) ? e.deltaX : e.deltaY;
+    if (delta === 0) return;
+    e.preventDefault();
+    sc.scrollLeft += delta;
+  }, { passive: false });
+
+  /* Track scroll for label + mini-timeline viewport */
+  sc.addEventListener('scroll', () => {
+    requestAnimationFrame(updateMonthLabel);
+  });
+
+  /* Buttons */
+  document.getElementById('prev-month').onclick = () => {
+    const sc2 = document.getElementById('gantt-scroller');
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+    const startDay = Math.round(sc2.scrollLeft / dayW);
+    const d = new Date(PERIOD_START);
+    d.setDate(d.getDate() + startDay);
+    // jump to first of current visible month, or previous if already there
+    if (d.getDate() <= 3) {
+      d.setMonth(d.getMonth() - 1);
+    }
+    d.setDate(1);
+    const idx = dayIndex(d);
+    if (idx >= 0) scrollToDayIndex(idx, true);
+  };
+  document.getElementById('next-month').onclick = () => {
+    const sc2 = document.getElementById('gantt-scroller');
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+    const startDay = Math.round(sc2.scrollLeft / dayW);
+    const d = new Date(PERIOD_START);
+    d.setDate(d.getDate() + startDay);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(1);
+    const idx = dayIndex(d);
+    if (idx >= 0 && idx < TOTAL_DAYS) scrollToDayIndex(idx, true);
+  };
+  document.getElementById('jump-today').onclick = () => {
+    const idx = dayIndex(TODAY);
+    const dayW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gantt-day-w'));
+    const visiblePx = sc.clientWidth;
+    const target = Math.max(0, idx * dayW - (visiblePx / 2) + (dayW / 2));
+    smoothScrollTo(sc, target, 380);
+    setTimeout(updateMonthLabel, 400);
+  };
+
+  /* Recalc viewport on resize */
+  window.addEventListener('resize', () => {
+    updateMiniViewport();
+    updateMonthLabel();
+  });
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   TOOLTIPS
+   ═════════════════════════════════════════════════════════════════════ */
+const TT = document.getElementById('gantt-tooltip');
+function attachTooltip(el) {
+  el.addEventListener('mouseenter', (e) => {
+    TT.innerHTML = el.dataset.tooltip.split('\n').map((line, i) =>
+      i === 0 ? line : `<div class="meta">${line}</div>`
+    ).join('');
+    TT.style.display = 'block';
+  });
+  el.addEventListener('mousemove', (e) => {
+    TT.style.left = (e.clientX + 14) + 'px';
+    TT.style.top = (e.clientY + 14) + 'px';
+  });
+  el.addEventListener('mouseleave', () => { TT.style.display = 'none'; });
+}
+</script>
+</body>
+</html>
