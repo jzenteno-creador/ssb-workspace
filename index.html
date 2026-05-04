@@ -1343,6 +1343,279 @@ body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
   z-index:9999;
 }
 .vac-toast.vac-toast--show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Vista Equipo: mini-timeline + Gantt anual ── */
+#panel-vacaciones .vac-section[data-section="equipo"]{padding:18px 2rem 40px}
+#panel-vacaciones .vac-section[data-section="equipo"].vac-section--active{display:flex;flex-direction:column;gap:12px}
+
+#panel-vacaciones .vac-mini-tl{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;user-select:none;
+}
+#panel-vacaciones .vac-mini-tl-head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:6px;gap:14px;flex-wrap:wrap;
+}
+#panel-vacaciones .vac-mini-tl-title{
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);font-weight:700;font-family:var(--mono);
+}
+#panel-vacaciones .vac-mini-tl-hint{font-size:var(--fs-xs);color:var(--muted);font-family:var(--mono)}
+#panel-vacaciones .vac-mini-tl-hint kbd{
+  display:inline-block;background:var(--faint);border:1px solid var(--border);
+  border-radius:4px;padding:1px 5px;font-size:10px;font-family:var(--mono);
+  color:var(--text);margin:0 2px;
+}
+#panel-vacaciones .vac-mini-tl-track{
+  position:relative;height:54px;background:var(--faint);
+  border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;
+}
+#panel-vacaciones .vac-mini-tl-month{
+  position:absolute;top:0;bottom:0;border-right:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;
+}
+#panel-vacaciones .vac-mini-tl-month:last-child{border-right:none}
+#panel-vacaciones .vac-mini-tl-month-lbl{
+  font-size:9px;font-weight:700;font-family:var(--mono);
+  color:var(--muted);text-transform:uppercase;letter-spacing:.05em;pointer-events:none;
+}
+#panel-vacaciones .vac-mini-tl-bar{
+  position:absolute;height:3px;border-radius:1px;background:var(--green);
+}
+#panel-vacaciones .vac-mini-tl-bar.vac-mini-pendiente{background:var(--amber)}
+#panel-vacaciones .vac-mini-tl-bar.vac-mini-tentativa{
+  background:repeating-linear-gradient(90deg,var(--purple),var(--purple) 3px,transparent 3px,transparent 5px);
+}
+#panel-vacaciones .vac-mini-tl-viewport{
+  position:absolute;top:-2px;bottom:-2px;
+  background:rgba(37,99,235,.10);border:2px solid var(--blue);
+  border-radius:5px;pointer-events:none;
+  transition:left .12s ease,width .12s ease;
+}
+body.dark #panel-vacaciones .vac-mini-tl-viewport{background:rgba(91,155,245,.12)}
+#panel-vacaciones .vac-mini-tl-today{
+  position:absolute;top:0;bottom:0;width:1px;
+  background:var(--orange);pointer-events:none;
+  box-shadow:0 0 4px var(--orange);
+}
+
+#panel-vacaciones .vac-gantt-shell{
+  --vac-gantt-name-w:220px;
+  --vac-gantt-status-w:140px;
+  --vac-gantt-day-w:24px;
+  --vac-gantt-row-h:44px;
+  --vac-gantt-month-h:26px;
+  --vac-gantt-day-h:32px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.06));position:relative;
+}
+@media(max-width:900px){
+  #panel-vacaciones .vac-gantt-shell{--vac-gantt-name-w:140px;--vac-gantt-status-w:104px}
+}
+
+#panel-vacaciones .vac-gantt-toolbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  background:var(--surface);gap:14px;flex-wrap:wrap;
+}
+#panel-vacaciones .vac-gantt-toolbar-left{display:flex;align-items:center;gap:10px}
+#panel-vacaciones .vac-gantt-toolbar-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#panel-vacaciones .vac-gantt-month{
+  font-family:var(--mono);font-size:var(--fs-md);font-weight:700;
+  color:var(--text);min-width:160px;letter-spacing:-.01em;
+}
+#panel-vacaciones .vac-gantt-month-sub{
+  font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted);font-weight:500;
+}
+#panel-vacaciones .vac-jump-btn{
+  height:30px;padding:0 12px;border-radius:6px;
+  background:var(--faint);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  display:flex;align-items:center;gap:5px;
+}
+#panel-vacaciones .vac-jump-btn:hover{background:var(--surface-hv);border-color:var(--border-strong,var(--border))}
+#panel-vacaciones .vac-team-filter{
+  height:30px;padding:0 9px;width:auto;min-width:160px;
+  font-size:var(--fs-sm);
+}
+#panel-vacaciones .vac-gantt-legend{
+  display:flex;gap:12px;align-items:center;
+  font-size:var(--fs-xs);color:var(--muted);font-family:var(--mono);
+}
+#panel-vacaciones .vac-gantt-legend-item{display:flex;align-items:center;gap:5px}
+#panel-vacaciones .vac-gantt-legend-item i{display:inline-block;width:14px;height:8px;border-radius:2px}
+#panel-vacaciones .vac-gantt-legend-tent{
+  background:repeating-linear-gradient(45deg,var(--purple),var(--purple) 4px,var(--purple-bd) 4px,var(--purple-bd) 7px) !important;
+}
+
+#panel-vacaciones .vac-gantt-frame{display:flex;align-items:stretch;background:var(--surface)}
+#panel-vacaciones .vac-gantt-col{display:flex;flex-direction:column;flex-shrink:0}
+#panel-vacaciones .vac-gantt-col-names{
+  width:var(--vac-gantt-name-w);background:var(--surface);
+  border-right:1px solid var(--border);z-index:2;
+  box-shadow:4px 0 6px -3px rgba(0,0,0,.08);
+}
+body.dark #panel-vacaciones .vac-gantt-col-names{box-shadow:4px 0 8px -3px rgba(0,0,0,.4)}
+#panel-vacaciones .vac-gantt-col-status{
+  width:var(--vac-gantt-status-w);background:var(--surface);
+  border-left:1px solid var(--border);z-index:2;
+  box-shadow:-4px 0 6px -3px rgba(0,0,0,.08);
+}
+body.dark #panel-vacaciones .vac-gantt-col-status{box-shadow:-4px 0 8px -3px rgba(0,0,0,.4)}
+
+#panel-vacaciones .vac-gantt-scroller{
+  flex:1 1 auto;position:relative;
+  overflow-x:auto;overflow-y:hidden;
+  cursor:grab;scroll-behavior:auto;min-width:0;
+}
+#panel-vacaciones .vac-gantt-scroller.is-dragging{cursor:grabbing;scroll-behavior:auto}
+#panel-vacaciones .vac-gantt-scroller::-webkit-scrollbar{height:10px}
+#panel-vacaciones .vac-gantt-scroller::-webkit-scrollbar-track{background:var(--faint)}
+#panel-vacaciones .vac-gantt-scroller::-webkit-scrollbar-thumb{background:var(--border-strong,var(--border));border-radius:5px}
+#panel-vacaciones .vac-gantt-scroller::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+#panel-vacaciones .vac-gantt-days-inner{position:relative}
+
+#panel-vacaciones .vac-gantt-col-head{
+  height:calc(var(--vac-gantt-month-h) + var(--vac-gantt-day-h));
+  background:var(--faint);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);font-weight:700;font-family:var(--mono);
+}
+
+#panel-vacaciones .vac-day-head{
+  position:sticky;top:0;z-index:2;
+  background:var(--faint);border-bottom:1px solid var(--border);
+  display:flex;flex-direction:column;
+}
+#panel-vacaciones .vac-day-head-months{display:flex;height:var(--vac-gantt-month-h)}
+#panel-vacaciones .vac-day-head-month{
+  border-right:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:var(--fs-xs);font-weight:700;
+  color:var(--text);letter-spacing:.04em;text-transform:uppercase;
+  white-space:nowrap;padding:0 6px;flex-shrink:0;
+}
+#panel-vacaciones .vac-day-head-month:last-child{border-right:none}
+#panel-vacaciones .vac-day-head-days{display:grid;height:var(--vac-gantt-day-h)}
+#panel-vacaciones .vac-day-head-day{
+  font-family:var(--mono);font-size:9px;color:var(--muted);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  line-height:1.15;border-right:1px solid var(--border);
+  background:var(--faint);font-weight:600;
+}
+#panel-vacaciones .vac-day-head-day.vac-first-of-month{border-left:2px solid var(--border-strong,var(--border))}
+#panel-vacaciones .vac-day-head-day.vac-weekend{color:var(--text);opacity:.55}
+#panel-vacaciones .vac-day-head-day.vac-today{color:#fff;background:var(--orange);font-weight:700}
+#panel-vacaciones .vac-day-head-day.vac-holiday{color:var(--red);font-weight:700;cursor:help}
+#panel-vacaciones .vac-day-head-day .vac-dh-dow{font-size:7.5px;opacity:.7;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+#panel-vacaciones .vac-day-head-day.vac-today .vac-dh-dow{opacity:.95}
+
+#panel-vacaciones .vac-gantt-row-name{
+  height:var(--vac-gantt-row-h);padding:0 14px;
+  display:flex;flex-direction:column;justify-content:center;
+  border-bottom:1px solid var(--border);background:var(--surface);
+}
+#panel-vacaciones .vac-gantt-row-name.vac-is-self{background:var(--purple-bg)}
+#panel-vacaciones .vac-gantt-row-name strong{font-size:var(--fs-sm);font-weight:700;letter-spacing:-.01em;color:var(--text)}
+#panel-vacaciones .vac-gantt-row-name-sub{font-size:var(--fs-2xs);color:var(--muted);font-family:var(--mono);margin-top:1px}
+#panel-vacaciones .vac-gantt-row-name-sub .vac-pill-admin{
+  display:inline-block;background:var(--purple-bg);color:var(--purple);
+  border:1px solid var(--purple-bd);border-radius:999px;
+  font-size:8px;padding:0 5px;margin-left:4px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+}
+
+#panel-vacaciones .vac-gantt-row-days{
+  height:var(--vac-gantt-row-h);
+  border-bottom:1px solid var(--border);
+  position:relative;background:transparent;
+}
+#panel-vacaciones .vac-gantt-row-days.vac-is-self{background:var(--purple-bg)}
+#panel-vacaciones .vac-gantt-row-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(to right,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px);
+  background-size:var(--vac-gantt-day-w) 100%;
+}
+body.dark #panel-vacaciones .vac-gantt-row-bg{
+  background-image:linear-gradient(to right,rgba(255,255,255,.05) 0,rgba(255,255,255,.05) 1px,transparent 1px);
+}
+
+#panel-vacaciones .vac-gantt-bands{position:absolute;left:0;right:0;pointer-events:none}
+#panel-vacaciones .vac-gantt-weekend-band{
+  position:absolute;top:0;bottom:0;
+  background:rgba(0,0,0,.025);pointer-events:none;
+}
+body.dark #panel-vacaciones .vac-gantt-weekend-band{background:rgba(255,255,255,.025)}
+#panel-vacaciones .vac-gantt-holiday-band{
+  position:absolute;top:0;bottom:0;
+  background:var(--red-bg);pointer-events:auto;cursor:help;
+}
+body.dark #panel-vacaciones .vac-gantt-holiday-band{background:rgba(239,100,97,.10)}
+
+#panel-vacaciones .vac-gantt-today-line{
+  position:absolute;top:0;bottom:0;width:1px;
+  background:var(--orange);pointer-events:none;z-index:3;
+  box-shadow:0 0 6px rgba(209,77,0,.6);
+}
+body.dark #panel-vacaciones .vac-gantt-today-line{box-shadow:0 0 8px rgba(251,146,60,.7)}
+#panel-vacaciones .vac-gantt-today-line::before{
+  content:'HOY';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  background:var(--orange);color:#fff;font-family:var(--mono);font-size:8px;
+  font-weight:700;padding:2px 5px;border-radius:0 0 3px 3px;letter-spacing:.05em;
+}
+
+#panel-vacaciones .vac-gantt-bar{
+  position:absolute;top:6px;bottom:6px;
+  background:var(--green);border-radius:4px;color:#fff;
+  font-size:10px;font-weight:600;padding:0 7px;
+  display:flex;align-items:center;
+  white-space:nowrap;overflow:hidden;cursor:default;z-index:2;
+  font-family:var(--mono);letter-spacing:.01em;
+  transition:filter .12s,transform .12s;
+}
+#panel-vacaciones .vac-gantt-bar:hover{filter:brightness(1.1);transform:translateY(-1px);z-index:5}
+#panel-vacaciones .vac-gantt-bar.vac-bar-tentativa{
+  background:repeating-linear-gradient(45deg,var(--purple),var(--purple) 6px,var(--purple-bd) 6px,var(--purple-bd) 12px);
+}
+#panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{background:var(--amber);color:#0b0f17}
+body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
+
+#panel-vacaciones .vac-gantt-row-status{
+  height:var(--vac-gantt-row-h);padding:0 14px;
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
+  border-bottom:1px solid var(--border);background:var(--surface);
+  font-family:var(--mono);font-size:var(--fs-xs);
+}
+#panel-vacaciones .vac-gantt-row-status.vac-is-self{background:var(--purple-bg)}
+#panel-vacaciones .vac-gantt-row-status .vac-num{
+  font-family:var(--font);font-size:var(--fs-lg);font-weight:700;letter-spacing:-.02em;line-height:1;
+}
+#panel-vacaciones .vac-gantt-row-status .vac-num.vac-disp{color:var(--green)}
+#panel-vacaciones .vac-gantt-row-status .vac-num.vac-pend{color:var(--amber)}
+#panel-vacaciones .vac-gantt-row-status-meta{font-size:10px;color:var(--muted);margin-top:2px}
+
+#panel-vacaciones .vac-gantt-empty{
+  padding:32px 14px;text-align:center;color:var(--muted);
+  font-size:var(--fs-sm);font-family:var(--font);
+}
+
+.vac-gantt-tooltip{
+  position:fixed;background:var(--header-bg,#0b0f17);color:#fff;
+  padding:8px 11px;border-radius:6px;
+  font-size:var(--fs-xs);font-family:var(--font);
+  z-index:9999;pointer-events:none;
+  box-shadow:0 6px 24px rgba(0,0,0,.35);
+  white-space:nowrap;display:none;line-height:1.4;
+  border:1px solid rgba(255,255,255,.08);
+}
+.vac-gantt-tooltip strong{font-weight:700}
+.vac-gantt-tooltip .vac-tip-meta{color:rgba(255,255,255,.65);font-family:var(--mono);font-size:10px;margin-top:2px}
+
+@media (prefers-reduced-motion: reduce){
+  #panel-vacaciones .vac-mini-tl-viewport{transition:none}
+  #panel-vacaciones .vac-gantt-bar{transition:none}
+}
 /* ═══════════════════════════════ FIN VACACIONES MODULE ═══════════════════════════════ */
 </style>
 </head>
@@ -2194,9 +2467,44 @@ body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
     </div>
 
     <div class="vac-section" data-section="equipo">
-      <div class="vac-empty">
-        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-bars"/></svg>
-        <p>Vista del equipo — se implementa en Fase 4.</p>
+      <!-- Mini-timeline: 12 meses del período -->
+      <div class="vac-mini-tl" id="vac-mini-tl">
+        <div class="vac-mini-tl-head">
+          <div class="vac-mini-tl-title" id="vac-mini-tl-title">Período —</div>
+          <div class="vac-mini-tl-hint">arrastrá <kbd>↔</kbd> el calendario · <kbd>⇧</kbd>+rueda · click en un mes para saltar</div>
+        </div>
+        <div class="vac-mini-tl-track" id="vac-mini-tl-track" role="presentation"></div>
+      </div>
+
+      <!-- Gantt -->
+      <div class="vac-gantt-shell">
+        <div class="vac-gantt-toolbar">
+          <div class="vac-gantt-toolbar-left">
+            <button type="button" class="vac-jump-btn" id="vac-team-prev" aria-label="Mes anterior">‹ mes anterior</button>
+            <div>
+              <div class="vac-gantt-month" id="vac-team-month">—</div>
+              <div class="vac-gantt-month-sub" id="vac-team-period">—</div>
+            </div>
+            <button type="button" class="vac-jump-btn" id="vac-team-next" aria-label="Mes siguiente">mes siguiente ›</button>
+            <button type="button" class="vac-jump-btn" id="vac-team-today" style="margin-left:8px">Hoy</button>
+          </div>
+          <div class="vac-gantt-toolbar-right">
+            <select class="vac-form-select vac-team-filter" id="vac-team-filter" aria-label="Filtrar empleado"></select>
+            <div class="vac-gantt-legend" aria-label="Referencias">
+              <span class="vac-gantt-legend-item"><i style="background:var(--green)"></i>Aprobada</span>
+              <span class="vac-gantt-legend-item"><i class="vac-gantt-legend-tent"></i>Tentativa</span>
+              <span class="vac-gantt-legend-item"><i style="background:var(--amber)"></i>Pendiente</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vac-gantt-frame">
+          <div class="vac-gantt-col vac-gantt-col-names" id="vac-gantt-names"></div>
+          <div class="vac-gantt-scroller" id="vac-gantt-scroller">
+            <div class="vac-gantt-days-inner" id="vac-gantt-days-inner"></div>
+          </div>
+          <div class="vac-gantt-col vac-gantt-col-status" id="vac-gantt-status"></div>
+        </div>
       </div>
     </div>
 
@@ -8933,6 +9241,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.balance = null;
     window.__vac.editingId = null;
     _miState.initialized = false;
+    if(window.__vac.team) clearTeamData();
   }
 
   // ── Carga de datos: balance + mis solicitudes + feriados + solicitudes de back-ups ──
@@ -9339,6 +9648,605 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     updateCargarSummary();
   }
 
+  // ════════════════ FASE 4: Vista Equipo (Gantt anual) ════════════════
+
+  window.__vac.team = {
+    initialized: false,
+    employees: [],
+    requests: [],
+    holidays: [],
+    balances: new Map(),       // employee_id -> balance row
+    monthBoundaries: [],       // [{ year, month, startIdx, count }]
+    monthStartIdxs: [],        // índices day-from-start de cada 1° del mes
+    totalDays: 0,
+    filterEmpId: '',           // '' = todos los empleados
+    scrollSyncRaf: null,
+    initialScrollDone: false
+  };
+  const TEAM_DOW_INITIAL = ['L','M','M','J','V','S','D'];
+  const MONTH_NAMES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  function ganttDayWidth(){
+    const shell = document.querySelector('#panel-vacaciones .vac-gantt-shell');
+    if(!shell) return 24;
+    const v = parseFloat(getComputedStyle(shell).getPropertyValue('--vac-gantt-day-w')) || 24;
+    return v;
+  }
+  function daysFromStart(iso, startIso){
+    const a = parseIsoDate(startIso), b = parseIsoDate(iso);
+    if(!a || !b) return 0;
+    return Math.round((b - a) / 86400000);
+  }
+
+  async function loadTeamData(){
+    if(!window.__vacAuth) return;
+    const periodYear = getCurrentPeriodYear();
+    const { startIso, endIso } = getCurrentPeriodRange();
+
+    const queries = [
+      supa.from('vac_employees')
+        .select('id,email,full_name,role,annual_days,backup_employee_ids,active')
+        .eq('active', true)
+        .order('full_name', { ascending: true }),
+      supa.from('vac_requests')
+        .select('id,employee_id,start_date,end_date,days_count,status,note')
+        .eq('period_year', periodYear)
+        .neq('status', 'rechazada')
+        .order('start_date', { ascending: true }),
+      supa.from('vac_holidays')
+        .select('date,name,type')
+        .gte('date', startIso).lte('date', endIso)
+        .order('date', { ascending: true }),
+      supa.from('vac_balance_view').select('*')
+    ];
+    const [eRes, rRes, hRes, bRes] = await Promise.all(queries);
+
+    window.__vac.team.employees = eRes?.data || [];
+    window.__vac.team.requests  = rRes?.data || [];
+    window.__vac.team.holidays  = hRes?.data || [];
+    const balMap = new Map();
+    for(const b of (bRes?.data || [])) balMap.set(b.employee_id, b);
+    window.__vac.team.balances = balMap;
+  }
+
+  function buildMonthBoundaries(startIso, totalDays){
+    const startDate = parseIsoDate(startIso);
+    const mb = [];
+    const monthStartIdxs = [];
+    let cur = -1;
+    for(let i = 0; i < totalDays; i++){
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      if(d.getDate() === 1 || i === 0){
+        mb.push({ year: d.getFullYear(), month: d.getMonth(), startIdx: i, count: 1 });
+        monthStartIdxs.push(i);
+        cur = mb.length - 1;
+      } else {
+        mb[cur].count++;
+      }
+    }
+    return { monthBoundaries: mb, monthStartIdxs };
+  }
+
+  function renderTeamGantt(){
+    const namesEl  = $('vac-gantt-names');
+    const innerEl  = $('vac-gantt-days-inner');
+    const statusEl = $('vac-gantt-status');
+    const scroller = $('vac-gantt-scroller');
+    if(!namesEl || !innerEl || !statusEl || !scroller) return;
+
+    const { startIso, endIso } = getCurrentPeriodRange();
+    const totalDays = daysBetweenInclusive(startIso, endIso);
+    const dayW = ganttDayWidth();
+    const totalW = totalDays * dayW;
+    const myEmpId = window.__vacAuth?.employee?.id;
+
+    const allEmps = window.__vac.team.employees;
+    const filterId = window.__vac.team.filterEmpId;
+    const emps = filterId ? allEmps.filter(e => e.id === filterId) : allEmps;
+
+    // Boundaries y guardar en estado
+    const { monthBoundaries, monthStartIdxs } = buildMonthBoundaries(startIso, totalDays);
+    window.__vac.team.monthBoundaries = monthBoundaries;
+    window.__vac.team.monthStartIdxs = monthStartIdxs;
+    window.__vac.team.totalDays = totalDays;
+
+    // Período labels
+    const ps = parseIsoDate(startIso), pe = parseIsoDate(endIso);
+    const periodLbl = `Período ${MONTH_NAMES_SHORT[ps.getMonth()]} ${ps.getFullYear()} → ${MONTH_NAMES_SHORT[pe.getMonth()]} ${pe.getFullYear()}`;
+    const titleEl = $('vac-mini-tl-title'); if(titleEl) titleEl.textContent = periodLbl;
+    const periodSub = $('vac-team-period'); if(periodSub) periodSub.textContent = periodLbl;
+
+    // Construir info por día
+    const startDate = parseIsoDate(startIso);
+    const todayIso = toIsoDate(new Date());
+    const holMap = new Map();
+    for(const h of window.__vac.team.holidays) holMap.set(h.date, h);
+
+    const days = [];
+    let todayIdx = -1;
+    for(let i = 0; i < totalDays; i++){
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const iso = toIsoDate(d);
+      const dow = d.getDay(); // 0=Sun
+      const isWeekend = dow === 0 || dow === 6;
+      const isFirstOfMonth = d.getDate() === 1;
+      const isToday = iso === todayIso;
+      if(isToday) todayIdx = i;
+      days.push({ date: d, iso, dow, isWeekend, isFirstOfMonth, isToday, holiday: holMap.get(iso) });
+    }
+
+    // Reset inner
+    innerEl.style.width = totalW + 'px';
+    innerEl.innerHTML = '';
+
+    // ── Day-head (sticky top): months row + days row ──
+    const dayHead = document.createElement('div');
+    dayHead.className = 'vac-day-head';
+    dayHead.style.width = totalW + 'px';
+
+    const monthsRow = document.createElement('div');
+    monthsRow.className = 'vac-day-head-months';
+    for(const mb of monthBoundaries){
+      const mEl = document.createElement('div');
+      mEl.className = 'vac-day-head-month';
+      mEl.style.width = (mb.count * dayW) + 'px';
+      mEl.textContent = `${MONTH_NAMES_SHORT[mb.month]} ${mb.year}`;
+      monthsRow.appendChild(mEl);
+    }
+    dayHead.appendChild(monthsRow);
+
+    const daysRow = document.createElement('div');
+    daysRow.className = 'vac-day-head-days';
+    daysRow.style.gridTemplateColumns = `repeat(${totalDays}, ${dayW}px)`;
+    for(const d of days){
+      const cls = ['vac-day-head-day'];
+      if(d.isFirstOfMonth) cls.push('vac-first-of-month');
+      if(d.isWeekend) cls.push('vac-weekend');
+      if(d.isToday) cls.push('vac-today');
+      if(d.holiday) cls.push('vac-holiday');
+      const cell = document.createElement('div');
+      cell.className = cls.join(' ');
+      if(d.holiday) cell.title = `${d.holiday.name} — ${formatDmy(d.iso)}`;
+      cell.innerHTML = `${d.date.getDate()}<span class="vac-dh-dow">${TEAM_DOW_INITIAL[(d.dow + 6) % 7]}</span>`;
+      daysRow.appendChild(cell);
+    }
+    dayHead.appendChild(daysRow);
+    innerEl.appendChild(dayHead);
+
+    // ── Bands: weekends + holidays ──
+    const bandsLayer = document.createElement('div');
+    bandsLayer.className = 'vac-gantt-bands';
+    bandsLayer.style.top = `calc(var(--vac-gantt-month-h) + var(--vac-gantt-day-h))`;
+    bandsLayer.style.bottom = '0';
+    for(let i = 0; i < days.length; i++){
+      const d = days[i];
+      if(d.holiday){
+        const band = document.createElement('div');
+        band.className = 'vac-gantt-holiday-band';
+        band.style.left = (i * dayW) + 'px';
+        band.style.width = dayW + 'px';
+        band.title = `${d.holiday.name} — ${formatDmy(d.iso)}`;
+        bandsLayer.appendChild(band);
+      } else if(d.isWeekend){
+        const band = document.createElement('div');
+        band.className = 'vac-gantt-weekend-band';
+        band.style.left = (i * dayW) + 'px';
+        band.style.width = dayW + 'px';
+        bandsLayer.appendChild(band);
+      }
+    }
+    if(todayIdx >= 0){
+      const tl = document.createElement('div');
+      tl.className = 'vac-gantt-today-line';
+      tl.style.left = (todayIdx * dayW + dayW / 2) + 'px';
+      bandsLayer.appendChild(tl);
+    }
+    innerEl.appendChild(bandsLayer);
+
+    // ── Names + Status: headers fijos ──
+    namesEl.innerHTML = '';
+    statusEl.innerHTML = '';
+    const namesHead = document.createElement('div');
+    namesHead.className = 'vac-gantt-col-head';
+    namesHead.textContent = 'Empleado';
+    namesEl.appendChild(namesHead);
+    const statusHead = document.createElement('div');
+    statusHead.className = 'vac-gantt-col-head';
+    statusHead.textContent = 'Estado';
+    statusEl.appendChild(statusHead);
+
+    if(emps.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'vac-gantt-empty';
+      empty.style.width = totalW + 'px';
+      empty.textContent = 'Sin empleados que mostrar.';
+      innerEl.appendChild(empty);
+    }
+
+    // ── Filas ──
+    for(const emp of emps){
+      const isSelf = emp.id === myEmpId;
+      const adminPill = emp.role === 'admin' ? `<span class="vac-pill-admin">admin</span>` : '';
+
+      const nameRow = document.createElement('div');
+      nameRow.className = 'vac-gantt-row-name' + (isSelf ? ' vac-is-self' : '');
+      nameRow.innerHTML = `<strong>${escHtml(emp.full_name)}</strong><div class="vac-gantt-row-name-sub">${emp.annual_days} d/año${adminPill}</div>`;
+      namesEl.appendChild(nameRow);
+
+      const daysRowEl = document.createElement('div');
+      daysRowEl.className = 'vac-gantt-row-days' + (isSelf ? ' vac-is-self' : '');
+      daysRowEl.style.width = totalW + 'px';
+      const bg = document.createElement('div');
+      bg.className = 'vac-gantt-row-bg';
+      daysRowEl.appendChild(bg);
+
+      const empReqs = window.__vac.team.requests.filter(r => r.employee_id === emp.id);
+      for(const r of empReqs){
+        const sIdx = Math.max(0, daysFromStart(r.start_date, startIso));
+        const eIdx = Math.min(totalDays - 1, daysFromStart(r.end_date, startIso));
+        if(eIdx < sIdx) continue;
+        const left = sIdx * dayW;
+        const width = Math.max(2, (eIdx - sIdx + 1) * dayW - 1);
+        const bar = document.createElement('div');
+        const stCls = r.status === 'pendiente' ? ' vac-bar-pendiente'
+                    : r.status === 'tentativa' ? ' vac-bar-tentativa' : '';
+        bar.className = 'vac-gantt-bar' + stCls;
+        bar.style.left = left + 'px';
+        bar.style.width = width + 'px';
+        bar.dataset.empName = emp.full_name;
+        bar.dataset.start = r.start_date;
+        bar.dataset.end = r.end_date;
+        bar.dataset.days = String(r.days_count);
+        bar.dataset.note = r.note || '';
+        bar.dataset.status = r.status;
+        if(width > 50) bar.textContent = `${r.days_count}d`;
+        bar.addEventListener('mouseenter', showBarTooltip);
+        bar.addEventListener('mousemove', moveBarTooltip);
+        bar.addEventListener('mouseleave', hideBarTooltip);
+        daysRowEl.appendChild(bar);
+      }
+      innerEl.appendChild(daysRowEl);
+
+      const bal = window.__vac.team.balances.get(emp.id);
+      const remaining = bal?.days_remaining ?? emp.annual_days;
+      const taken = bal?.days_approved ?? 0;
+      const pending = bal?.days_pending ?? 0;
+      const stRow = document.createElement('div');
+      stRow.className = 'vac-gantt-row-status' + (isSelf ? ' vac-is-self' : '');
+      stRow.innerHTML = `
+        <span class="vac-num vac-disp">${remaining}</span>
+        <span class="vac-gantt-row-status-meta">disp · ${taken} tom · ${pending} pend</span>
+      `;
+      statusEl.appendChild(stRow);
+    }
+
+    // ── Filter dropdown (poblar 1 vez con todos los empleados) ──
+    populateTeamFilter();
+
+    // ── Mini-timeline + posición inicial: defer al próximo frame para
+    //    asegurarnos que el layout esté listo (clientWidth correcto).
+    requestAnimationFrame(() => {
+      renderMiniTimeline(emps, totalDays, todayIdx, startIso);
+      if(!window.__vac.team.initialScrollDone){
+        if(todayIdx >= 0){
+          scroller.scrollLeft = Math.max(0, todayIdx * dayW - scroller.clientWidth / 2 + dayW / 2);
+        } else {
+          scroller.scrollLeft = 0;
+        }
+        window.__vac.team.initialScrollDone = true;
+      }
+      // Sync inicial del viewport del mini-tl + label de mes
+      onGanttScroll();
+    });
+
+    // Wire-up del scroller + botones (idempotente)
+    setupGanttScroll(scroller);
+  }
+
+  function populateTeamFilter(){
+    const sel = $('vac-team-filter');
+    if(!sel) return;
+    if(sel._populated){
+      sel.value = window.__vac.team.filterEmpId || '';
+      return;
+    }
+    sel._populated = true;
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Todos los empleados';
+    sel.appendChild(opt0);
+    for(const e of window.__vac.team.employees){
+      const o = document.createElement('option');
+      o.value = e.id;
+      o.textContent = e.full_name;
+      sel.appendChild(o);
+    }
+    sel.value = window.__vac.team.filterEmpId || '';
+    sel.addEventListener('change', () => {
+      window.__vac.team.filterEmpId = sel.value;
+      renderTeamGantt();
+    });
+  }
+
+  function renderMiniTimeline(emps, totalDays, todayIdx, startIso){
+    const track = $('vac-mini-tl-track');
+    if(!track) return;
+    track.innerHTML = '';
+    const trackW = track.clientWidth || track.offsetWidth || 800;
+    window.__vac.team.miniTrackW = trackW;
+
+    const mb = window.__vac.team.monthBoundaries;
+    for(const m of mb){
+      const left = (m.startIdx / totalDays) * trackW;
+      const width = (m.count / totalDays) * trackW;
+      const mEl = document.createElement('div');
+      mEl.className = 'vac-mini-tl-month';
+      mEl.style.left = left + 'px';
+      mEl.style.width = width + 'px';
+      mEl.dataset.startDay = String(m.startIdx);
+      mEl.innerHTML = `<span class="vac-mini-tl-month-lbl">${MONTH_NAMES_SHORT[m.month][0]}</span>`;
+      track.appendChild(mEl);
+    }
+
+    const empCount = Math.max(1, emps.length);
+    const usableH = 50; // 54 - 4 padding
+    const laneH = Math.max(2, usableH / empCount);
+    const empIdxMap = new Map(emps.map((e, i) => [e.id, i]));
+
+    for(const r of window.__vac.team.requests){
+      const empIdx = empIdxMap.get(r.employee_id);
+      if(empIdx == null) continue; // empleado fuera del filtro
+      const sIdx = Math.max(0, daysFromStart(r.start_date, startIso));
+      const eIdx = Math.min(totalDays - 1, daysFromStart(r.end_date, startIso));
+      if(eIdx < sIdx) continue;
+      const left = (sIdx / totalDays) * trackW;
+      const width = ((eIdx - sIdx + 1) / totalDays) * trackW;
+      const top = 2 + empIdx * laneH;
+      const bar = document.createElement('div');
+      let extra = '';
+      if(r.status === 'pendiente') extra = ' vac-mini-pendiente';
+      else if(r.status === 'tentativa') extra = ' vac-mini-tentativa';
+      bar.className = 'vac-mini-tl-bar' + extra;
+      bar.style.left = left + 'px';
+      bar.style.width = Math.max(2, width) + 'px';
+      bar.style.top = top + 'px';
+      bar.style.height = Math.max(2, laneH - 1) + 'px';
+      track.appendChild(bar);
+    }
+
+    if(todayIdx >= 0){
+      const t = document.createElement('div');
+      t.className = 'vac-mini-tl-today';
+      t.style.left = ((todayIdx / totalDays) * trackW) + 'px';
+      track.appendChild(t);
+    }
+
+    const vp = document.createElement('div');
+    vp.className = 'vac-mini-tl-viewport';
+    vp.id = 'vac-mini-tl-viewport';
+    vp.style.left = '0px';
+    vp.style.width = '40px';
+    track.appendChild(vp);
+
+    if(!track._wired){
+      track._wired = true;
+      track.addEventListener('click', e => {
+        const scroller = $('vac-gantt-scroller');
+        if(!scroller) return;
+        const rect = track.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const totalDaysCur = window.__vac.team.totalDays || 365;
+        const targetDay = Math.floor((x / rect.width) * totalDaysCur);
+        const dayW = ganttDayWidth();
+        const targetLeft = Math.max(0, targetDay * dayW - scroller.clientWidth / 2 + dayW / 2);
+        scroller.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      });
+    }
+  }
+
+  function onGanttScroll(){
+    const scroller = $('vac-gantt-scroller');
+    const vp = $('vac-mini-tl-viewport');
+    const monthLbl = $('vac-team-month');
+    const track = $('vac-mini-tl-track');
+    if(!scroller || !vp || !track) return;
+    const trackW = track.clientWidth || track.offsetWidth || 800;
+    const totalDays = window.__vac.team.totalDays || 365;
+    const dayW = ganttDayWidth();
+    const startDay = scroller.scrollLeft / dayW;
+    const visibleDays = scroller.clientWidth / dayW;
+    const left = (startDay / totalDays) * trackW;
+    const width = Math.max(20, (visibleDays / totalDays) * trackW);
+    vp.style.left = left + 'px';
+    vp.style.width = width + 'px';
+
+    const cx = scroller.scrollLeft + scroller.clientWidth / 2;
+    const centerDay = Math.floor(cx / dayW);
+    const mb = window.__vac.team.monthBoundaries.find(m => centerDay >= m.startIdx && centerDay < m.startIdx + m.count)
+            || window.__vac.team.monthBoundaries[0];
+    if(monthLbl && mb) monthLbl.textContent = `${MONTH_NAMES_LONG[mb.month]} ${mb.year}`;
+  }
+
+  function setupGanttScroll(scroller){
+    if(scroller._wired) return;
+    scroller._wired = true;
+    let dragging = false;
+    let startX = 0, startScroll = 0, moved = false;
+
+    scroller.addEventListener('mousedown', e => {
+      if(e.button !== 0) return;
+      // No iniciar drag si el click fue en una barra (deja propagar para tooltip)
+      // No interfiere porque las barras son hijas y no tienen su propio handler de mousedown.
+      dragging = true; moved = false;
+      scroller.classList.add('is-dragging');
+      startX = e.pageX;
+      startScroll = scroller.scrollLeft;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if(!dragging) return;
+      const dx = e.pageX - startX;
+      if(Math.abs(dx) > 2) moved = true;
+      scroller.scrollLeft = startScroll - dx;
+    });
+    const endDrag = () => {
+      if(!dragging) return;
+      dragging = false;
+      scroller.classList.remove('is-dragging');
+      if(moved) snapToNearestMonth(scroller);
+      moved = false;
+    };
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('mouseleave', endDrag);
+
+    // Touch
+    scroller.addEventListener('touchstart', e => {
+      if(!e.touches.length) return;
+      dragging = true; moved = false;
+      startX = e.touches[0].pageX;
+      startScroll = scroller.scrollLeft;
+    }, { passive: true });
+    scroller.addEventListener('touchmove', e => {
+      if(!dragging || !e.touches.length) return;
+      const dx = e.touches[0].pageX - startX;
+      if(Math.abs(dx) > 2) moved = true;
+      scroller.scrollLeft = startScroll - dx;
+    }, { passive: true });
+    scroller.addEventListener('touchend', () => {
+      if(!dragging) return;
+      dragging = false;
+      if(moved) snapToNearestMonth(scroller);
+      moved = false;
+    });
+    scroller.addEventListener('touchcancel', () => { dragging = false; moved = false; });
+
+    // Wheel: deltaX directo, o shift+deltaY → horizontal
+    scroller.addEventListener('wheel', e => {
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      if(dx === 0) return;
+      e.preventDefault();
+      scroller.scrollLeft += dx;
+    }, { passive: false });
+
+    // Sync con mini-tl (rAF throttle)
+    scroller.addEventListener('scroll', () => {
+      if(window.__vac.team.scrollSyncRaf) return;
+      window.__vac.team.scrollSyncRaf = requestAnimationFrame(() => {
+        window.__vac.team.scrollSyncRaf = null;
+        onGanttScroll();
+      });
+    });
+
+    // Botones prev/next/today
+    const prevBtn = $('vac-team-prev');
+    if(prevBtn && !prevBtn._wired){ prevBtn._wired = true; prevBtn.addEventListener('click', () => jumpMonth(-1)); }
+    const nextBtn = $('vac-team-next');
+    if(nextBtn && !nextBtn._wired){ nextBtn._wired = true; nextBtn.addEventListener('click', () => jumpMonth(1)); }
+    const todayBtn = $('vac-team-today');
+    if(todayBtn && !todayBtn._wired){ todayBtn._wired = true; todayBtn.addEventListener('click', jumpToToday); }
+  }
+
+  function snapToNearestMonth(scroller){
+    const dayW = ganttDayWidth();
+    const totalDays = window.__vac.team.totalDays;
+    const monthStarts = window.__vac.team.monthStartIdxs;
+    if(!monthStarts || !monthStarts.length) return;
+    const cx = scroller.scrollLeft;
+    let bestIdx = 0, bestDist = Infinity;
+    for(const ms of monthStarts){
+      const left = ms * dayW;
+      const dist = Math.abs(left - cx);
+      if(dist < bestDist){ bestDist = dist; bestIdx = ms; }
+    }
+    const monthAvgW = (totalDays / 12) * dayW;
+    if(bestDist < monthAvgW * 0.5){
+      scroller.scrollTo({ left: bestIdx * dayW, behavior: 'smooth' });
+    }
+  }
+
+  function jumpMonth(delta){
+    const scroller = $('vac-gantt-scroller');
+    if(!scroller) return;
+    const dayW = ganttDayWidth();
+    const monthStarts = window.__vac.team.monthStartIdxs;
+    if(!monthStarts || !monthStarts.length) return;
+    const cx = scroller.scrollLeft + scroller.clientWidth / 2;
+    const centerDay = Math.floor(cx / dayW);
+    let curIdx = 0;
+    for(let i = 0; i < monthStarts.length; i++){
+      if(monthStarts[i] <= centerDay) curIdx = i; else break;
+    }
+    const targetIdx = Math.max(0, Math.min(monthStarts.length - 1, curIdx + delta));
+    scroller.scrollTo({ left: monthStarts[targetIdx] * dayW, behavior: 'smooth' });
+  }
+
+  function jumpToToday(){
+    const scroller = $('vac-gantt-scroller');
+    if(!scroller) return;
+    const dayW = ganttDayWidth();
+    const { startIso } = getCurrentPeriodRange();
+    const todayIdx = daysFromStart(toIsoDate(new Date()), startIso);
+    if(todayIdx < 0 || todayIdx >= window.__vac.team.totalDays){
+      scroller.scrollTo({ left: 0, behavior: 'smooth' });
+      return;
+    }
+    const left = Math.max(0, todayIdx * dayW - scroller.clientWidth / 2 + dayW / 2);
+    scroller.scrollTo({ left, behavior: 'smooth' });
+  }
+
+  // ── Tooltip de barras ──
+  let _vacBarTip = null;
+  function ensureBarTooltip(){
+    if(_vacBarTip) return _vacBarTip;
+    _vacBarTip = document.createElement('div');
+    _vacBarTip.className = 'vac-gantt-tooltip';
+    document.body.appendChild(_vacBarTip);
+    return _vacBarTip;
+  }
+  function showBarTooltip(e){
+    const tip = ensureBarTooltip();
+    const t = e.currentTarget;
+    const status = t.dataset.status || '';
+    const stCap = status ? status[0].toUpperCase() + status.slice(1) : '';
+    const dates = `${formatDmy(t.dataset.start)} → ${formatDmy(t.dataset.end)}`;
+    const note = t.dataset.note ? `<div class="vac-tip-meta">${escHtml(t.dataset.note)}</div>` : '';
+    tip.innerHTML = `<strong>${escHtml(t.dataset.empName)}</strong><br>${dates} (${escHtml(t.dataset.days)}d)<div class="vac-tip-meta">${escHtml(stCap)}</div>${note}`;
+    tip.style.display = 'block';
+    moveBarTooltip(e);
+  }
+  function moveBarTooltip(e){
+    if(!_vacBarTip) return;
+    _vacBarTip.style.left = (e.clientX + 12) + 'px';
+    _vacBarTip.style.top  = (e.clientY + 12) + 'px';
+  }
+  function hideBarTooltip(){
+    if(_vacBarTip) _vacBarTip.style.display = 'none';
+  }
+
+  function clearTeamData(){
+    window.__vac.team.employees = [];
+    window.__vac.team.requests = [];
+    window.__vac.team.holidays = [];
+    window.__vac.team.balances = new Map();
+    window.__vac.team.initialized = false;
+    window.__vac.team.initialScrollDone = false;
+    window.__vac.team.filterEmpId = '';
+    const sel = $('vac-team-filter');
+    if(sel){ sel._populated = false; sel.innerHTML = ''; }
+  }
+
+  async function onEnterEquipo(){
+    if(!window.__vacAuth) return;
+    if(!window.__vac.team.initialized){
+      await loadTeamData();
+      window.__vac.team.initialized = true;
+    }
+    renderTeamGantt();
+  }
+
   // ── Sub-tabs ──
   function switchSubtab(name){
     if(!name) return;
@@ -9354,6 +10262,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     });
     if(name === 'mi') onEnterMi();
     else if(name === 'cargar') onEnterCargar();
+    else if(name === 'equipo') onEnterEquipo();
   }
   window.vacSwitchSubtab = switchSubtab;
 
@@ -9364,6 +10273,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const cur = window.__vac.currentSubtab;
     if(cur === 'mi') onEnterMi();
     else if(cur === 'cargar') onEnterCargar();
+    else if(cur === 'equipo') onEnterEquipo();
   };
   window.vacOnLeaveTab = function(){ /* no-op por ahora */ };
 
