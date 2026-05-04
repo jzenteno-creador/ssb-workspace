@@ -968,6 +968,165 @@ select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
 #panel-tt-dow .sth.tt-sortable .tt-sort-ind{display:inline-block;width:8px;height:8px;opacity:.35;transition:opacity .12s,transform .12s}
 #panel-tt-dow .sth.tt-sort-active .tt-sort-ind{opacity:1;color:var(--teal)}
 #panel-tt-dow .sth.tt-sort-active.tt-sort-desc .tt-sort-ind{transform:rotate(180deg)}
+
+/* ═══════════════════════════════ VACACIONES MODULE ═══════════════════════════════ */
+/* Estados semánticos del módulo */
+.vac-aprobada     { background:var(--green-bg);  border-color:var(--green-bd);  color:var(--green); }
+.vac-pendiente    { background:var(--amber-bg);  border-color:var(--amber-bd);  color:var(--amber); }
+.vac-tentativa    { background:var(--purple-bg); border-color:var(--purple-bd); color:var(--purple); }
+.vac-rechazada    { background:var(--red-bg);    border-color:var(--red-bd);    color:var(--red); }
+.vac-feriado      { background:var(--red-bg);    border-color:var(--red-bd); }
+.vac-no-laborable { background:var(--amber-bg);  border-color:var(--amber-bd); }
+
+/* Badge en el tab principal */
+.vac-tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 6px;margin-left:6px;
+  background:var(--amber);color:#fff;font-size:10px;font-weight:700;
+  border-radius:9px;line-height:1;
+}
+body.light .vac-tab-badge{color:#fff}
+
+/* Splash de login */
+#panel-vacaciones .vac-splash{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:40px 2rem;min-height:480px;
+}
+#panel-vacaciones .vac-splash-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:36px 32px;max-width:420px;width:100%;
+  box-shadow:var(--shadow);text-align:center;
+}
+#panel-vacaciones .vac-splash-ico{
+  width:56px;height:56px;border-radius:14px;margin:0 auto 16px;
+  background:var(--blue-lt);color:var(--blue);
+  display:grid;place-items:center;
+}
+#panel-vacaciones .vac-splash-ico .ic{width:28px;height:28px}
+#panel-vacaciones .vac-splash-title{
+  font-family:var(--font);font-size:20px;font-weight:700;
+  letter-spacing:-.02em;color:var(--text);margin-bottom:8px;
+}
+#panel-vacaciones .vac-splash-sub{
+  font-size:var(--fs-sm);color:var(--muted);margin-bottom:22px;line-height:1.5;
+}
+#panel-vacaciones .vac-splash-form{display:flex;flex-direction:column;gap:10px;text-align:left}
+#panel-vacaciones .vac-splash-lbl{
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);font-weight:600;font-family:var(--mono);
+}
+#panel-vacaciones .vac-splash-input{
+  font-family:var(--font);font-size:var(--fs-md);
+  padding:10px 12px;border-radius:8px;
+  border:1px solid var(--border);background:var(--faint);color:var(--text);
+  transition:border-color .12s,box-shadow .12s;
+}
+#panel-vacaciones .vac-splash-input:focus{
+  outline:none;border-color:var(--blue);
+  box-shadow:0 0 0 3px var(--blue-lt);
+}
+#panel-vacaciones .vac-splash-btn{
+  margin-top:6px;padding:11px 16px;border:none;border-radius:8px;
+  background:var(--blue);color:#fff;
+  font-family:var(--font);font-size:var(--fs-md);font-weight:600;
+  cursor:pointer;transition:filter .12s,transform .05s;
+}
+#panel-vacaciones .vac-splash-btn:hover{filter:brightness(1.08)}
+#panel-vacaciones .vac-splash-btn:active{transform:translateY(1px)}
+#panel-vacaciones .vac-splash-btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
+#panel-vacaciones .vac-splash-status{
+  margin-top:8px;font-size:var(--fs-xs);min-height:18px;line-height:1.4;
+}
+#panel-vacaciones .vac-splash-status.ok{color:var(--green)}
+#panel-vacaciones .vac-splash-status.err{color:var(--red)}
+#panel-vacaciones .vac-splash-status.info{color:var(--muted)}
+
+/* App auth-protected: flex column para que header → disclaimer → banner → section apilen */
+#panel-vacaciones .vac-app{flex:1;flex-direction:column;min-height:0}
+
+/* Header del módulo cuando hay sesión: pill de usuario */
+#panel-vacaciones #vac-user-pill{display:inline-flex;align-items:center;gap:6px}
+#panel-vacaciones #vac-logout-btn{
+  background:transparent;border:none;color:var(--muted);
+  font-size:14px;line-height:1;cursor:pointer;padding:0 4px;
+  border-radius:4px;transition:color .12s,background .12s;
+}
+#panel-vacaciones #vac-logout-btn:hover{color:var(--red);background:var(--red-bg)}
+
+/* Sub-tabs estilo segmented control (similar a .tt-mode-bar) */
+.vac-subtab-bar{
+  display:inline-flex;gap:0;
+  background:var(--faint);border:1px solid var(--border);border-radius:9px;
+  padding:3px;box-shadow:inset 0 1px 0 rgba(0,0,0,.04);
+}
+.vac-subtab{
+  padding:7px 14px;border:none;background:transparent;color:var(--muted);
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  cursor:pointer;border-radius:6px;letter-spacing:-.005em;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:color .12s,background .12s,box-shadow .12s;
+}
+.vac-subtab:hover{color:var(--text)}
+.vac-subtab.vac-subtab--active{
+  background:var(--surface);color:var(--text);
+  box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.04);
+}
+body.dark .vac-subtab.vac-subtab--active{
+  box-shadow:0 1px 2px rgba(0,0,0,.4),0 0 0 1px var(--border);
+}
+
+/* Disclaimer naranja: período oct→sep */
+.vac-disclaimer{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 2rem;
+  background:var(--orange-bg);border-bottom:1px solid var(--orange-bd);
+  color:var(--orange);font-size:var(--fs-sm);
+}
+.vac-disclaimer strong{color:var(--orange);font-weight:700}
+body.dark .vac-disclaimer{color:var(--orange)}
+.vac-disclaimer-ico{
+  width:18px;height:18px;flex-shrink:0;border-radius:50%;
+  background:var(--orange);color:#fff;
+  display:grid;place-items:center;
+  font-size:11px;font-weight:700;font-style:italic;font-family:var(--font);
+}
+
+/* Banner de aprobaciones pendientes (admin) */
+.vac-approval-banner{
+  display:flex;align-items:center;gap:14px;
+  margin:14px 2rem 0;padding:11px 16px;
+  background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;
+  font-size:var(--fs-sm);color:var(--text);
+}
+.vac-approval-ico{
+  width:24px;height:24px;flex-shrink:0;border-radius:6px;
+  background:var(--amber);color:#0b0f17;
+  display:grid;place-items:center;font-weight:700;font-size:13px;
+}
+.vac-approval-text{flex:1}
+.vac-approval-text strong{color:var(--text);font-weight:700}
+body.dark .vac-approval-banner{color:var(--amber)}
+body.dark .vac-approval-text strong{color:var(--amber)}
+.vac-btn-primary{
+  padding:7px 14px;border:none;border-radius:7px;
+  background:var(--blue);color:#fff;
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  cursor:pointer;transition:filter .12s;
+}
+.vac-btn-primary:hover{filter:brightness(1.08)}
+
+/* Contenedor de las sub-tab sections */
+#panel-vacaciones .vac-section{display:none;flex:1;overflow:auto;padding:18px 2rem 40px}
+#panel-vacaciones .vac-section.vac-section--active{display:block}
+#panel-vacaciones .vac-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 20px;color:var(--muted);text-align:center;gap:14px;
+  border:1px dashed var(--border);border-radius:10px;
+  background:var(--surface);
+}
+#panel-vacaciones .vac-empty .ic{width:48px;height:48px;opacity:.45;color:var(--muted)}
+#panel-vacaciones .vac-empty p{font-size:var(--fs-sm);margin:0}
+/* ═══════════════════════════════ FIN VACACIONES MODULE ═══════════════════════════════ */
 </style>
 </head>
 <body>
@@ -1077,6 +1236,7 @@ select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
   <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
   <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
   <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
+  <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -1687,6 +1847,105 @@ select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
 </div>
 <!-- ═══════════ FIN TAB: TARIFAS TERRESTRES DOW ═══════════ -->
 
+<!-- ═══════════ TAB: VACACIONES ═══════════ -->
+<div class="tab-panel" id="panel-vacaciones">
+
+  <!-- Splash login: visible cuando no hay sesión -->
+  <div class="vac-splash" id="vac-splash" style="display:none">
+    <div class="vac-splash-card">
+      <div class="vac-splash-ico" aria-hidden="true">
+        <svg class="ic ic-lg"><use href="#i-calendar"/></svg>
+      </div>
+      <h2 class="vac-splash-title">Módulo de Vacaciones</h2>
+      <p class="vac-splash-sub">Ingresá con tu mail corporativo. Te mandamos un link mágico para entrar sin contraseña.</p>
+      <form class="vac-splash-form" id="vac-splash-form" autocomplete="off">
+        <label for="vac-splash-email" class="vac-splash-lbl">Email</label>
+        <input type="email" id="vac-splash-email" class="vac-splash-input" placeholder="usuario@ssbint.com" required autocomplete="email" inputmode="email">
+        <button type="submit" class="vac-splash-btn" id="vac-splash-btn">Enviar magic link</button>
+        <div class="vac-splash-status" id="vac-splash-status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contenido autenticado -->
+  <div class="vac-app" id="vac-app" style="display:none">
+
+    <!-- Header del módulo -->
+    <div class="sched-filter-bar">
+      <div class="sched-filter-row" style="align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="tt-header-title">
+          <svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>
+          <span class="tt-title">Vacaciones</span>
+          <span class="tt-pill-info" id="vac-user-pill">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-package"/></svg>
+            <span id="vac-user-pill-name">—</span>
+            <button type="button" class="tt-chip-x" id="vac-logout-btn" title="Cerrar sesión" aria-label="Cerrar sesión">×</button>
+          </span>
+        </div>
+        <div class="vac-subtab-bar" role="tablist" aria-label="Sub-secciones de Vacaciones">
+          <button type="button" class="vac-subtab vac-subtab--active" data-subtab="mi" role="tab" aria-selected="true">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-calendar"/></svg> Mi calendario
+          </button>
+          <button type="button" class="vac-subtab" data-subtab="equipo" role="tab" aria-selected="false">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-bars"/></svg> Equipo
+          </button>
+          <button type="button" class="vac-subtab" data-subtab="cargar" role="tab" aria-selected="false">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg> Cargar
+          </button>
+          <button type="button" class="vac-subtab vac-admin-only" data-subtab="admin" role="tab" aria-selected="false" style="display:none">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-wrench"/></svg> Administración
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disclaimer naranja: período vacacional -->
+    <div class="vac-disclaimer">
+      <div class="vac-disclaimer-ico" aria-hidden="true">i</div>
+      <div>Período vacacional: <strong>1° de octubre al 30 de septiembre</strong>. Los días disponibles se renuevan cada 1° de octubre.</div>
+    </div>
+
+    <!-- Banner de aprobaciones pendientes (solo admin, oculto si no hay) -->
+    <div class="vac-approval-banner vac-admin-only" id="vac-approval-banner" style="display:none">
+      <div class="vac-approval-ico" aria-hidden="true">!</div>
+      <div class="vac-approval-text" id="vac-approval-text"><strong>0</strong> solicitudes pendientes de aprobación.</div>
+      <button type="button" class="vac-btn-primary" id="vac-go-admin">Revisar</button>
+    </div>
+
+    <!-- Containers de cada sub-tab (vacíos en Fase 2, contenido se llena en fases siguientes) -->
+    <div class="vac-section vac-section--active" data-section="mi">
+      <div class="vac-empty">
+        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-calendar"/></svg>
+        <p>Mi calendario — se implementa en Fase 3.</p>
+      </div>
+    </div>
+
+    <div class="vac-section" data-section="equipo">
+      <div class="vac-empty">
+        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-bars"/></svg>
+        <p>Vista del equipo — se implementa en Fase 4.</p>
+      </div>
+    </div>
+
+    <div class="vac-section" data-section="cargar">
+      <div class="vac-empty">
+        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-plus"/></svg>
+        <p>Carga de solicitudes — se implementa en Fase 3.</p>
+      </div>
+    </div>
+
+    <div class="vac-section vac-admin-only" data-section="admin">
+      <div class="vac-empty">
+        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-wrench"/></svg>
+        <p>Administración — se implementa en Fase 5.</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<!-- ═══════════ FIN TAB: VACACIONES ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1746,7 +2005,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -1758,6 +2017,8 @@ function switchTab(name) {
   else if(window.cleanupScheduleRT){ window.cleanupScheduleRT(); }
   if(name==='detention' && window.loadDetention){ loadDetention(); }
   if(name==='tt-dow' && window.loadTT){ loadTT(); }
+  if(name==='vacaciones' && window.vacOnEnterTab){ window.vacOnEnterTab(); }
+  else if(window.vacOnLeaveTab){ window.vacOnLeaveTab(); }
 }
 
 // ── BELL ──
@@ -8074,6 +8335,294 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 })();
 </script>
 <!-- ═══════════ FIN TARIFAS TERRESTRES DOW ═══════════ -->
+
+<!-- ═══════════ VACACIONES MODULE — auth + badge polling (Fase 2) ═══════════ -->
+<script>
+(() => {
+  const SUPA_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
+  const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
+    auth: { storageKey: 'sb-vacaciones-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  const POLL_MS = 60_000;
+
+  const $ = id => document.getElementById(id);
+  const escHtml = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Estado del módulo
+  window.__vac = window.__vac || {};
+  window.__vacAuth = null;
+  window.__vac.badgeIntervalId = null;
+  window.__vac.authSubscription = null;
+  window.__vac.currentSubtab = 'mi';
+
+  function setStatus(kind, msg){
+    const el = $('vac-splash-status');
+    if(!el) return;
+    el.className = 'vac-splash-status ' + (kind || '');
+    el.textContent = msg || '';
+  }
+
+  function showSplash(){
+    const sp = $('vac-splash'); const ap = $('vac-app');
+    if(sp) sp.style.display = 'flex';
+    if(ap) ap.style.display = 'none';
+  }
+  function hideSplash(){
+    const sp = $('vac-splash'); const ap = $('vac-app');
+    if(sp) sp.style.display = 'none';
+    if(ap) ap.style.display = 'flex';
+  }
+
+  function setAdminUI(isAdmin){
+    // El admin button del segmented control se muestra/oculta. La section
+    // admin queda gobernada por la clase .vac-section--active, no por
+    // inline display (evita que quede 'block' tras setAdminUI y se solape
+    // con otra section). El banner lo gobierna updatePendingBadge.
+    document.querySelectorAll('#panel-vacaciones .vac-admin-only').forEach(el => {
+      if(el.classList.contains('vac-section')) return;
+      if(el.id === 'vac-approval-banner'){
+        if(!isAdmin) el.style.display = 'none';
+        return;
+      }
+      el.style.display = isAdmin ? '' : 'none';
+    });
+    // Si el usuario no es admin pero la sub-tab actual era 'admin', volver a 'mi'
+    if(!isAdmin && window.__vac.currentSubtab === 'admin'){
+      switchSubtab('mi');
+    }
+  }
+
+  async function loadEmployeeForEmail(email){
+    const { data, error } = await supa
+      .from('vac_employees')
+      .select('id,email,full_name,role,annual_days,backup_employee_ids,active')
+      .eq('email', email)
+      .maybeSingle();
+    if(error) return { error };
+    if(!data) return { notFound: true };
+    if(!data.active) return { inactive: true };
+    return { employee: data };
+  }
+
+  async function applySession(session){
+    if(!session || !session.user || !session.user.email){
+      window.__vacAuth = null;
+      stopBadgePolling();
+      showSplash();
+      updatePendingBadge();
+      return;
+    }
+    const email = session.user.email.toLowerCase();
+    const res = await loadEmployeeForEmail(email);
+    if(res.error){
+      setStatus('err', 'No se pudo verificar tu cuenta. Reintentá.');
+      await supa.auth.signOut();
+      return;
+    }
+    if(res.notFound){
+      setStatus('err', 'Tu email no está registrado. Pedile al admin que te dé de alta.');
+      await supa.auth.signOut();
+      return;
+    }
+    if(res.inactive){
+      setStatus('err', 'Tu cuenta está desactivada. Contactá al admin.');
+      await supa.auth.signOut();
+      return;
+    }
+    const emp = res.employee;
+    window.__vacAuth = {
+      user: session.user,
+      employee: emp,
+      isAdmin: emp.role === 'admin'
+    };
+    // UI auth
+    const pillName = $('vac-user-pill-name');
+    if(pillName) pillName.textContent = emp.full_name + (window.__vacAuth.isAdmin ? ' · admin' : '');
+    setAdminUI(window.__vacAuth.isAdmin);
+    hideSplash();
+    setStatus('', '');
+    // Polling y badge
+    startBadgePolling();
+    updatePendingBadge();
+  }
+
+  async function sendMagicLink(email){
+    const btn = $('vac-splash-btn');
+    if(btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
+    setStatus('info', '');
+    const redirect = window.location.origin + window.location.pathname + '?tab=vacaciones';
+    const { error } = await supa.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirect }
+    });
+    if(btn){ btn.disabled = false; btn.textContent = 'Enviar magic link'; }
+    if(error){
+      setStatus('err', 'No se pudo enviar el link: ' + (error.message || 'error desconocido'));
+      return;
+    }
+    setStatus('ok', 'Te mandamos un mail con el link. Revisá tu bandeja.');
+  }
+
+  async function logout(){
+    await supa.auth.signOut();
+    // applySession(null) lo maneja onAuthStateChange
+  }
+
+  // ── Badge polling ──
+  async function fetchPendingCount(){
+    const { count, error } = await supa
+      .from('vac_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pendiente');
+    if(error) return null;
+    return count || 0;
+  }
+
+  async function fetchPendingNames(limit){
+    const { data, error } = await supa
+      .from('vac_requests')
+      .select('id, vac_employees!vac_requests_employee_id_fkey(full_name)')
+      .eq('status', 'pendiente')
+      .order('created_at', { ascending: true })
+      .limit(limit);
+    if(error || !data) return [];
+    return data.map(r => r.vac_employees?.full_name).filter(Boolean);
+  }
+
+  async function updatePendingBadge(){
+    const tabBadge = $('vac-tab-badge');
+    const banner = $('vac-approval-banner');
+    const text = $('vac-approval-text');
+    const isAdmin = window.__vacAuth && window.__vacAuth.isAdmin;
+    if(!isAdmin){
+      if(tabBadge) tabBadge.style.display = 'none';
+      if(banner) banner.style.display = 'none';
+      return;
+    }
+    const count = await fetchPendingCount();
+    if(count == null){
+      // Error de red: no romper, solo ocultar
+      if(tabBadge) tabBadge.style.display = 'none';
+      if(banner) banner.style.display = 'none';
+      return;
+    }
+    if(count > 0){
+      if(tabBadge){ tabBadge.style.display = 'inline-flex'; tabBadge.textContent = String(count); }
+      const names = await fetchPendingNames(3);
+      const more = count - names.length;
+      let txt = `<strong>${count}</strong> ${count===1?'solicitud pendiente':'solicitudes pendientes'} de aprobación`;
+      if(names.length){
+        const safe = names.map(n => escHtml(n));
+        txt += ': ' + safe.join(', ');
+        if(more > 0) txt += ` y ${more} más`;
+      }
+      if(text) text.innerHTML = txt + '.';
+      if(banner) banner.style.display = 'flex';
+    } else {
+      if(tabBadge) tabBadge.style.display = 'none';
+      if(banner) banner.style.display = 'none';
+    }
+  }
+  // Exponer para uso desde futuras fases (insert/update/delete refrescan inmediato)
+  window.vacUpdatePendingBadge = updatePendingBadge;
+
+  function startBadgePolling(){
+    stopBadgePolling();
+    window.__vac.badgeIntervalId = setInterval(updatePendingBadge, POLL_MS);
+  }
+  function stopBadgePolling(){
+    if(window.__vac.badgeIntervalId){
+      clearInterval(window.__vac.badgeIntervalId);
+      window.__vac.badgeIntervalId = null;
+    }
+  }
+
+  // ── Sub-tabs ──
+  function switchSubtab(name){
+    if(!name) return;
+    if(name === 'admin' && !(window.__vacAuth && window.__vacAuth.isAdmin)) return;
+    window.__vac.currentSubtab = name;
+    document.querySelectorAll('#panel-vacaciones .vac-subtab').forEach(b => {
+      const on = b.dataset.subtab === name;
+      b.classList.toggle('vac-subtab--active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('#panel-vacaciones .vac-section').forEach(s => {
+      s.classList.toggle('vac-section--active', s.dataset.section === name);
+    });
+  }
+  window.vacSwitchSubtab = switchSubtab;
+
+  // Hooks que llama switchTab() del index
+  window.vacOnEnterTab = function(){
+    if(window.__vacAuth) updatePendingBadge();
+  };
+  window.vacOnLeaveTab = function(){ /* no-op por ahora */ };
+
+  // ── Wire-up de eventos del DOM ──
+  function wireUp(){
+    const form = $('vac-splash-form');
+    if(form && !form._wired){
+      form._wired = true;
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const inp = $('vac-splash-email');
+        const email = (inp?.value || '').trim().toLowerCase();
+        if(!email) return;
+        sendMagicLink(email);
+      });
+    }
+    const logoutBtn = $('vac-logout-btn');
+    if(logoutBtn && !logoutBtn._wired){
+      logoutBtn._wired = true;
+      logoutBtn.addEventListener('click', logout);
+    }
+    document.querySelectorAll('#panel-vacaciones .vac-subtab').forEach(b => {
+      if(b._wired) return;
+      b._wired = true;
+      b.addEventListener('click', () => switchSubtab(b.dataset.subtab));
+    });
+    const goAdminBtn = $('vac-go-admin');
+    if(goAdminBtn && !goAdminBtn._wired){
+      goAdminBtn._wired = true;
+      goAdminBtn.addEventListener('click', () => switchSubtab('admin'));
+    }
+  }
+
+  // ── Init ──
+  async function vacInit(){
+    wireUp();
+    // Listener (idempotente: si ya hay uno, lo unsubscribimos antes)
+    if(window.__vac.authSubscription && typeof window.__vac.authSubscription.unsubscribe === 'function'){
+      try { window.__vac.authSubscription.unsubscribe(); } catch(_) {}
+    }
+    const { data: subData } = supa.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+    window.__vac.authSubscription = subData?.subscription || null;
+
+    const { data: { session } } = await supa.auth.getSession();
+    await applySession(session);
+
+    // Deep-link ?tab=vacaciones (la lógica completa con &sub=… llega en Fase 5)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if(params.get('tab') === 'vacaciones' && typeof window.switchTab === 'function'){
+        window.switchTab('vacaciones');
+      }
+    } catch(_) {}
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', vacInit, { once: true });
+  } else {
+    vacInit();
+  }
+})();
+</script>
+<!-- ═══════════ FIN VACACIONES MODULE ═══════════ -->
 
 </body>
 </html>
