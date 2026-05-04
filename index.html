@@ -1126,6 +1126,223 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 }
 #panel-vacaciones .vac-empty .ic{width:48px;height:48px;opacity:.45;color:var(--muted)}
 #panel-vacaciones .vac-empty p{font-size:var(--fs-sm);margin:0}
+
+/* ── Mi calendario: stats strip ── */
+#panel-vacaciones .vac-stats-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--border);border:1px solid var(--border);border-radius:8px;
+  overflow:hidden;margin-bottom:18px;
+}
+#panel-vacaciones .vac-stat{background:var(--surface);padding:14px 18px}
+#panel-vacaciones .vac-stat-label{
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:6px;font-weight:600;font-family:var(--mono);
+}
+#panel-vacaciones .vac-stat-value{
+  font-family:var(--font);font-size:24px;font-weight:700;
+  letter-spacing:-.02em;line-height:1;color:var(--text);
+}
+#panel-vacaciones .vac-stat-unit{font-size:var(--fs-sm);color:var(--muted);margin-left:5px;font-weight:500}
+
+/* ── Mi calendario: layout calendario + side ── */
+#panel-vacaciones .vac-cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
+@media (max-width:1100px){
+  #panel-vacaciones .vac-cal-layout{grid-template-columns:1fr}
+  #panel-vacaciones .vac-stats-strip{grid-template-columns:repeat(2,1fr)}
+}
+#panel-vacaciones .vac-cal-panel,
+#panel-vacaciones .vac-side-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.06));
+}
+#panel-vacaciones .vac-panel-header{
+  padding:13px 18px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+#panel-vacaciones .vac-panel-title{font-size:var(--fs-md);font-weight:700;letter-spacing:-.005em}
+#panel-vacaciones .vac-month-nav{display:flex;align-items:center;gap:6px}
+#panel-vacaciones .vac-nav-btn{
+  width:28px;height:28px;border-radius:6px;
+  background:var(--faint);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;display:grid;place-items:center;font-family:var(--font);font-size:14px;
+  transition:background .12s,border-color .12s;
+}
+#panel-vacaciones .vac-nav-btn:hover{background:var(--surface-hv);border-color:var(--border-strong,var(--border))}
+#panel-vacaciones .vac-month-label{
+  font-family:var(--font);font-weight:700;font-size:var(--fs-md);
+  min-width:140px;text-align:center;letter-spacing:-.01em;text-transform:capitalize;
+}
+
+/* Calendario grid */
+#panel-vacaciones .vac-cal-body{padding:14px}
+#panel-vacaciones .vac-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+#panel-vacaciones .vac-cal-dow{
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);text-align:center;padding:6px 0;font-weight:700;font-family:var(--mono);
+}
+#panel-vacaciones .vac-cal-day{
+  aspect-ratio:1.25/1;border:1px solid var(--border);border-radius:6px;
+  padding:6px 8px;font-size:var(--fs-sm);background:var(--surface);
+  position:relative;display:flex;flex-direction:column;
+}
+#panel-vacaciones .vac-cal-day--muted{opacity:.35}
+#panel-vacaciones .vac-cal-day--today{border:2px solid var(--blue)}
+#panel-vacaciones .vac-cal-day--today .vac-cal-day-num{color:var(--blue);font-weight:700}
+#panel-vacaciones .vac-cal-day-num{font-weight:600;font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-cal-day-tag{
+  font-size:9px;color:var(--muted);margin-top:auto;
+  text-transform:uppercase;letter-spacing:.05em;font-weight:600;
+  font-family:var(--mono);line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#panel-vacaciones .vac-cal-day.vac-aprobada .vac-cal-day-num{color:var(--green);font-weight:700}
+#panel-vacaciones .vac-cal-day.vac-pendiente .vac-cal-day-num{color:var(--amber);font-weight:700}
+#panel-vacaciones .vac-cal-day.vac-tentativa{
+  background:repeating-linear-gradient(45deg,var(--purple-bg),var(--purple-bg) 4px,var(--surface) 4px,var(--surface) 8px);
+  border-style:dashed;
+}
+#panel-vacaciones .vac-cal-day.vac-tentativa .vac-cal-day-num{color:var(--purple);font-weight:700}
+#panel-vacaciones .vac-cal-day.vac-feriado .vac-cal-day-num{color:var(--red);font-weight:700}
+#panel-vacaciones .vac-cal-day.vac-feriado .vac-cal-day-tag{color:var(--red)}
+#panel-vacaciones .vac-cal-day.vac-no-laborable .vac-cal-day-tag{color:var(--amber)}
+
+/* Side panel */
+#panel-vacaciones .vac-side-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+#panel-vacaciones .vac-side-section:last-child{border-bottom:none}
+#panel-vacaciones .vac-side-title{
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);font-weight:700;margin-bottom:11px;font-family:var(--mono);
+}
+#panel-vacaciones .vac-side-strong{font-size:var(--fs-md);font-weight:600;color:var(--text)}
+#panel-vacaciones .vac-side-hint{font-size:var(--fs-xs);color:var(--muted);margin-top:4px;line-height:1.45}
+#panel-vacaciones .vac-side-empty{
+  font-size:var(--fs-xs);color:var(--muted);font-style:italic;
+  background:var(--faint);border:1px dashed var(--border);border-radius:6px;
+  padding:10px 12px;
+}
+
+/* Item de "Mis solicitudes" */
+#panel-vacaciones .vac-item{
+  background:var(--faint);border:1px solid var(--border);
+  border-left:3px solid var(--green);border-radius:6px;
+  padding:9px 12px;margin-bottom:7px;
+}
+#panel-vacaciones .vac-item:last-child{margin-bottom:0}
+#panel-vacaciones .vac-item--pendiente{border-left-color:var(--amber)}
+#panel-vacaciones .vac-item--tentativa{border-left-color:var(--purple);border-left-style:dashed}
+#panel-vacaciones .vac-item--rechazada{border-left-color:var(--red)}
+#panel-vacaciones .vac-item-dates{font-family:var(--mono);font-size:var(--fs-xs);font-weight:600;color:var(--text)}
+#panel-vacaciones .vac-item-meta{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:var(--fs-xs);color:var(--muted);margin-top:4px;
+}
+#panel-vacaciones .vac-item-status{
+  font-size:9px;padding:2px 6px;border-radius:3px;
+  text-transform:uppercase;letter-spacing:.05em;font-weight:700;
+  font-family:var(--mono);border:1px solid;
+}
+#panel-vacaciones .vac-item-note{font-size:var(--fs-xs);color:var(--muted);margin-top:5px;line-height:1.4}
+#panel-vacaciones .vac-item-actions{display:flex;gap:6px;margin-top:7px}
+#panel-vacaciones .vac-item-actions:empty{display:none}
+#panel-vacaciones .vac-mini-btn{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-family:var(--font);font-size:var(--fs-2xs);font-weight:600;
+  padding:3px 8px;border-radius:4px;cursor:pointer;
+  text-transform:uppercase;letter-spacing:.04em;
+  transition:color .12s,border-color .12s,background .12s;
+}
+#panel-vacaciones .vac-mini-btn:hover{color:var(--text);border-color:var(--border-strong,var(--border))}
+#panel-vacaciones .vac-mini-btn--danger:hover{color:var(--red);border-color:var(--red);background:var(--red-bg)}
+
+/* Leyenda */
+#panel-vacaciones .vac-legend{display:flex;flex-direction:column;gap:7px}
+#panel-vacaciones .vac-legend-item{display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);color:var(--text)}
+#panel-vacaciones .vac-legend-swatch{
+  width:14px;height:14px;border-radius:3px;border:1px solid var(--border);flex-shrink:0;
+}
+#panel-vacaciones .vac-legend-swatch.vac-tentativa{
+  background:repeating-linear-gradient(45deg,var(--purple-bg),var(--purple-bg) 4px,var(--surface) 4px,var(--surface) 8px);
+  border-style:dashed;
+}
+
+/* ── Cargar: form ── */
+#panel-vacaciones .vac-form-container{max-width:640px;margin:0 auto}
+#panel-vacaciones .vac-form-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:24px 28px;box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.06));
+}
+#panel-vacaciones .vac-form-head{margin-bottom:18px}
+#panel-vacaciones .vac-form-title{
+  font-family:var(--font);font-size:20px;font-weight:700;
+  letter-spacing:-.02em;margin-bottom:4px;color:var(--text);
+}
+#panel-vacaciones .vac-form-sub{color:var(--muted);font-size:var(--fs-sm);line-height:1.5;margin:0}
+#panel-vacaciones .vac-form-row{margin-bottom:14px}
+#panel-vacaciones .vac-form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){#panel-vacaciones .vac-form-row-2{grid-template-columns:1fr}}
+#panel-vacaciones .vac-form-label{
+  display:block;font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);font-weight:700;margin-bottom:6px;font-family:var(--mono);
+}
+#panel-vacaciones .vac-form-input,
+#panel-vacaciones .vac-form-select,
+#panel-vacaciones .vac-form-textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;
+  font-family:var(--font);font-size:var(--fs-md);
+  background:var(--surface);color:var(--text);
+}
+#panel-vacaciones .vac-form-textarea{font-family:var(--font);resize:vertical;min-height:60px}
+#panel-vacaciones .vac-form-input:focus,
+#panel-vacaciones .vac-form-select:focus,
+#panel-vacaciones .vac-form-textarea:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);
+}
+#panel-vacaciones .vac-form-help{
+  font-size:var(--fs-xs);color:var(--muted);margin-top:6px;line-height:1.45;
+}
+#panel-vacaciones .vac-form-summary{
+  background:var(--faint);border:1px solid var(--border);border-radius:8px;
+  padding:14px 18px;margin:18px 0 10px;font-size:var(--fs-md);
+}
+#panel-vacaciones .vac-form-summary-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+#panel-vacaciones .vac-form-big{font-family:var(--font);font-size:22px;font-weight:700;letter-spacing:-.02em}
+#panel-vacaciones .vac-form-muted{color:var(--muted);font-size:var(--fs-sm)}
+#panel-vacaciones .vac-form-range{font-size:var(--fs-xs);color:var(--muted);margin-top:3px;font-family:var(--mono)}
+#panel-vacaciones .vac-form-error{
+  background:var(--red-bg);border-left:3px solid var(--red);
+  padding:9px 14px;border-radius:4px;font-size:var(--fs-sm);color:var(--red);margin:10px 0;
+}
+body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
+#panel-vacaciones .vac-form-warning{
+  background:var(--amber-bg);border-left:3px solid var(--amber);
+  padding:9px 14px;border-radius:4px;font-size:var(--fs-sm);color:var(--amber);margin:10px 0;line-height:1.5;
+}
+#panel-vacaciones .vac-form-warning strong{font-weight:700;color:var(--amber)}
+#panel-vacaciones .vac-form-actions{
+  display:flex;gap:10px;justify-content:flex-end;
+  margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
+}
+#panel-vacaciones .vac-btn-ghost{
+  padding:9px 14px;border:1px solid var(--border);
+  background:transparent;color:var(--text);
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  border-radius:7px;cursor:pointer;transition:background .12s,border-color .12s;
+}
+#panel-vacaciones .vac-btn-ghost:hover{background:var(--faint);border-color:var(--border-strong,var(--border))}
+#panel-vacaciones .vac-btn-primary:disabled,
+#panel-vacaciones .vac-btn-ghost:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Toast ── */
+.vac-toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--text);color:var(--bg);
+  padding:10px 18px;border-radius:8px;
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  z-index:9999;
+}
+.vac-toast.vac-toast--show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* ═══════════════════════════════ FIN VACACIONES MODULE ═══════════════════════════════ */
 </style>
 </head>
@@ -1914,9 +2131,65 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 
     <!-- Containers de cada sub-tab (vacíos en Fase 2, contenido se llena en fases siguientes) -->
     <div class="vac-section vac-section--active" data-section="mi">
-      <div class="vac-empty">
-        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-calendar"/></svg>
-        <p>Mi calendario — se implementa en Fase 3.</p>
+      <!-- Stats strip -->
+      <div class="vac-stats-strip">
+        <div class="vac-stat">
+          <div class="vac-stat-label">Total anual</div>
+          <div class="vac-stat-value"><span id="vac-stat-total">—</span><span class="vac-stat-unit">días</span></div>
+        </div>
+        <div class="vac-stat">
+          <div class="vac-stat-label">Aprobados</div>
+          <div class="vac-stat-value" style="color:var(--green)"><span id="vac-stat-approved">—</span><span class="vac-stat-unit">días</span></div>
+        </div>
+        <div class="vac-stat">
+          <div class="vac-stat-label">Pendientes</div>
+          <div class="vac-stat-value" style="color:var(--amber)"><span id="vac-stat-pending">—</span><span class="vac-stat-unit">días</span></div>
+        </div>
+        <div class="vac-stat">
+          <div class="vac-stat-label">Restantes</div>
+          <div class="vac-stat-value"><span id="vac-stat-remaining">—</span><span class="vac-stat-unit">días</span></div>
+        </div>
+      </div>
+
+      <!-- Calendar + side panel -->
+      <div class="vac-cal-layout">
+        <div class="vac-cal-panel">
+          <div class="vac-panel-header">
+            <div class="vac-panel-title">Mis vacaciones</div>
+            <div class="vac-month-nav">
+              <button type="button" class="vac-nav-btn" id="vac-prev-month" aria-label="Mes anterior">‹</button>
+              <div class="vac-month-label" id="vac-month-label">—</div>
+              <button type="button" class="vac-nav-btn" id="vac-next-month" aria-label="Mes siguiente">›</button>
+            </div>
+          </div>
+          <div class="vac-cal-body">
+            <div class="vac-cal-grid" id="vac-cal-grid"></div>
+          </div>
+        </div>
+
+        <div class="vac-side-panel">
+          <div class="vac-side-section">
+            <div class="vac-side-title">Mis solicitudes</div>
+            <div id="vac-my-requests-list">
+              <div class="vac-side-empty">— sin solicitudes en el período actual —</div>
+            </div>
+          </div>
+          <div class="vac-side-section">
+            <div class="vac-side-title">Mi back-up</div>
+            <div id="vac-backup-list" class="vac-side-strong">—</div>
+            <div class="vac-side-hint">Si pedís vacaciones cuando tu back-up también está, te avisamos.</div>
+          </div>
+          <div class="vac-side-section">
+            <div class="vac-side-title">Referencias</div>
+            <div class="vac-legend">
+              <div class="vac-legend-item"><div class="vac-legend-swatch vac-aprobada"></div>Vacaciones aprobadas</div>
+              <div class="vac-legend-item"><div class="vac-legend-swatch vac-pendiente"></div>Pendiente de aprobación</div>
+              <div class="vac-legend-item"><div class="vac-legend-swatch vac-tentativa"></div>Tentativa</div>
+              <div class="vac-legend-item"><div class="vac-legend-swatch vac-feriado"></div>Feriado nacional</div>
+              <div class="vac-legend-item"><div class="vac-legend-swatch vac-no-laborable"></div>Día no laborable</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1928,9 +2201,70 @@ body.dark .vac-approval-text strong{color:var(--amber)}
     </div>
 
     <div class="vac-section" data-section="cargar">
-      <div class="vac-empty">
-        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-plus"/></svg>
-        <p>Carga de solicitudes — se implementa en Fase 3.</p>
+      <div class="vac-form-container">
+        <div class="vac-form-card">
+          <div class="vac-form-head">
+            <h2 class="vac-form-title" id="vac-form-title">Solicitar vacaciones</h2>
+            <p class="vac-form-sub" id="vac-form-sub">Tu solicitud queda en estado pendiente hasta que un admin la apruebe.</p>
+          </div>
+
+          <form id="vac-form" autocomplete="off" novalidate>
+            <div class="vac-form-row">
+              <label class="vac-form-label" for="vac-form-mode">Tipo de solicitud</label>
+              <select class="vac-form-select" id="vac-form-mode">
+                <option value="rango" selected>Días específicos / rango</option>
+                <option value="semana">Semana completa (lun a dom)</option>
+              </select>
+            </div>
+
+            <div class="vac-form-row vac-form-row-2">
+              <div>
+                <label class="vac-form-label" for="vac-form-from">Desde</label>
+                <input type="date" class="vac-form-input" id="vac-form-from" required>
+              </div>
+              <div>
+                <label class="vac-form-label" for="vac-form-to">Hasta</label>
+                <input type="date" class="vac-form-input" id="vac-form-to" required>
+              </div>
+            </div>
+
+            <div class="vac-form-row">
+              <label class="vac-form-label" for="vac-form-status">Estado</label>
+              <select class="vac-form-select" id="vac-form-status">
+                <option value="pendiente" selected>Confirmada (pasa por aprobación)</option>
+                <option value="tentativa">Tentativa (a confirmar después)</option>
+              </select>
+              <div class="vac-form-help" id="vac-form-status-help">Las confirmadas quedan pendientes hasta que admin las aprueba. Las tentativas reservan los días sin pasar por aprobación.</div>
+            </div>
+
+            <div class="vac-form-row">
+              <label class="vac-form-label" for="vac-form-note">Nota (opcional)</label>
+              <textarea class="vac-form-textarea" id="vac-form-note" rows="2" placeholder="Ej: vacaciones de invierno, feriado puente, etc."></textarea>
+            </div>
+
+            <div class="vac-form-summary">
+              <div class="vac-form-summary-row">
+                <div>
+                  <span class="vac-form-big" id="vac-form-days">0</span><span class="vac-form-muted"> días corridos</span>
+                  <div class="vac-form-range mono" id="vac-form-range">—</div>
+                </div>
+                <div style="text-align:right">
+                  <div class="vac-form-muted">Saldo proyectado</div>
+                  <span class="vac-form-big" id="vac-form-balance" style="color:var(--green)">—</span>
+                  <span class="vac-form-muted"> de <span id="vac-form-annual">—</span> días</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="vac-form-error" id="vac-form-error" style="display:none"></div>
+            <div class="vac-form-warning" id="vac-form-warning" style="display:none"></div>
+
+            <div class="vac-form-actions">
+              <button type="button" class="vac-btn-ghost" id="vac-form-cancel">Cancelar</button>
+              <button type="submit" class="vac-btn-primary" id="vac-form-submit">Enviar solicitud</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -8412,6 +8746,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       stopBadgePolling();
       showSplash();
       updatePendingBadge();
+      clearPhase3Data();
       return;
     }
     const email = session.user.email.toLowerCase();
@@ -8446,6 +8781,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Polling y badge
     startBadgePolling();
     updatePendingBadge();
+    // Disparar carga de la sub-tab activa (default: 'mi')
+    const cur = window.__vac.currentSubtab;
+    if(cur === 'mi') onEnterMi();
+    else if(cur === 'cargar') onEnterCargar();
   }
 
   async function sendMagicLink(email){
@@ -8539,6 +8878,467 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
   }
 
+  // ════════════════ FASE 3: Mi calendario + Cargar ════════════════
+
+  // Estado
+  window.__vac.requests       = [];
+  window.__vac.backupRequests = [];
+  window.__vac.holidays       = [];
+  window.__vac.balance        = null;
+  window.__vac.currentMonth   = null;
+  window.__vac.editingId      = null;
+  const _miState = { initialized: false };
+
+  // Date helpers — todo en 'YYYY-MM-DD' string para evitar shifts UTC
+  function toIsoDate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+  }
+  function parseIsoDate(s){
+    if(!s) return null;
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function formatDmy(s){
+    if(!s) return '—';
+    const [y,m,d] = s.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  function daysBetweenInclusive(startIso, endIso){
+    const a = parseIsoDate(startIso), b = parseIsoDate(endIso);
+    if(!a || !b) return 0;
+    return Math.round((b - a) / 86400000) + 1;
+  }
+  function rangesOverlap(aStart, aEnd, bStart, bEnd){
+    // Comparación lexicográfica de YYYY-MM-DD == cronológica
+    return aStart <= bEnd && bStart <= aEnd;
+  }
+  function getCurrentPeriodYear(){
+    const d = new Date();
+    return d.getMonth() >= 9 ? d.getFullYear() : d.getFullYear() - 1;
+  }
+  function getCurrentPeriodRange(){
+    const py = getCurrentPeriodYear();
+    return { startIso: `${py}-10-01`, endIso: `${py+1}-09-30` };
+  }
+  const MONTH_NAMES_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DOW_SHORT_LUN = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+  function clearPhase3Data(){
+    window.__vac.requests = [];
+    window.__vac.backupRequests = [];
+    window.__vac.holidays = [];
+    window.__vac.balance = null;
+    window.__vac.editingId = null;
+    _miState.initialized = false;
+  }
+
+  // ── Carga de datos: balance + mis solicitudes + feriados + solicitudes de back-ups ──
+  async function loadMyData(){
+    if(!window.__vacAuth) return;
+    const empId = window.__vacAuth.employee.id;
+    const periodYear = getCurrentPeriodYear();
+    const { startIso, endIso } = getCurrentPeriodRange();
+    const backupIds = window.__vacAuth.employee.backup_employee_ids || [];
+
+    const queries = [
+      supa.from('vac_balance_view').select('*').eq('employee_id', empId).maybeSingle(),
+      supa.from('vac_requests').select('*').eq('employee_id', empId).eq('period_year', periodYear).order('start_date', { ascending: false }),
+      supa.from('vac_holidays').select('*').gte('date', startIso).lte('date', endIso).order('date', { ascending: true }),
+      backupIds.length
+        ? supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
+        : Promise.resolve({ data: [], error: null })
+    ];
+    const [bRes, rRes, hRes, bkRes] = await Promise.all(queries);
+
+    window.__vac.balance        = bRes?.data || null;
+    window.__vac.requests       = rRes?.data || [];
+    window.__vac.holidays       = hRes?.data || [];
+    window.__vac.backupRequests = bkRes?.data || [];
+  }
+
+  // ── Render: stats strip ──
+  function renderStatsStrip(){
+    const b = window.__vac.balance;
+    const e = window.__vacAuth?.employee;
+    const annual = b?.annual_days ?? e?.annual_days ?? 0;
+    const set = (id, v) => { const el = $(id); if(el) el.textContent = String(v); };
+    set('vac-stat-total', annual);
+    set('vac-stat-approved', b?.days_approved ?? 0);
+    set('vac-stat-pending', b?.days_pending ?? 0);
+    set('vac-stat-remaining', b?.days_remaining ?? annual);
+  }
+
+  // ── Render: calendario mensual ──
+  function renderMonthGrid(){
+    const grid = $('vac-cal-grid');
+    if(!grid) return;
+    const ref = window.__vac.currentMonth || new Date();
+    const y = ref.getFullYear();
+    const m = ref.getMonth();
+    const firstDay = new Date(y, m, 1);
+    const lastDay  = new Date(y, m+1, 0);
+    const offset = (firstDay.getDay() + 6) % 7;       // Lun = 0
+    const totalCells = offset + lastDay.getDate();
+    const trailing = (7 - (totalCells % 7)) % 7;
+
+    const lbl = $('vac-month-label');
+    if(lbl) lbl.textContent = `${MONTH_NAMES_LONG[m]} ${y}`;
+
+    // Map iso → estado (request gana sobre holiday por claridad UX)
+    const dayState = {};
+    for(const h of (window.__vac.holidays || [])){
+      const isNoLab = h.type === 'no_laborable';
+      dayState[h.date] = { type: isNoLab ? 'no_laborable' : 'feriado', label: h.name };
+    }
+    for(const r of (window.__vac.requests || [])){
+      if(r.status === 'rechazada') continue;
+      const start = parseIsoDate(r.start_date);
+      const end = parseIsoDate(r.end_date);
+      if(!start || !end) continue;
+      for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+        const iso = toIsoDate(d);
+        const stateMap = { aprobada:'aprobada', pendiente:'pendiente', tentativa:'tentativa' };
+        const cls = stateMap[r.status];
+        if(cls){
+          const labelBase = r.status[0].toUpperCase() + r.status.slice(1);
+          dayState[iso] = { type: cls, label: r.note ? `${labelBase} — ${r.note}` : labelBase };
+        }
+      }
+    }
+
+    const todayIso = toIsoDate(new Date());
+    const out = [];
+    // Headers Lun-Dom
+    for(const d of DOW_SHORT_LUN) out.push(`<div class="vac-cal-dow">${d}</div>`);
+    // Días del mes anterior (muted)
+    for(let i = offset; i > 0; i--){
+      const d = new Date(y, m, 1 - i);
+      out.push(`<div class="vac-cal-day vac-cal-day--muted"><span class="vac-cal-day-num">${d.getDate()}</span></div>`);
+    }
+    // Días del mes
+    for(let d = 1; d <= lastDay.getDate(); d++){
+      const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const st = dayState[iso];
+      const classes = ['vac-cal-day'];
+      let tag = '';
+      if(iso === todayIso) classes.push('vac-cal-day--today');
+      if(st){
+        const tagMap = { aprobada:'Aprob.', pendiente:'Pend.', tentativa:'Tent.', feriado:'Feriado', no_laborable:'No lab.' };
+        classes.push('vac-' + st.type);
+        tag = tagMap[st.type] || '';
+      } else if(iso === todayIso){
+        tag = 'Hoy';
+      }
+      const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
+      const tagHtml = tag ? `<span class="vac-cal-day-tag">${tag}</span>` : '';
+      out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${tagHtml}</div>`);
+    }
+    // Días del mes siguiente (muted)
+    for(let i = 1; i <= trailing; i++){
+      out.push(`<div class="vac-cal-day vac-cal-day--muted"><span class="vac-cal-day-num">${i}</span></div>`);
+    }
+    grid.innerHTML = out.join('');
+  }
+
+  // ── Render: lista "Mis solicitudes" ──
+  function renderMyRequests(){
+    const list = $('vac-my-requests-list');
+    if(!list) return;
+    const reqs = window.__vac.requests || [];
+    if(reqs.length === 0){
+      list.innerHTML = '<div class="vac-side-empty">— sin solicitudes en el período actual —</div>';
+      return;
+    }
+    list.innerHTML = '';
+    for(const r of reqs){
+      const item = document.createElement('div');
+      item.className = `vac-item vac-item--${r.status}`;
+      const dates = `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`;
+      const noteHtml = r.note ? `<div class="vac-item-note">${escHtml(r.note)}</div>` : '';
+      const statusLabel = r.status[0].toUpperCase() + r.status.slice(1);
+      item.innerHTML = `
+        <div class="vac-item-dates">${dates}</div>
+        <div class="vac-item-meta">
+          <span>${r.days_count} ${r.days_count === 1 ? 'día' : 'días'}</span>
+          <span class="vac-item-status vac-${r.status}">${statusLabel}</span>
+        </div>
+        ${noteHtml}
+        <div class="vac-item-actions"></div>
+      `;
+      if(r.status === 'pendiente'){
+        const actions = item.querySelector('.vac-item-actions');
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'vac-mini-btn';
+        editBtn.textContent = 'editar';
+        editBtn.onclick = () => editRequest(r.id);
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'vac-mini-btn vac-mini-btn--danger';
+        delBtn.textContent = 'borrar';
+        delBtn.onclick = () => deleteRequest(r.id);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+      }
+      list.appendChild(item);
+    }
+  }
+
+  // ── Render: nombres de back-ups ──
+  async function renderBackupNames(){
+    const el = $('vac-backup-list');
+    if(!el) return;
+    const ids = window.__vacAuth?.employee?.backup_employee_ids || [];
+    if(!ids.length){ el.textContent = '—'; return; }
+    const { data, error } = await supa.from('vac_employees').select('id,full_name').in('id', ids);
+    if(error || !data){ el.textContent = '—'; return; }
+    const order = new Map(ids.map((id,i) => [id,i]));
+    const sorted = [...data].sort((a,b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
+    el.textContent = sorted.map(e => e.full_name).join(' · ') || '—';
+  }
+
+  // ── Navegación de mes ──
+  function goToPrevMonth(){
+    const ref = window.__vac.currentMonth || new Date();
+    window.__vac.currentMonth = new Date(ref.getFullYear(), ref.getMonth() - 1, 1);
+    renderMonthGrid();
+  }
+  function goToNextMonth(){
+    const ref = window.__vac.currentMonth || new Date();
+    window.__vac.currentMonth = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
+    renderMonthGrid();
+  }
+
+  // ── Edit / Delete ──
+  function editRequest(id){
+    const r = (window.__vac.requests || []).find(x => x.id === id);
+    if(!r) return;
+    if(r.status !== 'pendiente') return;
+    window.__vac.editingId = r.id;
+    switchSubtab('cargar');
+    $('vac-form-title').textContent = 'Editar solicitud';
+    $('vac-form-sub').textContent = `Editás la solicitud del ${formatDmy(r.start_date)} al ${formatDmy(r.end_date)}.`;
+    $('vac-form-submit').textContent = 'Guardar cambios';
+    $('vac-form-mode').value = 'rango';
+    $('vac-form-from').value = r.start_date;
+    $('vac-form-to').value   = r.end_date;
+    // El status se fija en 'pendiente' y se bloquea: la RLS (WITH CHECK) prohíbe
+    // cambiar de pendiente a tentativa en un update por el dueño. Para "tentativizar"
+    // hay que borrar y crear de nuevo.
+    const stEl = $('vac-form-status');
+    if(stEl){ stEl.value = 'pendiente'; stEl.disabled = true; }
+    const stHelp = $('vac-form-status-help');
+    if(stHelp) stHelp.textContent = 'No se puede cambiar el estado en una edición. Borrá y creá la solicitud si necesitás cambiarlo a tentativa.';
+    $('vac-form-note').value = r.note || '';
+    updateCargarSummary();
+  }
+
+  async function deleteRequest(id){
+    const r = (window.__vac.requests || []).find(x => x.id === id);
+    if(!r) return;
+    if(!confirm(`¿Borrar la solicitud del ${formatDmy(r.start_date)} al ${formatDmy(r.end_date)}?`)) return;
+    const { error } = await supa.from('vac_requests').delete().eq('id', id);
+    if(error){ alert('No se pudo borrar: ' + error.message); return; }
+    showToast('Solicitud borrada');
+    await refreshAndRender();
+    if(window.__vacAuth?.isAdmin) updatePendingBadge();
+  }
+
+  // ── Cargar form ──
+  function suggestedWeekRange(fromIso){
+    const d = parseIsoDate(fromIso);
+    if(!d) return { from: fromIso, to: fromIso };
+    const mondayOffset = (d.getDay() + 6) % 7;
+    const mon = new Date(d); mon.setDate(d.getDate() - mondayOffset);
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    return { from: toIsoDate(mon), to: toIsoDate(sun) };
+  }
+
+  function updateCargarSummary(){
+    const modeEl = $('vac-form-mode'), fromEl = $('vac-form-from'), toEl = $('vac-form-to');
+    if(!modeEl || !fromEl || !toEl) return;
+    const mode = modeEl.value;
+    let fromIso = fromEl.value;
+    let toIso   = toEl.value;
+    if(mode === 'semana' && fromIso){
+      const { from, to } = suggestedWeekRange(fromIso);
+      if(fromEl.value !== from) fromEl.value = from;
+      if(toEl.value !== to)     toEl.value   = to;
+      fromIso = from; toIso = to;
+    }
+    const days = (fromIso && toIso) ? daysBetweenInclusive(fromIso, toIso) : 0;
+    $('vac-form-days').textContent = days < 0 ? 0 : days;
+    $('vac-form-range').textContent = (fromIso && toIso) ? `${formatDmy(fromIso)} al ${formatDmy(toIso)} inclusive` : '—';
+
+    const annual    = window.__vac.balance?.annual_days ?? window.__vacAuth?.employee?.annual_days ?? 0;
+    const remaining = window.__vac.balance?.days_remaining ?? annual;
+    let projected;
+    if(window.__vac.editingId){
+      const orig = (window.__vac.requests || []).find(x => x.id === window.__vac.editingId);
+      const origDays = orig ? orig.days_count : 0;
+      projected = remaining + origDays - days;
+    } else {
+      projected = remaining - days;
+    }
+    const balanceEl = $('vac-form-balance');
+    if(balanceEl){
+      balanceEl.textContent = projected;
+      balanceEl.style.color = projected < 0 ? 'var(--red)' : 'var(--green)';
+    }
+    $('vac-form-annual').textContent = annual;
+
+    // Errores
+    const errEl = $('vac-form-error');
+    const submitBtn = $('vac-form-submit');
+    let err = '';
+    if(fromIso && toIso && parseIsoDate(toIso) < parseIsoDate(fromIso)){
+      err = 'La fecha "Hasta" debe ser posterior o igual a "Desde".';
+    } else if(days > 0 && projected < 0){
+      err = `Excedés tu saldo. Pedís ${days} días pero te quedan ${remaining}.`;
+    }
+    if(errEl){
+      errEl.textContent = err;
+      errEl.style.display = err ? 'block' : 'none';
+    }
+    if(submitBtn) submitBtn.disabled = !!err || days <= 0;
+
+    // Warning de back-ups
+    const warnEl = $('vac-form-warning');
+    if(warnEl){
+      let warnHtml = '';
+      if(fromIso && toIso && days > 0 && (window.__vac.backupRequests || []).length){
+        const overlaps = window.__vac.backupRequests.filter(b => rangesOverlap(fromIso, toIso, b.start_date, b.end_date));
+        if(overlaps.length){
+          const items = overlaps.map(o => {
+            const name = escHtml(o.vac_employees?.full_name || '?');
+            return `${name} (${formatDmy(o.start_date)} al ${formatDmy(o.end_date)})`;
+          }).join(', ');
+          warnHtml = `<strong>Atención:</strong> tu back-up ${items} también tiene vacaciones en ese rango. La solicitud se puede enviar igual.`;
+        }
+      }
+      warnEl.innerHTML = warnHtml;
+      warnEl.style.display = warnHtml ? 'block' : 'none';
+    }
+  }
+
+  async function submitCargarForm(e){
+    if(e) e.preventDefault();
+    if(!window.__vacAuth) return;
+    const fromIso = $('vac-form-from').value;
+    const toIso   = $('vac-form-to').value;
+    const status  = $('vac-form-status').value === 'tentativa' ? 'tentativa' : 'pendiente';
+    const note    = $('vac-form-note').value.trim() || null;
+    if(!fromIso || !toIso) return;
+
+    const submitBtn = $('vac-form-submit');
+    if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Guardando…'; }
+
+    let err = null;
+    if(window.__vac.editingId){
+      const res = await supa.from('vac_requests')
+        .update({ start_date: fromIso, end_date: toIso, status, note })
+        .eq('id', window.__vac.editingId);
+      err = res.error;
+    } else {
+      const res = await supa.from('vac_requests').insert({
+        employee_id: window.__vacAuth.employee.id,
+        start_date:  fromIso,
+        end_date:    toIso,
+        status,
+        note
+        // days_count y period_year los calcula el trigger SQL
+      });
+      err = res.error;
+    }
+
+    if(err){
+      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = window.__vac.editingId ? 'Guardar cambios' : 'Enviar solicitud'; }
+      alert('No se pudo guardar: ' + err.message);
+      return;
+    }
+
+    showToast(window.__vac.editingId ? 'Solicitud actualizada' : 'Solicitud enviada');
+    resetCargarForm();
+    await refreshAndRender();
+    switchSubtab('mi');
+    if(window.__vacAuth?.isAdmin) updatePendingBadge();
+  }
+
+  function resetCargarForm(){
+    const f = $('vac-form');
+    if(f) f.reset();
+    window.__vac.editingId = null;
+    const t = $('vac-form-title'); if(t) t.textContent = 'Solicitar vacaciones';
+    const s = $('vac-form-sub');   if(s) s.textContent = 'Tu solicitud queda en estado pendiente hasta que un admin la apruebe.';
+    const b = $('vac-form-submit'); if(b){ b.textContent = 'Enviar solicitud'; b.disabled = false; }
+    const m = $('vac-form-mode');  if(m) m.value = 'rango';
+    const st = $('vac-form-status'); if(st){ st.value = 'pendiente'; st.disabled = false; }
+    const stHelp = $('vac-form-status-help');
+    if(stHelp) stHelp.textContent = 'Las confirmadas quedan pendientes hasta que admin las aprueba. Las tentativas reservan los días sin pasar por aprobación.';
+    const today = toIsoDate(new Date());
+    const fr = $('vac-form-from'); if(fr) fr.value = today;
+    const to = $('vac-form-to');   if(to) to.value = today;
+    const w = $('vac-form-warning'); if(w){ w.style.display = 'none'; w.innerHTML = ''; }
+    const e = $('vac-form-error');   if(e){ e.style.display = 'none'; e.textContent = ''; }
+    updateCargarSummary();
+  }
+
+  // ── Toast simple ──
+  function showToast(msg){
+    let el = document.getElementById('vac-toast');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'vac-toast';
+      el.className = 'vac-toast';
+      el.setAttribute('role','status');
+      el.setAttribute('aria-live','polite');
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('vac-toast--show');
+    clearTimeout(el._tid);
+    el._tid = setTimeout(() => { el.classList.remove('vac-toast--show'); }, 2200);
+  }
+
+  // ── Refetch + re-render combinado ──
+  async function refreshAndRender(){
+    await loadMyData();
+    await renderBackupNames();
+    renderStatsStrip();
+    renderMonthGrid();
+    renderMyRequests();
+  }
+
+  // ── Hooks de subtab ──
+  async function onEnterMi(){
+    if(!window.__vacAuth) return;
+    if(!window.__vac.currentMonth) window.__vac.currentMonth = new Date();
+    if(!_miState.initialized){
+      _miState.initialized = true;
+      await refreshAndRender();
+    } else {
+      renderStatsStrip();
+      renderMonthGrid();
+      renderMyRequests();
+    }
+  }
+  async function onEnterCargar(){
+    if(!window.__vacAuth) return;
+    if(!window.__vac.balance) await loadMyData();
+    if(!window.__vac.editingId){
+      const fromEl = $('vac-form-from'), toEl = $('vac-form-to');
+      if(fromEl && !fromEl.value){
+        const today = toIsoDate(new Date());
+        fromEl.value = today;
+        if(toEl) toEl.value = today;
+      }
+    }
+    updateCargarSummary();
+  }
+
   // ── Sub-tabs ──
   function switchSubtab(name){
     if(!name) return;
@@ -8552,12 +9352,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     document.querySelectorAll('#panel-vacaciones .vac-section').forEach(s => {
       s.classList.toggle('vac-section--active', s.dataset.section === name);
     });
+    if(name === 'mi') onEnterMi();
+    else if(name === 'cargar') onEnterCargar();
   }
   window.vacSwitchSubtab = switchSubtab;
 
   // Hooks que llama switchTab() del index
   window.vacOnEnterTab = function(){
-    if(window.__vacAuth) updatePendingBadge();
+    if(!window.__vacAuth) return;
+    updatePendingBadge();
+    const cur = window.__vac.currentSubtab;
+    if(cur === 'mi') onEnterMi();
+    else if(cur === 'cargar') onEnterCargar();
   };
   window.vacOnLeaveTab = function(){ /* no-op por ahora */ };
 
@@ -8588,6 +9394,32 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(goAdminBtn && !goAdminBtn._wired){
       goAdminBtn._wired = true;
       goAdminBtn.addEventListener('click', () => switchSubtab('admin'));
+    }
+
+    // Fase 3: navegación de mes + form Cargar
+    const prevBtn = $('vac-prev-month');
+    if(prevBtn && !prevBtn._wired){ prevBtn._wired = true; prevBtn.addEventListener('click', goToPrevMonth); }
+    const nextBtn = $('vac-next-month');
+    if(nextBtn && !nextBtn._wired){ nextBtn._wired = true; nextBtn.addEventListener('click', goToNextMonth); }
+
+    const formEl = $('vac-form');
+    if(formEl && !formEl._wired){
+      formEl._wired = true;
+      formEl.addEventListener('submit', submitCargarForm);
+      ['vac-form-from','vac-form-to','vac-form-mode','vac-form-status','vac-form-note'].forEach(id => {
+        const el = $(id);
+        if(!el) return;
+        el.addEventListener('change', updateCargarSummary);
+        if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.addEventListener('input', updateCargarSummary);
+      });
+    }
+    const cancelBtn = $('vac-form-cancel');
+    if(cancelBtn && !cancelBtn._wired){
+      cancelBtn._wired = true;
+      cancelBtn.addEventListener('click', () => {
+        resetCargarForm();
+        switchSubtab('mi');
+      });
     }
   }
 
