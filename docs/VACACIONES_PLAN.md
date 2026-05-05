@@ -855,7 +855,7 @@ NO se mandan mails. Los admins se enteran por:
    - Si la URL al cargar tiene ?tab=vacaciones, switchear directo a ese tab.
    - Si tiene &sub=admin (o cargar/equipo/mi), switchear a esa sub-tab.
    - Útil para compartir links directos por WhatsApp:
-     "Te dejé una solicitud: https://tarifa-schedule.netlify.app/?tab=vacaciones&sub=admin"
+     "Te dejé una solicitud: https://ssb-workspace.netlify.app/?tab=vacaciones&sub=admin"
    - El parsing se hace después de DOMContentLoaded y después de que vacInit termine.
 </tarea>
 

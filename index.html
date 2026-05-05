@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fletes Marítimos · Contrato BID</title>
-<meta name="description" content="Sistema de consulta de fletes marítimos y schedule de buques - DOW/PBB Polisur">
+<title>SSB Workspace</title>
+<meta name="description" content="SSB Workspace — workspace interno de SSB International: tarifas BID, schedule de buques, EFA, detention, tarifas terrestres y vacaciones.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2032,7 +2032,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>Fletes Marítimos · Contrato BID</div>
+  <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>SSB Workspace</div>
   <div class="topbar-right">
     <!-- Dark mode toggle -->
     <button class="btn-top" id="btn-light" onclick="toggleLight()" title="Modo claro" aria-label="Alternar modo claro"><svg class="ic ic-md" aria-hidden="true"><use href="#i-sun"/></svg></button>
@@ -5714,7 +5714,7 @@ function exportTarifasPDF(){
     .efa{color:#6d28d9;font-weight:700}
     @media print{body{margin:10px}}
   </style></head><body>
-  <h1>⚓ Fletes Marítimos · Contrato BID</h1>
+  <h1>⚓ SSB Workspace · Tarifas BID</h1>
   <div class="sub">Exportado: ${fecha} · ${filtros}</div>
   <table>
     <tr>
@@ -5760,7 +5760,7 @@ function exportTarifasPDF(){
     </tr>`;
   });
 
-  html+=`</table><div style="font-size:9px;color:#999;margin-top:12px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div>
+  html+=`</table><div style="font-size:9px;color:#999;margin-top:12px">SSB Workspace · DOW/PBB Polisur · ${fecha}</div>
   </bo${''}dy></html>`;
 
   const win=window.open('','_blank');
@@ -5885,7 +5885,7 @@ function exportSchedPDF(){
     </tr>`;
   });
 
-  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">Sistema de Fletes Marítimos · DOW/PBB Polisur · ${fecha}</div></bo${''}dy></html>`;
+  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">SSB Workspace · DOW/PBB Polisur · ${fecha}</div></bo${''}dy></html>`;
   const win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
