@@ -1077,19 +1077,34 @@ body.dark .vac-subtab.vac-subtab--active{
 
 /* Disclaimer naranja: período oct→sep */
 .vac-disclaimer{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:flex-start;gap:10px;
   padding:10px 2rem;
-  background:var(--orange-bg);border-bottom:1px solid var(--orange-bd);
-  color:var(--orange);font-size:var(--fs-sm);
+  background:var(--blue-lt,rgba(37,99,235,.06));
+  border-bottom:1px solid var(--border);
+  color:var(--text);font-size:var(--fs-sm);
+  line-height:1.5;
 }
-.vac-disclaimer strong{color:var(--orange);font-weight:700}
-body.dark .vac-disclaimer{color:var(--orange)}
+.vac-disclaimer strong{color:var(--text);font-weight:700}
+body.dark .vac-disclaimer{
+  background:rgba(91,155,245,.08);
+  color:var(--text);
+  border-bottom-color:var(--border);
+}
 .vac-disclaimer-ico{
   width:18px;height:18px;flex-shrink:0;border-radius:50%;
-  background:var(--orange);color:#fff;
+  background:var(--blue);color:#fff;
   display:grid;place-items:center;
   font-size:11px;font-weight:700;font-style:italic;font-family:var(--font);
+  margin-top:2px;
 }
+.vac-disclaimer-content{flex:1;min-width:0}
+.vac-disclaimer-line{display:block}
+.vac-disclaimer-line + .vac-disclaimer-line{margin-top:3px}
+.vac-disclaimer-bday{color:var(--muted);font-size:var(--fs-xs)}
+.vac-disclaimer-bday strong{color:var(--text);font-weight:700}
+.vac-disclaimer-bday .vac-bday-name{color:var(--text);font-weight:600}
+.vac-disclaimer-bday .vac-bday-date{font-family:var(--mono);color:var(--muted);font-size:11px;margin-left:3px}
+.vac-disclaimer-bday-hint{color:var(--muted);font-style:italic;font-size:var(--fs-xs)}
 
 /* Banner de aprobaciones pendientes (admin) */
 .vac-approval-banner{
@@ -1616,6 +1631,69 @@ body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
   #panel-vacaciones .vac-mini-tl-viewport{transition:none}
   #panel-vacaciones .vac-gantt-bar{transition:none}
 }
+
+/* Mini-tl: meses en 3 letras. Achicar fuente si la ventana es chica. */
+#panel-vacaciones .vac-mini-tl-month-lbl{font-size:10px}
+@media (max-width:700px){
+  #panel-vacaciones .vac-mini-tl-month-lbl{font-size:8px}
+}
+
+/* Días importantes — cuadro debajo del Gantt */
+#panel-vacaciones .vac-important-days{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.06));
+}
+#panel-vacaciones .vac-important-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;
+}
+#panel-vacaciones .vac-important-title{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:700;
+  letter-spacing:-.005em;color:var(--text);
+}
+#panel-vacaciones .vac-important-title .ic{color:var(--muted)}
+#panel-vacaciones .vac-important-range{
+  font-family:var(--mono);font-size:var(--fs-xs);
+  color:var(--muted);font-weight:600;
+}
+#panel-vacaciones .vac-important-body{padding:0}
+#panel-vacaciones .vac-important-empty{
+  padding:16px;text-align:center;color:var(--muted);font-size:var(--fs-xs);
+}
+#panel-vacaciones .vac-important-table{
+  width:100%;border-collapse:collapse;font-size:var(--fs-xs);
+}
+#panel-vacaciones .vac-important-table th{
+  background:var(--faint);padding:8px 14px;text-align:left;
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);font-weight:700;font-family:var(--mono);
+  border-bottom:1px solid var(--border);
+}
+#panel-vacaciones .vac-important-table td{
+  padding:8px 14px;border-bottom:1px solid var(--border);vertical-align:top;
+}
+#panel-vacaciones .vac-important-table tr:last-child td{border-bottom:none}
+#panel-vacaciones .vac-important-table .vac-important-date{
+  font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--text);
+}
+#panel-vacaciones .vac-important-table .vac-important-type{white-space:nowrap}
+#panel-vacaciones .vac-important-table .vac-important-detail{color:var(--muted)}
+#panel-vacaciones .vac-important-row--feriado .vac-important-date{color:var(--red)}
+#panel-vacaciones .vac-important-row--no_laborable .vac-important-date{color:var(--amber)}
+#panel-vacaciones .vac-important-row--cumpleanos .vac-important-date{color:var(--purple)}
+#panel-vacaciones .vac-type-chip{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:999px;
+  font-size:10px;font-weight:700;font-family:var(--mono);
+  text-transform:uppercase;letter-spacing:.04em;
+  border:1px solid;
+}
+#panel-vacaciones .vac-type-chip--feriado{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+#panel-vacaciones .vac-type-chip--no_laborable{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+#panel-vacaciones .vac-type-chip--puente{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+#panel-vacaciones .vac-type-chip--cumpleanos{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
 
 /* ── Sub-tab Administración ── */
 #panel-vacaciones .vac-section[data-section="admin"]{padding:18px 2rem 40px}
@@ -2647,10 +2725,13 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       </div>
     </div>
 
-    <!-- Disclaimer naranja: período vacacional -->
+    <!-- Disclaimer informativo: período vacacional + cumpleaños del mes -->
     <div class="vac-disclaimer">
       <div class="vac-disclaimer-ico" aria-hidden="true">i</div>
-      <div>Período vacacional: <strong>1° de octubre al 30 de septiembre</strong>. Los días disponibles se renuevan cada 1° de octubre.</div>
+      <div class="vac-disclaimer-content">
+        <div class="vac-disclaimer-line">Período vacacional: <strong>1° de octubre al 30 de septiembre</strong>. Los días disponibles se renuevan cada 1° de octubre.</div>
+        <div class="vac-disclaimer-line vac-disclaimer-bday" id="vac-bday-line" style="display:none"></div>
+      </div>
     </div>
 
     <!-- Banner de aprobaciones pendientes (solo admin, oculto si no hay) -->
@@ -2762,6 +2843,20 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
             <div class="vac-gantt-days-inner" id="vac-gantt-days-inner"></div>
           </div>
           <div class="vac-gantt-col vac-gantt-col-status" id="vac-gantt-status"></div>
+        </div>
+      </div>
+
+      <!-- Cuadro: días importantes en el rango visible -->
+      <div class="vac-important-days" id="vac-important-days">
+        <div class="vac-important-head">
+          <div class="vac-important-title">
+            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-clock"/></svg>
+            Días importantes en este rango
+          </div>
+          <div class="vac-important-range" id="vac-important-range">—</div>
+        </div>
+        <div class="vac-important-body" id="vac-important-body">
+          <div class="vac-important-empty">Cargando…</div>
         </div>
       </div>
     </div>
@@ -9369,6 +9464,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   window.__vac.badgeIntervalId = null;
   window.__vac.authSubscription = null;
   window.__vac.currentSubtab = 'mi';
+  window.__vac.allEmployees = [];
 
   function setStatus(kind, msg){
     const el = $('vac-splash-status');
@@ -9389,14 +9485,25 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   function setAdminUI(isAdmin){
-    // El admin button del segmented control se muestra/oculta. La section
-    // admin queda gobernada por la clase .vac-section--active, no por
-    // inline display (evita que quede 'block' tras setAdminUI y se solape
-    // con otra section). El banner lo gobierna updatePendingBadge.
+    // Defensa en profundidad: cuando NO es admin ocultamos también la section admin
+    // con display:none inline para que ni manipulando el DOM (toggle de la clase
+    // vac-section--active) se vea contenido. Cuando sí es admin, limpiamos el
+    // inline para que el toggle por vac-section--active vuelva a gobernar el display.
     document.querySelectorAll('#panel-vacaciones .vac-admin-only').forEach(el => {
-      if(el.classList.contains('vac-section')) return;
       if(el.id === 'vac-approval-banner'){
         if(!isAdmin) el.style.display = 'none';
+        // Si es admin, lo gobierna updatePendingBadge.
+        return;
+      }
+      if(el.classList.contains('vac-section')){
+        if(!isAdmin){
+          el.style.display = 'none';
+          el.setAttribute('aria-hidden', 'true');
+          el.classList.remove('vac-section--active');
+        } else {
+          el.style.display = '';
+          el.removeAttribute('aria-hidden');
+        }
         return;
       }
       el.style.display = isAdmin ? '' : 'none';
@@ -9460,10 +9567,45 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Polling y badge
     startBadgePolling();
     updatePendingBadge();
+    // Cargar empleados globales para el banner de cumpleaños del mes (Cambio 6)
+    loadGlobalEmployees().then(() => renderBirthdayLine());
     // Disparar carga de la sub-tab activa (default: 'mi')
     const cur = window.__vac.currentSubtab;
     if(cur === 'mi') onEnterMi();
     else if(cur === 'cargar') onEnterCargar();
+  }
+
+  // ── Cumpleaños del mes (Cambio 6): carga liviana, compartida con el banner ──
+  async function loadGlobalEmployees(){
+    if(!window.__vacAuth) return;
+    const { data, error } = await supa
+      .from('vac_employees')
+      .select('id,full_name,birthday_day,birthday_month,active')
+      .eq('active', true);
+    if(error) return;
+    window.__vac.allEmployees = data || [];
+  }
+
+  function renderBirthdayLine(){
+    const el = $('vac-bday-line');
+    if(!el) return;
+    const all = window.__vac.allEmployees || [];
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const upcoming = all.filter(e => e.birthday_month === m && e.birthday_day != null)
+      .sort((a,b) => a.birthday_day - b.birthday_day);
+    if(upcoming.length === 0){
+      el.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+    const items = upcoming.map(e =>
+      `<span class="vac-bday-name">${escHtml(e.full_name)}</span><span class="vac-bday-date">(${String(e.birthday_day).padStart(2,'0')}/${String(e.birthday_month).padStart(2,'0')})</span>`
+    ).join(' · ');
+    el.style.display = '';
+    el.innerHTML =
+      `<strong>Cumpleaños este mes:</strong> ${items}` +
+      ` <span class="vac-disclaimer-bday-hint">— cada empleado puede tomarse 1 día por su cumpleaños, idealmente en el mes.</span>`;
   }
 
   async function sendMagicLink(email){
@@ -9614,6 +9756,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _miState.initialized = false;
     if(window.__vac.team) clearTeamData();
     if(window.__vac.admin) clearAdminData();
+    window.__vac.allEmployees = [];
+    const bdayEl = $('vac-bday-line');
+    if(bdayEl){ bdayEl.style.display = 'none'; bdayEl.innerHTML = ''; }
   }
 
   // ── Carga de datos: balance + mis solicitudes + feriados + solicitudes de back-ups ──
@@ -9640,11 +9785,19 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.backupRequests = bkRes?.data || [];
   }
 
+  // Helper: días anuales efectivos (annual_days + extra_days). Lo lee de la view
+  // si está disponible, sino lo compone, sino cae al annual_days del empleado.
+  function effectiveAnnualDays(b, e){
+    if(b && b.effective_annual_days != null) return b.effective_annual_days;
+    if(b && b.annual_days != null) return b.annual_days + (b.extra_days || 0);
+    return e?.annual_days ?? 0;
+  }
+
   // ── Render: stats strip ──
   function renderStatsStrip(){
     const b = window.__vac.balance;
     const e = window.__vacAuth?.employee;
-    const annual = b?.annual_days ?? e?.annual_days ?? 0;
+    const annual = effectiveAnnualDays(b, e);
     const set = (id, v) => { const el = $(id); if(el) el.textContent = String(v); };
     set('vac-stat-total', annual);
     set('vac-stat-approved', b?.days_approved ?? 0);
@@ -9854,7 +10007,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     $('vac-form-days').textContent = days < 0 ? 0 : days;
     $('vac-form-range').textContent = (fromIso && toIso) ? `${formatDmy(fromIso)} al ${formatDmy(toIso)} inclusive` : '—';
 
-    const annual    = window.__vac.balance?.annual_days ?? window.__vacAuth?.employee?.annual_days ?? 0;
+    const annual    = effectiveAnnualDays(window.__vac.balance, window.__vacAuth?.employee);
     const remaining = window.__vac.balance?.days_remaining ?? annual;
     let projected;
     if(window.__vac.editingId){
@@ -10057,7 +10210,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     const queries = [
       supa.from('vac_employees')
-        .select('id,email,full_name,role,annual_days,backup_employee_ids,active')
+        .select('id,email,full_name,role,annual_days,backup_employee_ids,active,birthday_day,birthday_month')
         .eq('active', true)
         .order('full_name', { ascending: true }),
       supa.from('vac_requests')
@@ -10217,17 +10370,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     innerEl.appendChild(bandsLayer);
 
-    // ── Names + Status: headers fijos ──
+    // ── Names: header fijo. Status: ocultada en sub-tab Equipo (cambio 3:
+    //    no exponemos días anuales/disponibles ajenos en esta vista). La columna
+    //    queda en el DOM para no alterar el layout del shell, solo display:none.
     namesEl.innerHTML = '';
     statusEl.innerHTML = '';
+    statusEl.style.display = 'none';
     const namesHead = document.createElement('div');
     namesHead.className = 'vac-gantt-col-head';
     namesHead.textContent = 'Empleado';
     namesEl.appendChild(namesHead);
-    const statusHead = document.createElement('div');
-    statusHead.className = 'vac-gantt-col-head';
-    statusHead.textContent = 'Estado';
-    statusEl.appendChild(statusHead);
 
     if(emps.length === 0){
       const empty = document.createElement('div');
@@ -10240,11 +10392,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // ── Filas ──
     for(const emp of emps){
       const isSelf = emp.id === myEmpId;
-      const adminPill = emp.role === 'admin' ? `<span class="vac-pill-admin">admin</span>` : '';
+      const adminPill = emp.role === 'admin' ? ` <span class="vac-pill-admin">admin</span>` : '';
 
       const nameRow = document.createElement('div');
       nameRow.className = 'vac-gantt-row-name' + (isSelf ? ' vac-is-self' : '');
-      nameRow.innerHTML = `<strong>${escHtml(emp.full_name)}</strong><div class="vac-gantt-row-name-sub">${emp.annual_days} d/año${adminPill}</div>`;
+      // Cambio 3: sin subtítulo "X d/año". Solo nombre + admin pill inline.
+      nameRow.innerHTML = `<strong>${escHtml(emp.full_name)}${adminPill}</strong>`;
       namesEl.appendChild(nameRow);
 
       const daysRowEl = document.createElement('div');
@@ -10281,17 +10434,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
       innerEl.appendChild(daysRowEl);
 
-      const bal = window.__vac.team.balances.get(emp.id);
-      const remaining = bal?.days_remaining ?? emp.annual_days;
-      const taken = bal?.days_approved ?? 0;
-      const pending = bal?.days_pending ?? 0;
-      const stRow = document.createElement('div');
-      stRow.className = 'vac-gantt-row-status' + (isSelf ? ' vac-is-self' : '');
-      stRow.innerHTML = `
-        <span class="vac-num vac-disp">${remaining}</span>
-        <span class="vac-gantt-row-status-meta">disp · ${taken} tom · ${pending} pend</span>
-      `;
-      statusEl.appendChild(stRow);
+      // Cambio 3: columna Status oculta en Equipo. No populamos contenido.
     }
 
     // ── Filter dropdown (poblar 1 vez con todos los empleados) ──
@@ -10359,7 +10502,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       mEl.style.left = left + 'px';
       mEl.style.width = width + 'px';
       mEl.dataset.startDay = String(m.startIdx);
-      mEl.innerHTML = `<span class="vac-mini-tl-month-lbl">${MONTH_NAMES_SHORT[m.month][0]}</span>`;
+      mEl.innerHTML = `<span class="vac-mini-tl-month-lbl">${MONTH_NAMES_SHORT[m.month]}</span>`;
       track.appendChild(mEl);
     }
 
@@ -10440,6 +10583,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const mb = window.__vac.team.monthBoundaries.find(m => centerDay >= m.startIdx && centerDay < m.startIdx + m.count)
             || window.__vac.team.monthBoundaries[0];
     if(monthLbl && mb) monthLbl.textContent = `${MONTH_NAMES_LONG[mb.month]} ${mb.year}`;
+    // Cambio 7: actualizar cuadro de días importantes con rango visible
+    renderImportantDays();
   }
 
   function setupGanttScroll(scroller){
@@ -10610,6 +10755,85 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(sel){ sel._populated = false; sel.innerHTML = ''; }
   }
 
+  // ── Birthdays helpers (compartidos con banner y cuadro de días importantes) ──
+  // Mapea el cumpleaños (DD/MM sin año) al período vacacional actual:
+  // si el mes >= 10, el año del cumple es period_start_year; sino, period_start_year + 1.
+  function birthdayIsoForPeriod(month, day, periodStartYear){
+    if(!month || !day) return null;
+    const yr = month >= 10 ? periodStartYear : (periodStartYear + 1);
+    return `${yr}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+
+  // ── Cuadro "días importantes" (Cambio 7): se llama en cada onGanttScroll ──
+  // Calcula los días visibles en el viewport del scroller y filtra
+  // feriados + cumpleaños que caen ahí.
+  function renderImportantDays(){
+    const body = $('vac-important-body');
+    const rangeEl = $('vac-important-range');
+    if(!body) return;
+    const scroller = $('vac-gantt-scroller');
+    const totalDays = window.__vac.team.totalDays || 0;
+    if(!scroller || !totalDays){
+      body.innerHTML = '<div class="vac-important-empty">Cargando…</div>';
+      return;
+    }
+    const dayW = ganttDayWidth();
+    const startVisibleDay = Math.max(0, Math.floor(scroller.scrollLeft / dayW));
+    const endVisibleDay = Math.min(totalDays - 1, Math.ceil((scroller.scrollLeft + scroller.clientWidth) / dayW) - 1);
+    if(endVisibleDay < startVisibleDay){
+      body.innerHTML = '<div class="vac-important-empty">Sin rango visible.</div>';
+      return;
+    }
+    const { startIso } = getCurrentPeriodRange();
+    const startDate = parseIsoDate(startIso);
+    const periodStartYear = startDate.getFullYear();
+    const fromIso = toIsoDate(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + startVisibleDay));
+    const toIsoStr = toIsoDate(new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + endVisibleDay));
+
+    // Items: feriados y cumpleaños dentro del rango visible
+    const items = [];
+    for(const h of (window.__vac.team.holidays || [])){
+      if(h.date >= fromIso && h.date <= toIsoStr){
+        items.push({
+          iso: h.date,
+          type: h.type === 'no_laborable' ? 'no_laborable' : (h.type === 'puente' ? 'puente' : 'feriado'),
+          rawType: h.type,
+          detail: h.name
+        });
+      }
+    }
+    for(const e of (window.__vac.team.employees || [])){
+      const iso = birthdayIsoForPeriod(e.birthday_month, e.birthday_day, periodStartYear);
+      if(iso && iso >= fromIso && iso <= toIsoStr){
+        items.push({
+          iso,
+          type: 'cumpleanos',
+          rawType: 'cumpleanos',
+          detail: e.full_name
+        });
+      }
+    }
+    items.sort((a,b) => a.iso.localeCompare(b.iso));
+
+    // Header con rango
+    if(rangeEl){
+      rangeEl.textContent = `${formatDmy(fromIso)} → ${formatDmy(toIsoStr)}`;
+    }
+
+    if(items.length === 0){
+      body.innerHTML = '<div class="vac-important-empty">No hay feriados ni cumpleaños en este rango.</div>';
+      return;
+    }
+    const typeLabel = { feriado:'Feriado', no_laborable:'No laborable', puente:'Puente', cumpleanos:'Cumpleaños' };
+    let html = `<table class="vac-important-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th></tr></thead><tbody>`;
+    for(const it of items){
+      const cls = it.type;
+      html += `<tr class="vac-important-row--${cls}"><td class="vac-important-date">${formatDmy(it.iso)}</td><td class="vac-important-type"><span class="vac-type-chip vac-type-chip--${cls}">${escHtml(typeLabel[it.type] || it.type)}</span></td><td class="vac-important-detail">${escHtml(it.detail)}</td></tr>`;
+    }
+    html += `</tbody></table>`;
+    body.innerHTML = html;
+  }
+
   async function onEnterEquipo(){
     if(!window.__vacAuth) return;
     if(!window.__vac.team.initialized){
@@ -10617,6 +10841,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       window.__vac.team.initialized = true;
     }
     renderTeamGantt();
+    // Render inicial del cuadro (después del rAF que ajusta scroll)
+    requestAnimationFrame(() => requestAnimationFrame(renderImportantDays));
   }
 
   // ════════════════ FASE 5: Administración + flujo de aprobación ════════════════
@@ -10726,7 +10952,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         .order('created_at', { ascending: true }),
       // Todos los empleados (incl. inactivos) para gestión
       supa.from('vac_employees')
-        .select('id,email,full_name,role,annual_days,backup_employee_ids,active,updated_at')
+        .select('id,email,full_name,role,annual_days,backup_employee_ids,active,updated_at,birthday_day,birthday_month,extra_days')
         .order('active', { ascending: false })
         .order('full_name', { ascending: true }),
       // Feriados del año actual y siguiente para gestión amplia
@@ -11117,6 +11343,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const initialBackupIds = new Set(emp?.backup_employee_ids || []);
 
     const wrap = document.createElement('div');
+    const monthOpts = [
+      [1,'Enero'],[2,'Febrero'],[3,'Marzo'],[4,'Abril'],[5,'Mayo'],[6,'Junio'],
+      [7,'Julio'],[8,'Agosto'],[9,'Septiembre'],[10,'Octubre'],[11,'Noviembre'],[12,'Diciembre']
+    ];
+    const monthOptsHtml = `<option value="">—</option>` + monthOpts
+      .map(([n,name]) => `<option value="${n}" ${emp?.birthday_month === n ? 'selected' : ''}>${name}</option>`).join('');
     wrap.innerHTML = `
       <div class="vac-form-row vac-form-row-2">
         <div>
@@ -11147,12 +11379,53 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         </div>
       </div>
 
+      <div class="vac-form-row vac-form-row-2">
+        <div>
+          <label class="vac-form-label" for="vac-emp-bday-month">Cumpleaños — mes</label>
+          <select id="vac-emp-bday-month" class="vac-form-select">${monthOptsHtml}</select>
+        </div>
+        <div>
+          <label class="vac-form-label" for="vac-emp-bday-day">Cumpleaños — día</label>
+          <select id="vac-emp-bday-day" class="vac-form-select"></select>
+        </div>
+      </div>
+
+      <div class="vac-form-row">
+        <label class="vac-form-label" for="vac-emp-extra-days">Días extra (one-time)</label>
+        <input type="number" id="vac-emp-extra-days" class="vac-form-input" min="0" max="60" step="1" value="${emp?.extra_days ?? 0}">
+        <div class="vac-form-help">Se suman a los días anuales solo para este período. El admin lo limpia manualmente al cerrar el período.</div>
+      </div>
+
       <div class="vac-form-row">
         <label class="vac-form-label">Back-ups <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:500"> · marcá uno o varios. Aparecerán en el orden de selección.</span></label>
         <div class="vac-backup-select" id="vac-emp-backup-list" role="listbox" aria-multiselectable="true"></div>
         <div class="vac-backup-select-summary" id="vac-emp-backup-summary">— sin selección —</div>
       </div>
     `;
+
+    // Día de cumpleaños: opciones se ajustan según el mes (Cambio 1: validar día/mes)
+    const monthSel = wrap.querySelector('#vac-emp-bday-month');
+    const daySel = wrap.querySelector('#vac-emp-bday-day');
+    function daysInMonth(m){
+      if(!m) return 31;
+      if([1,3,5,7,8,10,12].includes(m)) return 31;
+      if([4,6,9,11].includes(m)) return 30;
+      return 29; // febrero acepta 29 para bisiestos
+    }
+    function rebuildDayOptions(){
+      const m = parseInt(monthSel.value, 10) || 0;
+      const max = daysInMonth(m);
+      const prev = parseInt(daySel.value, 10) || emp?.birthday_day || 0;
+      let html = `<option value="">—</option>`;
+      for(let d = 1; d <= max; d++){
+        const sel = (d === prev && d <= max) ? 'selected' : '';
+        html += `<option value="${d}" ${sel}>${d}</option>`;
+      }
+      daySel.innerHTML = html;
+      // Si el día previo era inválido para el nuevo mes, queda en "—"
+    }
+    rebuildDayOptions();
+    monthSel.addEventListener('change', rebuildDayOptions);
 
     // Poblar multi-select con orden estable: primero los ya seleccionados (en su orden),
     // después el resto alfabético.
@@ -11220,10 +11493,26 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const email = wrap.querySelector('#vac-emp-email').value.trim().toLowerCase();
       const role = wrap.querySelector('#vac-emp-role').value;
       const days = parseInt(wrap.querySelector('#vac-emp-days').value, 10);
+      const bdayMonth = parseInt(wrap.querySelector('#vac-emp-bday-month').value, 10) || null;
+      const bdayDay = parseInt(wrap.querySelector('#vac-emp-bday-day').value, 10) || null;
+      const extraDaysRaw = parseInt(wrap.querySelector('#vac-emp-extra-days').value, 10);
+      const extraDays = (Number.isFinite(extraDaysRaw) && extraDaysRaw >= 0) ? extraDaysRaw : 0;
       const backupIds = getSelectedBackupIds();
       if(!name || !email){ alert('Nombre y email son obligatorios.'); return; }
+      // birthday: ambos o ninguno (constraint vac_birthday_paired lo respalda)
+      if((bdayDay && !bdayMonth) || (bdayMonth && !bdayDay)){
+        alert('Día y mes de cumpleaños deben estar ambos completos o ambos vacíos.');
+        return;
+      }
       save.disabled = true; save.textContent = 'Guardando…';
-      const ok = await saveEmployee(empId, { full_name: name, email, role, annual_days: days, backup_employee_ids: backupIds });
+      const ok = await saveEmployee(empId, {
+        full_name: name, email, role,
+        annual_days: days,
+        backup_employee_ids: backupIds,
+        birthday_day: bdayDay,
+        birthday_month: bdayMonth,
+        extra_days: extraDays
+      });
       if(ok) closeModal();
       else { save.disabled = false; save.textContent = isEdit ? 'Guardar cambios' : 'Crear empleado'; }
     };
@@ -11255,6 +11544,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
     await loadAdminData();
     renderEmpleados();
+    // Refrescar caches dependientes: banner de cumpleaños + team
+    await loadGlobalEmployees();
+    renderBirthdayLine();
+    if(window.__vac.team) window.__vac.team.initialized = false;
     return true;
   }
 
