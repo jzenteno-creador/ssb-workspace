@@ -9989,8 +9989,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const email = session.user.email.toLowerCase();
     const res = await loadEmployeeForEmail(email);
     if(res.error || res.notFound || res.inactive){
-      // El global ya cubrió este caso. Si igual llegó acá, log + abort.
-      console.warn('[vacaciones] applySession: empleado no resolvible', res);
+      // El global ya cubrió este caso. Si igual llegó acá, abort silently.
+      // NO loguear `res` completo (podría contener detalles del error de
+      // Supabase con info de schema/columnas).
+      const tag = res.error ? 'error' : (res.notFound ? 'notFound' : 'inactive');
+      console.warn('[vacaciones] empleado no resolvible:', tag);
       window.__vacAuth = null;
       return;
     }
