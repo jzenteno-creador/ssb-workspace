@@ -9620,17 +9620,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   // Pre-check: ¿el email está habilitado en vac_employees?
-  // No filtra por `active` acá para poder dar mensaje específico de "inactivo".
+  // Usa RPC `signup_check_email` (security definer) porque la RLS de
+  // vac_employees solo permite SELECT a authenticated, y en signup el
+  // user todavía NO tiene sesión. La RPC bypassea RLS y retorna sólo
+  // {email_exists, is_active}. Tolera casing mixto (lower-lower).
   async function lookupEmployee(email){
-    const { data, error } = await supa
-      .from('vac_employees')
-      .select('id,email,active')
-      .eq('email', email)
-      .maybeSingle();
+    const { data, error } = await supa.rpc('signup_check_email', { p_email: email });
     if(error) return { error };
-    if(!data)  return { notFound: true };
-    if(!data.active) return { inactive: true };
-    return { ok: true, id: data.id };
+    // RPC con `returns table(...)` devuelve un array con 1 row.
+    const row = Array.isArray(data) ? data[0] : data;
+    if(!row || !row.email_exists) return { notFound: true };
+    if(!row.is_active) return { inactive: true };
+    return { ok: true };
   }
 
   // ── Acciones ──
@@ -9778,7 +9779,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
     // OK → autorizado.
-    window.__ssbAuth = { user: session.user, email, employeeId: lookup.id, session };
+    // Nota: el id del empleado lo carga el módulo Vacaciones via su propia
+    // query enriquecida (loadEmployeeForEmail). El gate global solo necesita
+    // saber que el mail está autorizado.
+    window.__ssbAuth = { user: session.user, email, session };
     document.body.classList.add('is-authed');
     hideGate();
     // Notificar al módulo de Vacaciones (si está cargado) para que refresque su estado.
