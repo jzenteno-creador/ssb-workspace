@@ -1144,11 +1144,11 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 
 /* ── Mi calendario: stats strip ── */
 #panel-vacaciones .vac-stats-strip{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:1px;
   background:var(--border);border:1px solid var(--border);border-radius:8px;
   overflow:hidden;margin-bottom:18px;
 }
-#panel-vacaciones .vac-stat{background:var(--surface);padding:14px 18px}
+#panel-vacaciones .vac-stat{background:var(--surface);padding:14px 18px;min-width:0}
 #panel-vacaciones .vac-stat-label{
   font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
   color:var(--muted);margin-bottom:6px;font-weight:600;font-family:var(--mono);
@@ -1158,11 +1158,20 @@ body.dark .vac-approval-text strong{color:var(--amber)}
   letter-spacing:-.02em;line-height:1;color:var(--text);
 }
 #panel-vacaciones .vac-stat-unit{font-size:var(--fs-sm);color:var(--muted);margin-left:5px;font-weight:500}
+#panel-vacaciones .vac-stat-sub{
+  margin-top:4px;font-size:var(--fs-2xs);color:var(--muted);
+  font-family:var(--mono);font-weight:600;
+}
+#panel-vacaciones .vac-stat--bday .vac-stat-value{color:var(--purple)}
+#panel-vacaciones .vac-stat--empty .vac-stat-value{color:var(--muted);font-size:var(--fs-sm);font-weight:600;line-height:1.4;font-family:var(--font);letter-spacing:0}
 
 /* ── Mi calendario: layout calendario + side ── */
 #panel-vacaciones .vac-cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
 @media (max-width:1100px){
   #panel-vacaciones .vac-cal-layout{grid-template-columns:1fr}
+  #panel-vacaciones .vac-stats-strip{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:600px){
   #panel-vacaciones .vac-stats-strip{grid-template-columns:repeat(2,1fr)}
 }
 #panel-vacaciones .vac-cal-panel,
@@ -2725,12 +2734,13 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       </div>
     </div>
 
-    <!-- Disclaimer informativo: período vacacional + cumpleaños del mes -->
+    <!-- Disclaimer informativo: período + cumpleaños del mes (condicional) + recordatorio (siempre) -->
     <div class="vac-disclaimer">
       <div class="vac-disclaimer-ico" aria-hidden="true">i</div>
       <div class="vac-disclaimer-content">
         <div class="vac-disclaimer-line">Período vacacional: <strong>1° de octubre al 30 de septiembre</strong>. Los días disponibles se renuevan cada 1° de octubre.</div>
         <div class="vac-disclaimer-line vac-disclaimer-bday" id="vac-bday-line" style="display:none"></div>
+        <div class="vac-disclaimer-line vac-disclaimer-bday-hint">Recordá: cada empleado tiene <strong>1 día libre por su cumpleaños</strong>, idealmente en su mes.</div>
       </div>
     </div>
 
@@ -2760,6 +2770,11 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
         <div class="vac-stat">
           <div class="vac-stat-label">Restantes</div>
           <div class="vac-stat-value"><span id="vac-stat-remaining">—</span><span class="vac-stat-unit">días</span></div>
+        </div>
+        <div class="vac-stat vac-stat--bday" id="vac-stat-bday-card">
+          <div class="vac-stat-label">Día de cumpleaños</div>
+          <div class="vac-stat-value" id="vac-stat-bday-value">—</div>
+          <div class="vac-stat-sub" id="vac-stat-bday-sub">—</div>
         </div>
       </div>
 
@@ -9517,7 +9532,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   async function loadEmployeeForEmail(email){
     const { data, error } = await supa
       .from('vac_employees')
-      .select('id,email,full_name,role,annual_days,backup_employee_ids,active')
+      .select('id,email,full_name,role,annual_days,backup_employee_ids,active,birthday_day,birthday_month,extra_days')
       .eq('email', email)
       .maybeSingle();
     if(error) return { error };
@@ -9603,9 +9618,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       `<span class="vac-bday-name">${escHtml(e.full_name)}</span><span class="vac-bday-date">(${String(e.birthday_day).padStart(2,'0')}/${String(e.birthday_month).padStart(2,'0')})</span>`
     ).join(' · ');
     el.style.display = '';
-    el.innerHTML =
-      `<strong>Cumpleaños este mes:</strong> ${items}` +
-      ` <span class="vac-disclaimer-bday-hint">— cada empleado puede tomarse 1 día por su cumpleaños, idealmente en el mes.</span>`;
+    el.innerHTML = `<strong>Cumpleaños este mes:</strong> ${items}`;
   }
 
   async function sendMagicLink(email){
@@ -9803,6 +9816,22 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     set('vac-stat-approved', b?.days_approved ?? 0);
     set('vac-stat-pending', b?.days_pending ?? 0);
     set('vac-stat-remaining', b?.days_remaining ?? annual);
+
+    // Card "Día de cumpleaños" — informativa, NO afecta balance.
+    const card = $('vac-stat-bday-card');
+    const valEl = $('vac-stat-bday-value');
+    const subEl = $('vac-stat-bday-sub');
+    if(!card || !valEl || !subEl) return;
+    const day = e?.birthday_day, month = e?.birthday_month;
+    if(day && month){
+      card.classList.remove('vac-stat--empty');
+      valEl.innerHTML = `1<span class="vac-stat-unit">día</span>`;
+      subEl.textContent = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}`;
+    } else {
+      card.classList.add('vac-stat--empty');
+      valEl.textContent = 'Pedile al admin que cargue tu cumpleaños';
+      subEl.textContent = '';
+    }
   }
 
   // ── Render: calendario mensual ──
@@ -11548,6 +11577,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     await loadGlobalEmployees();
     renderBirthdayLine();
     if(window.__vac.team) window.__vac.team.initialized = false;
+    // Si el admin se editó a sí mismo, refrescar __vacAuth.employee para que
+    // la card de cumple en Mi calendario y el saldo (extra_days) reflejen
+    // el cambio sin requerir nuevo login.
+    if(empId && empId === window.__vacAuth?.employee?.id){
+      const fresh = await loadEmployeeForEmail(window.__vacAuth.employee.email);
+      if(fresh.employee) window.__vacAuth.employee = fresh.employee;
+      _miState.initialized = false;
+    }
     return true;
   }
 
