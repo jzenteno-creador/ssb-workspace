@@ -714,6 +714,43 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 /* Splash screen — Dirección A · Cartografía viva */
 .splash{position:fixed;inset:0;background:#0b0f17;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .45s ease-out;overflow:hidden;isolation:isolate}
 .splash.hide{transform:translateY(-100%)}
+/* Auth gate global — bloquea acceso a la app sin sesión */
+body:not(.is-authed) .topbar,
+body:not(.is-authed) .tab-bar,
+body:not(.is-authed) .tab-panel,
+body:not(.is-authed) .sched-tools-bar{display:none !important}
+.auth-gate{position:fixed;inset:0;z-index:9999;background:#0b0f17;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.auth-gate.is-active{display:flex}
+.auth-card{background:#141925;border-radius:16px;padding:36px 32px;width:min(420px,100%);border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.5);color:#e8ecf3;animation:auth-card-in .35s cubic-bezier(.22,1,.36,1)}
+@keyframes auth-card-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.auth-card .auth-logo{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.18em;color:#a78bfa;margin-bottom:6px;text-transform:uppercase}
+.auth-card h2{font-size:20px;font-weight:700;margin:6px 0 4px;color:#fff;letter-spacing:-.3px}
+.auth-card .auth-help{color:rgba(255,255,255,.6);font-size:12px;margin-bottom:8px;line-height:1.55}
+.auth-card form{display:flex;flex-direction:column;gap:10px;text-align:left;margin-top:14px}
+.auth-card label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:-4px}
+.auth-card input{padding:11px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0b0f17;color:#fff;font-size:14px;font-family:var(--font);transition:border-color .15s,box-shadow .15s}
+.auth-card input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.2)}
+.auth-card .auth-btn{padding:12px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:.06em;cursor:pointer;font-family:var(--font);text-transform:uppercase;transition:filter .15s,transform .15s,background .15s}
+.auth-card .auth-btn.primary{background:#7c3aed;color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.35);margin-top:6px}
+.auth-card .auth-btn.primary:hover{filter:brightness(1.1)}
+.auth-card .auth-btn.primary:disabled{opacity:.6;cursor:not-allowed;filter:none}
+.auth-card .auth-btn.secondary{background:transparent;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18);font-size:11px;padding:10px 14px}
+.auth-card .auth-btn.secondary:hover{background:rgba(255,255,255,.06)}
+.auth-card .auth-altrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap}
+.auth-card .auth-link{background:transparent;border:none;color:#a78bfa;font-size:12px;cursor:pointer;font-family:var(--font);padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+.auth-card .auth-link:hover{color:#c4b5fd}
+.auth-card .auth-status{font-size:12px;font-family:var(--mono);min-height:18px;margin-top:6px;line-height:1.45}
+.auth-card .auth-status.ok{color:#4ade80}
+.auth-card .auth-status.err{color:#f87171}
+.auth-card .auth-status.info{color:#93c5fd}
+.auth-card .auth-state[hidden]{display:none}
+/* Botón logout en topbar */
+.btn-top.btn-logout{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.28);color:rgba(255,255,255,.85);padding:7px 11px}
+.btn-top.btn-logout:hover{background:rgba(239,68,68,.22);border-color:rgba(239,68,68,.5)}
+.btn-top.btn-logout .ic{margin-right:4px}
+@media (prefers-reduced-motion: reduce){
+  .auth-card{animation:none}
+}
 .splash > *:not(.splash-bg){position:relative;z-index:2}
 /* Background host */
 .splash-bg{position:absolute;inset:0;z-index:0;pointer-events:none}
@@ -999,62 +1036,9 @@ select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
 }
 body.light .vac-tab-badge{color:#fff}
 
-/* Splash de login */
-#panel-vacaciones .vac-splash{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  padding:40px 2rem;min-height:480px;
-}
-#panel-vacaciones .vac-splash-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:14px;
-  padding:36px 32px;max-width:420px;width:100%;
-  box-shadow:var(--shadow);text-align:center;
-}
-#panel-vacaciones .vac-splash-ico{
-  width:56px;height:56px;border-radius:14px;margin:0 auto 16px;
-  background:var(--blue-lt);color:var(--blue);
-  display:grid;place-items:center;
-}
-#panel-vacaciones .vac-splash-ico .ic{width:28px;height:28px}
-#panel-vacaciones .vac-splash-title{
-  font-family:var(--font);font-size:20px;font-weight:700;
-  letter-spacing:-.02em;color:var(--text);margin-bottom:8px;
-}
-#panel-vacaciones .vac-splash-sub{
-  font-size:var(--fs-sm);color:var(--muted);margin-bottom:22px;line-height:1.5;
-}
-#panel-vacaciones .vac-splash-form{display:flex;flex-direction:column;gap:10px;text-align:left}
-#panel-vacaciones .vac-splash-lbl{
-  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
-  color:var(--muted);font-weight:600;font-family:var(--mono);
-}
-#panel-vacaciones .vac-splash-input{
-  font-family:var(--font);font-size:var(--fs-md);
-  padding:10px 12px;border-radius:8px;
-  border:1px solid var(--border);background:var(--faint);color:var(--text);
-  transition:border-color .12s,box-shadow .12s;
-}
-#panel-vacaciones .vac-splash-input:focus{
-  outline:none;border-color:var(--blue);
-  box-shadow:0 0 0 3px var(--blue-lt);
-}
-#panel-vacaciones .vac-splash-btn{
-  margin-top:6px;padding:11px 16px;border:none;border-radius:8px;
-  background:var(--blue);color:#fff;
-  font-family:var(--font);font-size:var(--fs-md);font-weight:600;
-  cursor:pointer;transition:filter .12s,transform .05s;
-}
-#panel-vacaciones .vac-splash-btn:hover{filter:brightness(1.08)}
-#panel-vacaciones .vac-splash-btn:active{transform:translateY(1px)}
-#panel-vacaciones .vac-splash-btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
-#panel-vacaciones .vac-splash-status{
-  margin-top:8px;font-size:var(--fs-xs);min-height:18px;line-height:1.4;
-}
-#panel-vacaciones .vac-splash-status.ok{color:var(--green)}
-#panel-vacaciones .vac-splash-status.err{color:var(--red)}
-#panel-vacaciones .vac-splash-status.info{color:var(--muted)}
-
-/* App auth-protected: flex column para que header → disclaimer → banner → section apilen */
-#panel-vacaciones .vac-app{flex:1;flex-direction:column;min-height:0}
+/* App de Vacaciones: flex column para que header → disclaimer → banner → section apilen.
+   La auth la maneja el gate global (#auth-gate) — el splash interno fue removido. */
+#panel-vacaciones .vac-app{flex:1;display:flex;flex-direction:column;min-height:0}
 
 /* Header del módulo cuando hay sesión: pill de usuario */
 #panel-vacaciones #vac-user-pill{display:inline-flex;align-items:center;gap:6px}
@@ -2010,6 +1994,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
   </defs>
 </svg>
 
@@ -2042,6 +2027,84 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   <button class="splash-btn" id="splash-btn" disabled onclick="document.getElementById('splash').classList.add('hide');setTimeout(()=>document.getElementById('splash').remove(),500)">Ingresar</button>
 </div>
 
+<!-- AUTH GATE — bloqueo previo a la app -->
+<div id="auth-gate" class="auth-gate" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+  <div class="auth-card">
+    <div class="auth-logo"><svg class="ic" aria-hidden="true" style="width:18px;height:18px;color:#a78bfa"><use href="#i-anchor"/></svg> SSB Workspace</div>
+
+    <!-- Estado: login -->
+    <div class="auth-state" data-state="login">
+      <h2 id="auth-title">Ingresá a tu cuenta</h2>
+      <p class="auth-help">Email corporativo + contraseña.</p>
+      <form id="auth-login-form" autocomplete="on" novalidate>
+        <label for="auth-login-email">Email</label>
+        <input type="email" id="auth-login-email" name="email" required autocomplete="email" inputmode="email" placeholder="usuario@ssbint.com">
+        <label for="auth-login-pw">Contraseña</label>
+        <input type="password" id="auth-login-pw" name="current-password" required autocomplete="current-password" minlength="8">
+        <button type="submit" class="auth-btn primary" id="auth-login-btn">Ingresar</button>
+        <div class="auth-status" id="auth-login-status" role="status" aria-live="polite"></div>
+      </form>
+      <div class="auth-altrow">
+        <button type="button" class="auth-link" data-goto="reset">Olvidé mi contraseña</button>
+        <button type="button" class="auth-btn secondary" data-goto="signup">Primera vez — registrarme</button>
+      </div>
+    </div>
+
+    <!-- Estado: signup -->
+    <div class="auth-state" data-state="signup" hidden>
+      <h2>Crear cuenta</h2>
+      <p class="auth-help">Tu mail tiene que estar habilitado por el admin (Jorge o John). Te recomendamos usar la misma contraseña que en el CRM corporativo, así no acumulás passwords distintas.</p>
+      <form id="auth-signup-form" autocomplete="on" novalidate>
+        <label for="auth-signup-email">Email corporativo</label>
+        <input type="email" id="auth-signup-email" name="email" required autocomplete="email" inputmode="email" placeholder="usuario@ssbint.com">
+        <label for="auth-signup-pw">Contraseña (mín. 8 caracteres)</label>
+        <input type="password" id="auth-signup-pw" name="new-password" required autocomplete="new-password" minlength="8">
+        <button type="submit" class="auth-btn primary" id="auth-signup-btn">Crear cuenta</button>
+        <div class="auth-status" id="auth-signup-status" role="status" aria-live="polite"></div>
+      </form>
+      <div class="auth-altrow">
+        <button type="button" class="auth-link" data-goto="login">← Volver al login</button>
+      </div>
+    </div>
+
+    <!-- Estado: reset (pedir mail de reset) -->
+    <div class="auth-state" data-state="reset" hidden>
+      <h2>Restablecer contraseña</h2>
+      <p class="auth-help">Te mandamos un mail con un link para elegir una nueva contraseña.</p>
+      <form id="auth-reset-form" autocomplete="off" novalidate>
+        <label for="auth-reset-email">Email</label>
+        <input type="email" id="auth-reset-email" name="email" required autocomplete="email" inputmode="email">
+        <button type="submit" class="auth-btn primary" id="auth-reset-btn">Enviar link</button>
+        <div class="auth-status" id="auth-reset-status" role="status" aria-live="polite"></div>
+      </form>
+      <div class="auth-altrow">
+        <button type="button" class="auth-link" data-goto="login">← Volver al login</button>
+      </div>
+    </div>
+
+    <!-- Estado: nueva contraseña (luego de click en link de reset) -->
+    <div class="auth-state" data-state="newpw" hidden>
+      <h2>Nueva contraseña</h2>
+      <p class="auth-help">Elegí tu nueva contraseña. Mínimo 8 caracteres.</p>
+      <form id="auth-newpw-form" autocomplete="off" novalidate>
+        <label for="auth-newpw-pw">Nueva contraseña</label>
+        <input type="password" id="auth-newpw-pw" name="new-password" required autocomplete="new-password" minlength="8">
+        <button type="submit" class="auth-btn primary" id="auth-newpw-btn">Guardar y entrar</button>
+        <div class="auth-status" id="auth-newpw-status" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+
+    <!-- Estado: confirmación pendiente (signup OK, esperando click en mail) -->
+    <div class="auth-state" data-state="confirm-pending" hidden>
+      <h2>Revisá tu mail</h2>
+      <p class="auth-help">Te mandamos un mail a <strong id="auth-confirm-email-shown">tu casilla</strong>. Hacé click en el link para activar tu cuenta. Después podés volver acá e ingresar con tu contraseña.</p>
+      <div class="auth-altrow">
+        <button type="button" class="auth-btn secondary" data-goto="login">Volver al login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <header class="topbar">
   <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>SSB Workspace</div>
@@ -2067,6 +2130,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       <span class="clock-time" id="clock-time">--:--</span>
       <span class="clock-offline-dot" id="clock-offline-dot" title="Sin conexión — última hora conocida" aria-hidden="true"></span>
     </div>
+    <!-- Logout -->
+    <button class="btn-top btn-logout" id="btn-logout" type="button" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ic ic-md" aria-hidden="true"><use href="#i-logout"/></svg> Salir</button>
   </div>
 </header>
 
@@ -2709,25 +2774,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 <!-- ═══════════ TAB: VACACIONES ═══════════ -->
 <div class="tab-panel" id="panel-vacaciones">
 
-  <!-- Splash login: visible cuando no hay sesión -->
-  <div class="vac-splash" id="vac-splash" style="display:none">
-    <div class="vac-splash-card">
-      <div class="vac-splash-ico" aria-hidden="true">
-        <svg class="ic ic-lg"><use href="#i-calendar"/></svg>
-      </div>
-      <h2 class="vac-splash-title">Módulo de Vacaciones</h2>
-      <p class="vac-splash-sub">Ingresá con tu mail corporativo. Te mandamos un link mágico para entrar sin contraseña.</p>
-      <form class="vac-splash-form" id="vac-splash-form" autocomplete="off">
-        <label for="vac-splash-email" class="vac-splash-lbl">Email</label>
-        <input type="email" id="vac-splash-email" class="vac-splash-input" placeholder="usuario@ssbint.com" required autocomplete="email" inputmode="email">
-        <button type="submit" class="vac-splash-btn" id="vac-splash-btn">Enviar magic link</button>
-        <div class="vac-splash-status" id="vac-splash-status" role="status" aria-live="polite"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Contenido autenticado -->
-  <div class="vac-app" id="vac-app" style="display:none">
+  <!-- Contenido del módulo (la auth la gobierna el gate global) -->
+  <div class="vac-app" id="vac-app">
 
     <!-- Header del módulo -->
     <div class="sched-filter-bar">
@@ -9528,14 +9576,348 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 </script>
 <!-- ═══════════ FIN TARIFAS TERRESTRES DOW ═══════════ -->
 
-<!-- ═══════════ VACACIONES MODULE — auth + badge polling (Fase 2) ═══════════ -->
+<!-- ═══════════ AUTH GLOBAL — login/signup/reset gating (SSB Workspace) ═══════════ -->
 <script>
 (() => {
   const SUPA_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+
+  // Cliente Supabase global de la app — sesión persistente, único storageKey.
+  // Vacaciones reusa esta misma instancia (window.__ssb.supa) para evitar
+  // dos GoTrueClient con misma key. Tarifas Terrestres mantiene su propio
+  // cliente anon (sin sesión) — fuera de scope de esta sesión.
   const supa = supabase.createClient(SUPA_URL, SUPA_KEY, {
-    auth: { storageKey: 'sb-vacaciones-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    auth: { storageKey: 'sb-ssb-workspace-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' }
   });
+
+  window.__ssb = { supa, ready: false };
+  window.__ssbAuth = null;          // populated after applySession success
+
+  const $ = id => document.getElementById(id);
+  const gate = () => $('auth-gate');
+
+  function showState(state){
+    const g = gate(); if(!g) return;
+    g.querySelectorAll('.auth-state').forEach(el => {
+      el.hidden = (el.dataset.state !== state);
+    });
+    g.classList.add('is-active');
+    // foco en el primer input visible para teclado
+    requestAnimationFrame(() => {
+      const inp = g.querySelector(`.auth-state[data-state="${state}"] input`);
+      if(inp) try{ inp.focus(); }catch(_){}
+    });
+  }
+  function hideGate(){
+    const g = gate(); if(!g) return;
+    g.classList.remove('is-active');
+  }
+  function setStatus(stateId, kind, msg){
+    const el = $(stateId);
+    if(!el) return;
+    el.className = 'auth-status ' + (kind || '');
+    el.textContent = msg || '';
+  }
+
+  // Pre-check: ¿el email está habilitado en vac_employees?
+  // No filtra por `active` acá para poder dar mensaje específico de "inactivo".
+  async function lookupEmployee(email){
+    const { data, error } = await supa
+      .from('vac_employees')
+      .select('id,email,active')
+      .eq('email', email)
+      .maybeSingle();
+    if(error) return { error };
+    if(!data)  return { notFound: true };
+    if(!data.active) return { inactive: true };
+    return { ok: true, id: data.id };
+  }
+
+  // ── Acciones ──
+  async function doSignIn(email, password){
+    setStatus('auth-login-status', 'info', 'Verificando…');
+    const btn = $('auth-login-btn'); if(btn) btn.disabled = true;
+    const { data, error } = await supa.auth.signInWithPassword({ email, password });
+    if(btn) btn.disabled = false;
+    if(error){
+      // Mensaje neutro para evitar enumeración de cuentas
+      const msg = /confirm/i.test(error.message)
+        ? 'Tu cuenta todavía no está confirmada. Revisá el mail que te enviamos al registrarte.'
+        : 'Email o contraseña incorrectos.';
+      setStatus('auth-login-status', 'err', msg);
+      return;
+    }
+    setStatus('auth-login-status', 'ok', 'Listo. Entrando…');
+    // applySession lo dispara onAuthStateChange
+  }
+
+  async function doSignUp(email, password){
+    setStatus('auth-signup-status', 'info', 'Verificando email autorizado…');
+    const btn = $('auth-signup-btn'); if(btn) btn.disabled = true;
+
+    const lookup = await lookupEmployee(email);
+    if(lookup.error){
+      if(btn) btn.disabled = false;
+      setStatus('auth-signup-status', 'err', 'No pudimos verificar el email. Reintentá en un momento.');
+      return;
+    }
+    if(lookup.notFound){
+      if(btn) btn.disabled = false;
+      setStatus('auth-signup-status', 'err', 'Tu mail no está habilitado. Pedile al admin (Jorge o John) que te dé de alta.');
+      return;
+    }
+    if(lookup.inactive){
+      if(btn) btn.disabled = false;
+      setStatus('auth-signup-status', 'err', 'Tu cuenta está desactivada. Contactá al admin.');
+      return;
+    }
+
+    const redirect = window.location.origin + window.location.pathname;
+    const { data, error } = await supa.auth.signUp({
+      email, password,
+      options: { emailRedirectTo: redirect }
+    });
+    if(btn) btn.disabled = false;
+    if(error){
+      // Si ya existe la cuenta, Supabase devuelve user con identities=[] (en dashboards "secure email change" off);
+      // si "secure email change" on, error claro. Mostramos texto genérico para no enumerar:
+      const msg = /already/i.test(error.message)
+        ? 'Ya hay una cuenta con ese mail. Probá ingresar o restablecer la contraseña.'
+        : (/password/i.test(error.message)
+          ? 'Contraseña inválida. Mínimo 8 caracteres.'
+          : 'No se pudo crear la cuenta: ' + (error.message || 'error desconocido'));
+      setStatus('auth-signup-status', 'err', msg);
+      return;
+    }
+    // Defensa: si Supabase devolvió user con identities vacíos = email ya existía
+    if(data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0){
+      setStatus('auth-signup-status', 'err', 'Ya hay una cuenta con ese mail. Probá ingresar o restablecer la contraseña.');
+      return;
+    }
+    // Email confirmation está ON → no hay session aún. Mostrar estado confirm-pending.
+    const shown = $('auth-confirm-email-shown');
+    if(shown) shown.textContent = email;
+    showState('confirm-pending');
+  }
+
+  async function doRequestReset(email){
+    setStatus('auth-reset-status', 'info', 'Enviando…');
+    const btn = $('auth-reset-btn'); if(btn) btn.disabled = true;
+    const redirect = window.location.origin + window.location.pathname + '?reset=1';
+    const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: redirect });
+    if(btn) btn.disabled = false;
+    if(error){
+      // Mensaje uniforme para no leak de existencia de cuenta
+      setStatus('auth-reset-status', 'ok', 'Si el mail existe, te enviamos un link. Revisá tu casilla.');
+      return;
+    }
+    setStatus('auth-reset-status', 'ok', 'Si el mail existe, te enviamos un link. Revisá tu casilla.');
+  }
+
+  async function doUpdatePassword(newPassword){
+    setStatus('auth-newpw-status', 'info', 'Guardando…');
+    const btn = $('auth-newpw-btn'); if(btn) btn.disabled = true;
+    const { error } = await supa.auth.updateUser({ password: newPassword });
+    if(btn) btn.disabled = false;
+    if(error){
+      setStatus('auth-newpw-status', 'err', 'No se pudo actualizar: ' + (error.message || 'error'));
+      return;
+    }
+    setStatus('auth-newpw-status', 'ok', 'Contraseña actualizada. Entrando…');
+    // limpiar query param de recovery sin recargar
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.delete('reset');
+      window.history.replaceState({}, '', url);
+    }catch(_){}
+    // Sesión queda activa → applySession por onAuthStateChange.
+  }
+
+  async function doLogout(){
+    try{ await supa.auth.signOut(); }catch(_){}
+    // Recargar para limpiar todo el estado en memoria de la app:
+    // rates, schedule, _ttData, __vacAuth caches, _rtChannel, etc.
+    window.location.reload();
+  }
+  window.ssbLogout = doLogout;
+
+  // ── Aplicar sesión ──
+  async function applySession(session, event){
+    // PASSWORD_RECOVERY: el user vino del mail de reset → mostrar form newpw.
+    if(event === 'PASSWORD_RECOVERY'){
+      showState('newpw');
+      return;
+    }
+    if(!session || !session.user || !session.user.email){
+      window.__ssbAuth = null;
+      document.body.classList.remove('is-authed');
+      // Limpiar query param eventual de reset
+      try{
+        const url = new URL(window.location.href);
+        if(url.searchParams.get('reset')){ url.searchParams.delete('reset'); window.history.replaceState({}, '', url); }
+      }catch(_){}
+      showState('login');
+      return;
+    }
+    // Validar que el email esté en vac_employees (gating server-side)
+    const email = session.user.email.toLowerCase();
+    const lookup = await lookupEmployee(email);
+    if(lookup.error){
+      setStatus('auth-login-status', 'err', 'No se pudo verificar tu cuenta. Reintentá.');
+      try{ await supa.auth.signOut(); }catch(_){}
+      return;
+    }
+    if(lookup.notFound){
+      setStatus('auth-login-status', 'err', 'Tu mail ya no está habilitado. Contactá al admin.');
+      try{ await supa.auth.signOut(); }catch(_){}
+      return;
+    }
+    if(lookup.inactive){
+      setStatus('auth-login-status', 'err', 'Tu cuenta está desactivada. Contactá al admin.');
+      try{ await supa.auth.signOut(); }catch(_){}
+      return;
+    }
+    // OK → autorizado.
+    window.__ssbAuth = { user: session.user, email, employeeId: lookup.id, session };
+    document.body.classList.add('is-authed');
+    hideGate();
+    // Notificar al módulo de Vacaciones (si está cargado) para que refresque su estado.
+    if(typeof window.vacApplySsbSession === 'function'){
+      try{ await window.vacApplySsbSession(session); }catch(_){}
+    }
+  }
+
+  // ── Wire-up de los forms del gate ──
+  function wireUp(){
+    const g = gate(); if(!g) return;
+    // Navegación entre estados
+    g.querySelectorAll('[data-goto]').forEach(b => {
+      if(b._wired) return;
+      b._wired = true;
+      b.addEventListener('click', () => {
+        // Limpio status del estado destino
+        const target = b.dataset.goto;
+        const targetStatusId = ({login:'auth-login-status', signup:'auth-signup-status', reset:'auth-reset-status', newpw:'auth-newpw-status'})[target];
+        if(targetStatusId) setStatus(targetStatusId, '', '');
+        showState(target);
+      });
+    });
+    // Login
+    const loginForm = $('auth-login-form');
+    if(loginForm && !loginForm._wired){
+      loginForm._wired = true;
+      loginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const email = ($('auth-login-email')?.value || '').trim().toLowerCase();
+        const pw    = $('auth-login-pw')?.value || '';
+        if(!email || pw.length < 8){
+          setStatus('auth-login-status', 'err', 'Completá email y contraseña (mín. 8 caracteres).');
+          return;
+        }
+        doSignIn(email, pw);
+      });
+    }
+    // Signup
+    const signupForm = $('auth-signup-form');
+    if(signupForm && !signupForm._wired){
+      signupForm._wired = true;
+      signupForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const email = ($('auth-signup-email')?.value || '').trim().toLowerCase();
+        const pw    = $('auth-signup-pw')?.value || '';
+        if(!email || pw.length < 8){
+          setStatus('auth-signup-status', 'err', 'Completá email y contraseña (mín. 8 caracteres).');
+          return;
+        }
+        doSignUp(email, pw);
+      });
+    }
+    // Reset request
+    const resetForm = $('auth-reset-form');
+    if(resetForm && !resetForm._wired){
+      resetForm._wired = true;
+      resetForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const email = ($('auth-reset-email')?.value || '').trim().toLowerCase();
+        if(!email){ setStatus('auth-reset-status', 'err', 'Ingresá tu email.'); return; }
+        doRequestReset(email);
+      });
+    }
+    // New password
+    const newpwForm = $('auth-newpw-form');
+    if(newpwForm && !newpwForm._wired){
+      newpwForm._wired = true;
+      newpwForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const pw = $('auth-newpw-pw')?.value || '';
+        if(pw.length < 8){ setStatus('auth-newpw-status', 'err', 'Mínimo 8 caracteres.'); return; }
+        doUpdatePassword(pw);
+      });
+    }
+    // Logout button (en topbar)
+    const logoutBtn = $('btn-logout');
+    if(logoutBtn && !logoutBtn._wired){
+      logoutBtn._wired = true;
+      logoutBtn.addEventListener('click', () => {
+        if(confirm('¿Cerrar sesión?')) doLogout();
+      });
+    }
+  }
+
+  // ── Boot ──
+  async function boot(){
+    wireUp();
+    // Si la URL trae ?reset=1 (volvió del mail), forzar estado newpw.
+    const params = new URLSearchParams(window.location.search);
+    const isReset = params.get('reset') === '1';
+
+    supa.auth.onAuthStateChange((event, session) => {
+      applySession(session, event);
+    });
+
+    const { data: { session } } = await supa.auth.getSession();
+    if(isReset){
+      // Recovery flow: mostrar gate en estado newpw aunque haya sesión.
+      document.body.classList.remove('is-authed');
+      showState('newpw');
+      // Y ocultar el splash decorativo — el user vino del mail, queremos que vea la pantalla de password.
+      const sp = document.getElementById('splash');
+      if(sp){ sp.classList.add('hide'); setTimeout(()=>sp?.remove(), 500); }
+    } else {
+      await applySession(session);
+      // Si no había sesión válida, ocultar el splash decorativo para no
+      // forzar al user a clickear "Ingresar" antes de ver el gate.
+      if(!window.__ssbAuth){
+        const sp = document.getElementById('splash');
+        if(sp){ sp.classList.add('hide'); setTimeout(()=>sp?.remove(), 500); }
+      }
+    }
+    window.__ssb.ready = true;
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
+</script>
+<!-- ═══════════ FIN AUTH GLOBAL ═══════════ -->
+
+<!-- ═══════════ VACACIONES MODULE — auth + badge polling (Fase 2) ═══════════ -->
+<script>
+(() => {
+  // Reusa el cliente global de auth para no acumular GoTrueClient con la
+  // misma key (warning resuelto). Si por algún motivo el script global no
+  // cargó, fallback a un cliente local — pero esto NO debería pasar.
+  const supa = (window.__ssb && window.__ssb.supa) || (() => {
+    console.warn('[vacaciones] cliente global no encontrado, creando fallback');
+    return supabase.createClient(
+      'https://xkppkzfxgtfsmfooozsm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y',
+      { auth: { storageKey: 'sb-ssb-workspace-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+    );
+  })();
 
   const POLL_MS = 60_000;
 
@@ -9549,24 +9931,6 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   window.__vac.authSubscription = null;
   window.__vac.currentSubtab = 'mi';
   window.__vac.allEmployees = [];
-
-  function setStatus(kind, msg){
-    const el = $('vac-splash-status');
-    if(!el) return;
-    el.className = 'vac-splash-status ' + (kind || '');
-    el.textContent = msg || '';
-  }
-
-  function showSplash(){
-    const sp = $('vac-splash'); const ap = $('vac-app');
-    if(sp) sp.style.display = 'flex';
-    if(ap) ap.style.display = 'none';
-  }
-  function hideSplash(){
-    const sp = $('vac-splash'); const ap = $('vac-app');
-    if(sp) sp.style.display = 'none';
-    if(ap) ap.style.display = 'flex';
-  }
 
   function setAdminUI(isAdmin){
     // Defensa en profundidad: cuando NO es admin ocultamos también la section admin
@@ -9611,29 +9975,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   async function applySession(session){
+    // El gating contra vac_employees lo hizo el cliente global ANTES de
+    // llegar acá (window.__ssbAuth ya está validado). Acá solo cargamos la
+    // info enriquecida del empleado (full_name, role, backup_employee_ids,
+    // birthday, extra_days) y armamos __vacAuth.
     if(!session || !session.user || !session.user.email){
       window.__vacAuth = null;
       stopBadgePolling();
-      showSplash();
       updatePendingBadge();
       clearPhase3Data();
       return;
     }
     const email = session.user.email.toLowerCase();
     const res = await loadEmployeeForEmail(email);
-    if(res.error){
-      setStatus('err', 'No se pudo verificar tu cuenta. Reintentá.');
-      await supa.auth.signOut();
-      return;
-    }
-    if(res.notFound){
-      setStatus('err', 'Tu email no está registrado. Pedile al admin que te dé de alta.');
-      await supa.auth.signOut();
-      return;
-    }
-    if(res.inactive){
-      setStatus('err', 'Tu cuenta está desactivada. Contactá al admin.');
-      await supa.auth.signOut();
+    if(res.error || res.notFound || res.inactive){
+      // El global ya cubrió este caso. Si igual llegó acá, log + abort.
+      console.warn('[vacaciones] applySession: empleado no resolvible', res);
+      window.__vacAuth = null;
       return;
     }
     const emp = res.employee;
@@ -9642,22 +10000,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       employee: emp,
       isAdmin: emp.role === 'admin'
     };
-    // UI auth
     const pillName = $('vac-user-pill-name');
     if(pillName) pillName.textContent = emp.full_name + (window.__vacAuth.isAdmin ? ' · admin' : '');
     setAdminUI(window.__vacAuth.isAdmin);
-    hideSplash();
-    setStatus('', '');
-    // Polling y badge
     startBadgePolling();
     updatePendingBadge();
-    // Cargar empleados globales para el banner de cumpleaños del mes (Cambio 6)
     loadGlobalEmployees().then(() => renderBirthdayLine());
-    // Disparar carga de la sub-tab activa (default: 'mi')
     const cur = window.__vac.currentSubtab;
     if(cur === 'mi') onEnterMi();
     else if(cur === 'cargar') onEnterCargar();
   }
+  // Hook expuesto al cliente global de auth.
+  window.vacApplySsbSession = applySession;
 
   // ── Cumpleaños del mes (Cambio 6): carga liviana, compartida con el banner ──
   async function loadGlobalEmployees(){
@@ -9690,26 +10044,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     el.innerHTML = `<strong>Cumpleaños este mes:</strong> ${items}`;
   }
 
-  async function sendMagicLink(email){
-    const btn = $('vac-splash-btn');
-    if(btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
-    setStatus('info', '');
-    const redirect = window.location.origin + window.location.pathname + '?tab=vacaciones';
-    const { error } = await supa.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: redirect }
-    });
-    if(btn){ btn.disabled = false; btn.textContent = 'Enviar magic link'; }
-    if(error){
-      setStatus('err', 'No se pudo enviar el link: ' + (error.message || 'error desconocido'));
-      return;
-    }
-    setStatus('ok', 'Te mandamos un mail con el link. Revisá tu bandeja.');
-  }
-
+  // Logout: delegado al cliente global. Se mantiene como wrapper por si
+  // alguna otra parte del módulo llama a esta función localmente.
   async function logout(){
-    await supa.auth.signOut();
-    // applySession(null) lo maneja onAuthStateChange
+    if(typeof window.ssbLogout === 'function') return window.ssbLogout();
+    try{ await supa.auth.signOut(); }catch(_){}
+    window.location.reload();
   }
 
   // ── Badge polling ──
@@ -12038,17 +12378,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   // ── Wire-up de eventos del DOM ──
   function wireUp(){
-    const form = $('vac-splash-form');
-    if(form && !form._wired){
-      form._wired = true;
-      form.addEventListener('submit', e => {
-        e.preventDefault();
-        const inp = $('vac-splash-email');
-        const email = (inp?.value || '').trim().toLowerCase();
-        if(!email) return;
-        sendMagicLink(email);
-      });
-    }
+    // Splash interno de Vacaciones eliminado — la auth la maneja el gate global.
     const logoutBtn = $('vac-logout-btn');
     if(logoutBtn && !logoutBtn._wired){
       logoutBtn._wired = true;
@@ -12098,17 +12428,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Init ──
   async function vacInit(){
     wireUp();
-    // Listener (idempotente: si ya hay uno, lo unsubscribimos antes)
-    if(window.__vac.authSubscription && typeof window.__vac.authSubscription.unsubscribe === 'function'){
-      try { window.__vac.authSubscription.unsubscribe(); } catch(_) {}
+    // La auth ya no se maneja acá — el cliente global (window.__ssb.supa)
+    // dispara onAuthStateChange y llama a window.vacApplySsbSession(session)
+    // cuando el usuario está autorizado. Si __ssbAuth ya estaba listo antes
+    // de que cargue este script, hacemos un fetch one-shot del session actual.
+    if(window.__ssbAuth && window.__ssb && window.__ssb.supa){
+      try{
+        const { data: { session } } = await window.__ssb.supa.auth.getSession();
+        if(session) await applySession(session);
+      }catch(_){}
     }
-    const { data: subData } = supa.auth.onAuthStateChange((_event, session) => {
-      applySession(session);
-    });
-    window.__vac.authSubscription = subData?.subscription || null;
-
-    const { data: { session } } = await supa.auth.getSession();
-    await applySession(session);
 
     // Deep-link ?tab=vacaciones[&sub=mi|equipo|cargar|admin]
     try {
