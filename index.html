@@ -141,6 +141,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .dot.err{background:#ff6b6b}
 .dot.spin{background:#f4a723;animation:blink .9s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+/* Reloj AR — topbar */
+.clock-widget{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);padding:6px 10px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);white-space:nowrap;line-height:1;letter-spacing:.02em;user-select:none}
+.clock-widget .clock-sep{opacity:.4;margin:0 2px}
+.clock-widget .clock-time{color:rgba(255,255,255,.78);font-weight:600}
+.clock-offline-dot{width:7px;height:7px;border-radius:50%;background:#ff6b6b;flex-shrink:0;display:none;box-shadow:0 0 6px rgba(255,107,107,.55)}
+.clock-widget.is-offline .clock-offline-dot{display:inline-block}
+.clock-widget.is-offline{color:rgba(255,107,107,.85)}
+.clock-widget.is-offline .clock-time{color:rgba(255,107,107,.95)}
 .btn-top{font-family:var(--font);font-size:12px;font-weight:500;padding:7px 15px;border-radius:7px;cursor:pointer;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);background:rgba(255,255,255,.09);transition:all .15s cubic-bezier(.4,0,.2,1)}
 .btn-top:hover{background:rgba(255,255,255,.18);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
 .btn-top:active{transform:translateY(0)}
@@ -2048,6 +2056,13 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
         <div class="bell-list" id="bell-list"><div class="bell-empty">Sin cambios recientes</div></div>
       </div>
     </div>
+    <!-- Reloj AR -->
+    <div class="clock-widget" id="clock-widget" role="status" aria-live="off" aria-label="Hora de Argentina">
+      <span class="clock-day" id="clock-day">—</span>
+      <span class="clock-sep" aria-hidden="true">·</span>
+      <span class="clock-time" id="clock-time">--:--</span>
+      <span class="clock-offline-dot" id="clock-offline-dot" title="Sin conexión — última hora conocida" aria-hidden="true"></span>
+    </div>
 <!-- Upload schedule -->
     <label class="btn-top btn-upload" style="cursor:pointer" title="Subir Excel de Schedule">
       <svg class="ic ic-md" aria-hidden="true"><use href="#i-upload"/></svg> Subir Schedule
@@ -3125,7 +3140,51 @@ document.addEventListener('click', e => {
 window.addEventListener('DOMContentLoaded', () => {
   syncSheet();
   loadChangesFromStorage();
+  initClockAR();
 });
+
+// ── Reloj AR (timezone fijo America/Argentina/Buenos_Aires) ──
+function initClockAR(){
+  const widget = document.getElementById('clock-widget');
+  const elDay  = document.getElementById('clock-day');
+  const elTime = document.getElementById('clock-time');
+  if(!widget || !elDay || !elTime) return;
+
+  const TZ = 'America/Argentina/Buenos_Aires';
+  let fmtDay, fmtTime;
+  try{
+    fmtDay  = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, weekday:'short', day:'numeric', month:'short' });
+    fmtTime = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, hour:'2-digit', minute:'2-digit', hour12:false });
+  }catch(e){
+    elDay.textContent = '—'; elTime.textContent = '--:--'; return;
+  }
+
+  function tick(){
+    if(!navigator.onLine){ widget.classList.add('is-offline'); return; }
+    widget.classList.remove('is-offline');
+    const now = new Date();
+    let dayStr = '';
+    try{
+      // formatToParts → "Mar 5 may" (sin comas, sin puntos, capitalizado)
+      const parts = fmtDay.formatToParts(now);
+      const out = [];
+      for(const p of parts){
+        if(p.type === 'weekday' || p.type === 'day' || p.type === 'month'){
+          out.push(p.value.replace(/\.$/,''));
+        }
+      }
+      dayStr = out.join(' ').replace(/^\w/, c => c.toUpperCase());
+    }catch(_){ dayStr = ''; }
+    const timeStr = fmtTime.format(now);
+    elDay.textContent = dayStr;
+    elTime.textContent = timeStr;
+  }
+
+  tick();
+  setInterval(tick, 60000);
+  window.addEventListener('online',  () => { tick(); });
+  window.addEventListener('offline', () => { widget.classList.add('is-offline'); });
+}
 
 // ── TABS ──
 function switchTab(name) {
