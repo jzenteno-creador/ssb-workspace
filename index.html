@@ -1616,6 +1616,264 @@ body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
   #panel-vacaciones .vac-mini-tl-viewport{transition:none}
   #panel-vacaciones .vac-gantt-bar{transition:none}
 }
+
+/* ── Sub-tab Administración ── */
+#panel-vacaciones .vac-section[data-section="admin"]{padding:18px 2rem 40px}
+#panel-vacaciones .vac-section[data-section="admin"].vac-section--active{display:flex;flex-direction:column;gap:18px}
+
+#panel-vacaciones .vac-admin-block{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  box-shadow:var(--shadow-sm,0 1px 2px rgba(0,0,0,.06));
+}
+#panel-vacaciones .vac-admin-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;
+}
+#panel-vacaciones .vac-admin-title{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font);font-size:var(--fs-md);font-weight:700;
+  letter-spacing:-.005em;color:var(--text);
+}
+#panel-vacaciones .vac-admin-title .ic{color:var(--muted)}
+#panel-vacaciones .vac-admin-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:24px;height:22px;padding:0 8px;margin-left:4px;
+  background:var(--amber);color:#fff;
+  font-size:var(--fs-xs);font-weight:700;font-family:var(--mono);
+  border-radius:11px;line-height:1;
+}
+#panel-vacaciones .vac-admin-count.vac-admin-count--zero{background:var(--faint);color:var(--muted);border:1px solid var(--border)}
+#panel-vacaciones .vac-admin-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#panel-vacaciones .vac-admin-actions .vac-btn-ghost,
+#panel-vacaciones .vac-admin-actions .vac-btn-primary{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 12px;font-size:var(--fs-sm);
+}
+#panel-vacaciones .vac-admin-body{padding:0}
+#panel-vacaciones .vac-admin-empty{
+  padding:32px 18px;text-align:center;color:var(--muted);font-size:var(--fs-sm);
+}
+
+#panel-vacaciones .vac-admin-table-wrap{overflow-x:auto}
+#panel-vacaciones .vac-admin-table{
+  width:100%;border-collapse:collapse;font-size:var(--fs-sm);background:var(--surface);
+}
+#panel-vacaciones .vac-admin-table th{
+  background:var(--faint);padding:10px 14px;text-align:left;
+  font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);font-weight:700;font-family:var(--mono);
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+#panel-vacaciones .vac-admin-table td{
+  padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;
+}
+#panel-vacaciones .vac-admin-table tbody tr:hover td{background:var(--faint)}
+#panel-vacaciones .vac-admin-table tbody tr:last-child td{border-bottom:none}
+#panel-vacaciones .vac-admin-table .vac-cell-emp{font-weight:700;color:var(--text)}
+#panel-vacaciones .vac-admin-table .vac-cell-mail{font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted)}
+#panel-vacaciones .vac-admin-table .vac-cell-mono{font-family:var(--mono);font-size:var(--fs-xs)}
+#panel-vacaciones .vac-admin-table .vac-cell-actions{text-align:right;white-space:nowrap}
+#panel-vacaciones .vac-admin-table .vac-cell-note{color:var(--muted);font-style:italic;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-vacaciones .vac-admin-table tr.vac-row-inactive td{opacity:.55}
+
+/* Chips para back-ups y conflictos */
+#panel-vacaciones .vac-chips{display:flex;flex-wrap:wrap;gap:4px}
+#panel-vacaciones .vac-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--faint);border:1px solid var(--border);
+  padding:2px 8px;border-radius:999px;
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);
+}
+#panel-vacaciones .vac-chip--admin{background:var(--purple-bg);border-color:var(--purple-bd);color:var(--purple)}
+#panel-vacaciones .vac-chip--conflict{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);font-weight:700}
+#panel-vacaciones .vac-chip--conflict .vac-chip-dates{font-weight:500;opacity:.85;margin-left:3px}
+#panel-vacaciones .vac-chip--ok{background:var(--green-bg);border-color:var(--green-bd);color:var(--green)}
+#panel-vacaciones .vac-chip--inactive{opacity:.5;text-decoration:line-through}
+
+/* Conflicto cell prominente (Prioridad B) */
+#panel-vacaciones .vac-conflict-cell{min-width:180px}
+#panel-vacaciones .vac-conflict-cell .vac-chips{margin-top:0}
+#panel-vacaciones .vac-conflict-none{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:11px;color:var(--green);font-weight:700;
+}
+
+/* Status badge en tabla */
+#panel-vacaciones .vac-status-dot{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:11px;font-weight:700;
+}
+#panel-vacaciones .vac-status-dot::before{
+  content:'';width:7px;height:7px;border-radius:50%;background:currentColor;
+}
+#panel-vacaciones .vac-status-dot--active{color:var(--green)}
+#panel-vacaciones .vac-status-dot--inactive{color:var(--muted)}
+
+/* Mini-buttons (acciones de tabla) */
+#panel-vacaciones .vac-act-btn{
+  background:transparent;border:1px solid var(--border);
+  color:var(--text);font-family:var(--font);font-size:var(--fs-2xs);font-weight:600;
+  padding:5px 10px;border-radius:6px;cursor:pointer;
+  text-transform:uppercase;letter-spacing:.04em;
+  transition:color .12s,border-color .12s,background .12s;
+  margin-left:5px;
+}
+#panel-vacaciones .vac-act-btn:first-child{margin-left:0}
+#panel-vacaciones .vac-act-btn:hover{color:var(--text);border-color:var(--border-strong,var(--border));background:var(--faint)}
+#panel-vacaciones .vac-act-btn--approve{color:var(--green);border-color:var(--green-bd)}
+#panel-vacaciones .vac-act-btn--approve:hover{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+#panel-vacaciones .vac-act-btn--reject{color:var(--red);border-color:var(--red-bd)}
+#panel-vacaciones .vac-act-btn--reject:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+#panel-vacaciones .vac-act-btn--danger{color:var(--red)}
+#panel-vacaciones .vac-act-btn--danger:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+
+/* Modal genérico */
+#panel-vacaciones .vac-modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(11,15,23,.55);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;z-index:300;
+  animation:vacFadeIn .14s ease;
+}
+@keyframes vacFadeIn{from{opacity:0}to{opacity:1}}
+#panel-vacaciones .vac-modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;
+  max-width:640px;width:100%;
+  max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 24px 60px rgba(0,0,0,.4);
+  outline:none;
+}
+#panel-vacaciones .vac-modal--wide{max-width:760px}
+#panel-vacaciones .vac-modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;border-bottom:1px solid var(--border);gap:12px;
+}
+#panel-vacaciones .vac-modal-title{
+  font-size:18px;font-weight:700;letter-spacing:-.01em;color:var(--text);
+}
+#panel-vacaciones .vac-modal-close{
+  background:transparent;border:none;color:var(--muted);cursor:pointer;
+  padding:4px;border-radius:6px;display:flex;align-items:center;
+}
+#panel-vacaciones .vac-modal-close:hover{background:var(--faint);color:var(--text)}
+#panel-vacaciones .vac-modal-sub{
+  padding:0 22px 10px;
+  font-size:var(--fs-xs);color:var(--muted);line-height:1.5;
+}
+#panel-vacaciones .vac-modal-body{
+  padding:18px 22px;
+  overflow-y:auto;flex:1;
+}
+#panel-vacaciones .vac-modal-foot{
+  padding:12px 22px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;
+}
+
+/* Form helpers reusables dentro de modales */
+#panel-vacaciones .vac-modal-body .vac-form-row{margin-bottom:14px}
+#panel-vacaciones .vac-modal-body .vac-form-row:last-child{margin-bottom:0}
+
+/* Multi-select de back-ups (Prioridad A) */
+#panel-vacaciones .vac-backup-select{
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);
+  max-height:240px;overflow-y:auto;
+  padding:6px;
+}
+#panel-vacaciones .vac-backup-select-option{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:6px;
+  cursor:pointer;transition:background .1s;
+  font-size:var(--fs-sm);
+}
+#panel-vacaciones .vac-backup-select-option:hover{background:var(--faint)}
+#panel-vacaciones .vac-backup-select-option input[type="checkbox"]{
+  width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;
+}
+#panel-vacaciones .vac-backup-select-option .vac-bs-name{font-weight:600;color:var(--text)}
+#panel-vacaciones .vac-backup-select-option .vac-bs-mail{
+  margin-left:auto;font-family:var(--mono);font-size:var(--fs-2xs);color:var(--muted);
+}
+#panel-vacaciones .vac-backup-select-option.is-selected{background:var(--blue-lt,rgba(37,99,235,.08))}
+body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgba(91,155,245,.15)}
+#panel-vacaciones .vac-backup-select-empty{
+  padding:12px;text-align:center;color:var(--muted);font-size:var(--fs-xs);
+}
+#panel-vacaciones .vac-backup-select-summary{
+  margin-top:8px;font-size:var(--fs-xs);color:var(--muted);
+  font-family:var(--mono);
+}
+
+/* Detalle pendiente */
+#panel-vacaciones .vac-detail-row{
+  display:flex;justify-content:space-between;gap:14px;
+  padding:8px 0;border-bottom:1px dashed var(--border);
+  font-size:var(--fs-sm);
+}
+#panel-vacaciones .vac-detail-row:last-child{border-bottom:none}
+#panel-vacaciones .vac-detail-row .vac-detail-lbl{color:var(--muted);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono)}
+#panel-vacaciones .vac-detail-row .vac-detail-val{color:var(--text);font-weight:600;text-align:right}
+#panel-vacaciones .vac-detail-conflicts-title{
+  margin-top:14px;margin-bottom:8px;
+  font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.08em;
+  color:var(--amber);font-weight:700;font-family:var(--mono);
+}
+#panel-vacaciones .vac-detail-conflict-list{display:flex;flex-direction:column;gap:6px}
+#panel-vacaciones .vac-detail-conflict-item{
+  background:var(--amber-bg);border:1px solid var(--amber-bd);
+  padding:8px 12px;border-radius:6px;
+  font-size:var(--fs-xs);color:var(--amber);
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+#panel-vacaciones .vac-detail-conflict-item strong{font-weight:700}
+#panel-vacaciones .vac-detail-conflict-item .vac-dci-status{
+  font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;font-size:10px;
+}
+#panel-vacaciones .vac-detail-conflict-none{
+  background:var(--green-bg);border:1px solid var(--green-bd);
+  padding:8px 12px;border-radius:6px;
+  font-size:var(--fs-xs);color:var(--green);font-weight:600;font-family:var(--mono);
+}
+
+/* Carga masiva: textarea + preview */
+#panel-vacaciones .vac-csv-textarea{
+  width:100%;min-height:160px;
+  border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;
+  font-family:var(--mono);font-size:var(--fs-xs);line-height:1.5;
+  background:var(--surface);color:var(--text);
+  resize:vertical;
+}
+#panel-vacaciones .vac-csv-textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt,rgba(37,99,235,.15))}
+#panel-vacaciones .vac-csv-help{
+  font-size:var(--fs-xs);color:var(--muted);margin-top:8px;line-height:1.5;
+  font-family:var(--mono);
+}
+#panel-vacaciones .vac-csv-preview{
+  margin-top:12px;
+  background:var(--faint);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;
+  font-size:var(--fs-xs);
+}
+#panel-vacaciones .vac-csv-preview-counts{
+  display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;
+  font-family:var(--mono);font-weight:700;
+}
+#panel-vacaciones .vac-csv-preview-counts .vac-cnt-ok{color:var(--green)}
+#panel-vacaciones .vac-csv-preview-counts .vac-cnt-err{color:var(--red)}
+#panel-vacaciones .vac-csv-preview-list{
+  max-height:160px;overflow-y:auto;
+  font-family:var(--mono);font-size:11px;line-height:1.55;
+}
+#panel-vacaciones .vac-csv-preview-list .vac-csv-row{padding:2px 0;border-bottom:1px dashed var(--border)}
+#panel-vacaciones .vac-csv-preview-list .vac-csv-row:last-child{border-bottom:none}
+#panel-vacaciones .vac-csv-preview-list .vac-csv-row.is-err{color:var(--red)}
+#panel-vacaciones .vac-csv-preview-list .vac-csv-row.is-ok{color:var(--text)}
+
+@media (prefers-reduced-motion: reduce){
+  #panel-vacaciones .vac-modal-overlay{animation:none}
+}
 /* ═══════════════════════════════ FIN VACACIONES MODULE ═══════════════════════════════ */
 </style>
 </head>
@@ -2577,12 +2835,125 @@ body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
     </div>
 
     <div class="vac-section vac-admin-only" data-section="admin">
-      <div class="vac-empty">
-        <svg class="ic ic-lg" aria-hidden="true"><use href="#i-wrench"/></svg>
-        <p>Administración — se implementa en Fase 5.</p>
+
+      <!-- ─── Pendientes ─── -->
+      <div class="vac-admin-block" id="vac-admin-pendientes-block">
+        <div class="vac-admin-head">
+          <div class="vac-admin-title">
+            <svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>
+            Solicitudes pendientes <span class="vac-admin-count" id="vac-pend-count">0</span>
+          </div>
+        </div>
+        <div class="vac-admin-body">
+          <div class="vac-admin-table-wrap">
+            <table class="vac-admin-table" id="vac-pend-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Período</th>
+                  <th>Días</th>
+                  <th>Nota</th>
+                  <th>Conflicto back-up</th>
+                  <th style="text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vac-pend-tbody"></tbody>
+            </table>
+          </div>
+          <div class="vac-admin-empty" id="vac-pend-empty" style="display:none">No hay solicitudes pendientes.</div>
+        </div>
       </div>
+
+      <!-- ─── Empleados ─── -->
+      <div class="vac-admin-block">
+        <div class="vac-admin-head">
+          <div class="vac-admin-title">
+            <svg class="ic ic-md" aria-hidden="true"><use href="#i-package"/></svg>
+            Empleados
+          </div>
+          <div class="vac-admin-actions">
+            <button type="button" class="vac-btn-ghost" id="vac-emp-mass-vac">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg>
+              Carga masiva vacaciones
+            </button>
+            <button type="button" class="vac-btn-primary" id="vac-emp-new">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg>
+              Nuevo empleado
+            </button>
+          </div>
+        </div>
+        <div class="vac-admin-body">
+          <div class="vac-admin-table-wrap">
+            <table class="vac-admin-table" id="vac-emp-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Email</th>
+                  <th>Días/año</th>
+                  <th>Back-ups</th>
+                  <th>Estado</th>
+                  <th style="text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vac-emp-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Feriados ─── -->
+      <div class="vac-admin-block">
+        <div class="vac-admin-head">
+          <div class="vac-admin-title">
+            <svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>
+            Feriados y días no laborables
+          </div>
+          <div class="vac-admin-actions">
+            <button type="button" class="vac-btn-ghost" id="vac-hol-mass">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg>
+              Carga masiva
+            </button>
+            <button type="button" class="vac-btn-primary" id="vac-hol-new">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus"/></svg>
+              Agregar feriado
+            </button>
+          </div>
+        </div>
+        <div class="vac-admin-body">
+          <div class="vac-admin-table-wrap">
+            <table class="vac-admin-table" id="vac-hol-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th style="text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vac-hol-tbody"></tbody>
+            </table>
+          </div>
+          <div class="vac-admin-empty" id="vac-hol-empty" style="display:none">No hay feriados cargados.</div>
+        </div>
+      </div>
+
     </div>
 
+  </div>
+
+  <!-- ─── Modal genérico (reusable: detalle, rechazo, empleado, feriado, carga masiva) ─── -->
+  <div class="vac-modal-overlay" id="vac-modal-overlay" style="display:none" role="presentation">
+    <div class="vac-modal" role="dialog" aria-modal="true" aria-labelledby="vac-modal-title" tabindex="-1">
+      <div class="vac-modal-head">
+        <div class="vac-modal-title" id="vac-modal-title">—</div>
+        <button type="button" class="vac-modal-close" id="vac-modal-close" aria-label="Cerrar">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg>
+        </button>
+      </div>
+      <div class="vac-modal-sub" id="vac-modal-sub" style="display:none"></div>
+      <div class="vac-modal-body" id="vac-modal-body"></div>
+      <div class="vac-modal-foot" id="vac-modal-foot"></div>
+    </div>
   </div>
 
 </div>
@@ -9242,6 +9613,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.editingId = null;
     _miState.initialized = false;
     if(window.__vac.team) clearTeamData();
+    if(window.__vac.admin) clearAdminData();
   }
 
   // ── Carga de datos: balance + mis solicitudes + feriados + solicitudes de back-ups ──
@@ -10247,6 +10619,992 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     renderTeamGantt();
   }
 
+  // ════════════════ FASE 5: Administración + flujo de aprobación ════════════════
+
+  window.__vac.admin = {
+    initialized: false,
+    pendientes: [],          // requests con status='pendiente'
+    employees: [],           // todos los empleados (incluye inactivos para edición)
+    holidays: [],            // todos los feriados
+    backupRequests: [],      // requests activas para cómputo de conflictos
+    scrollAfterEnter: null   // 'pendientes' para scroll al entrar
+  };
+
+  // ── Modal genérico ──
+  const _modalState = { lastFocus: null, escHandler: null, currentClose: null };
+
+  function openModal({ title, sub, body, footer, wide, onClose }){
+    const overlay = $('vac-modal-overlay');
+    const modal   = overlay?.querySelector('.vac-modal');
+    const titleEl = $('vac-modal-title');
+    const subEl   = $('vac-modal-sub');
+    const bodyEl  = $('vac-modal-body');
+    const footEl  = $('vac-modal-foot');
+    if(!overlay || !modal || !bodyEl || !footEl) return;
+
+    titleEl.textContent = title || '';
+    if(sub){ subEl.textContent = sub; subEl.style.display = 'block'; }
+    else   { subEl.textContent = ''; subEl.style.display = 'none'; }
+    bodyEl.innerHTML = '';
+    footEl.innerHTML = '';
+    if(body instanceof Node) bodyEl.appendChild(body);
+    else if(typeof body === 'string') bodyEl.innerHTML = body;
+    if(footer instanceof Node) footEl.appendChild(footer);
+    else if(typeof footer === 'string') footEl.innerHTML = footer;
+
+    modal.classList.toggle('vac-modal--wide', !!wide);
+    overlay.style.display = 'flex';
+
+    _modalState.lastFocus = document.activeElement;
+    _modalState.currentClose = onClose || null;
+
+    // Focus inicial al primer focusable
+    setTimeout(() => {
+      const focusables = modal.querySelectorAll('input,select,textarea,button,[tabindex]:not([tabindex="-1"])');
+      const target = focusables[0] || modal;
+      try{ target.focus(); }catch(_){ }
+    }, 30);
+
+    // Escape para cerrar + focus trap básico
+    if(_modalState.escHandler) document.removeEventListener('keydown', _modalState.escHandler);
+    _modalState.escHandler = (e) => {
+      if(e.key === 'Escape'){ closeModal(); }
+      else if(e.key === 'Tab'){
+        const focusables = [...modal.querySelectorAll('input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])')];
+        if(!focusables.length) return;
+        const first = focusables[0], last = focusables[focusables.length-1];
+        if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', _modalState.escHandler);
+  }
+
+  function closeModal(){
+    const overlay = $('vac-modal-overlay');
+    if(!overlay) return;
+    overlay.style.display = 'none';
+    if(_modalState.escHandler){
+      document.removeEventListener('keydown', _modalState.escHandler);
+      _modalState.escHandler = null;
+    }
+    if(_modalState.currentClose){
+      try { _modalState.currentClose(); } catch(_){ }
+      _modalState.currentClose = null;
+    }
+    if(_modalState.lastFocus && typeof _modalState.lastFocus.focus === 'function'){
+      try{ _modalState.lastFocus.focus(); }catch(_){ }
+    }
+    _modalState.lastFocus = null;
+  }
+
+  function wireModalChrome(){
+    const overlay = $('vac-modal-overlay');
+    const closeBtn = $('vac-modal-close');
+    if(overlay && !overlay._wired){
+      overlay._wired = true;
+      overlay.addEventListener('click', (e) => {
+        if(e.target === overlay) closeModal();
+      });
+    }
+    if(closeBtn && !closeBtn._wired){
+      closeBtn._wired = true;
+      closeBtn.addEventListener('click', closeModal);
+    }
+  }
+
+  // ── Carga de datos admin ──
+  async function loadAdminData(){
+    if(!window.__vacAuth?.isAdmin) return;
+    const periodYear = getCurrentPeriodYear();
+
+    const queries = [
+      // Pendientes con nombre del empleado y back-up ids para conflicto
+      supa.from('vac_requests')
+        .select('*, vac_employees!vac_requests_employee_id_fkey(id,full_name,email,backup_employee_ids)')
+        .eq('status', 'pendiente')
+        .order('created_at', { ascending: true }),
+      // Todos los empleados (incl. inactivos) para gestión
+      supa.from('vac_employees')
+        .select('id,email,full_name,role,annual_days,backup_employee_ids,active,updated_at')
+        .order('active', { ascending: false })
+        .order('full_name', { ascending: true }),
+      // Feriados del año actual y siguiente para gestión amplia
+      supa.from('vac_holidays')
+        .select('id,date,name,type')
+        .order('date', { ascending: true }),
+      // Para conflicto: requests del período actual con status no rechazada
+      supa.from('vac_requests')
+        .select('id,employee_id,start_date,end_date,status,vac_employees!vac_requests_employee_id_fkey(full_name)')
+        .eq('period_year', periodYear)
+        .neq('status', 'rechazada')
+    ];
+    const [pRes, eRes, hRes, brRes] = await Promise.all(queries);
+    window.__vac.admin.pendientes      = pRes?.data || [];
+    window.__vac.admin.employees       = eRes?.data || [];
+    window.__vac.admin.holidays        = hRes?.data || [];
+    window.__vac.admin.backupRequests  = brRes?.data || [];
+  }
+
+  function clearAdminData(){
+    window.__vac.admin.initialized = false;
+    window.__vac.admin.pendientes = [];
+    window.__vac.admin.employees = [];
+    window.__vac.admin.holidays = [];
+    window.__vac.admin.backupRequests = [];
+  }
+
+  // ── Cómputo de conflictos de back-up para una solicitud ──
+  function computeBackupConflicts(req){
+    // req tiene vac_employees.backup_employee_ids
+    const backupIds = req.vac_employees?.backup_employee_ids || [];
+    if(!backupIds.length) return [];
+    const all = window.__vac.admin.backupRequests || [];
+    const conflicts = [];
+    for(const bId of backupIds){
+      const overlapping = all.filter(b =>
+        b.employee_id === bId &&
+        b.id !== req.id &&
+        rangesOverlap(req.start_date, req.end_date, b.start_date, b.end_date)
+      );
+      for(const o of overlapping){
+        conflicts.push({
+          backupId: bId,
+          backupName: o.vac_employees?.full_name || '?',
+          start_date: o.start_date,
+          end_date: o.end_date,
+          status: o.status
+        });
+      }
+    }
+    return conflicts;
+  }
+
+  // ── Render: tabla de pendientes ──
+  function renderPendientes(){
+    const tbody = $('vac-pend-tbody');
+    const empty = $('vac-pend-empty');
+    const cnt   = $('vac-pend-count');
+    if(!tbody) return;
+    const reqs = window.__vac.admin.pendientes;
+    if(cnt){
+      cnt.textContent = String(reqs.length);
+      cnt.classList.toggle('vac-admin-count--zero', reqs.length === 0);
+    }
+    tbody.innerHTML = '';
+    if(reqs.length === 0){
+      if(empty) empty.style.display = 'block';
+      tbody.parentElement.style.display = 'none';
+      return;
+    }
+    if(empty) empty.style.display = 'none';
+    tbody.parentElement.style.display = '';
+    for(const r of reqs){
+      const conflicts = computeBackupConflicts(r);
+      const tr = document.createElement('tr');
+
+      const tdEmp = document.createElement('td');
+      tdEmp.className = 'vac-cell-emp';
+      tdEmp.textContent = r.vac_employees?.full_name || '?';
+      tr.appendChild(tdEmp);
+
+      const tdPer = document.createElement('td');
+      tdPer.className = 'vac-cell-mono';
+      tdPer.textContent = `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`;
+      tr.appendChild(tdPer);
+
+      const tdDays = document.createElement('td');
+      tdDays.innerHTML = `<span class="vac-chip">${r.days_count} ${r.days_count===1?'día':'días'}</span>`;
+      tr.appendChild(tdDays);
+
+      const tdNote = document.createElement('td');
+      tdNote.className = 'vac-cell-note';
+      tdNote.textContent = r.note || '—';
+      if(r.note) tdNote.title = r.note;
+      tr.appendChild(tdNote);
+
+      const tdConflict = document.createElement('td');
+      tdConflict.className = 'vac-conflict-cell';
+      if(conflicts.length === 0){
+        tdConflict.innerHTML = `<span class="vac-conflict-none"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-check"/></svg> Sin conflicto</span>`;
+      } else {
+        const chips = document.createElement('div');
+        chips.className = 'vac-chips';
+        for(const c of conflicts){
+          const chip = document.createElement('span');
+          chip.className = 'vac-chip vac-chip--conflict';
+          chip.innerHTML = `${escHtml(c.backupName)}<span class="vac-chip-dates">${formatDmy(c.start_date)}→${formatDmy(c.end_date)}</span>`;
+          chip.title = `Estado del back-up: ${c.status}`;
+          chips.appendChild(chip);
+        }
+        tdConflict.appendChild(chips);
+      }
+      tr.appendChild(tdConflict);
+
+      const tdAct = document.createElement('td');
+      tdAct.className = 'vac-cell-actions';
+      const btnDet = document.createElement('button');
+      btnDet.type = 'button'; btnDet.className = 'vac-act-btn';
+      btnDet.textContent = 'Ver detalle';
+      btnDet.onclick = () => openDetailModal(r.id);
+      const btnApr = document.createElement('button');
+      btnApr.type = 'button'; btnApr.className = 'vac-act-btn vac-act-btn--approve';
+      btnApr.textContent = 'Aprobar';
+      btnApr.onclick = () => approveRequest(r.id);
+      const btnRej = document.createElement('button');
+      btnRej.type = 'button'; btnRej.className = 'vac-act-btn vac-act-btn--reject';
+      btnRej.textContent = 'Rechazar';
+      btnRej.onclick = () => openRejectModal(r.id);
+      tdAct.appendChild(btnDet);
+      tdAct.appendChild(btnApr);
+      tdAct.appendChild(btnRej);
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Render: tabla de empleados ──
+  function renderEmpleados(){
+    const tbody = $('vac-emp-tbody');
+    if(!tbody) return;
+    const emps = window.__vac.admin.employees;
+    const empById = new Map(emps.map(e => [e.id, e]));
+    tbody.innerHTML = '';
+    for(const emp of emps){
+      const tr = document.createElement('tr');
+      if(!emp.active) tr.className = 'vac-row-inactive';
+
+      const tdEmp = document.createElement('td');
+      tdEmp.className = 'vac-cell-emp';
+      const adminPill = emp.role === 'admin' ? ' <span class="vac-chip vac-chip--admin">admin</span>' : '';
+      tdEmp.innerHTML = escHtml(emp.full_name) + adminPill;
+      tr.appendChild(tdEmp);
+
+      const tdMail = document.createElement('td');
+      tdMail.className = 'vac-cell-mail';
+      tdMail.textContent = emp.email;
+      tr.appendChild(tdMail);
+
+      const tdDays = document.createElement('td');
+      tdDays.className = 'vac-cell-mono';
+      tdDays.textContent = String(emp.annual_days);
+      tr.appendChild(tdDays);
+
+      // Back-ups visibles como chips (Prioridad A)
+      const tdBackups = document.createElement('td');
+      const ids = emp.backup_employee_ids || [];
+      if(ids.length === 0){
+        tdBackups.innerHTML = `<span class="vac-cell-note" style="font-style:italic">— sin back-ups —</span>`;
+      } else {
+        const chips = document.createElement('div');
+        chips.className = 'vac-chips';
+        for(const id of ids){
+          const b = empById.get(id);
+          const chip = document.createElement('span');
+          chip.className = 'vac-chip' + (b && !b.active ? ' vac-chip--inactive' : '');
+          chip.textContent = b ? b.full_name : '? (eliminado)';
+          if(b && !b.active) chip.title = 'Empleado inactivo';
+          chips.appendChild(chip);
+        }
+        tdBackups.appendChild(chips);
+      }
+      tr.appendChild(tdBackups);
+
+      const tdSt = document.createElement('td');
+      tdSt.innerHTML = emp.active
+        ? `<span class="vac-status-dot vac-status-dot--active">Activo</span>`
+        : `<span class="vac-status-dot vac-status-dot--inactive">Inactivo</span>`;
+      tr.appendChild(tdSt);
+
+      const tdAct = document.createElement('td');
+      tdAct.className = 'vac-cell-actions';
+      const btnEdit = document.createElement('button');
+      btnEdit.type = 'button'; btnEdit.className = 'vac-act-btn';
+      btnEdit.textContent = 'Editar';
+      btnEdit.onclick = () => openEmployeeModal(emp.id);
+      const btnTog = document.createElement('button');
+      btnTog.type = 'button';
+      btnTog.className = 'vac-act-btn' + (emp.active ? ' vac-act-btn--danger' : '');
+      btnTog.textContent = emp.active ? 'Desactivar' : 'Reactivar';
+      btnTog.onclick = () => toggleEmployeeActive(emp.id, !emp.active);
+      tdAct.appendChild(btnEdit);
+      tdAct.appendChild(btnTog);
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Render: tabla de feriados ──
+  function renderFeriados(){
+    const tbody = $('vac-hol-tbody');
+    const empty = $('vac-hol-empty');
+    if(!tbody) return;
+    const hols = window.__vac.admin.holidays;
+    tbody.innerHTML = '';
+    if(hols.length === 0){
+      if(empty) empty.style.display = 'block';
+      tbody.parentElement.style.display = 'none';
+      return;
+    }
+    if(empty) empty.style.display = 'none';
+    tbody.parentElement.style.display = '';
+    for(const h of hols){
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.className = 'vac-cell-mono'; td1.textContent = formatDmy(h.date); tr.appendChild(td1);
+      const td2 = document.createElement('td'); td2.textContent = h.name; tr.appendChild(td2);
+      const td3 = document.createElement('td');
+      const typeMap = { nacional:'Nacional', no_laborable:'No laborable', puente:'Puente' };
+      const cls = h.type === 'no_laborable' ? 'vac-chip--conflict' : '';
+      td3.innerHTML = `<span class="vac-chip ${cls}">${typeMap[h.type] || h.type}</span>`;
+      tr.appendChild(td3);
+      const td4 = document.createElement('td'); td4.className = 'vac-cell-actions';
+      const btnEd = document.createElement('button');
+      btnEd.type = 'button'; btnEd.className = 'vac-act-btn';
+      btnEd.textContent = 'Editar';
+      btnEd.onclick = () => openHolidayModal(h.id);
+      const btnDel = document.createElement('button');
+      btnDel.type = 'button'; btnDel.className = 'vac-act-btn vac-act-btn--danger';
+      btnDel.textContent = 'Eliminar';
+      btnDel.onclick = () => deleteHoliday(h.id);
+      td4.appendChild(btnEd);
+      td4.appendChild(btnDel);
+      tr.appendChild(td4);
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Aprobar / Rechazar ──
+  async function approveRequest(id){
+    if(!window.__vacAuth?.isAdmin) return;
+    const adminId = window.__vacAuth.employee.id;
+    const { error } = await supa.from('vac_requests')
+      .update({ status: 'aprobada', approved_by: adminId, approved_at: new Date().toISOString(), rejection_reason: null })
+      .eq('id', id);
+    if(error){ alert('No se pudo aprobar: ' + error.message); return; }
+    showToast('Solicitud aprobada');
+    await loadAdminData();
+    renderPendientes();
+    updatePendingBadge();
+    // Las stats personales del solicitante quedan obsoletas; si vuelve a "Mi calendario"
+    // se refrescará al entrar (initialized=true pero hooks re-pegan render). Para que
+    // el cambio sea visible inmediato si admin aprueba lo suyo, invalidamos:
+    _miState.initialized = false;
+  }
+
+  function openRejectModal(id){
+    const req = window.__vac.admin.pendientes.find(r => r.id === id);
+    if(!req) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="vac-form-row">
+        <div class="vac-form-summary" style="margin:0">
+          <strong>${escHtml(req.vac_employees?.full_name || '?')}</strong>
+          <span class="vac-form-muted"> · ${formatDmy(req.start_date)} → ${formatDmy(req.end_date)} · ${req.days_count} días</span>
+        </div>
+      </div>
+      <div class="vac-form-row">
+        <label class="vac-form-label" for="vac-reject-reason">Motivo del rechazo</label>
+        <textarea id="vac-reject-reason" class="vac-form-textarea" rows="3" placeholder="Ej: solapamiento crítico con back-up, fechas no compatibles, etc." required></textarea>
+      </div>
+    `;
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost';
+    cancel.textContent = 'Cancelar';
+    cancel.onclick = closeModal;
+    const confirm = document.createElement('button');
+    confirm.type = 'button'; confirm.className = 'vac-btn-primary';
+    confirm.textContent = 'Rechazar solicitud';
+    confirm.onclick = async () => {
+      const ta = $('vac-reject-reason');
+      const reason = (ta?.value || '').trim();
+      if(!reason){ ta?.focus(); return; }
+      confirm.disabled = true; confirm.textContent = 'Rechazando…';
+      const ok = await rejectRequest(id, reason);
+      if(ok) closeModal();
+      else { confirm.disabled = false; confirm.textContent = 'Rechazar solicitud'; }
+    };
+    foot.appendChild(cancel);
+    foot.appendChild(confirm);
+    openModal({ title: 'Rechazar solicitud', body: wrap, footer: foot });
+  }
+
+  async function rejectRequest(id, reason){
+    if(!window.__vacAuth?.isAdmin) return false;
+    const adminId = window.__vacAuth.employee.id;
+    const { error } = await supa.from('vac_requests')
+      .update({ status: 'rechazada', rejection_reason: reason, approved_by: adminId, approved_at: new Date().toISOString() })
+      .eq('id', id);
+    if(error){ alert('No se pudo rechazar: ' + error.message); return false; }
+    showToast('Solicitud rechazada');
+    await loadAdminData();
+    renderPendientes();
+    updatePendingBadge();
+    _miState.initialized = false;
+    return true;
+  }
+
+  // ── Modal: detalle de solicitud pendiente (Prioridad B) ──
+  function openDetailModal(id){
+    const r = window.__vac.admin.pendientes.find(x => x.id === id);
+    if(!r) return;
+    const conflicts = computeBackupConflicts(r);
+    const wrap = document.createElement('div');
+    const rows = [
+      ['Empleado', escHtml(r.vac_employees?.full_name || '?')],
+      ['Email', escHtml(r.vac_employees?.email || '—')],
+      ['Período', `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`],
+      ['Días corridos', `${r.days_count}`],
+      ['Estado', '<span class="vac-chip" style="background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)">Pendiente</span>'],
+      ['Cargada', new Date(r.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })],
+      ['Nota', r.note ? escHtml(r.note) : '<span style="color:var(--muted);font-style:italic">—</span>']
+    ];
+    let detailHtml = '';
+    for(const [lbl, val] of rows){
+      detailHtml += `<div class="vac-detail-row"><span class="vac-detail-lbl">${lbl}</span><span class="vac-detail-val">${val}</span></div>`;
+    }
+    wrap.innerHTML = detailHtml;
+
+    if(conflicts.length === 0){
+      const noneEl = document.createElement('div');
+      noneEl.className = 'vac-detail-conflict-none';
+      noneEl.textContent = '✓ Ningún back-up del solicitante tiene vacaciones en este rango.';
+      wrap.appendChild(noneEl);
+    } else {
+      const ttl = document.createElement('div');
+      ttl.className = 'vac-detail-conflicts-title';
+      ttl.textContent = `⚠ ${conflicts.length} conflicto${conflicts.length===1?'':'s'} de back-up`;
+      wrap.appendChild(ttl);
+      const list = document.createElement('div');
+      list.className = 'vac-detail-conflict-list';
+      for(const c of conflicts){
+        const it = document.createElement('div');
+        it.className = 'vac-detail-conflict-item';
+        it.innerHTML = `<span><strong>${escHtml(c.backupName)}</strong> ${formatDmy(c.start_date)} → ${formatDmy(c.end_date)}</span><span class="vac-dci-status">${escHtml(c.status)}</span>`;
+        list.appendChild(it);
+      }
+      wrap.appendChild(list);
+    }
+
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost';
+    cancel.textContent = 'Cerrar';
+    cancel.onclick = closeModal;
+    const reject = document.createElement('button');
+    reject.type = 'button'; reject.className = 'vac-act-btn vac-act-btn--reject';
+    reject.textContent = 'Rechazar';
+    reject.onclick = () => { closeModal(); setTimeout(() => openRejectModal(id), 50); };
+    const approve = document.createElement('button');
+    approve.type = 'button'; approve.className = 'vac-btn-primary';
+    approve.textContent = 'Aprobar';
+    approve.onclick = async () => { closeModal(); await approveRequest(id); };
+    foot.appendChild(cancel);
+    foot.appendChild(reject);
+    foot.appendChild(approve);
+    openModal({ title: 'Detalle de solicitud', body: wrap, footer: foot });
+  }
+
+  // ── Modal: nuevo / editar empleado (Prioridad A: multi-select prominente) ──
+  function openEmployeeModal(empId){
+    const isEdit = !!empId;
+    const emp = isEdit ? window.__vac.admin.employees.find(e => e.id === empId) : null;
+    const all = window.__vac.admin.employees;
+    const initialBackupIds = new Set(emp?.backup_employee_ids || []);
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="vac-form-row vac-form-row-2">
+        <div>
+          <label class="vac-form-label" for="vac-emp-name">Nombre completo</label>
+          <input type="text" id="vac-emp-name" class="vac-form-input" required value="${escHtml(emp?.full_name || '')}">
+        </div>
+        <div>
+          <label class="vac-form-label" for="vac-emp-email">Email</label>
+          <input type="email" id="vac-emp-email" class="vac-form-input" required value="${escHtml(emp?.email || '')}" ${isEdit ? 'readonly title="El email es la clave de auth y no se puede cambiar"' : ''}>
+        </div>
+      </div>
+      <div class="vac-form-row vac-form-row-2">
+        <div>
+          <label class="vac-form-label" for="vac-emp-role">Rol</label>
+          <select id="vac-emp-role" class="vac-form-select">
+            <option value="employee" ${emp?.role !== 'admin' ? 'selected' : ''}>Empleado</option>
+            <option value="admin" ${emp?.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+        </div>
+        <div>
+          <label class="vac-form-label" for="vac-emp-days">Días anuales</label>
+          <select id="vac-emp-days" class="vac-form-select">
+            <option value="14" ${emp?.annual_days === 14 ? 'selected' : ''}>14 días</option>
+            <option value="21" ${(!emp || emp.annual_days === 21) ? 'selected' : ''}>21 días</option>
+            <option value="28" ${emp?.annual_days === 28 ? 'selected' : ''}>28 días</option>
+            <option value="35" ${emp?.annual_days === 35 ? 'selected' : ''}>35 días</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="vac-form-row">
+        <label class="vac-form-label">Back-ups <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:500"> · marcá uno o varios. Aparecerán en el orden de selección.</span></label>
+        <div class="vac-backup-select" id="vac-emp-backup-list" role="listbox" aria-multiselectable="true"></div>
+        <div class="vac-backup-select-summary" id="vac-emp-backup-summary">— sin selección —</div>
+      </div>
+    `;
+
+    // Poblar multi-select con orden estable: primero los ya seleccionados (en su orden),
+    // después el resto alfabético.
+    const selectedOrder = (emp?.backup_employee_ids || []).slice();
+    const unselected = all
+      .filter(e => e.id !== empId && e.active && !initialBackupIds.has(e.id))
+      .sort((a,b) => a.full_name.localeCompare(b.full_name, 'es'));
+    const selectedEmps = selectedOrder.map(id => all.find(e => e.id === id)).filter(Boolean);
+
+    const listEl = wrap.querySelector('#vac-emp-backup-list');
+    const candidates = [...selectedEmps, ...unselected];
+    if(candidates.length === 0){
+      listEl.innerHTML = `<div class="vac-backup-select-empty">Cargá otros empleados activos primero para asignar back-ups.</div>`;
+    } else {
+      for(const e of candidates){
+        const opt = document.createElement('label');
+        opt.className = 'vac-backup-select-option';
+        opt.dataset.empId = e.id;
+        const isSel = initialBackupIds.has(e.id);
+        if(isSel) opt.classList.add('is-selected');
+        opt.innerHTML = `
+          <input type="checkbox" ${isSel ? 'checked' : ''}>
+          <span class="vac-bs-name">${escHtml(e.full_name)}</span>
+          <span class="vac-bs-mail">${escHtml(e.email)}</span>
+        `;
+        const cb = opt.querySelector('input[type="checkbox"]');
+        cb.addEventListener('change', () => {
+          opt.classList.toggle('is-selected', cb.checked);
+          updateBackupSummary();
+        });
+        listEl.appendChild(opt);
+      }
+    }
+
+    function getSelectedBackupIds(){
+      // Mantener orden visual (primero los marcados originales que sigan check, después nuevos)
+      const out = [];
+      listEl.querySelectorAll('.vac-backup-select-option input[type="checkbox"]:checked').forEach(cb => {
+        const opt = cb.closest('.vac-backup-select-option');
+        if(opt?.dataset.empId) out.push(opt.dataset.empId);
+      });
+      return out;
+    }
+    function updateBackupSummary(){
+      const ids = getSelectedBackupIds();
+      const summary = wrap.querySelector('#vac-emp-backup-summary');
+      if(!summary) return;
+      if(ids.length === 0){ summary.textContent = '— sin selección —'; return; }
+      const names = ids.map(id => all.find(e => e.id === id)?.full_name || '?');
+      summary.textContent = `${ids.length} back-up${ids.length===1?'':'s'}: ${names.join(' · ')}`;
+    }
+    updateBackupSummary();
+
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost';
+    cancel.textContent = 'Cancelar';
+    cancel.onclick = closeModal;
+    const save = document.createElement('button');
+    save.type = 'button'; save.className = 'vac-btn-primary';
+    save.textContent = isEdit ? 'Guardar cambios' : 'Crear empleado';
+    save.onclick = async () => {
+      const name = wrap.querySelector('#vac-emp-name').value.trim();
+      const email = wrap.querySelector('#vac-emp-email').value.trim().toLowerCase();
+      const role = wrap.querySelector('#vac-emp-role').value;
+      const days = parseInt(wrap.querySelector('#vac-emp-days').value, 10);
+      const backupIds = getSelectedBackupIds();
+      if(!name || !email){ alert('Nombre y email son obligatorios.'); return; }
+      save.disabled = true; save.textContent = 'Guardando…';
+      const ok = await saveEmployee(empId, { full_name: name, email, role, annual_days: days, backup_employee_ids: backupIds });
+      if(ok) closeModal();
+      else { save.disabled = false; save.textContent = isEdit ? 'Guardar cambios' : 'Crear empleado'; }
+    };
+    foot.appendChild(cancel);
+    foot.appendChild(save);
+
+    openModal({
+      title: isEdit ? `Editar empleado · ${emp?.full_name || ''}` : 'Nuevo empleado',
+      sub: isEdit ? null : 'El email queda como clave de magic link. No se puede cambiar después de creado.',
+      body: wrap,
+      footer: foot
+    });
+  }
+
+  async function saveEmployee(empId, data){
+    if(!window.__vacAuth?.isAdmin) return false;
+    let res;
+    if(empId){
+      // No actualizamos email — está readonly en edit
+      const { email, ...rest } = data;
+      res = await supa.from('vac_employees').update(rest).eq('id', empId);
+    } else {
+      res = await supa.from('vac_employees').insert(data);
+    }
+    if(res.error){
+      alert('No se pudo guardar: ' + res.error.message);
+      return false;
+    }
+    showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
+    await loadAdminData();
+    renderEmpleados();
+    return true;
+  }
+
+  async function toggleEmployeeActive(empId, makeActive){
+    if(!window.__vacAuth?.isAdmin) return;
+    const emp = window.__vac.admin.employees.find(e => e.id === empId);
+    if(!emp) return;
+    const verb = makeActive ? 'reactivar' : 'desactivar';
+    if(!confirm(`¿${verb[0].toUpperCase()+verb.slice(1)} a ${emp.full_name}?`)) return;
+    const { error } = await supa.from('vac_employees').update({ active: makeActive }).eq('id', empId);
+    if(error){ alert('No se pudo ' + verb + ': ' + error.message); return; }
+    showToast(`Empleado ${makeActive ? 'reactivado' : 'desactivado'}`);
+    await loadAdminData();
+    renderEmpleados();
+  }
+
+  // ── Modal: feriado (nuevo / editar) ──
+  function openHolidayModal(holId){
+    const isEdit = !!holId;
+    const h = isEdit ? window.__vac.admin.holidays.find(x => x.id === holId) : null;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="vac-form-row vac-form-row-2">
+        <div>
+          <label class="vac-form-label" for="vac-hol-date">Fecha</label>
+          <input type="date" id="vac-hol-date" class="vac-form-input" required value="${escHtml(h?.date || '')}">
+        </div>
+        <div>
+          <label class="vac-form-label" for="vac-hol-type">Tipo</label>
+          <select id="vac-hol-type" class="vac-form-select">
+            <option value="nacional" ${(!h || h.type==='nacional') ? 'selected' : ''}>Nacional</option>
+            <option value="no_laborable" ${h?.type==='no_laborable' ? 'selected' : ''}>No laborable</option>
+            <option value="puente" ${h?.type==='puente' ? 'selected' : ''}>Puente</option>
+          </select>
+        </div>
+      </div>
+      <div class="vac-form-row">
+        <label class="vac-form-label" for="vac-hol-name">Nombre</label>
+        <input type="text" id="vac-hol-name" class="vac-form-input" required value="${escHtml(h?.name || '')}" placeholder="Ej: Día del Trabajador">
+      </div>
+    `;
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost'; cancel.textContent = 'Cancelar';
+    cancel.onclick = closeModal;
+    const save = document.createElement('button');
+    save.type = 'button'; save.className = 'vac-btn-primary';
+    save.textContent = isEdit ? 'Guardar' : 'Agregar';
+    save.onclick = async () => {
+      const date = wrap.querySelector('#vac-hol-date').value;
+      const name = wrap.querySelector('#vac-hol-name').value.trim();
+      const type = wrap.querySelector('#vac-hol-type').value;
+      if(!date || !name){ alert('Fecha y nombre son obligatorios.'); return; }
+      save.disabled = true; save.textContent = 'Guardando…';
+      const ok = await saveHoliday(holId, { date, name, type });
+      if(ok) closeModal();
+      else { save.disabled = false; save.textContent = isEdit ? 'Guardar' : 'Agregar'; }
+    };
+    foot.appendChild(cancel); foot.appendChild(save);
+    openModal({ title: isEdit ? 'Editar feriado' : 'Agregar feriado', body: wrap, footer: foot });
+  }
+
+  async function saveHoliday(holId, data){
+    if(!window.__vacAuth?.isAdmin) return false;
+    let res;
+    if(holId){
+      res = await supa.from('vac_holidays').update(data).eq('id', holId);
+    } else {
+      res = await supa.from('vac_holidays').upsert(data, { onConflict: 'date' });
+    }
+    if(res.error){ alert('No se pudo guardar: ' + res.error.message); return false; }
+    showToast('Feriado guardado');
+    await loadAdminData();
+    renderFeriados();
+    return true;
+  }
+
+  async function deleteHoliday(holId){
+    if(!window.__vacAuth?.isAdmin) return;
+    const h = window.__vac.admin.holidays.find(x => x.id === holId);
+    if(!h) return;
+    if(!confirm(`¿Eliminar el feriado "${h.name}" del ${formatDmy(h.date)}?`)) return;
+    const { error } = await supa.from('vac_holidays').delete().eq('id', holId);
+    if(error){ alert('No se pudo eliminar: ' + error.message); return; }
+    showToast('Feriado eliminado');
+    await loadAdminData();
+    renderFeriados();
+  }
+
+  // ── Modal: carga masiva de feriados ──
+  const _HOL_TYPES = new Set(['nacional','no_laborable','puente']);
+
+  function parseHolidayCsv(csv){
+    const rows = [];
+    const errors = [];
+    const seen = new Set();
+    const lines = csv.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    lines.forEach((line, i) => {
+      // skip header opcional
+      if(i === 0 && /^fecha\s*,/i.test(line)) return;
+      const parts = line.split(',').map(p => p.trim());
+      if(parts.length < 3){
+        errors.push({ line: i+1, raw: line, msg: 'Esperado: fecha,nombre,tipo' });
+        return;
+      }
+      const [date, name, type] = [parts[0], parts.slice(1, parts.length-1).join(',').trim(), parts[parts.length-1].toLowerCase()];
+      // validar fecha
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+        errors.push({ line: i+1, raw: line, msg: 'Fecha inválida (esperado YYYY-MM-DD)' });
+        return;
+      }
+      if(!name){ errors.push({ line: i+1, raw: line, msg: 'Nombre vacío' }); return; }
+      if(!_HOL_TYPES.has(type)){
+        errors.push({ line: i+1, raw: line, msg: `Tipo inválido "${type}" (válidos: ${[..._HOL_TYPES].join(', ')})` });
+        return;
+      }
+      if(seen.has(date)){
+        errors.push({ line: i+1, raw: line, msg: `Fecha duplicada en CSV: ${date}` });
+        return;
+      }
+      seen.add(date);
+      rows.push({ date, name, type });
+    });
+    return { rows, errors };
+  }
+
+  function openMassHolidayModal(){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="vac-form-row">
+        <label class="vac-form-label" for="vac-hol-csv">CSV — una línea por feriado</label>
+        <textarea id="vac-hol-csv" class="vac-csv-textarea" placeholder="2026-01-01,Año Nuevo,nacional&#10;2026-04-03,Viernes Santo,no_laborable"></textarea>
+        <div class="vac-csv-help">
+          Formato: <strong>fecha,nombre,tipo</strong> · tipos válidos: nacional, no_laborable, puente.<br>
+          Las fechas existentes se actualizan (upsert por fecha).
+        </div>
+      </div>
+      <div class="vac-csv-preview" id="vac-hol-preview" style="display:none"></div>
+    `;
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost'; cancel.textContent = 'Cancelar';
+    cancel.onclick = closeModal;
+    const preview = document.createElement('button');
+    preview.type = 'button'; preview.className = 'vac-btn-ghost'; preview.textContent = 'Vista previa';
+    const importBtn = document.createElement('button');
+    importBtn.type = 'button'; importBtn.className = 'vac-btn-primary'; importBtn.textContent = 'Importar';
+    importBtn.disabled = true;
+
+    let lastRows = [];
+    function doPreview(){
+      const csv = wrap.querySelector('#vac-hol-csv').value;
+      const { rows, errors } = parseHolidayCsv(csv);
+      lastRows = rows;
+      const prev = wrap.querySelector('#vac-hol-preview');
+      prev.style.display = 'block';
+      let html = `<div class="vac-csv-preview-counts">
+        <span class="vac-cnt-ok">✓ ${rows.length} válida${rows.length===1?'':'s'}</span>
+        ${errors.length ? `<span class="vac-cnt-err">✗ ${errors.length} con error</span>` : ''}
+      </div>`;
+      html += `<div class="vac-csv-preview-list">`;
+      for(const r of rows) html += `<div class="vac-csv-row is-ok">${escHtml(r.date)} · ${escHtml(r.name)} · ${escHtml(r.type)}</div>`;
+      for(const e of errors) html += `<div class="vac-csv-row is-err">L${e.line}: ${escHtml(e.msg)}</div>`;
+      html += `</div>`;
+      prev.innerHTML = html;
+      importBtn.disabled = rows.length === 0;
+    }
+    preview.onclick = doPreview;
+    wrap.querySelector('#vac-hol-csv').addEventListener('input', () => { importBtn.disabled = true; });
+
+    importBtn.onclick = async () => {
+      if(!lastRows.length){ doPreview(); if(!lastRows.length) return; }
+      importBtn.disabled = true; importBtn.textContent = 'Importando…';
+      const { error } = await supa.from('vac_holidays').upsert(lastRows, { onConflict: 'date' });
+      if(error){ alert('No se pudo importar: ' + error.message); importBtn.disabled = false; importBtn.textContent = 'Importar'; return; }
+      showToast(`Importados ${lastRows.length} feriados`);
+      await loadAdminData();
+      renderFeriados();
+      closeModal();
+    };
+
+    foot.appendChild(cancel);
+    foot.appendChild(preview);
+    foot.appendChild(importBtn);
+    openModal({ title: 'Carga masiva de feriados', body: wrap, footer: foot, wide: true });
+  }
+
+  // ── Modal: carga masiva de vacaciones históricas (Prioridad C) ──
+  const _VAC_STATUSES = new Set(['aprobada','tentativa','pendiente']);
+
+  function parseVacCsv(csv, employees){
+    const rows = [];
+    const errors = [];
+    const empByEmail = new Map(employees.filter(e => e.active).map(e => [e.email.toLowerCase(), e]));
+    const lines = csv.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    lines.forEach((line, i) => {
+      if(i === 0 && /^email\s*,/i.test(line)) return;
+      // Soportamos nota con comas: tomamos los primeros 4 fields y el resto es nota
+      const parts = line.split(',');
+      if(parts.length < 4){
+        errors.push({ line: i+1, raw: line, msg: 'Esperado: email,start_date,end_date,status[,note]' });
+        return;
+      }
+      const email = parts[0].trim().toLowerCase();
+      const start = parts[1].trim();
+      const end = parts[2].trim();
+      const status = parts[3].trim().toLowerCase();
+      const note = parts.length > 4 ? parts.slice(4).join(',').trim() : '';
+
+      const emp = empByEmail.get(email);
+      if(!emp){ errors.push({ line: i+1, raw: line, msg: `Email no encontrado entre empleados activos: ${email}` }); return; }
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)){
+        errors.push({ line: i+1, raw: line, msg: 'Fechas inválidas (YYYY-MM-DD)' }); return;
+      }
+      if(!_VAC_STATUSES.has(status)){
+        errors.push({ line: i+1, raw: line, msg: `Status inválido "${status}" (válidos: ${[..._VAC_STATUSES].join(', ')})` }); return;
+      }
+      if(parseIsoDate(end) < parseIsoDate(start)){
+        errors.push({ line: i+1, raw: line, msg: 'end_date < start_date' }); return;
+      }
+      rows.push({ employee_id: emp.id, employeeName: emp.full_name, start_date: start, end_date: end, status, note: note || null });
+    });
+    return { rows, errors };
+  }
+
+  function openMassVacModal(){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="vac-form-row">
+        <label class="vac-form-label" for="vac-vac-csv">CSV — una línea por solicitud</label>
+        <textarea id="vac-vac-csv" class="vac-csv-textarea" placeholder="jzenteno@ssbint.com,2026-01-19,2026-01-25,aprobada,vacaciones de verano&#10;nalicio@ssbint.com,2026-01-05,2026-01-16,aprobada,"></textarea>
+        <div class="vac-csv-help">
+          Formato: <strong>email,start_date,end_date,status[,note]</strong>.<br>
+          Status válidos: aprobada, tentativa, pendiente. Las aprobadas quedan
+          con <em>approved_by</em>=vos y <em>approved_at</em>=ahora. Útil para
+          cargar histórico una sola vez.
+        </div>
+      </div>
+      <div class="vac-csv-preview" id="vac-vac-preview" style="display:none"></div>
+    `;
+    const foot = document.createElement('div');
+    foot.style.cssText = 'display:flex;gap:10px';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'vac-btn-ghost'; cancel.textContent = 'Cancelar';
+    cancel.onclick = closeModal;
+    const preview = document.createElement('button');
+    preview.type = 'button'; preview.className = 'vac-btn-ghost'; preview.textContent = 'Vista previa';
+    const importBtn = document.createElement('button');
+    importBtn.type = 'button'; importBtn.className = 'vac-btn-primary'; importBtn.textContent = 'Importar';
+    importBtn.disabled = true;
+
+    let lastRows = [];
+    function doPreview(){
+      const csv = wrap.querySelector('#vac-vac-csv').value;
+      const { rows, errors } = parseVacCsv(csv, window.__vac.admin.employees);
+      lastRows = rows;
+      const prev = wrap.querySelector('#vac-vac-preview');
+      prev.style.display = 'block';
+      // Resumen por empleado
+      const byEmp = new Map();
+      for(const r of rows){ byEmp.set(r.employeeName, (byEmp.get(r.employeeName) || 0) + 1); }
+      let html = `<div class="vac-csv-preview-counts">
+        <span class="vac-cnt-ok">✓ ${rows.length} válida${rows.length===1?'':'s'}</span>
+        ${errors.length ? `<span class="vac-cnt-err">✗ ${errors.length} con error</span>` : ''}
+        <span style="color:var(--muted)">${byEmp.size} empleado${byEmp.size===1?'':'s'} afectado${byEmp.size===1?'':'s'}</span>
+      </div>`;
+      html += `<div class="vac-csv-preview-list">`;
+      for(const r of rows){
+        html += `<div class="vac-csv-row is-ok">${escHtml(r.employeeName)} · ${escHtml(r.start_date)}→${escHtml(r.end_date)} · ${escHtml(r.status)}${r.note ? ' · '+escHtml(r.note.slice(0,40)) : ''}</div>`;
+      }
+      for(const e of errors) html += `<div class="vac-csv-row is-err">L${e.line}: ${escHtml(e.msg)}</div>`;
+      html += `</div>`;
+      prev.innerHTML = html;
+      importBtn.disabled = rows.length === 0;
+    }
+    preview.onclick = doPreview;
+    wrap.querySelector('#vac-vac-csv').addEventListener('input', () => { importBtn.disabled = true; });
+
+    importBtn.onclick = async () => {
+      if(!lastRows.length){ doPreview(); if(!lastRows.length) return; }
+      importBtn.disabled = true; importBtn.textContent = 'Importando…';
+      const adminId = window.__vacAuth.employee.id;
+      const nowIso = new Date().toISOString();
+      const payload = lastRows.map(r => {
+        const base = {
+          employee_id: r.employee_id,
+          start_date: r.start_date,
+          end_date: r.end_date,
+          status: r.status,
+          note: r.note
+        };
+        if(r.status === 'aprobada'){
+          base.approved_by = adminId;
+          base.approved_at = nowIso;
+        }
+        return base;
+      });
+      // El trigger SQL setea days_count y period_year en cada row.
+      const { error } = await supa.from('vac_requests').insert(payload);
+      if(error){
+        alert('No se pudo importar: ' + error.message);
+        importBtn.disabled = false; importBtn.textContent = 'Importar';
+        return;
+      }
+      showToast(`Importadas ${lastRows.length} solicitudes`);
+      await loadAdminData();
+      renderPendientes();
+      updatePendingBadge();
+      closeModal();
+    };
+
+    foot.appendChild(cancel);
+    foot.appendChild(preview);
+    foot.appendChild(importBtn);
+    openModal({ title: 'Carga masiva de vacaciones', sub: 'Cada fila genera una solicitud nueva. Las aprobadas quedan con vos como aprobador.', body: wrap, footer: foot, wide: true });
+  }
+
+  // ── Wire-up del panel admin ──
+  function wireAdminButtons(){
+    const newEmpBtn = $('vac-emp-new');
+    if(newEmpBtn && !newEmpBtn._wired){ newEmpBtn._wired = true; newEmpBtn.addEventListener('click', () => openEmployeeModal(null)); }
+    const massVacBtn = $('vac-emp-mass-vac');
+    if(massVacBtn && !massVacBtn._wired){ massVacBtn._wired = true; massVacBtn.addEventListener('click', openMassVacModal); }
+    const newHolBtn = $('vac-hol-new');
+    if(newHolBtn && !newHolBtn._wired){ newHolBtn._wired = true; newHolBtn.addEventListener('click', () => openHolidayModal(null)); }
+    const massHolBtn = $('vac-hol-mass');
+    if(massHolBtn && !massHolBtn._wired){ massHolBtn._wired = true; massHolBtn.addEventListener('click', openMassHolidayModal); }
+    wireModalChrome();
+  }
+
+  async function onEnterAdmin(){
+    if(!window.__vacAuth?.isAdmin) return;
+    wireAdminButtons();
+    if(!window.__vac.admin.initialized){
+      await loadAdminData();
+      window.__vac.admin.initialized = true;
+    }
+    renderPendientes();
+    renderEmpleados();
+    renderFeriados();
+    // Si entré por click en "Revisar" del banner, hacer scroll a pendientes
+    if(window.__vac.admin.scrollAfterEnter === 'pendientes'){
+      window.__vac.admin.scrollAfterEnter = null;
+      const el = $('vac-admin-pendientes-block');
+      if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   // ── Sub-tabs ──
   function switchSubtab(name){
     if(!name) return;
@@ -10263,6 +11621,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(name === 'mi') onEnterMi();
     else if(name === 'cargar') onEnterCargar();
     else if(name === 'equipo') onEnterEquipo();
+    else if(name === 'admin') onEnterAdmin();
   }
   window.vacSwitchSubtab = switchSubtab;
 
@@ -10274,6 +11633,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(cur === 'mi') onEnterMi();
     else if(cur === 'cargar') onEnterCargar();
     else if(cur === 'equipo') onEnterEquipo();
+    else if(cur === 'admin') onEnterAdmin();
   };
   window.vacOnLeaveTab = function(){ /* no-op por ahora */ };
 
@@ -10303,7 +11663,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const goAdminBtn = $('vac-go-admin');
     if(goAdminBtn && !goAdminBtn._wired){
       goAdminBtn._wired = true;
-      goAdminBtn.addEventListener('click', () => switchSubtab('admin'));
+      goAdminBtn.addEventListener('click', () => {
+        if(window.__vac.admin) window.__vac.admin.scrollAfterEnter = 'pendientes';
+        switchSubtab('admin');
+      });
     }
 
     // Fase 3: navegación de mes + form Cargar
@@ -10348,11 +11711,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const { data: { session } } = await supa.auth.getSession();
     await applySession(session);
 
-    // Deep-link ?tab=vacaciones (la lógica completa con &sub=… llega en Fase 5)
+    // Deep-link ?tab=vacaciones[&sub=mi|equipo|cargar|admin]
     try {
       const params = new URLSearchParams(window.location.search);
       if(params.get('tab') === 'vacaciones' && typeof window.switchTab === 'function'){
         window.switchTab('vacaciones');
+        const sub = params.get('sub');
+        const valid = ['mi','equipo','cargar','admin'];
+        if(sub && valid.includes(sub)){
+          // Esperar al próximo frame para asegurar que el panel está activo
+          requestAnimationFrame(() => switchSubtab(sub));
+        }
       }
     } catch(_) {}
   }
