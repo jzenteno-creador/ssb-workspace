@@ -220,6 +220,45 @@ Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 ### Migrations (ya aplicadas)
 - `vac_schema`, `vac_seed`, `vac_rls`, `vac_audit_fixes` (cierre auditoría: `security_invoker`, search_path, etc.), `vac_birthday_extra` (birthday + extra_days + view recreada).
 
+## Auth global (2026-05-05)
+
+Toda la app está detrás de un gate de autenticación. Cliente Supabase global
+en `window.__ssb.supa` con `storageKey: 'sb-ssb-workspace-auth'`. Vacaciones
+reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
+(deuda aceptada — warning "Multiple GoTrueClient").
+
+### Gate de auth (`#auth-gate`)
+- 5 estados: `login | signup | reset | newpw | confirm-pending`.
+- Pre-check signup contra `vac_employees` (existe + active=true) — si no, error claro.
+- Email confirmations **ON**: se manda mail una sola vez al signup. Sin confirmar = no entra.
+- Reset password: flujo via `?reset=1` query param. `PASSWORD_RECOVERY` event dispara form newpw.
+- Mensajes neutros en login para evitar enumeración (excepto signup, donde es UX explícita).
+
+### Anti-bypass UI
+- `body:not(.is-authed) .topbar, .tab-bar, .tab-panel, .sched-tools-bar { display:none !important }`.
+- `body.is-authed` solo se setea después de validar contra `vac_employees` server-side.
+- Última línea de defensa: RLS de tablas vac_* y schedules_master.
+- Tarifas BID, EFA, Schedule (BID) y Tarifas Terrestres son accesibles a anon (datos públicos por decisión arquitectónica).
+
+### Hooks expuestos
+- `window.__ssb = { supa, ready }` — cliente y flag de inicialización.
+- `window.__ssbAuth = { user, email, employeeId, session } | null` — sesión validada.
+- `window.ssbLogout()` — signOut + reload de la página.
+- `window.vacApplySsbSession(session)` — lo llama el global tras validar; el módulo Vacaciones carga el employee enriquecido y arma `__vacAuth`.
+
+### Headers de seguridad (netlify.toml)
+- `X-Frame-Options: DENY`
+- `Content-Security-Policy: frame-ancestors 'none'` (anti-clickjacking del gate)
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
+### Caveats
+- Storage key cambió de `sb-vacaciones-auth` a `sb-ssb-workspace-auth` — sesiones viejas se invalidan.
+- Email enumeration parcial en signup ("tu mail no está habilitado") — riesgo bajo aceptado.
+- No hay CSP completa todavía (solo frame-ancestors). Whitelist completa requeriría: `*.supabase.co`, `fonts.googleapis.com`, `fonts.gstatic.com`, `script.google.com`, `cdn.jsdelivr.net`.
+- Boot splash auto-oculto cuando no hay sesión (para no forzar 2 pantallas).
+- Subdominio: `https://ssb-workspace.netlify.app` (cambiado de `tarifa-schedule.netlify.app`).
+
 ## Decisiones de diseño inamovibles
 
 - Vanilla JS: no migrar a React/Vue/frameworks
@@ -227,3 +266,4 @@ Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 - precinto_aduana UNIQUE global (no por orden)
 - Detección dinámica de columnas: nunca por posición fija
 - **Módulo Vacaciones — completo (5 fases + extensiones)**
+- **Auth global obligatoria** — toda la app vive detrás del gate, gating por `vac_employees`
