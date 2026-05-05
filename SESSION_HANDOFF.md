@@ -1,321 +1,75 @@
-# Handoff de sesión — 2026-04-28 · tarifa-schedule
+# Handoff de sesión — 2026-05-05 · tarifa-schedule
 
-## Resumen ejecutivo
+## Resumen
 
-Sesión completa de construcción del **módulo Tarifas Terrestres Dow** — flete
-terrestre por contrato Dow con 4 transportistas (PETROLERA, AGUILUCHO, DON PEDRO,
-MOYA), 48 destinos en 4 países (Chile, Brasil, Uruguay, Bolivia). Tab nuevo
-(7º del proyecto) en `index.html`, backed by Supabase con 3 tablas nuevas,
-trigger de auditoría y vista de consulta.
+Cierre del módulo Vacaciones completo: 5 fases + extensiones (cumpleaños/extra_days, banner informativo, días importantes, card de cumpleaños en Mi calendario, nota de máximo 14 días). Todo en rama `feat/vacaciones`, mergeado a `master` con `--no-ff` y pusheado. CLAUDE.md del proyecto actualizado con sección completa del módulo.
 
-Tres modos internos en la solapa: **Consulta** (default, lectura con 5
-dropdowns multi-select y bloque copiable), **Edición** (Tarifas + Carriers
-con audit trail e inline editing), **Historial** (log con filtros y diff
-inline). Carriers son lista cerrada (defensa contra typos); país/departure/
-aduana permiten "+ Agregar nuevo" con validación case-insensitive.
+## Cambios realizados (esta sesión)
 
-**14 commits** sobre `master`. Mergeado y pusheado — Netlify auto-deploy en
-producción. Diff total: +2999 / −113 líneas.
+### Fase 5 — Administración + flujo de aprobación (commit `db23c92`)
+- Sub-tab Admin con 3 bloques: Pendientes | Empleados | Feriados.
+- Pendientes: tabla con conflicto back-up prominente (chips amber), Ver detalle / Aprobar / Rechazar (modal motivo obligatorio).
+- Empleados: chips de back-ups visibles en la tabla principal (Prioridad A), modal nuevo/editar con multi-select prominente de checkboxes (Prioridad A).
+- Detalle pendiente: modal con todos los conflictos del solicitante en chips amber (Prioridad B).
+- Carga masiva vacaciones (Prioridad C): modal CSV `email,start,end,status[,note]`, parser con resumen por empleado, errores por línea, insert con `approved_by/at` automático cuando status=aprobada.
+- Feriados: CRUD individual + carga masiva CSV (upsert por fecha).
+- Modal genérico reutilizable: focus trap, Escape, click overlay.
+- Banner "Revisar" → switchea a admin con scrollIntoView a pendientes.
+- Deep-link extendido `?tab=vacaciones&sub=mi|equipo|cargar|admin`.
 
-## Cambios realizados
-
-### Supabase (proyecto `xkppkzfxgtfsmfooozsm`)
-
-- **3 tablas nuevas** (migración `create_tarifas_terrestres`):
-  - `tarifas_terrestres_carriers (id, nombre UNIQUE, seguro_pct, activo,
-    updated_by, update_reason, created_at, updated_at)`.
-  - `tarifas_terrestres (id, carrier_id FK, departure, destination,
-    pais_destino, customs_exit, freight_usd CHECK >0, activo, updated_by,
-    update_reason, created_at, updated_at)` con UNIQUE
-    `(carrier_id, departure, destination, customs_exit)`.
-  - `tarifas_terrestres_log (id, tarifa_id, operacion CHECK
-    INSERT|UPDATE|DELETE, valores_anteriores jsonb, valores_nuevos jsonb,
-    changed_by, change_reason, changed_at)` con índices.
-- **Trigger AFTER** `trg_tarifas_terrestres_log` sobre tarifas. Función
-  `fn_tarifas_terrestres_log()` con `SECURITY DEFINER` (corrección
-  encontrada en runtime — sin esto la RLS del log bloquea el INSERT).
-- **Vista** `v_tarifas_terrestres` (JOIN con carriers, filtra `activo=true`
-  ambos lados).
-- **RLS abierta** (`USING(true) WITH CHECK(true)`) en las 3 tablas — patrón
-  uniforme del proyecto.
-- **Datos**: 4 carriers (AGUILUCHO con seguro_pct=0.0050) + 48 tarifas + 48
-  entries de auditoría con `changed_by='SEED'`.
-
-### Frontend (`index.html`)
-
-- Tab `#tab-tt-dow` con sprite SVG `i-truck` agregado al `<defs>`.
-- Panel `#panel-tt-dow` con 3 modos toggleables (`tt-mode-bar`).
-- IIFE propio (3er cliente Supabase del archivo, ~1700 líneas en el bloque)
-  con state `_tt*` y listeners delegados.
-- 5 filtros multi-select estilo Detention en Consulta + bloque copiable
-  formato 1 línea con middle dot.
-- Modo Edición: editor name persistente (`localStorage tt_editor_name`),
-  modal "¿Quién está editando?" la primera vez. Tabla editable inline para
-  tarifas (selects + inputs) y carriers (input/checkbox). Pill amber
-  pulsante con cantidad de cambios pendientes. Botones Guardar/Descartar
-  visibles solo cuando hay cambios.
-- Modo Historial: filtros (rango fechas, op, editor, búsqueda libre), tabla
-  paginada (50/page), diff inline expandible.
-- Rediseño visual aplicado por Claude Design (commit `19cd3a9`) — mejora
-  jerarquía, contraste, microinteracciones, sin tocar lógica.
-- Ordenamiento por columna en modo Edición · Tarifas (commit `f9b5347`).
-- Carriers como lista cerrada (commit `8d10f21`): nombre como `<span>`,
-  modal dedicado para crear con validación case-insensitive. País/Departure/
-  Aduana siguen flexibles via "+ Agregar nuevo" + sentinel `__NEW__`.
-
-### Backend / Scripts
-
-- `scripts/seed-tarifas-terrestres.js`: lee Excel con xlsx, mapea
-  ciudad→país explícitamente (aborta si encuentra ciudad nueva), upsert
-  carriers + tarifas con audit trail `updated_by='SEED'`. Idempotente con
-  flag `--force`.
-- `scripts/package.json`: deps `xlsx@^0.18.5`, `@supabase/supabase-js@^2`.
-  Lockfile migrado de npm a bun.
-- `.gitignore`: `data/*.xlsx` (info contractual de Dow no va al repo).
-- `migrations/2026-04-28-tarifas-terrestres/`: snapshot versionado
-  (`README.md`, `before.sql`, `applied.sql`, `rollback.sql`).
-- `tarifa-schedule/CLAUDE.md` actualizado con sección "Tarifas Terrestres
-  Dow — arquitectura" (modelo, reglas inamovibles, convenciones, caveats).
-
-### Bugs corregidos en el camino
-
-- **Trigger sin SECURITY DEFINER**: el INSERT del trigger al log fallaba
-  con la RLS solo SELECT. Fix: `ALTER FUNCTION fn_tarifas_terrestres_log()
-  SECURITY DEFINER`. Documentado en `applied.sql`.
-- **switchTTMode no renderizaba Edición**: faltaba hook a
-  `switchTTEditSubtab` + `_ensureEditor` al entrar al modo. Encontrado en
-  VERIFY automatizado, fix en commit `208834a`.
-- **Pill amber siempre invisible** post-rediseño: el CSS declaraba
-  `display:none` base + `display:inline-flex` solo en `.show`, pero el JS
-  togglaba via `style.display=''`. Cambio mecánico de 4 líneas a
-  `classList.toggle('show', n>0)`. Documentado en commit `19cd3a9`.
+### Cumpleaños + extra_days + UI ajustes (commits `2fef794`, `6e25b0e`, `bcc5bf7`)
+- Migration `vac_birthday_extra` aplicada (idempotente): columnas `birthday_day`, `birthday_month`, `extra_days`. Constraints: rango día 1-31, rango mes 1-12, paired (ambos o ninguno), valid_calendar_day (max día por mes, 29/feb permitido), extra_days >= 0. View `vac_balance_view` recreada con `security_invoker=on`, agrega `effective_annual_days = annual_days + extra_days`, `days_remaining` usa el efectivo.
+- Banner período → tono informativo (azul) con 4 líneas: período / cumpleaños del mes (condicional) / recordatorio cumple (siempre) / máximo 14 días corridos (siempre).
+- Form admin (Editar empleado): selects día/mes con `rebuildDayOptions()` que ajusta opciones según el mes; input `extra_days` con help text.
+- Sub-tab Equipo: subtítulo "X d/año" eliminado del nombre y columna Status oculta (defensa de privacidad sobre días ajenos). Pill "admin" inline al lado del nombre.
+- Cuadro "Días importantes en este rango" debajo del Gantt: tabla con feriados/no laborables/cumpleaños del rango visible. Hook a `onGanttScroll` con throttle rAF.
+- Mini-timeline: meses con 3 letras (Oct Nov Dic …) en lugar de la inicial; fuente baja a 8px en pantallas <700px.
+- `effectiveAnnualDays()` helper en Mi calendario y Cargar para que Total/Saldo proyectado reflejen extra_days.
+- 5ta card en Mi calendario: "Día de cumpleaños" en púrpura. Si tiene birthday cargado: 1 día / DD/MM. Si no: estado vacío con texto guía. Grid 5 cols hasta 1100px, 3 cols hasta 600px, 2 cols mobile.
+- Defensa en profundidad para visibilidad admin: `setAdminUI` setea display:none + aria-hidden + remueve clase activa cuando no es admin.
+- `loadEmployeeForEmail` ahora trae `birthday_day/month` y `extra_days`. Si admin se edita a sí mismo, `__vacAuth.employee` se refresca para que la UI vea cambios sin nuevo login.
 
 ## Decisiones tomadas
 
-### Del PLAN inicial (16 decisiones que NO estaban en el prompt original)
-
-1. **Identificadores HTML**: prefijo `tt-` (`tab-tt-dow`, `panel-tt-dow`,
-   `tt-paises-wrap`, etc.). Coherente con `det-` de Detention.
-2. **Variables JS**: prefijo `_tt` (`_ttData`, `_ttSelPaises`,
-   `_ttPendingChanges`, etc.).
-3. **localStorage keys**: `tt_filtro_paises | _carriers | _departures |
-   _aduanas | _destinations` + `tt_editor_name`.
-4. **Toggle de modos**: segmented control con 3 botones (`.tt-mode-bar`)
-   reusando `.btn-clear` con un mod active.
-5. **Sub-tabs Tarifas/Carriers**: misma técnica.
-6. **Modal de motivo**: `<div class="tt-modal-overlay" position:fixed>`,
-   no `<dialog>` HTML5 (sin precedente en el repo).
-7. **Defaults de filtros vacíos** = mostrar todo al primer load (decisión
-   que el usuario validó explícitamente — distinto a Detention que tiene
-   defaults hard-coded).
-8. **Pre-check de duplicado en cliente** contra `_ttData + _ttPendingNew`
-   antes del UPSERT. UNIQUE de Postgres como respaldo.
-9. **Manejo error FK al borrar carrier**: catch error code `23503` con
-   mensaje en español. (En la práctica nunca dispara porque hacemos soft
-   delete; el guard espejo vive en cliente).
-10. **Editor name validación**: trim no vacío, máx 50 chars, sin formato.
-11. **Posición de la tab nueva**: 7º (último).
-12. **Empty states**: reuso `.empty / .empty-ico / .empty-ttl /
-    .empty-sub` con copy humanizado.
-13. **Skeletons**: 5 filas igual que Detention.
-14. **`updated_by` y `update_reason` en INSERT**: el frontend los setea
-    explícitamente para que el trigger los capture en el log también para
-    creaciones (no solo updates).
-15. **Borrado físico nunca**: solo soft delete (`activo=false`) con motivo.
-16. **Búsqueda en filtros**: substring case-insensitive con `.includes()`.
-
-### Del ajuste post-rediseño (las 2 funcionalidades pedidas + sub-decisiones)
-
-**A — Carriers inmutables + dropdowns estrictos en tarifas (commit `8d10f21`)**
-
-- A.1. Carrier nuevo = INSERT directo via modal dedicado (no pasa por
-  pending). Distinto a tarifas. Cada carrier nuevo lleva su propio motivo.
-- A.2. Modal multi-campo dedicado (`#tt-carrier-modal-overlay`) en lugar
-  de extender el genérico — más claro para 4 campos.
-- A.3. Carrier inactivo en `<select>`: aparece como `<option disabled>`
-  conservando el valor (no se pierde el dato pero impide reasignar).
-- A.4. Sentinel `__NEW__` en selects de país/departure/aduana —
-  typográficamente imposible de tipear como valor real.
-- A.5. Validación case-insensitive en cliente para país/departure/aduana
-  (espejo de la UNIQUE case-sensitive del DB para carriers).
-- A.6. Destination y Freight USD siguen como inputs libres
-  (más volátiles).
-
-**B — Sort de columnas en modo Edición · Tarifas (commit `f9b5347`)**
-
-- B.1. Comparator estable con tiebreakers fijos (carrier → departure →
-  destination) para orden determinístico.
-- B.2. Filas nuevas y existentes se ordenan juntas (no separar `_ttPendingNew`
-  al final). Razón: si el operador agrega 3 PETROLERA y ordena por carrier,
-  esperan verlas agrupadas.
-- B.3. Default sort: `Carrier ASC`. Toggle ASC↔DESC al re-clickear la
-  misma col; cambiar de col vuelve a ASC.
-- B.4. Indicador SVG inline triangular (no agrega símbolo al sprite).
-
-### Decisiones técnicas adicionales surgidas en runtime
-
-- **C.1. SECURITY DEFINER en `fn_tarifas_terrestres_log`** — única forma de
-  permitir que el trigger inserte en el log con RLS solo SELECT (patrón
-  estándar para audit logs). Aplicada como migración correctiva
-  `tt_log_security_definer` el mismo día.
-- **C.2. Anon key como fallback en seed script**: el script usa la anon key
-  (que ya está en index.html, pública por design) como default si no hay
-  `SUPA_SERVICE_KEY` en `.env`. Permite correr el script sin secretos
-  adicionales para uso interno.
-- **C.3. Idempotencia con `--force`**: el seed aborta si ya hay tarifas en
-  DB; pasar `--force` re-ejecuta (los UPSERT no duplican filas pero sí
-  generan UPDATE entries en log si hay diferencias).
-- **C.4. Bloque copiable formato 1 línea con middle dot** — decidido por
-  el usuario tras discutir tres opciones (alineación texto plano fallaba
-  en Gmail; HTML al clipboard era complejo; opción "una línea" funciona
-  en cualquier cliente).
-- **C.5. `classList.toggle('show', n>0)`** para pills pendientes — fix del
-  conflicto entre el CSS de Claude Design y el JS original.
-- **C.6. Hook `switchTTEditSubtab` + `_ensureEditor` en `switchTTMode`**
-  para que el modo Edición renderice y pida editor al entrar
-  (encontrado en VERIFY).
-- **C.7. Migración versionada en `migrations/2026-04-28-*/`** con before/
-  applied/rollback — pedido del usuario en el ajuste 3 del PLAN inicial.
-- **C.8. Auditoría con skills `security-review` + `vanilla-js-auditor`**
-  antes del push final — pedido del usuario en el ajuste 2 del PLAN
-  inicial. 0 findings altos o críticos.
+- **RLS SELECT permisivas (`auth.role()='authenticated'`)**: se mantienen como están para permitir vista Equipo pública. La UI oculta admin a no-admins (defensa en profundidad), pero un empleado técnico podría leer pendientes/notas desde la consola con queries directos al cliente Supabase. Marcado como deuda BAJA en CLAUDE.md.
+- **Cumpleaños no se descuenta automáticamente**: regla de negocio manual entre solicitante y admin vía nota en la solicitud. La UI solo muestra info.
+- **Período máximo 14 días corridos**: solo informativo en banner. NO se valida en el form de Cargar.
+- **`extra_days` persiste**: el admin lo limpia manualmente al cerrar período.
 
 ## Estado actual
 
-- **Branch**: `master`, sin cambios sin commitear. HEAD =
-  `f9b5347 feat(tarifas-terrestres): ordenamiento de columnas en modo edición`.
-- **Producción**: Netlify auto-deploy disparado por el push a master.
-- **Branch de feature**: `feature/tarifas-terrestres-dow` ya mergeada,
-  preservada en `origin` como histórico (14 commits).
-- **Supabase**:
-  - 3 tablas activas (`tarifas_terrestres_carriers`, `tarifas_terrestres`,
-    `tarifas_terrestres_log`).
-  - 4 carriers (AGUILUCHO con seguro_pct=0.0050, resto en 0).
-  - 48 tarifas activas (35 Chile, 7 Brasil, 5 Uruguay, 1 Bolivia).
-  - 48 entries SEED en log (`changed_by='SEED'`).
-  - Trigger + función + view + RLS verificados.
-- **Tab Tarifas Terrestres Dow**: funcional end-to-end (smoke tested con
-  Playwright headless: 8 chequeos del flujo principal + 9 chequeos de
-  defensas + 5 chequeos de sort).
-- **CLAUDE.md** del proyecto actualizado con la nueva sección.
+- Rama `feat/vacaciones` mergeada a `master` con `--no-ff`. Push hecho.
+- Netlify auto-deploy disparado por el push.
+- 5 commits del módulo en master:
+  - `df950df` schema, seed y RLS
+  - `cd28bfd` cierre auditoría
+  - `40eff77` auth magic link, panel y badge
+  - `a0bff68` mi calendario y carga
+  - `7427d47` vista equipo
+  - `db23c92` admin y aprobaciones
+  - `2fef794` cumpleaños, días extra, banner, días importantes
+  - `6e25b0e` card cumpleaños + recordatorio fijo
+  - `bcc5bf7` nota de máximo 14 días
+- Migrations en Supabase (proyecto `xkppkzfxgtfsmfooozsm`): `vac_schema` → `vac_seed` → `vac_rls` → `vac_audit_fixes` → `vac_birthday_extra`. Advisors corridos: 0 issues nuevos del módulo.
 
-## Recordatorio sobre n8n
+## Próximos pasos (cuando se retome)
 
-Verificación de los 2 workflows activos del usuario:
-
-| Workflow | ID | ¿Depende de tarifas terrestres? |
-|---|---|---|
-| `control de bill of lading` | `WVt6gvghL2nFVbt6` | ❌ NO. Procesa PDFs de BLs vía Watch Drive → normalizador. Cero referencias a `tarifas_terrestres*` ni a tablas/URLs relacionadas. |
-| `Descarga de pdf, clasificacion y subida a drive` | `pBN4Wd1lcTSHNkFg` | ❌ NO. Extract from File → Clasificar Documento → upload Drive. No toca Supabase de tarifas. |
-
-**Conclusión**: NO se requiere actualización de workflows existentes. Si en
-algún momento se quiere notificar al equipo de un cambio en tarifas
-terrestres (mail/Slack al cargar un cambio en el log), se puede sumar un
-workflow nuevo escuchando `postgres_changes` sobre `tarifas_terrestres_log`
-— ver "Próximos pasos" abajo.
-
-## Próximos pasos sugeridos (no obligatorios)
-
-### Cortos
-1. **Smoke test en Live Server con datos reales** — validar visualmente
-   con dark/light mode, probar el flujo end-to-end de un cambio (insertar
-   → editar → guardar → ver historial → diff inline) con un editor real.
-2. **Confirmar copy del bloque copiable en Gmail real** — el operador
-   pega en un mail al cliente y verifica que se ve bien en el cliente
-   destinatario.
-
-### Medianos (1–2 hs cada uno)
-3. **Search dentro de los `<select>` de Edición** — si los dropdowns
-   crecen a >50 valores únicos (ej. muchas aduanas), agregar un input
-   de búsqueda inline. Hoy con 16 destinos y 7 aduanas no hace falta.
-4. **UNIQUE LOWER en carriers** — la UNIQUE actual del DB es
-   case-sensitive sobre `nombre`. La validación case-insensitive vive en
-   cliente. Si dos editores en simultáneo intentan crear "AGUILUCHO" y
-   "aguilucho", la DB acepta ambas. Solución: agregar
-   `CREATE UNIQUE INDEX ON tarifas_terrestres_carriers (lower(nombre))`.
-   Prioridad baja porque el espacio de carriers es chico y los editores
-   son pocos.
-5. **Locking optimista para concurrencia** — last-write-wins acepta hoy.
-   Si en algún momento se vuelve relevante, agregar columna `version int`
-   en `tarifas_terrestres` y validar en cada UPDATE.
-6. **n8n notificación de cambios** — workflow nuevo escuchando
-   `tarifas_terrestres_log` (postgres_changes Realtime) → Slack/mail al
-   equipo cuando hay un cambio. Útil si Dow informa actualizaciones por
-   fuera de canales formales.
-
-### Largos
-7. **Modularizar `index.html`** — el archivo tiene ~8.000 líneas y crece.
-   Deuda técnica conocida (CLAUDE.md la flagea desde antes). Candidato
-   cuando haya pausa de features.
-8. **Mobile responsive** — el módulo es desktop-only (alineado con
-   decisión del proyecto). Si se necesita en algún momento, los filtros
-   y tabla deben adaptarse a viewport <1024px.
-9. **Realtime en modo Consulta** — sumar canal Supabase Realtime para que
-   cuando un editor guarde cambios, otros usuarios viendo Consulta los
-   vean al instante sin recargar.
+1. Cargar histórico 2025 vía sub-tab Administración → Empleados → Carga masiva vacaciones.
+2. Completar birthdays de empleados desde Administración → Editar.
+3. Cargar `extra_days` por empleado donde aplique (días no tomados que se transfieren).
+4. **Si se decide blindar privacidad**: migration nueva con RLS más estricta sobre `vac_requests.SELECT` y vista pública con campos minimal para Gantt Equipo (ver caveats en CLAUDE.md sección Vacaciones).
+5. **Si se decide automatizar emails**: webhook o Edge Function después de cada insert/update en `vac_requests` (sección 9 del VACACIONES_PLAN.md).
+6. Drop de indexes unused detectados en advisors: `idx_vac_employees_active`, `idx_vac_requests_dates` (limpieza menor).
 
 ## Contexto no obvio
 
-- **El cliente Supabase con anon key hace INSERT/UPDATE/DELETE en
-  producción desde el navegador**. RLS abierta `USING(true) WITH CHECK(true)`
-  lo permite. No es nuevo riesgo introducido por este módulo — es el patrón
-  uniforme del proyecto (`schedules_master`, `detention_freetime`).
-  Documentado en CLAUDE.md como deuda técnica.
-- **3 clientes Supabase coexisten en el archivo** (Schedule Realtime +
-  Detention + Tarifas Terrestres). Genera warning "Multiple GoTrueClient
-  instances" en consola — aceptado por el patrón del proyecto.
-- **El sentinel `__NEW__` en los `<select>` es typográficamente imposible
-  de tipear** como valor real. Si algún día se introduce un país literal
-  llamado "__NEW__" (improbable), el sentinel choca. Si pasa, cambiar a
-  `__TT_ADD_NEW__`.
-- **El `fn_tarifas_terrestres_log()` corre con `SECURITY DEFINER`**. Si en
-  algún momento se aplica una migración que recrea la función (ej.
-  `CREATE OR REPLACE`), hay que volver a aplicar `ALTER FUNCTION ...
-  SECURITY DEFINER`. Si no, los cambios desde el frontend dejarían de
-  loguearse silenciosamente.
-- **El Excel original de Dow** (`data/TARIFAS TERERSTRES - DOW.xlsx`) está
-  en `data/` y se ignora por `.gitignore` (`data/*.xlsx`). NO va al repo
-  por ser info contractual.
-- **Smoke test automatizado** vive en `/tmp/tt-smoke*.mjs` (no commiteado
-  — son tests de validación de la sesión). Si querés re-ejecutarlos, hay
-  que regenerarlos o commitearlos a futuro.
-
-## Commits de la sesión (orden cronológico)
-
-```
-6d691a0  chore(tarifas-terrestres): gitignore + deps de seed + migration snapshot
-5aa2e8a  feat(tarifas-terrestres): script de seed desde Excel
-894b77f  feat(tarifas-terrestres): sprite truck + tab + panel + segmented control
-4fd0981  feat(tarifas-terrestres): modo Consulta funcional
-3b53b4f  feat(tarifas-terrestres): modo Edición — tarifas (inline + audit)
-0c129d7  feat(tarifas-terrestres): modo Edición — carriers (FK guard + audit)
-a3c5f9a  feat(tarifas-terrestres): modo Historial — log + filtros + diff inline
-84b3937  feat(tarifas-terrestres): módulo funcional completo (pre-rediseño)
-19cd3a9  style(tarifas-terrestres): rediseño visual (Claude Design)
-208834a  fix(tarifas-terrestres): renderizar Edición y pedir editor al entrar al modo
-8d10f21  feat(tarifas-terrestres): carriers inmutables + dropdowns estrictos en tarifas
-f9b5347  feat(tarifas-terrestres): ordenamiento de columnas en modo edición  ← HEAD master
-```
-
-## Comandos útiles para el próximo chat
-
-```bash
-# Estado
-git log --oneline -10
-git status
-
-# Verificar tarifas en Supabase (via MCP supabase)
-SELECT carrier, departure, destination, pais_destino, freight_usd, seguro_pct
-FROM v_tarifas_terrestres
-ORDER BY pais_destino, carrier;
-
-# Ver últimos cambios del log (con motivo)
-SELECT changed_at, operacion, changed_by, change_reason
-FROM tarifas_terrestres_log
-ORDER BY changed_at DESC LIMIT 20;
-
-# Re-correr el seed (idempotente con --force)
-cd scripts && bun run seed-tarifas-terrestres.js -- --force
-
-# Live Server (VS Code) → click derecho en index.html
-```
+- **Mes octubre = índice 9** (zero-based JS). `getCurrentPeriodYear` corta en `month >= 9`. Hoy = 2026-05-05 → período 2025 → 2025-10-01 a 2026-09-30.
+- **`security_invoker=on` en la view** es crítico: la auditoría inicial (commit `cd28bfd`) lo requirió. Cualquier `CREATE OR REPLACE VIEW` del módulo debe mantenerlo.
+- **`CREATE OR REPLACE VIEW` no permite reordenar columnas existentes**: la migration `vac_birthday_extra` lo aprendió en el primer intento (falló). `extra_days` y `effective_annual_days` quedaron al final por ese motivo.
+- **`escHtml` local NO escapa comillas**. Toda interpolación que vaya a atributos HTML pasa por DOM properties (`el.title=`, `el.dataset=`, `setAttribute`).
+- **Modal genérico**: `_modalState.escHandler` se desuscribe en `closeModal()` para no apilar listeners.
+- **Polling de badge**: solo arranca con sesión, se detiene en logout. `__vac.badgeIntervalId` se trackea para evitar leaks.
+- **Vista Equipo: columna Status oculta con `display:none` inline**. Si en el futuro se reactiva, hay que limpiar ese inline al renderizar.
+- **`__vac.allEmployees`** es la cache global liviana del banner de cumpleaños. Se carga después del login y se refresca cuando admin edita un empleado.
+- **Self-update del admin**: si admin edita su propia row, `loadEmployeeForEmail` se reusa para refrescar `__vacAuth.employee` y se invalida `_miState.initialized`. Sin esto, el card de cumple en Mi calendario quedaba con datos viejos hasta nuevo login.
+- **n8n webhook de handoff** (`https://jzenteno.app.n8n.cloud/webhook/claude-handoff`): se dispara con curl/python POST `{chatInput: <md>}` al cerrar sesión, sincroniza con Drive/Obsidian + manda mail.

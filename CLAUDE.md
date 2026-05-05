@@ -179,9 +179,51 @@ auditada y log con diff inline.
 - `setup.sh`: requiere `n8n-cli` (NO instalado) → replicar con MCP tools + curl REST API
 - Setup ejecutado 2026-04-10: variables y credencial `Claude API Key` creadas, falta asignar OAuth Google Drive + Gmail en n8n UI para activar
 
+## Módulo Vacaciones — completo (5 fases + extensiones) (2026-05-05)
+
+Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
+(Supabase Auth), RLS por rol y email. Plan canon en `docs/VACACIONES_PLAN.md`.
+
+### Modelo de datos (Supabase)
+- `vac_employees(id, email UNIQUE, full_name, role admin|employee, annual_days CHECK in 14|21|28|35, backup_employee_ids uuid[], active, birthday_day, birthday_month, extra_days, ...)`. Constraints: `vac_birthday_paired`, `vac_birthday_valid_calendar_day` (max día por mes, 29/feb permitido).
+- `vac_requests(id, employee_id FK, start_date, end_date, days_count, note, status pendiente|aprobada|tentativa|rechazada, rejection_reason, approved_by, approved_at, period_year, ...)`. Trigger `vac_compute_request_fields` setea `days_count` y `period_year` antes de insert/update. RLS de UPDATE/DELETE solo permite al dueño si `status='pendiente'`.
+- `vac_holidays(id, date UNIQUE, name, type nacional|no_laborable|puente)`.
+- View `vac_balance_view` con `security_invoker=on`. Computa `effective_annual_days = annual_days + extra_days` y `days_remaining` usando el efectivo. Solo activos.
+- Helpers SQL `vac_is_admin()` y `vac_my_employee_id()` (`security definer stable`, `set search_path = ''`).
+
+### Reglas de negocio inamovibles
+- Período vacacional: **1° oct → 30 sep**. Renovación automática (la view filtra por `period_year`).
+- Días corridos (no hábiles).
+- Cumpleaños (1 día libre por empleado): NO se descuenta automáticamente — gestión manual entre solicitante y admin (vía nota en la solicitud).
+- Período máximo seguido: 14 días corridos (informativo en banner, NO bloqueado en el form).
+- `extra_days` (one-time): persiste por empleado hasta que admin lo limpie. NO se resetea al cambiar de período.
+- Soft delete de empleados (`active=false`) — nunca borrado físico.
+
+### Frontend (IIFE al final del `<script>`)
+- Prefijo HTML: `vac-`. Prefijo JS: `__vac` namespace + `vacInit/vacOnEnterTab/vacSwitchSubtab/vacUpdatePendingBadge` exportados a window.
+- Cliente Supabase reutilizado del archivo (no crear uno nuevo).
+- Sub-tabs: Mi calendario | Equipo | Cargar | Administración (solo admin).
+- Banner informativo siempre visible (período + cumpleaños del mes condicional + recordatorio cumple + máximo 14 días).
+- Stats strip de Mi calendario: 5 cards (Total / Aprobados / Pendientes / Restantes / Día de cumpleaños). Card cumple es informativa (no afecta balance).
+- Vista Equipo: Gantt anual draggable (mouse + shift+wheel + touch + snap a mes). Mini-timeline 12 meses con click-to-jump y viewport sync. Cuadro "Días importantes" debajo se actualiza con el rango visible (feriados + no laborables + cumpleaños). Columna Status oculta en Equipo (no exponemos días anuales/disponibles ajenos).
+- Modal genérico reutilizable con focus trap + Escape + click overlay. Cubre: detalle pendiente, rechazo, nuevo/editar empleado (multi-select prominente de back-ups con chips), nuevo/editar feriado, carga masiva CSV de feriados, carga masiva CSV de vacaciones históricas.
+- Polling badge: 60s mientras hay sesión + invalidación inmediata después de aprobar/rechazar/import.
+- Deep-link: `?tab=vacaciones&sub=mi|equipo|cargar|admin`. `switchSubtab` tiene guard isAdmin para `sub=admin`.
+- Defensa en profundidad UI admin: `setAdminUI(false)` setea display:none + aria-hidden + remueve `vac-section--active` sobre el panel admin si no es admin.
+
+### Caveats
+- Las RLS SELECT de `vac_requests` y `vac_employees` son `auth.role()='authenticated'` (cualquier logueado puede leer todo vía cliente Supabase directo). La UI oculta admin para no-admins, pero un usuario técnico podría leer notas/rejection_reason desde la consola. Decisión arquitectónica original ("vista Equipo pública"). Si se quiere blindar: cambiar a `(employee_id = vac_my_employee_id() OR vac_is_admin())` y mover el render del Gantt a una vista pública con campos minimal.
+- `escHtml` local del IIFE solo escapa `&`, `<`, `>` (no `"` ni `'`). Toda interpolación en atributos usa DOM properties (`el.title=`, `el.dataset=`).
+- No hay ResizeObserver en mini-timeline: las posiciones quedan en píxeles del momento del render. Re-render al re-entrar a la sub-tab.
+- Mes índice 9 = Octubre (zero-based). `getCurrentPeriodYear` corta en `month >= 9`.
+
+### Migrations (ya aplicadas)
+- `vac_schema`, `vac_seed`, `vac_rls`, `vac_audit_fixes` (cierre auditoría: `security_invoker`, search_path, etc.), `vac_birthday_extra` (birthday + extra_days + view recreada).
+
 ## Decisiones de diseño inamovibles
 
 - Vanilla JS: no migrar a React/Vue/frameworks
 - Sin npm/bundlers: todo via CDN
 - precinto_aduana UNIQUE global (no por orden)
 - Detección dinámica de columnas: nunca por posición fija
+- **Módulo Vacaciones — completo (5 fases + extensiones)**
