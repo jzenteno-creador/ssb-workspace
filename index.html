@@ -10364,6 +10364,61 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
   }
 
+  // ── Modal: mis ajustes (vista empleado) ──
+  function openMyAdjustmentsModal(adjs){
+    const body = document.createElement('div');
+
+    const head = document.createElement('div');
+    head.className = 'vac-side-hint';
+    head.textContent = `${adjs.length} ajuste${adjs.length === 1 ? '' : 's'} aplicado${adjs.length === 1 ? '' : 's'} a tu saldo en el período actual.`;
+    body.appendChild(head);
+
+    const list = document.createElement('div');
+    list.style.marginTop = '12px';
+
+    for(const a of adjs){
+      const item = document.createElement('div');
+      item.className = 'vac-item';
+      item.style.borderLeftColor = a.delta_days >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const dates = document.createElement('div');
+      dates.className = 'vac-item-dates';
+      const d = new Date(a.created_at);
+      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
+      item.appendChild(dates);
+
+      const meta = document.createElement('div');
+      meta.className = 'vac-item-meta';
+      const adminName = a.vac_employees?.full_name || (a.created_by ? '(admin eliminado)' : '—');
+      meta.textContent = `Aplicado por ${adminName}`;
+      item.appendChild(meta);
+
+      const note = document.createElement('div');
+      note.className = 'vac-item-note';
+      note.textContent = a.reason;
+      item.appendChild(note);
+
+      list.appendChild(item);
+    }
+
+    body.appendChild(list);
+
+    const footer = document.createElement('div');
+    const btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.className = 'vac-btn-primary';
+    btnClose.textContent = 'Cerrar';
+    btnClose.onclick = closeModal;
+    footer.appendChild(btnClose);
+
+    openModal({
+      title: 'Mis ajustes manuales',
+      sub: 'Estos ajustes los carga el admin y afectan tu saldo disponible.',
+      body,
+      footer
+    });
+  }
+
   // ── Render: calendario mensual ──
   function renderMonthGrid(){
     const grid = $('vac-cal-grid');
