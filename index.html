@@ -10308,7 +10308,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const aprobados  = balanceRow?.days_approved  ?? 0;
     const pendientes = (balanceRow?.days_pending  ?? 0) + (balanceRow?.days_tentative ?? 0);
     const ajustes    = (adjustmentsForEmployee || []).reduce((s, a) => s + (a.delta_days|0), 0);
-    const disponible = totalAnual - aprobados - pendientes - ajustes;
+    // Convención: delta_days positivo SUMA al saldo disponible; negativo lo descuenta.
+    const disponible = totalAnual - aprobados - pendientes + ajustes;
     return { totalAnual, aprobados, pendientes, ajustes, disponible };
   }
 
@@ -11715,7 +11716,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const deltaWrap = document.createElement('div');
     deltaWrap.className = 'vac-form-row';
     deltaWrap.innerHTML = `
-      <label class="vac-form-label" for="vac-adj-delta">Delta (días) <span class="vac-side-hint">— positivo suma, negativo resta. Rango: -100 a +100, no cero.</span></label>
+      <label class="vac-form-label" for="vac-adj-delta">Delta (días) <span class="vac-side-hint">— positivo suma al saldo, negativo lo descuenta. Rango: -100 a +100, no cero.</span></label>
       <input id="vac-adj-delta" class="vac-form-input" type="number" min="-100" max="100" step="1" inputmode="numeric">`;
     body.appendChild(deltaWrap);
 
