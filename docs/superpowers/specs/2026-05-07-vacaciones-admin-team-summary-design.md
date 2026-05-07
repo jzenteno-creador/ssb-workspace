@@ -204,7 +204,7 @@ revoke update, delete on public.vac_balance_adjustments from anon;
 - "Aprobados" = `vac_balance_view.days_approved` del período actual (todas las solicitudes con `status='aprobada'`, sin filtrar por fecha — ver §5.4).
 - "Pendientes" = `days_pending + days_tentative` (incluye `pendiente` y `tentativa`).
 - "Ajustes" = `sum(delta_days)` para ese empleado en el período. Mostrar con signo (`+5`, `-3`). Si 0 → mostrar "—".
-- "Disponible" = `Total anual − Aprobados − Pendientes − Ajustes` (output de `computeRealAvailable`).
+- "Disponible" = `Total anual − Aprobados − Pendientes + Ajustes` (output de `computeRealAvailable`). Convención: ajustes positivos suman al saldo, negativos lo descuentan.
 - Acción única: botón **"Ajuste manual"** (icono `i-edit` o `i-plus-minus`).
 - Filas con `Disponible < 0` resaltadas con clase `.vac-team-row--negative` (color `--red`).
 
@@ -262,8 +262,14 @@ restantes = balance.days_remaining
 **Después:**
 ```
 restantes = computeRealAvailable(balance, ajustes).disponible
-         = (annual_days + extra_days) - aprobados - pendientes - sum(ajustes)
+         = (annual_days + extra_days) - aprobados - pendientes + sum(ajustes)
 ```
+
+Convención de signos de `delta_days`:
+- **Positivo SUMA al saldo disponible** — admin recredita días al empleado.
+- **Negativo DESCUENTA del saldo** — admin registra que el empleado consumió días fuera del sistema (típico: adelanto antes del inicio del período).
+
+Ejemplo: empleado tomó 9 días antes del 1-oct adelantados a cuenta del nuevo período → admin carga `delta_days = -9` (resta del saldo).
 
 Es decir, `Restantes` en el frontend = `disponible` que devuelve la función pura. Misma cuenta que la columna "Disponible" del Resumen del equipo.
 
@@ -317,7 +323,8 @@ function computeRealAvailable(balanceRow, adjustmentsForEmployee){
   const aprobados  = balanceRow?.days_approved  ?? 0;  // ver §5.4 sobre el alcance temporal
   const pendientes = (balanceRow?.days_pending  ?? 0) + (balanceRow?.days_tentative ?? 0);
   const ajustes    = (adjustmentsForEmployee || []).reduce((s, a) => s + (a.delta_days|0), 0);
-  const disponible = totalAnual - aprobados - pendientes - ajustes;
+  // Convención: delta_days positivo SUMA al saldo disponible; negativo lo descuenta.
+  const disponible = totalAnual - aprobados - pendientes + ajustes;
   return { totalAnual, aprobados, pendientes, ajustes, disponible };
 }
 ```

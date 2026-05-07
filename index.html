@@ -1164,6 +1164,17 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 }
 #panel-vacaciones .vac-stat--bday .vac-stat-value{color:var(--purple)}
 #panel-vacaciones .vac-stat--empty .vac-stat-value{color:var(--muted);font-size:var(--fs-sm);font-weight:600;line-height:1.4;font-family:var(--font);letter-spacing:0}
+#panel-vacaciones .vac-stat--adj .vac-stat-value{font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-stat--adj .vac-stat-value.is-positive{color:var(--green)}
+#panel-vacaciones .vac-stat--adj .vac-stat-value.is-negative{color:var(--red)}
+#panel-vacaciones .vac-stat-adj-link{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+#panel-vacaciones .vac-stat-adj-link:hover{color:var(--text)}
+#panel-vacaciones .vac-team-row--negative td{background:var(--red-bg)}
+#panel-vacaciones .vac-team-row--negative .vac-team-disponible{color:var(--red);font-weight:700}
+#panel-vacaciones .vac-team-ajustes{font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-team-ajustes.is-positive{color:var(--green);font-weight:600}
+#panel-vacaciones .vac-team-ajustes.is-negative{color:var(--red);font-weight:600}
+#panel-vacaciones .vac-team-ajustes-link{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 /* ── Mi calendario: layout calendario + side ── */
 #panel-vacaciones .vac-cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
@@ -2855,6 +2866,11 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
           <div class="vac-stat-value" id="vac-stat-bday-value">—</div>
           <div class="vac-stat-sub" id="vac-stat-bday-sub">—</div>
         </div>
+        <div class="vac-stat vac-stat--adj" id="vac-stat-adj-card" style="display:none">
+          <div class="vac-stat-label">Ajustes manuales</div>
+          <div class="vac-stat-value" id="vac-stat-adj-value">—</div>
+          <div class="vac-stat-sub vac-stat-adj-link" id="vac-stat-adj-sub" tabindex="0" role="button">Ver detalle</div>
+        </div>
       </div>
 
       <!-- Calendar + side panel -->
@@ -3050,6 +3066,35 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
             </table>
           </div>
           <div class="vac-admin-empty" id="vac-pend-empty" style="display:none">No hay solicitudes pendientes.</div>
+        </div>
+      </div>
+
+      <!-- ─── Resumen del equipo ─── -->
+      <div class="vac-admin-block" id="vac-admin-team-summary-block">
+        <div class="vac-admin-head">
+          <div class="vac-admin-title">
+            <svg class="ic ic-md" aria-hidden="true"><use href="#i-package"/></svg>
+            Resumen del equipo
+          </div>
+        </div>
+        <div class="vac-admin-body">
+          <div class="vac-admin-table-wrap">
+            <table class="vac-admin-table" id="vac-team-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Total anual</th>
+                  <th>Aprobados</th>
+                  <th>Pendientes</th>
+                  <th>Ajustes</th>
+                  <th>Disponible</th>
+                  <th style="text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vac-team-tbody"></tbody>
+            </table>
+          </div>
+          <div class="vac-admin-empty" id="vac-team-empty" style="display:none">No hay empleados activos.</div>
         </div>
       </div>
 
@@ -10202,6 +10247,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.backupRequests = [];
     window.__vac.holidays = [];
     window.__vac.balance = null;
+    window.__vac.adjustments = [];
     window.__vac.editingId = null;
     _miState.initialized = false;
     if(window.__vac.team) clearTeamData();
@@ -10225,14 +10271,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       supa.from('vac_holidays').select('*').gte('date', startIso).lte('date', endIso).order('date', { ascending: true }),
       backupIds.length
         ? supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
-        : Promise.resolve({ data: [], error: null })
+        : Promise.resolve({ data: [], error: null }),
+      // Ajustes manuales del período actual del empleado autenticado (RLS solo permite los propios o si es admin — acá buscamos los propios)
+      supa.from('vac_balance_adjustments')
+        .select('id,period_year,delta_days,reason,created_at,created_by,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
+        .eq('employee_id', empId)
+        .eq('period_year', periodYear)
+        .order('created_at', { ascending: false })
     ];
-    const [bRes, rRes, hRes, bkRes] = await Promise.all(queries);
+    const [bRes, rRes, hRes, bkRes, aRes] = await Promise.all(queries);
 
     window.__vac.balance        = bRes?.data || null;
     window.__vac.requests       = rRes?.data || [];
     window.__vac.holidays       = hRes?.data || [];
     window.__vac.backupRequests = bkRes?.data || [];
+    window.__vac.adjustments    = aRes?.data || [];
   }
 
   // Helper: días anuales efectivos (annual_days + extra_days). Lo lee de la view
@@ -10243,32 +10296,127 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return e?.annual_days ?? 0;
   }
 
+  // Helper: cómputo del "disponible real" — única fuente de verdad para 3 consumidores
+  // (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview).
+  // Pure function: mismos inputs → mismos outputs, sin side effects.
+  // balanceRow: fila de vac_balance_view (puede ser null si el empleado no tiene fila)
+  // adjustmentsForEmployee: array de filas de vac_balance_adjustments YA filtradas
+  //   por employee_id + period_year (el caller hace el filtro).
+  function computeRealAvailable(balanceRow, adjustmentsForEmployee){
+    const totalAnual = balanceRow?.effective_annual_days
+      ?? ((balanceRow?.annual_days ?? 0) + (balanceRow?.extra_days ?? 0));
+    const aprobados  = balanceRow?.days_approved  ?? 0;
+    const pendientes = (balanceRow?.days_pending  ?? 0) + (balanceRow?.days_tentative ?? 0);
+    const ajustes    = (adjustmentsForEmployee || []).reduce((s, a) => s + (a.delta_days|0), 0);
+    // Convención: delta_days positivo SUMA al saldo disponible; negativo lo descuenta.
+    const disponible = totalAnual - aprobados - pendientes + ajustes;
+    return { totalAnual, aprobados, pendientes, ajustes, disponible };
+  }
+
   // ── Render: stats strip ──
   function renderStatsStrip(){
     const b = window.__vac.balance;
     const e = window.__vacAuth?.employee;
-    const annual = effectiveAnnualDays(b, e);
+    const adjs = window.__vac.adjustments || [];
+    const r = computeRealAvailable(b, adjs);
+
     const set = (id, v) => { const el = $(id); if(el) el.textContent = String(v); };
-    set('vac-stat-total', annual);
-    set('vac-stat-approved', b?.days_approved ?? 0);
-    set('vac-stat-pending', b?.days_pending ?? 0);
-    set('vac-stat-remaining', b?.days_remaining ?? annual);
+    set('vac-stat-total', r.totalAnual);
+    set('vac-stat-approved', r.aprobados);
+    set('vac-stat-pending', r.pendientes);
+    set('vac-stat-remaining', r.disponible);
 
     // Card "Día de cumpleaños" — informativa, NO afecta balance.
     const card = $('vac-stat-bday-card');
     const valEl = $('vac-stat-bday-value');
     const subEl = $('vac-stat-bday-sub');
-    if(!card || !valEl || !subEl) return;
-    const day = e?.birthday_day, month = e?.birthday_month;
-    if(day && month){
-      card.classList.remove('vac-stat--empty');
-      valEl.innerHTML = `1<span class="vac-stat-unit">día</span>`;
-      subEl.textContent = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}`;
-    } else {
-      card.classList.add('vac-stat--empty');
-      valEl.textContent = 'Pedile al admin que cargue tu cumpleaños';
-      subEl.textContent = '';
+    if(card && valEl && subEl){
+      const day = e?.birthday_day, month = e?.birthday_month;
+      if(day && month){
+        card.classList.remove('vac-stat--empty');
+        valEl.innerHTML = `1<span class="vac-stat-unit">día</span>`;
+        subEl.textContent = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}`;
+      } else {
+        card.classList.add('vac-stat--empty');
+        valEl.textContent = 'Pedile al admin que cargue tu cumpleaños';
+        subEl.textContent = '';
+      }
     }
+
+    // Card "Ajustes manuales" — solo visible si hay ajustes propios cargados por admin.
+    const adjCard = $('vac-stat-adj-card');
+    const adjVal  = $('vac-stat-adj-value');
+    const adjSub  = $('vac-stat-adj-sub');
+    if(adjCard && adjVal && adjSub){
+      if(adjs.length === 0){
+        adjCard.style.display = 'none';
+      } else {
+        adjCard.style.display = '';
+        const sign = r.ajustes > 0 ? '+' : '';
+        adjVal.textContent = `${sign}${r.ajustes}`;
+        adjVal.classList.toggle('is-positive', r.ajustes > 0);
+        adjVal.classList.toggle('is-negative', r.ajustes < 0);
+        adjSub.onclick = () => openMyAdjustmentsModal(adjs);
+        adjSub.onkeydown = (ev) => {
+          if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openMyAdjustmentsModal(adjs); }
+        };
+      }
+    }
+  }
+
+  // ── Modal: mis ajustes (vista empleado) ──
+  function openMyAdjustmentsModal(adjs){
+    const body = document.createElement('div');
+
+    const head = document.createElement('div');
+    head.className = 'vac-side-hint';
+    head.textContent = `${adjs.length} ajuste${adjs.length === 1 ? '' : 's'} aplicado${adjs.length === 1 ? '' : 's'} a tu saldo en el período actual.`;
+    body.appendChild(head);
+
+    const list = document.createElement('div');
+    list.style.marginTop = '12px';
+
+    for(const a of adjs){
+      const item = document.createElement('div');
+      item.className = 'vac-item';
+      item.style.borderLeftColor = a.delta_days >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const dates = document.createElement('div');
+      dates.className = 'vac-item-dates';
+      const d = new Date(a.created_at);
+      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
+      item.appendChild(dates);
+
+      const meta = document.createElement('div');
+      meta.className = 'vac-item-meta';
+      const adminName = a.vac_employees?.full_name || (a.created_by ? '(admin eliminado)' : '—');
+      meta.textContent = `Aplicado por ${adminName}`;
+      item.appendChild(meta);
+
+      const note = document.createElement('div');
+      note.className = 'vac-item-note';
+      note.textContent = a.reason;
+      item.appendChild(note);
+
+      list.appendChild(item);
+    }
+
+    body.appendChild(list);
+
+    const footer = document.createElement('div');
+    const btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.className = 'vac-btn-primary';
+    btnClose.textContent = 'Cerrar';
+    btnClose.onclick = closeModal;
+    footer.appendChild(btnClose);
+
+    openModal({
+      title: 'Mis ajustes manuales',
+      sub: 'Estos ajustes los carga el admin y afectan tu saldo disponible.',
+      body,
+      footer
+    });
   }
 
   // ── Render: calendario mensual ──
@@ -11429,13 +11577,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       supa.from('vac_requests')
         .select('id,employee_id,start_date,end_date,status,vac_employees!vac_requests_employee_id_fkey(full_name)')
         .eq('period_year', periodYear)
-        .neq('status', 'rechazada')
+        .neq('status', 'rechazada'),
+      // Balance por empleado del período actual (todos los empleados activos)
+      supa.from('vac_balance_view')
+        .select('employee_id,full_name,annual_days,extra_days,effective_annual_days,days_approved,days_pending,days_tentative,days_remaining'),
+      // Ajustes manuales del período actual (admin ve todos por RLS)
+      supa.from('vac_balance_adjustments')
+        .select('id,employee_id,period_year,delta_days,reason,created_by,created_at,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
+        .eq('period_year', periodYear)
+        .order('created_at', { ascending: false })
     ];
-    const [pRes, eRes, hRes, brRes] = await Promise.all(queries);
-    window.__vac.admin.pendientes      = pRes?.data || [];
-    window.__vac.admin.employees       = eRes?.data || [];
-    window.__vac.admin.holidays        = hRes?.data || [];
+    const [pRes, eRes, hRes, brRes, balRes, adjRes] = await Promise.all(queries);
+    window.__vac.admin.pendientes      = pRes?.data  || [];
+    window.__vac.admin.employees       = eRes?.data  || [];
+    window.__vac.admin.holidays        = hRes?.data  || [];
     window.__vac.admin.backupRequests  = brRes?.data || [];
+    window.__vac.admin.balances        = balRes?.data || [];
+    window.__vac.admin.adjustments     = adjRes?.data || [];
   }
 
   function clearAdminData(){
@@ -11444,6 +11602,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.admin.employees = [];
     window.__vac.admin.holidays = [];
     window.__vac.admin.backupRequests = [];
+    window.__vac.admin.balances = [];
+    window.__vac.admin.adjustments = [];
   }
 
   // ── Cómputo de conflictos de back-up para una solicitud ──
@@ -11470,6 +11630,299 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
     }
     return conflicts;
+  }
+
+  // ── Render: Resumen del equipo (admin) ──
+  function renderTeamSummary(){
+    const tbody = $('vac-team-tbody');
+    const empty = $('vac-team-empty');
+    if(!tbody) return;
+
+    const balances    = window.__vac.admin.balances    || [];
+    const adjustments = window.__vac.admin.adjustments || [];
+    const employees   = (window.__vac.admin.employees || []).filter(e => e.active);
+
+    if(employees.length === 0){
+      tbody.innerHTML = '';
+      if(empty) empty.style.display = 'block';
+      tbody.parentElement.style.display = 'none';
+      return;
+    }
+    if(empty) empty.style.display = 'none';
+    tbody.parentElement.style.display = '';
+
+    const balanceByEmp = new Map();
+    for(const b of balances) balanceByEmp.set(b.employee_id, b);
+
+    const adjByEmp = new Map();
+    for(const a of adjustments){
+      if(!adjByEmp.has(a.employee_id)) adjByEmp.set(a.employee_id, []);
+      adjByEmp.get(a.employee_id).push(a);
+    }
+
+    tbody.innerHTML = '';
+    for(const e of employees){
+      const balance = balanceByEmp.get(e.id) || { annual_days: e.annual_days, extra_days: e.extra_days || 0, days_approved: 0, days_pending: 0, days_tentative: 0 };
+      const adjs = adjByEmp.get(e.id) || [];
+      const r = computeRealAvailable(balance, adjs);
+
+      const tr = document.createElement('tr');
+      if(r.disponible < 0) tr.classList.add('vac-team-row--negative');
+
+      const tdName = document.createElement('td');
+      tdName.textContent = e.full_name;
+      tr.appendChild(tdName);
+
+      const tdTotal = document.createElement('td');
+      tdTotal.textContent = String(r.totalAnual);
+      tr.appendChild(tdTotal);
+
+      const tdAprob = document.createElement('td');
+      tdAprob.textContent = String(r.aprobados);
+      tr.appendChild(tdAprob);
+
+      const tdPend = document.createElement('td');
+      tdPend.textContent = String(r.pendientes);
+      tr.appendChild(tdPend);
+
+      const tdAdj = document.createElement('td');
+      tdAdj.classList.add('vac-team-ajustes');
+      if(r.ajustes > 0){
+        tdAdj.classList.add('is-positive');
+        tdAdj.textContent = `+${r.ajustes}`;
+      } else if(r.ajustes < 0){
+        tdAdj.classList.add('is-negative');
+        tdAdj.textContent = String(r.ajustes);
+      } else {
+        tdAdj.textContent = '—';
+      }
+      if(adjs.length > 0){
+        tdAdj.classList.add('vac-team-ajustes-link');
+        tdAdj.tabIndex = 0;
+        tdAdj.setAttribute('role', 'button');
+        tdAdj.title = 'Ver histórico';
+        tdAdj.onclick = () => openAdjustmentHistoryModal(e, adjs);
+        tdAdj.onkeydown = (ev) => { if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openAdjustmentHistoryModal(e, adjs); } };
+      }
+      tr.appendChild(tdAdj);
+
+      const tdDisp = document.createElement('td');
+      tdDisp.classList.add('vac-team-disponible');
+      tdDisp.textContent = String(r.disponible);
+      tr.appendChild(tdDisp);
+
+      const tdAct = document.createElement('td');
+      tdAct.style.textAlign = 'right';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vac-mini-btn';
+      btn.textContent = 'Ajuste manual';
+      btn.onclick = () => openAdjustmentModal(e, balance, adjs);
+      tdAct.appendChild(btn);
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Modal: Ajuste manual ──
+  function openAdjustmentModal(employee, balance, currentAdjs){
+    const periodYear = getCurrentPeriodYear();
+
+    // Body DOM
+    const body = document.createElement('div');
+
+    const head = document.createElement('div');
+    head.className = 'vac-form-row';
+    head.innerHTML = `<div class="vac-form-label">Empleado</div><div class="vac-side-strong"></div>`;
+    head.querySelector('.vac-side-strong').textContent = employee.full_name;
+    body.appendChild(head);
+
+    // Card balance actual
+    const baseR = computeRealAvailable(balance, currentAdjs);
+    const cardActual = document.createElement('div');
+    cardActual.className = 'vac-form-row';
+    cardActual.innerHTML = `
+      <div class="vac-form-label">Balance actual</div>
+      <div class="vac-side-hint">
+        Total ${baseR.totalAnual} · Aprobados ${baseR.aprobados} · Pendientes ${baseR.pendientes}
+        · Ajustes ${baseR.ajustes >= 0 ? '+' : ''}${baseR.ajustes}
+        · <strong>Disponible ${baseR.disponible}</strong>
+      </div>`;
+    body.appendChild(cardActual);
+
+    // Selector de período (actual + 2 anteriores + 1 siguiente)
+    const periodWrap = document.createElement('div');
+    periodWrap.className = 'vac-form-row';
+    periodWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-period">Período</label>
+      <select id="vac-adj-period" class="vac-form-select"></select>`;
+    body.appendChild(periodWrap);
+    const periodSel = periodWrap.querySelector('#vac-adj-period');
+    for(const y of [periodYear-2, periodYear-1, periodYear, periodYear+1]){
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = `${y}-10-01 → ${y+1}-09-30`;
+      if(y === periodYear) opt.selected = true;
+      periodSel.appendChild(opt);
+    }
+
+    // Delta input
+    const deltaWrap = document.createElement('div');
+    deltaWrap.className = 'vac-form-row';
+    deltaWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-delta">Delta (días) <span class="vac-side-hint">— positivo suma al saldo, negativo lo descuenta. Rango: -100 a +100, no cero.</span></label>
+      <input id="vac-adj-delta" class="vac-form-input" type="number" min="-100" max="100" step="1" inputmode="numeric">`;
+    body.appendChild(deltaWrap);
+
+    // Reason textarea (label EXPLÍCITO de visibilidad)
+    const reasonWrap = document.createElement('div');
+    reasonWrap.className = 'vac-form-row';
+    reasonWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-reason">Motivo (visible para el empleado afectado)</label>
+      <textarea id="vac-adj-reason" class="vac-form-input" rows="3" required minlength="3" placeholder="Ej: Días tomados antes del 1-oct-25 a cuenta del nuevo período."></textarea>`;
+    body.appendChild(reasonWrap);
+
+    // Card balance proyectado
+    const cardProj = document.createElement('div');
+    cardProj.className = 'vac-form-row';
+    cardProj.innerHTML = `
+      <div class="vac-form-label">Balance proyectado</div>
+      <div class="vac-side-hint" id="vac-adj-projected">Ingresá un delta para ver el proyectado.</div>`;
+    body.appendChild(cardProj);
+
+    // Footer
+    const footer = document.createElement('div');
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.className = 'vac-btn-ghost';
+    btnCancel.textContent = 'Cancelar';
+    btnCancel.onclick = closeModal;
+    const btnConfirm = document.createElement('button');
+    btnConfirm.type = 'button';
+    btnConfirm.className = 'vac-btn-primary';
+    btnConfirm.textContent = 'Confirmar ajuste';
+    btnConfirm.disabled = true;
+    footer.append(btnCancel, btnConfirm);
+
+    // Live update del proyectado
+    const inpDelta  = deltaWrap.querySelector('#vac-adj-delta');
+    const inpReason = reasonWrap.querySelector('#vac-adj-reason');
+    const proj      = cardProj.querySelector('#vac-adj-projected');
+
+    const recompute = () => {
+      const d = parseInt(inpDelta.value, 10);
+      const reasonOk = (inpReason.value || '').trim().length >= 3;
+      const deltaOk = Number.isFinite(d) && d !== 0 && d >= -100 && d <= 100;
+      btnConfirm.disabled = !(deltaOk && reasonOk);
+      btnConfirm.style.background = deltaOk && d < 0 ? 'var(--red)' : '';
+      if(deltaOk){
+        const projected = computeRealAvailable(balance, [...currentAdjs, { delta_days: d }]);
+        proj.innerHTML = `Disponible proyectado: <strong>${projected.disponible}</strong> (delta ${d >= 0 ? '+' : ''}${d})`;
+      } else if (inpDelta.value === ''){
+        proj.textContent = 'Ingresá un delta para ver el proyectado.';
+      } else {
+        proj.textContent = 'Delta inválido (no puede ser 0 ni superar ±100).';
+      }
+    };
+    inpDelta.addEventListener('input', recompute);
+    inpReason.addEventListener('input', recompute);
+
+    btnConfirm.onclick = async () => {
+      const d = parseInt(inpDelta.value, 10);
+      const reason = (inpReason.value || '').trim();
+      const py = parseInt(periodSel.value, 10);
+      if(!Number.isFinite(d) || d === 0 || d < -100 || d > 100) return;
+      if(reason.length < 3) return;
+
+      btnConfirm.disabled = true;
+      btnConfirm.textContent = 'Guardando...';
+
+      const { error } = await supa.from('vac_balance_adjustments').insert({
+        employee_id: employee.id,
+        period_year: py,
+        delta_days: d,
+        reason: reason
+        // created_by: lo setea el default DB con vac_internal.vac_my_employee_id()
+      });
+
+      if(error){
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = 'Confirmar ajuste';
+        alert('Error al guardar: ' + (error.message || JSON.stringify(error)));
+        return;
+      }
+
+      closeModal();
+      await loadAdminData();
+      renderTeamSummary();
+      // Si el admin se ajustó a sí mismo, refrescar Mi calendario
+      if(window.__vacAuth?.employee?.id === employee.id){
+        await loadMyData();
+        renderStatsStrip();
+      }
+    };
+
+    openModal({
+      title: 'Ajuste manual',
+      sub: `Saldo del empleado en el período seleccionado.`,
+      body,
+      footer
+    });
+  }
+
+  // ── Modal: histórico de ajustes para un empleado ──
+  function openAdjustmentHistoryModal(employee, adjs){
+    const body = document.createElement('div');
+    const head = document.createElement('div');
+    head.className = 'vac-side-hint';
+    head.textContent = `${adjs.length} ajuste${adjs.length === 1 ? '' : 's'} en el período actual`;
+    body.appendChild(head);
+
+    const list = document.createElement('div');
+    list.style.marginTop = '12px';
+
+    for(const a of adjs){
+      const item = document.createElement('div');
+      item.className = 'vac-item';
+      item.style.borderLeftColor = a.delta_days >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const dates = document.createElement('div');
+      dates.className = 'vac-item-dates';
+      const d = new Date(a.created_at);
+      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
+      item.appendChild(dates);
+
+      const meta = document.createElement('div');
+      meta.className = 'vac-item-meta';
+      const adminName = a.vac_employees?.full_name || (a.created_by ? '(empleado eliminado)' : '—');
+      meta.textContent = `Por ${adminName}`;
+      item.appendChild(meta);
+
+      const note = document.createElement('div');
+      note.className = 'vac-item-note';
+      note.textContent = a.reason;
+      item.appendChild(note);
+
+      list.appendChild(item);
+    }
+
+    body.appendChild(list);
+
+    const footer = document.createElement('div');
+    const btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.className = 'vac-btn-primary';
+    btnClose.textContent = 'Cerrar';
+    btnClose.onclick = closeModal;
+    footer.appendChild(btnClose);
+
+    openModal({
+      title: `Ajustes de ${employee.full_name}`,
+      sub: 'Histórico inmutable. Para corregir un ajuste, cargá uno opuesto.',
+      body,
+      footer
+    });
   }
 
   // ── Render: tabla de pendientes ──
@@ -11678,6 +12131,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast('Solicitud aprobada');
     await loadAdminData();
     renderPendientes();
+    renderTeamSummary();
     updatePendingBadge();
     // Las stats personales del solicitante quedan obsoletas; si vuelve a "Mi calendario"
     // se refrescará al entrar (initialized=true pero hooks re-pegan render). Para que
@@ -11734,6 +12188,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast('Solicitud rechazada');
     await loadAdminData();
     renderPendientes();
+    renderTeamSummary();
     updatePendingBadge();
     _miState.initialized = false;
     return true;
@@ -12010,6 +12465,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
     await loadAdminData();
     renderEmpleados();
+    renderTeamSummary();
     // Refrescar caches dependientes: banner de cumpleaños + team
     await loadGlobalEmployees();
     renderBirthdayLine();
@@ -12036,6 +12492,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast(`Empleado ${makeActive ? 'reactivado' : 'desactivado'}`);
     await loadAdminData();
     renderEmpleados();
+    renderTeamSummary();
   }
 
   // ── Modal: feriado (nuevo / editar) ──
@@ -12331,6 +12788,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       showToast(`Importadas ${lastRows.length} solicitudes`);
       await loadAdminData();
       renderPendientes();
+      renderTeamSummary();
       updatePendingBadge();
       closeModal();
     };
@@ -12363,6 +12821,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     renderPendientes();
     renderEmpleados();
+    renderTeamSummary();
     renderFeriados();
     // Si entré por click en "Revisar" del banner, hacer scroll a pendientes
     if(window.__vac.admin.scrollAfterEnter === 'pendientes'){
