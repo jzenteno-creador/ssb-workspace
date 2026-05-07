@@ -1164,6 +1164,17 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 }
 #panel-vacaciones .vac-stat--bday .vac-stat-value{color:var(--purple)}
 #panel-vacaciones .vac-stat--empty .vac-stat-value{color:var(--muted);font-size:var(--fs-sm);font-weight:600;line-height:1.4;font-family:var(--font);letter-spacing:0}
+#panel-vacaciones .vac-stat--adj .vac-stat-value{font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-stat--adj .vac-stat-value.is-positive{color:var(--green)}
+#panel-vacaciones .vac-stat--adj .vac-stat-value.is-negative{color:var(--red)}
+#panel-vacaciones .vac-stat-adj-link{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+#panel-vacaciones .vac-stat-adj-link:hover{color:var(--text)}
+#panel-vacaciones .vac-team-row--negative td{background:var(--red-bg)}
+#panel-vacaciones .vac-team-row--negative .vac-team-disponible{color:var(--red);font-weight:700}
+#panel-vacaciones .vac-team-ajustes{font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-team-ajustes.is-positive{color:var(--green);font-weight:600}
+#panel-vacaciones .vac-team-ajustes.is-negative{color:var(--red);font-weight:600}
+#panel-vacaciones .vac-team-ajustes-link{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 /* ── Mi calendario: layout calendario + side ── */
 #panel-vacaciones .vac-cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
@@ -2855,6 +2866,11 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
           <div class="vac-stat-value" id="vac-stat-bday-value">—</div>
           <div class="vac-stat-sub" id="vac-stat-bday-sub">—</div>
         </div>
+        <div class="vac-stat vac-stat--adj" id="vac-stat-adj-card" style="display:none">
+          <div class="vac-stat-label">Ajustes manuales</div>
+          <div class="vac-stat-value" id="vac-stat-adj-value">—</div>
+          <div class="vac-stat-sub vac-stat-adj-link" id="vac-stat-adj-sub" tabindex="0" role="button">Ver detalle</div>
+        </div>
       </div>
 
       <!-- Calendar + side panel -->
@@ -3050,6 +3066,35 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
             </table>
           </div>
           <div class="vac-admin-empty" id="vac-pend-empty" style="display:none">No hay solicitudes pendientes.</div>
+        </div>
+      </div>
+
+      <!-- ─── Resumen del equipo ─── -->
+      <div class="vac-admin-block" id="vac-admin-team-summary-block">
+        <div class="vac-admin-head">
+          <div class="vac-admin-title">
+            <svg class="ic ic-md" aria-hidden="true"><use href="#i-package"/></svg>
+            Resumen del equipo
+          </div>
+        </div>
+        <div class="vac-admin-body">
+          <div class="vac-admin-table-wrap">
+            <table class="vac-admin-table" id="vac-team-table">
+              <thead>
+                <tr>
+                  <th>Empleado</th>
+                  <th>Total anual</th>
+                  <th>Aprobados</th>
+                  <th>Pendientes</th>
+                  <th>Ajustes</th>
+                  <th>Disponible</th>
+                  <th style="text-align:right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="vac-team-tbody"></tbody>
+            </table>
+          </div>
+          <div class="vac-admin-empty" id="vac-team-empty" style="display:none">No hay empleados activos.</div>
         </div>
       </div>
 
