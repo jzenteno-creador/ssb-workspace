@@ -1,154 +1,113 @@
-# Handoff de sesión — 2026-05-05 · tarifa-schedule (rama feat/auth-and-rebrand)
+# Handoff de sesión — 2026-05-07 · tarifa-schedule (rama master)
 
 ## Resumen
 
-4 cambios en una sola branch (`feat/auth-and-rebrand`) — pendiente de mergear a master tras smoke-test:
+Sesión de planning para feature **Admin Vacaciones · Resumen del equipo + ajuste manual auditado**. **No hubo cambios de código** — solo spec + plan commiteados. Ejecución se difiere a una próxima sesión en modo **Subagent-Driven**.
 
-1. **Rebrand a SSB Workspace** (commit `89aa918`)
-2. **Reloj día+hora argentina en topbar** (commit `29e0216`)
-3. **Toolbar Subir/Sync aislada al panel Schedule (BID)** (commit `1c9f2c4`)
-4. **Auth global con mail+contraseña restringido a empleados activos** (commit `b8f84a6`)
-5. **Hardening post-auditoría** (commit `dd37fe3`)
+## Estado al cierre
 
-## ⚠️ Pasos manuales OBLIGATORIOS antes de smoke-test
+- Working tree limpio sobre `master`.
+- 5 commits nuevos en esta sesión (todos solo de docs):
+  - `690b905` — spec inicial
+  - `753d8b0` — self-review fixes (Aprobados, no Tomados)
+  - `205afe3` — user review fixes (JSDoc, FK, modal label)
+  - `d2d0602` — postgres-best-practices fixes (anti-spoofing, revoke, índice)
+  - `edaf70c` — plan de implementación (10 fases, 30+ tasks)
 
-Estos pasos NO se pueden hacer desde código — el deploy va a fallar o el reset de password no va a llegar al usuario si no se hacen primero.
+## Artefactos generados
 
-### 1. Netlify — renombrar el sitio
-1. Netlify Dashboard → Site settings → Site information → **Change site name**
-2. Nuevo nombre: `ssb-workspace`
-3. El subdominio nuevo queda `https://ssb-workspace.netlify.app`. El viejo (`tarifa-schedule.netlify.app`) deja de funcionar inmediatamente — avisá al equipo si tienen el bookmark viejo.
+- **Spec aprobada y validada técnicamente:** `docs/superpowers/specs/2026-05-07-vacaciones-admin-team-summary-design.md`
+- **Plan de implementación:** `docs/superpowers/plans/2026-05-07-vacaciones-admin-team-summary.md`
 
-### 2. Supabase — Auth providers (proyecto `xkppkzfxgtfsmfooozsm`)
-1. Authentication → Providers → Email
-   - `Enable Email provider` = **ON**
-   - `Confirm email` = **ON** (decisión de seguridad: confirma 1 sola vez al signup)
-   - `Secure email change` = ON
-   - `Secure password change` = ON
-   - `Minimum password length` = **8**
+Ambos commiteados a `master`. **No** hay branch `feat/vacaciones-admin-adjustments` todavía — la creará Task 1.1 del plan.
 
-### 3. Supabase — URL Configuration
-1. Authentication → URL Configuration
-2. **Site URL**: `https://ssb-workspace.netlify.app`
-3. **Redirect URLs** (Add URL para cada uno):
-   - `https://ssb-workspace.netlify.app/*`
-   - `http://localhost:5500/*` (Live Server VS Code)
-   - `http://127.0.0.1:5500/*`
+## Decisiones cerradas (Brainstorming Q1-Q6)
 
-### 4. Supabase — Email Templates (opcional)
-1. Authentication → Email Templates
-2. Cambiar subject del **Confirm signup** a "Confirmá tu cuenta en SSB Workspace"
-3. Cambiar subject del **Reset password** a "Restablecé tu contraseña en SSB Workspace"
+| Q | Decisión |
+|---|----------|
+| Q1 | Empleado ve sus ajustes con motivo en Mi calendario; admin ve todos. Label modal: **"Motivo (visible para el empleado afectado)"**. |
+| Q2 | `period_year int NOT NULL`, default `getCurrentPeriodYear()` en modal, selector visible para retroactivos. |
+| Q3 | Inmutable. Sin policies UPDATE/DELETE + `revoke update,delete from authenticated, anon` (defensa en 2 capas). Corrección = ajuste opuesto. |
+| Q4 | `delta_days int NOT NULL CHECK (delta_days <> 0 AND BETWEEN -100 AND 100)` + preview "Balance proyectado" en modal. |
+| Q5 | NO afecta el badge de pendientes (vive en tabla paralela `vac_balance_adjustments`). |
+| Q6 | RLS solo en tabla nueva; `vac_employees`/`vac_requests` sin tocar. Camino B: NO modificar `vac_balance_view`, JS hace merge via `computeRealAvailable(balanceRow, adjustments)` (única función pura, 3 consumidores). |
 
-### 5. Cargar/activar empleados en `vac_employees`
-Los 8 mails autorizados que pasó John:
-```sql
-select email, full_name, role, active from vac_employees
-where email in (
-  'jsrojas@ssbint.com','jzenteno@ssbint.com','aizaguirre@ssbint.com',
-  'bahumada@ssbint.com','nalicio@ssbint.com','dbonfiglio@dow.com',
-  'cbobadilla@dow.com','operez@ssbint.com'
-) order by email;
-```
-Insertar/activar lo que falte. Sin esto NADIE puede registrarse.
+## Hardenings adicionales (post-revisión postgres-best-practices)
 
-## Cambios técnicos en detalle (esta sesión)
+- **Anti-spoofing INSERT:** policy exige `created_by = vac_my_employee_id()` además de `vac_is_admin()`. Default DB autocompleta — frontend no pasa el campo.
+- **Defensa en profundidad de inmutabilidad:** `revoke update, delete on public.vac_balance_adjustments from authenticated, anon` — 2 capas (RLS + grants).
+- **Índice compuesto invertido a `(period_year, employee_id)`** — cubre query admin (filtro por period_year solo) y query empleado (period_year + employee_id). Antes el admin habría hecho seq scan.
+- **Prefijo `public.`** en todo el DDL para consistencia con `vac_audit_fixes.sql`.
 
-### Rebrand
-- `<title>`, header del topbar, h1 + footers de PDFs, meta description, link en `docs/VACACIONES_PLAN.md`.
-- NO se tocaron las tabs "Tarifas BID" ni "Admin BID".
+## Modo de ejecución elegido
 
-### Reloj AR
-- Widget `#clock-widget` en topbar (entre bell y resto). Formato "Mar 5 may · 15:42".
-- `Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })` con `formatToParts`.
-- Update cada 60s. Listener `online`/`offline`: dot rojo + última hora congelada cuando offline.
-- `prefers-reduced-motion` respetado.
+**Subagent-Driven** — un subagent fresco por task, review entre tasks. Esto se gatea por la skill `superpowers:subagent-driven-development` al arrancar la próxima sesión.
 
-### Toolbar Schedule reubicada
-- Subir Schedule + sync-pill + indicador + Sincronizar pasaron a `.sched-tools-bar` dentro de `#panel-schedule`.
-- IDs preservados (file-input, btn-sync, dot, sync-lbl, sched-indicator, sched-ind-name, sched-ind-age) — toda la lógica JS sigue funcionando.
-- Decisión scope (Opción A modificada): visible SOLO en la tab Schedule (BID). Si querés sincronizar Tarifas BID o EFA, vas a Schedule, sincronizás y volvés.
-- Empty state ya no dice "barra superior", dice "de arriba".
+## Próximos pasos al retomar (en orden)
 
-### Auth global
-**Cliente Supabase global** (`window.__ssb.supa`):
-- `storageKey: 'sb-ssb-workspace-auth'`, `persistSession`, `autoRefreshToken`, `flowType: 'pkce'`.
-- Vacaciones reusa esta misma instancia (no más cliente con `sb-vacaciones-auth`). Tarifas Terrestres mantiene su cliente anon (fuera de scope).
+1. Leer este handoff + spec + plan.
+2. Arrancar `superpowers:subagent-driven-development` con el plan como input.
+3. Ejecutar Phase 1 (branch + 3 archivos en `migrations/2026-05-07-vacaciones-admin-adjustments/`). No requiere Supabase MCP.
+4. **Phase 2 = checkpoint obligatorio.** Ver §"Recordatorios" más abajo.
+5. Continuar Phase 3 → Phase 10 según plan.
 
-**Gate de auth (`#auth-gate`)** con 5 estados:
-- **login**: email+password. Mensajes neutros para evitar enumeración. Detecta email no confirmado.
-- **signup**: pre-check contra `vac_employees` (existe + active). Si Supabase devuelve `data.user.identities=[]` (mail ya existía) muestra error.
-- **reset**: `resetPasswordForEmail` con redirect `?reset=1`. Mensaje uniforme "Si el mail existe…".
-- **newpw**: detecta `?reset=1` en boot, fuerza el form aunque haya sesión. `updateUser({password})`.
-- **confirm-pending**: post-signup muestra "Revisá tu mail".
+## Recordatorios para la próxima sesión
 
-**Anti-bypass UI**:
-- `body:not(.is-authed) .topbar, .tab-bar, .tab-panel, .sched-tools-bar { display:none !important }`
-- `body.is-authed` solo se setea después de validar `vac_employees` en server.
+### 1. Phase 2 requiere autorizar Supabase MCP — Task 2.1 tiene el flow
 
-**Logout** (`window.ssbLogout`):
-- `signOut()` + `window.location.reload()` para limpiar TODOS los caches in-memory.
-- Botón "Salir" rojo en topbar (icono `i-logout` agregado al sprite).
+El plan tiene los pasos exactos:
+- Llamar `mcp__plugin_postgres-best-practices_supabase__authenticate` (o el server activo en esa sesión — cambia entre sesiones).
+- Pedir al usuario que pegue el callback URL del browser.
+- Llamar `mcp__plugin_postgres-best-practices_supabase__complete_authentication`.
+- Verificar con `list_tables` que `vac_balance_adjustments` NO existe todavía.
 
-**Refactor Vacaciones**:
-- Eliminado HTML `<div class="vac-splash">` y todo su CSS.
-- Eliminado cliente Supabase secundario.
-- Eliminadas funciones: `setStatus`, `showSplash`, `hideSplash`, `sendMagicLink`.
-- `applySession` simplificado — solo carga el employee enriquecido.
-- `vacInit` ya no maneja `getSession`/`onAuthStateChange`. El global llama a `window.vacApplySsbSession(session)`.
+**No avanzar a Task 2.3 (apply migration) sin completar el flow + capturar `get_advisors` baseline en Task 2.2.**
 
-### Hardening post-auditoría
-- `netlify.toml`: headers `X-Frame-Options: DENY`, `CSP: frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`.
-- `console.warn` de Vacaciones: ya no loguea el objeto `res` completo (solo un tag neutro).
+### 2. SMTP Gmail (ssbintn8n@ssbint.com) configurado pero NO testeado en producción
 
-## Reporte de auditoría
+- La cuenta `ssbintn8n@ssbint.com` está activa en n8n y el workflow de handoff funciona.
+- Sin embargo, NO se testeó el flujo de mails de **Supabase Auth** (signup confirmation, reset password) end-to-end en prod desde el rebrand a `ssb-workspace.netlify.app`.
+- **Deuda separada — no bloquea esta feature.** Si durante el smoke-test de Phase 7 algún test falla por ausencia de mail (improbable, pero posible), levantar el ticket aparte.
 
-### 🔴 Crítico — 0 hallazgos
+### 3. Task 6.2 (renderStatsStrip) — leer el código actual antes de reemplazar
 
-### 🟡 Medio — 2 hallazgos (corregidos)
-- ✅ Clickjacking → headers en `netlify.toml`.
-- ✅ Log con leak potencial → sanitizado.
+El plan reemplaza el cuerpo entero de `renderStatsStrip()` para integrar la card de ajustes y el cómputo via `computeRealAvailable`. **Antes de aplicar el reemplazo:**
+- Leer la implementación actual completa.
+- Comparar con la versión propuesta del plan.
+- Si la actual tiene lógica adicional sobre la card de cumpleaños o algún side-effect que no está en la versión del plan, preservarlo. El plan asume el estado documentado en EXPLORE pero el código vivo manda.
 
-### 🟢 Bajo — 5 hallazgos documentados como deuda
-1. **Email enumeration en signup**: respuesta específica "tu mail no está habilitado" filtra existencia en `vac_employees`. Riesgo bajo (8 mails, todos conocidos por el equipo) — preservado por UX explícita.
-2. **Email enumeration en login**: mensaje "tu cuenta no está confirmada" filtra si el mail existe. Igual razón.
-3. **Tarifas BID/EFA/TT/Schedule (BID) accesibles sin auth**: si un atacante elimina `body.is-authed` y el gate por DOM, los datos de Apps Script público y RLS anon (Tarifas Terrestres) quedan visibles. Pre-existente, decisión arquitectónica. Vacaciones y Schedule Realtime sí están blindados por RLS.
-4. **No hay rate limiting en signup/login**: Supabase tiene rate limit por IP por default (limited). Sin defensa en cliente.
-5. **No hay CSP completa**: solo `frame-ancestors`. La app carga supabase + fonts.googleapis. Una CSP completa requiere whitelist de dominios.
+### 4. Rename `tarifa-schedule` → `ssb-workspace` sigue diferido
 
-## Verificación manual (smoke-test antes de mergear)
+Sigue como deuda para una sesión dedicada aparte. Pasos planificados (referencia):
 
-Ejecutá los pasos manuales arriba (Netlify rename, Supabase URL config, vac_employees) y después:
+1. Borrar branches locales mergeadas: `feat/auth-and-rebrand`, `feat/vacaciones`, `feature/tarifas-terrestres-dow`, `feat/vacaciones-admin-adjustments` (cuando se complete).
+2. Actualizar referencias a "tarifa-schedule" en repo (CLAUDE.md, GUIA-OPERARIO.md, docs/VACACIONES_PLAN.md, etc.).
+3. Actualizar `~/.claude/CLAUDE.md` global.
+4. Rename del repo en GitHub.
+5. `git remote set-url origin <url-nuevo>`.
+6. `mv ~/projects/tarifa-schedule ~/projects/ssb-workspace`.
+7. Reapuntar el path de memory de Claude.
 
-- [ ] F5 sin sesión → ves el gate (no la app).
-- [ ] Signup con mail random (no en vac_employees) → "Tu mail no está habilitado…".
-- [ ] Signup con mail real de vac_employees → "Revisá tu mail" + llega mail de confirmación.
-- [ ] Click en link de confirm → entra a la app (sesión activa).
-- [ ] Login con mail confirmado + contraseña → entra.
-- [ ] Login con password incorrecta → "Email o contraseña incorrectos" (no leak).
-- [ ] "Olvidé mi contraseña" → mail llega → click → form newpw funciona → entra.
-- [ ] F5 después de login → seguís logueado (no aparece gate).
-- [ ] Logout → recarga + gate aparece.
-- [ ] Vacaciones funciona idéntico (Mi calendario, Equipo, Cargar, Admin).
-- [ ] Tab Schedule → toolbar Subir/Sync visible. Otras tabs → no.
-- [ ] Reloj actualiza cada minuto, hora AR correcta independiente del SO.
-- [ ] Modo offline → dot rojo en reloj + última hora congelada.
-- [ ] DevTools: borrar `body.is-authed` y `#auth-gate` → app aparece pero RLS de vac_* devuelven vacío.
+NO ejecutar como subtask de la feature de Vacaciones.
 
-## Próximos pasos (cuando se retome)
+## Branches locales pendientes de limpieza (deuda menor)
 
-1. Mergear `feat/auth-and-rebrand` → `master` después del smoke-test.
-2. Anunciar al equipo el nuevo subdominio + flujo de signup (los 8 emails).
-3. (Opcional) Si se decide blindar privacidad de vac_requests / vac_employees: migration de RLS más estricta.
-4. (Opcional) Bookmark redirect del subdominio viejo al nuevo (no es viable en Netlify gratis — requiere Pro).
-5. (Opcional) CSP completa: whitelist de https://*.supabase.co + https://fonts.googleapis.com + https://fonts.gstatic.com + https://script.google.com + cdn.jsdelivr.net.
-6. (Opcional) Unificar el 3er cliente Supabase de Tarifas Terrestres con el global. Hoy aceptamos warning "Multiple GoTrueClient" como deuda BAJA.
+- `feat/auth-and-rebrand` — mergeada hace dos sesiones.
+- `feat/vacaciones` — mergeada.
+- `feature/tarifas-terrestres-dow` — mergeada.
 
-## Contexto no obvio
+Borrar con `git branch -d <name>` cuando haya bandwidth.
 
-- **Storage key cambió** (`sb-vacaciones-auth` → `sb-ssb-workspace-auth`) — todos los users con sesión vieja necesitan re-loguearse. Como ahora hay login global obligatorio, no es regresión.
-- **Email confirmations ON** → Supabase manda mail al signup. El user no puede ingresar hasta confirmar. Una sola vez en la vida del usuario.
-- **`?reset=1`** se agrega manualmente en `redirectTo` del resetPasswordForEmail — el access_token va en el hash (no en query) y `detectSessionInUrl` lo procesa. El `PASSWORD_RECOVERY` event dispara el flow de newpw.
-- **`vacApplySsbSession`** es el hook que el global llama después de validar contra `vac_employees`. Si por algún motivo el script global no cargó (bug en CDN), Vacaciones tiene fallback a un cliente local (con warning en consola).
-- **Boot splash** se oculta automáticamente si no hay sesión, para que el user vaya directo al gate.
-- **n8n webhook de handoff** (`https://jzenteno.app.n8n.cloud/webhook/claude-handoff`): se dispara con curl/python POST al cerrar sesión.
+## Contexto no obvio para el agente que retome
+
+- El cliente Supabase global vive en `window.__ssb.supa` con `storageKey: 'sb-ssb-workspace-auth'`. El módulo Vacaciones lo reusa.
+- `window.__vacAuth` queda seteado tras validación contra `vac_employees`. Tiene `{user, employee, employeeId, isAdmin}`.
+- Helpers DB ya existentes (NO crear nuevos): `vac_internal.vac_is_admin()` y `vac_internal.vac_my_employee_id()` (`security definer stable, set search_path=''`).
+- La columna `effective_annual_days` la devuelve `vac_balance_view` post-migration `vac_birthday_extra` (aplicada vía MCP, sin archivo SQL en repo — deuda anotada en CLAUDE.md). Si en algún ambiente la view no la tiene, `computeRealAvailable` cae al fallback `annual_days + extra_days` por el `??`.
+- El modal genérico de Vacaciones (`openModal({title, sub, body, footer, wide, onClose})`) acepta Node/string/HTML como body. Multi-input es trivial — el caller arma el DOM. NO se extiende API.
+- El modal de Tarifas Terrestres (`_showModal` en línea 8054) es OTRO sistema (IDs `tt-modal-*`). NO confundir.
+- `esc()` solo escapa `&<>` (no `'` ni `"`). Toda interpolación con datos de DB en atributos debe ir por DOM properties (`el.textContent`, `el.title`, `el.dataset`, `btn.onclick = () => fn(val)`). Nunca `onclick="fn('${esc(val)}')"`.
+
+## Webhook de cierre
+
+Disparado al final de esta sesión.
