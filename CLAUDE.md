@@ -216,9 +216,14 @@ Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 - `escHtml` local del IIFE solo escapa `&`, `<`, `>` (no `"` ni `'`). Toda interpolación en atributos usa DOM properties (`el.title=`, `el.dataset=`).
 - No hay ResizeObserver en mini-timeline: las posiciones quedan en píxeles del momento del render. Re-render al re-entrar a la sub-tab.
 - Mes índice 9 = Octubre (zero-based). `getCurrentPeriodYear` corta en `month >= 9`.
+- **Ajustes manuales (`vac_balance_adjustments`)** son INMUTABLES por diseño. Para corregir un error, cargar otro ajuste con delta opuesto. La tabla NO tiene policies UPDATE/DELETE y los grants están revocados de `authenticated`/`anon` — defensa en 2 capas. Service role (Supabase MCP) sí puede borrar para limpieza de testing data.
+- **Convención de signos de `delta_days`:** positivo SUMA al saldo disponible, negativo lo descuenta. Ejemplo: empleado tomó 9 días antes del 1-oct adelantados a cuenta del nuevo período → admin carga `delta_days = -9`. Originalmente la fórmula era inversa pero se invirtió 2026-05-07 después de detectar la ambigüedad en testing real con Belén.
+- **`computeRealAvailable(balance, adjustments)`** es la única función pura que computa "disponible real". Usada por 3 consumidores: Mi calendario (stats strip), Resumen del equipo (admin), modal de ajuste (preview). NO se modifica `vac_balance_view` — el merge con ajustes es client-side.
+- **Bug pre-existente conocido (NO relacionado con ajustes):** el cómputo de "días corridos" en solicitudes de vacaciones NO descuenta feriados de `vac_holidays`. Reportado por Belén en testing 2026-05-07. Feature aparte, definir política con supervisor antes de fixear (ver memoria `project_bug_dias_corridos_feriados.md`).
 
 ### Migrations (ya aplicadas)
 - `vac_schema`, `vac_seed`, `vac_rls`, `vac_audit_fixes` (cierre auditoría: `security_invoker`, search_path, etc.), `vac_birthday_extra` (birthday + extra_days + view recreada).
+- `vac_balance_adjustments` (2026-05-07): tabla nueva inmutable + RLS asimétrica (empleado ve los suyos, admin ve todos) + revoke update/delete + default `created_by = vac_internal.vac_my_employee_id()`. Anti-spoofing: INSERT WITH CHECK exige `created_by = vac_my_employee_id()` además de `vac_is_admin()`. Ver `migrations/2026-05-07-vacaciones-admin-adjustments/`.
 
 ## Auth global (2026-05-05)
 
@@ -267,3 +272,4 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - Detección dinámica de columnas: nunca por posición fija
 - **Módulo Vacaciones — completo (5 fases + extensiones)**
 - **Auth global obligatoria** — toda la app vive detrás del gate, gating por `vac_employees`
+- **Vacaciones — ajuste manual auditado (2026-05-07)** — admin carga ajustes inmutables (`vac_balance_adjustments`) sobre el saldo disponible de cualquier empleado, sin tocar `annual_days` ni `extra_days`. Empleado afectado ve los suyos con motivo en Mi calendario; admin ve todos. Cómputo del "disponible real" en frontend vía `computeRealAvailable(balanceRow, adjustments)` (única función pura, 3 consumidores). NO se modifica `vac_balance_view`. RLS hardened: INSERT exige `created_by = vac_my_employee_id()` (anti-spoofing). UPDATE/DELETE bloqueados por ausencia de policy + revoke de grants (Q3 inmutabilidad). **Convención: delta positivo SUMA al saldo, negativo lo descuenta.**

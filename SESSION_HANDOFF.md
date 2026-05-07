@@ -1,113 +1,170 @@
-# Handoff de sesión — 2026-05-07 · tarifa-schedule (rama master)
+# Handoff de sesión — 2026-05-07 · tarifa-schedule (master) · CIERRE COMPLETO
 
 ## Resumen
 
-Sesión de planning para feature **Admin Vacaciones · Resumen del equipo + ajuste manual auditado**. **No hubo cambios de código** — solo spec + plan commiteados. Ejecución se difiere a una próxima sesión en modo **Subagent-Driven**.
+Feature **Admin Vacaciones · Resumen del equipo + ajuste manual auditado**
+implementada de punta a punta y validada en producción con un empleado real
+(Belén Ahumada). Sesión arrancó con spec + plan ya commiteados (Phase 1
+diferida) y terminó con el feature mergeado, deployado vía Netlify, y
+validado por la usuaria final.
 
 ## Estado al cierre
 
-- Working tree limpio sobre `master`.
-- 5 commits nuevos en esta sesión (todos solo de docs):
-  - `690b905` — spec inicial
-  - `753d8b0` — self-review fixes (Aprobados, no Tomados)
-  - `205afe3` — user review fixes (JSDoc, FK, modal label)
-  - `d2d0602` — postgres-best-practices fixes (anti-spoofing, revoke, índice)
-  - `edaf70c` — plan de implementación (10 fases, 30+ tasks)
+- **Branch master:** `b4a5388` — sincronizada con `origin/master`.
+- **Working tree:** limpio.
+- **Producción (`https://ssb-workspace.netlify.app`):** auto-deploy completo. Belén confirmó: ve `disponible = 0` con ajuste -9 visible en card "Ajustes manuales" + en modal "Mis ajustes manuales".
+- **DB (`xkppkzfxgtfsmfooozsm`):** tabla `vac_balance_adjustments` aplicada con 1 row legítima (Belén, -9, "ajuste vacacional", cargado por John Zenteno).
+- **Branches locales mergeadas pendientes de cleanup:** `feat/vacaciones-admin-adjustments` (esta sesión), más las viejas (`feat/auth-and-rebrand`, `feat/vacaciones`, `feature/tarifas-terrestres-dow`). Borrar con `git branch -d <name>` cuando haya bandwidth.
 
-## Artefactos generados
+## Commits de esta sesión (15 total: 14 feature + 1 merge)
 
-- **Spec aprobada y validada técnicamente:** `docs/superpowers/specs/2026-05-07-vacaciones-admin-team-summary-design.md`
-- **Plan de implementación:** `docs/superpowers/plans/2026-05-07-vacaciones-admin-team-summary.md`
+```
+b4a5388 Merge feat/vacaciones-admin-adjustments
+7c5fc88 feat(vacaciones): openMyAdjustmentsModal — empleado ve sus propios ajustes
+9cef64d fix(vacaciones): invertir signo de ajustes — delta positivo SUMA al saldo
+59efd21 feat(vacaciones): renderStatsStrip usa computeRealAvailable + card "Ajustes manuales"
+41a1858 feat(vacaciones): extender loadMyData/clearPhase3Data con adjustments del empleado
+15b2c11 feat(vacaciones): modales admin — openAdjustmentModal + openAdjustmentHistoryModal
+880bcf3 fix(vacaciones): keydown handler en tdAdj de renderTeamSummary (a11y)
+ab26799 feat(vacaciones): renderTeamSummary — admin Resumen del equipo
+024fe83 feat(vacaciones): extender loadAdminData/clearAdminData con balances + adjustments
+f8167ef feat(vacaciones): computeRealAvailable — función pura única (3 consumidores)
+a34cb78 feat(vacaciones): HTML+CSS skeleton — Resumen del equipo + card Ajustes manuales
+d9ce733 chore(migration): apply 2026-05-07-vacaciones-admin-adjustments to xkppkzfxgtfsmfooozsm
+1245af5 fix(migration): drop subquery wrapper in DEFAULT expression
+410296e docs(migration): mark applied.sql as one-shot (not idempotent)
+c89bcb1 chore(migration): vac_balance_adjustments DDL files (no apply yet)
+```
 
-Ambos commiteados a `master`. **No** hay branch `feat/vacaciones-admin-adjustments` todavía — la creará Task 1.1 del plan.
+## Cobertura de Phase 7 (smoke-tests del spec §9)
 
-## Decisiones cerradas (Brainstorming Q1-Q6)
+**12/14 reales validados.** 2 diferidos.
 
-| Q | Decisión |
-|---|----------|
-| Q1 | Empleado ve sus ajustes con motivo en Mi calendario; admin ve todos. Label modal: **"Motivo (visible para el empleado afectado)"**. |
-| Q2 | `period_year int NOT NULL`, default `getCurrentPeriodYear()` en modal, selector visible para retroactivos. |
-| Q3 | Inmutable. Sin policies UPDATE/DELETE + `revoke update,delete from authenticated, anon` (defensa en 2 capas). Corrección = ajuste opuesto. |
-| Q4 | `delta_days int NOT NULL CHECK (delta_days <> 0 AND BETWEEN -100 AND 100)` + preview "Balance proyectado" en modal. |
-| Q5 | NO afecta el badge de pendientes (vive en tabla paralela `vac_balance_adjustments`). |
-| Q6 | RLS solo en tabla nueva; `vac_employees`/`vac_requests` sin tocar. Camino B: NO modificar `vac_balance_view`, JS hace merge via `computeRealAvailable(balanceRow, adjustments)` (única función pura, 3 consumidores). |
+| Test | Estado | Quién |
+|---|---|---|
+| 1. Sin sesión → no app | ✅ | Implícito (gate auth) |
+| 2. Empleado normal → admin invisible | ✅ | Smoke admin |
+| 3. Admin → bloque visible | ✅ | Smoke admin |
+| 4. Click "Ajuste manual" + validaciones + save | ✅ | Smoke admin |
+| 5. Re-open + corrección con delta opuesto | ✅ | Smoke admin |
+| 6. Empleado X (Belén) ve sus ajustes con motivo | ✅ | **Validado en prod** |
+| 7. Empleado Y (sin ajustes) — card oculta | ✅ | Implícito (`display:none` por default) |
+| 8. SELECT directo empleado solo ve los suyos | ⏭️ DIFERIDO | Pendiente cuando Belén lo corra desde su DevTools (validaría RLS asimétrica de SELECT) |
+| 9. INSERT directo empleado falla 42501/RLS | ✅ | DevTools del usuario (201 cuando admin, RLS denied cuando empleado) |
+| 10. UPDATE directo falla 403 | ✅ | DevTools del usuario |
+| 10b. DELETE directo falla 403 | ✅ | DevTools del usuario |
+| 11-13. CHECK violations (delta=0, ±150, reason vacío) | ✅ | DevTools del usuario — todas 400 Bad Request |
+| 14. Soft delete empleado con ajustes | ⏭️ DIFERIDO | Deuda menor, no crítico |
 
-## Hardenings adicionales (post-revisión postgres-best-practices)
+## Phase 8 — auditoría
 
-- **Anti-spoofing INSERT:** policy exige `created_by = vac_my_employee_id()` además de `vac_is_admin()`. Default DB autocompleta — frontend no pasa el campo.
-- **Defensa en profundidad de inmutabilidad:** `revoke update, delete on public.vac_balance_adjustments from authenticated, anon` — 2 capas (RLS + grants).
-- **Índice compuesto invertido a `(period_year, employee_id)`** — cubre query admin (filtro por period_year solo) y query empleado (period_year + employee_id). Antes el admin habría hecho seq scan.
-- **Prefijo `public.`** en todo el DDL para consistencia con `vac_audit_fixes.sql`.
+**Saltada parcialmente.** Los reviews per-batch (spec compliance + code quality)
+de cada commit pasaron. Adicionalmente se corrieron pre-merge:
 
-## Modo de ejecución elegido
+- `vanilla-js-auditor` sobre el diff completo `master..HEAD`: 0 HIGH/CRITICAL.
+- `security-review` con foco en INSERT anti-spoofing + XSS: 0 findings adicionales.
 
-**Subagent-Driven** — un subagent fresco por task, review entre tasks. Esto se gatea por la skill `superpowers:subagent-driven-development` al arrancar la próxima sesión.
+**Findings MEDIUM/LOW diferidos** (no bloquearon el push, anotados en memoria
+`project_deuda_post_vacaciones_admin_2026-05-07.md`):
 
-## Próximos pasos al retomar (en orden)
+1. MEDIUM — `renderTeamSummary` sin guard `isAdmin` (defensivo, no exploitable hoy).
+2. LOW — `alert(error.message)` en modal de ajuste filtra mensajes Supabase crudos (admin-only screen).
+3. LOW — query `vac_balance_view` admin sin filtro defensivo de `period_year`.
+4. INFO — `openAdjustmentModal` ~130 líneas, candidato a refactor en helpers.
 
-1. Leer este handoff + spec + plan.
-2. Arrancar `superpowers:subagent-driven-development` con el plan como input.
-3. Ejecutar Phase 1 (branch + 3 archivos en `migrations/2026-05-07-vacaciones-admin-adjustments/`). No requiere Supabase MCP.
-4. **Phase 2 = checkpoint obligatorio.** Ver §"Recordatorios" más abajo.
-5. Continuar Phase 3 → Phase 10 según plan.
+## Bugs reportados durante la sesión
 
-## Recordatorios para la próxima sesión
+### 1. NUEVO — Cálculo de "días corridos" no descuenta feriados (pre-existente)
 
-### 1. Phase 2 requiere autorizar Supabase MCP — Task 2.1 tiene el flow
+**Reportado por:** Belén Ahumada durante testing 2026-05-07.
+**Repro:** Solicitud 22/05/2026 → 29/05/2026 cuenta 8 días, pero el 25/05/2026 (feriado nacional) está en `vac_holidays` y debería descontarse → 7 días esperados.
+**Scope:** Feature aparte. NO mezclar con sesión actual. Política a definir con supervisor (fines de semana, tipos de feriado a descontar).
+**Anotado en:** `project_bug_dias_corridos_feriados.md` (memoria).
 
-El plan tiene los pasos exactos:
-- Llamar `mcp__plugin_postgres-best-practices_supabase__authenticate` (o el server activo en esa sesión — cambia entre sesiones).
-- Pedir al usuario que pegue el callback URL del browser.
-- Llamar `mcp__plugin_postgres-best-practices_supabase__complete_authentication`.
-- Verificar con `list_tables` que `vac_balance_adjustments` NO existe todavía.
+### 2. RESUELTO en esta sesión — `default (select fn())` en DDL
 
-**No avanzar a Task 2.3 (apply migration) sin completar el flow + capturar `get_advisors` baseline en Task 2.2.**
+Postgres rechaza subqueries en `DEFAULT` expressions (error 0A000) aunque
+sean válidas en RLS policies. El patrón pasó **tres reviews** (spec,
+code-quality, postgres-best-practices) sin ser cazado — solo se detectó al
+aplicar el DDL contra Postgres real (Phase 2 Task 2.3). **Aprendizaje:**
+ningún reviewer estático caza esto, hace falta dry-run con `execute_sql`
+contra DB real antes de mergear migrations grandes. Anotado en memoria
+`feedback_postgres_default_subquery.md`.
 
-### 2. SMTP Gmail (ssbintn8n@ssbint.com) configurado pero NO testeado en producción
+### 3. RESUELTO en esta sesión — Convención de signo invertida
 
-- La cuenta `ssbintn8n@ssbint.com` está activa en n8n y el workflow de handoff funciona.
-- Sin embargo, NO se testeó el flujo de mails de **Supabase Auth** (signup confirmation, reset password) end-to-end en prod desde el rebrand a `ssb-workspace.netlify.app`.
-- **Deuda separada — no bloquea esta feature.** Si durante el smoke-test de Phase 7 algún test falla por ausencia de mail (improbable, pero posible), levantar el ticket aparte.
+El label del modal "positivo suma, negativo resta" se leía como "positivo
+suma al saldo", pero la fórmula `disponible = total - aprobados - pendientes
+- ajustes` hacía lo opuesto (positivo deducía del saldo). Detectado durante
+testing con Belén — admin cargó delta=+9 con intención de restarle 9 días,
+y la fórmula sí restó 9 (consistente con interpretación "delta = días
+consumidos") pero el label sugería lo contrario. Decisión: **invertir la
+fórmula** para que el label sea literalmente correcto. Nueva convención:
+positivo SUMA al saldo, negativo lo descuenta. Spec §4.4 y §5.3
+actualizadas. Migración de datos: 3 ajustes de testing previos a Belén
+borrados via DELETE directo (testing data, audit no aplica), recargado un
+único ajuste -9 con reason "ajuste vacacional".
 
-### 3. Task 6.2 (renderStatsStrip) — leer el código actual antes de reemplazar
+## Aprendizajes de la sesión (para retomar si vuelve a pasar)
 
-El plan reemplaza el cuerpo entero de `renderStatsStrip()` para integrar la card de ajustes y el cómputo via `computeRealAvailable`. **Antes de aplicar el reemplazo:**
-- Leer la implementación actual completa.
-- Comparar con la versión propuesta del plan.
-- Si la actual tiene lógica adicional sobre la card de cumpleaños o algún side-effect que no está en la versión del plan, preservarlo. El plan asume el estado documentado en EXPLORE pero el código vivo manda.
+1. **`default (select fn())`** falla en DDL aunque pase 3 reviews. Reviewers
+   estáticos no lo cazan. **Fix preventivo:** dry-run del DDL contra una
+   branch o staging antes de merge. Memoria
+   `feedback_postgres_default_subquery.md` documenta el patrón a evitar.
 
-### 4. Rename `tarifa-schedule` → `ssb-workspace` sigue diferido
+2. **Labels de UI ambiguos sobreviven a code reviews** y solo se cazan con
+   testing real con un usuario que NO sea quien diseñó el feature. Belén
+   detectó la ambigüedad en menos de 5 minutos de uso. Aprendizaje:
+   priorizar testing con usuario real para features con cualquier
+   ambigüedad semántica (signos, direcciones, nomenclatura).
 
-Sigue como deuda para una sesión dedicada aparte. Pasos planificados (referencia):
+3. **OAuth flows con TTL corto** entre `authenticate` y `complete_authentication`
+   del MCP de Supabase. La primera URL expiró antes de pegar el callback.
+   Workaround: regenerar URL inmediato si el flow falla.
 
-1. Borrar branches locales mergeadas: `feat/auth-and-rebrand`, `feat/vacaciones`, `feature/tarifas-terrestres-dow`, `feat/vacaciones-admin-adjustments` (cuando se complete).
-2. Actualizar referencias a "tarifa-schedule" en repo (CLAUDE.md, GUIA-OPERARIO.md, docs/VACACIONES_PLAN.md, etc.).
-3. Actualizar `~/.claude/CLAUDE.md` global.
-4. Rename del repo en GitHub.
-5. `git remote set-url origin <url-nuevo>`.
-6. `mv ~/projects/tarifa-schedule ~/projects/ssb-workspace`.
-7. Reapuntar el path de memory de Claude.
+4. **Granularidad de subagents** funcionó bien con la regla:
+   - Tasks tightly-coupled (Phase 1: branch + 3 archivos + commit) → 1 subagent.
+   - Tasks que terminan en commit independiente → 1 subagent por task.
+   - Pausar para review/smoke entre Tasks 5.3 y 5.4 (renderTeamSummary antes de modales) permitió cazar problemas temprano.
 
-NO ejecutar como subtask de la feature de Vacaciones.
+## Próximos pasos al retomar
 
-## Branches locales pendientes de limpieza (deuda menor)
+### Prioritario (si Belén o algún empleado reporta bug)
 
-- `feat/auth-and-rebrand` — mergeada hace dos sesiones.
-- `feat/vacaciones` — mergeada.
-- `feature/tarifas-terrestres-dow` — mergeada.
+1. Fix antes que cualquier otra cosa.
 
-Borrar con `git branch -d <name>` cuando haya bandwidth.
+### Deuda diferida del feature (no bloquea)
 
-## Contexto no obvio para el agente que retome
+Ver memoria `project_deuda_post_vacaciones_admin_2026-05-07.md`. Los 4
+items pueden hacerse en una sesión corta de cleanup.
 
-- El cliente Supabase global vive en `window.__ssb.supa` con `storageKey: 'sb-ssb-workspace-auth'`. El módulo Vacaciones lo reusa.
-- `window.__vacAuth` queda seteado tras validación contra `vac_employees`. Tiene `{user, employee, employeeId, isAdmin}`.
-- Helpers DB ya existentes (NO crear nuevos): `vac_internal.vac_is_admin()` y `vac_internal.vac_my_employee_id()` (`security definer stable, set search_path=''`).
-- La columna `effective_annual_days` la devuelve `vac_balance_view` post-migration `vac_birthday_extra` (aplicada vía MCP, sin archivo SQL en repo — deuda anotada en CLAUDE.md). Si en algún ambiente la view no la tiene, `computeRealAvailable` cae al fallback `annual_days + extra_days` por el `??`.
-- El modal genérico de Vacaciones (`openModal({title, sub, body, footer, wide, onClose})`) acepta Node/string/HTML como body. Multi-input es trivial — el caller arma el DOM. NO se extiende API.
-- El modal de Tarifas Terrestres (`_showModal` en línea 8054) es OTRO sistema (IDs `tt-modal-*`). NO confundir.
-- `esc()` solo escapa `&<>` (no `'` ni `"`). Toda interpolación con datos de DB en atributos debe ir por DOM properties (`el.textContent`, `el.title`, `el.dataset`, `btn.onclick = () => fn(val)`). Nunca `onclick="fn('${esc(val)}')"`.
+### Feature aparte — días corridos
 
-## Webhook de cierre
+Ver memoria `project_bug_dias_corridos_feriados.md`. Definir política con
+supervisor antes de tocar.
 
-Disparado al final de esta sesión.
+### Test 8 (RLS asimétrica de SELECT)
+
+Cuando Belén tenga 5 minutos, pedirle que abra DevTools logueada en su
+cuenta y corra:
+
+```js
+window.__ssb.supa.from('vac_balance_adjustments').select('*').then(r => console.log(r))
+```
+
+Esperado: `data` solo contiene 1 row (su -9). Si aparece algún ajuste de
+otro empleado → RLS rota, abrir incidente.
+
+### Cleanup de branches locales
+
+```bash
+git branch -d feat/vacaciones-admin-adjustments
+git branch -d feat/auth-and-rebrand
+git branch -d feat/vacaciones
+git branch -d feature/tarifas-terrestres-dow
+```
+
+### Rename `tarifa-schedule` → `ssb-workspace` (sigue diferido)
+
+Sigue como deuda separada. Pasos planificados en handoff anterior — no
+ejecutar como subtask.
