@@ -11490,13 +11490,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       supa.from('vac_requests')
         .select('id,employee_id,start_date,end_date,status,vac_employees!vac_requests_employee_id_fkey(full_name)')
         .eq('period_year', periodYear)
-        .neq('status', 'rechazada')
+        .neq('status', 'rechazada'),
+      // Balance por empleado del período actual (todos los empleados activos)
+      supa.from('vac_balance_view')
+        .select('employee_id,full_name,annual_days,extra_days,effective_annual_days,days_approved,days_pending,days_tentative,days_remaining'),
+      // Ajustes manuales del período actual (admin ve todos por RLS)
+      supa.from('vac_balance_adjustments')
+        .select('id,employee_id,period_year,delta_days,reason,created_by,created_at,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
+        .eq('period_year', periodYear)
+        .order('created_at', { ascending: false })
     ];
-    const [pRes, eRes, hRes, brRes] = await Promise.all(queries);
-    window.__vac.admin.pendientes      = pRes?.data || [];
-    window.__vac.admin.employees       = eRes?.data || [];
-    window.__vac.admin.holidays        = hRes?.data || [];
+    const [pRes, eRes, hRes, brRes, balRes, adjRes] = await Promise.all(queries);
+    window.__vac.admin.pendientes      = pRes?.data  || [];
+    window.__vac.admin.employees       = eRes?.data  || [];
+    window.__vac.admin.holidays        = hRes?.data  || [];
     window.__vac.admin.backupRequests  = brRes?.data || [];
+    window.__vac.admin.balances        = balRes?.data || [];
+    window.__vac.admin.adjustments     = adjRes?.data || [];
   }
 
   function clearAdminData(){
@@ -11505,6 +11515,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.admin.employees = [];
     window.__vac.admin.holidays = [];
     window.__vac.admin.backupRequests = [];
+    window.__vac.admin.balances = [];
+    window.__vac.admin.adjustments = [];
   }
 
   // ── Cómputo de conflictos de back-up para una solicitud ──
