@@ -155,7 +155,7 @@ create policy vac_adj_insert on vac_balance_adjustments
           <tr>
             <th>Empleado</th>
             <th>Total anual</th>
-            <th>Tomados</th>
+            <th>Aprobados</th>
             <th>Pendientes</th>
             <th>Ajustes</th>
             <th>Disponible</th>
@@ -173,10 +173,10 @@ create policy vac_adj_insert on vac_balance_adjustments
 **Reglas de render:**
 - 1 fila por empleado activo (`vac_employees.active=true`).
 - "Total anual" = `annual_days + extra_days` (lectura, no editable acá — eso vive en el editor de empleado del bloque "Empleados").
-- "Tomados" = suma de `days_count` de `vac_requests` con `status='aprobada'` y `end_date < CURRENT_DATE` del período actual.
-- "Pendientes" = suma de `days_count` con `status IN ('pendiente','tentativa')` del período actual.
+- "Aprobados" = `vac_balance_view.days_approved` del período actual (todas las solicitudes con `status='aprobada'`, sin filtrar por fecha — ver §5.4).
+- "Pendientes" = `days_pending + days_tentative` (incluye `pendiente` y `tentativa`).
 - "Ajustes" = `sum(delta_days)` para ese empleado en el período. Mostrar con signo (`+5`, `-3`). Si 0 → mostrar "—".
-- "Disponible" = `Total anual − Tomados − Pendientes − Ajustes`.
+- "Disponible" = `Total anual − Aprobados − Pendientes − Ajustes` (output de `computeRealAvailable`).
 - Acción única: botón **"Ajuste manual"** (icono `i-edit` o `i-plus-minus`).
 - Filas con `Disponible < 0` resaltadas con clase `.vac-team-row--negative` (color `--red`).
 
@@ -219,9 +219,11 @@ create policy vac_adj_insert on vac_balance_adjustments
 - Valor = suma firmada (`+5` / `-3`).
 - "Ver detalle" abre tooltip / popover (o reusa modal genérico) listando cada ajuste: `{fecha} · {delta firmado} días · {motivo} · — {nombre admin}`.
 
-### 4.4. Reordenamiento de stats existentes
+### 4.4. Cambio en la card "Restantes" de Mi calendario
 
-`Total anual` debe seguir siendo `annual_days + extra_days` (sin restar ajustes). El "Restantes" cambia de fórmula:
+`Total anual` (card) sigue siendo `annual_days + extra_days` (sin restar ajustes — para no falsear el "techo" del empleado).
+
+La card `Restantes` cambia de fórmula:
 
 **Antes:**
 ```
@@ -232,8 +234,10 @@ restantes = balance.days_remaining
 **Después:**
 ```
 restantes = computeRealAvailable(balance, ajustes).disponible
-         = (annual_days + extra_days) - tomados - pendientes - sum(ajustes)
+         = (annual_days + extra_days) - aprobados - pendientes - sum(ajustes)
 ```
+
+Es decir, `Restantes` en el frontend = `disponible` que devuelve la función pura. Misma cuenta que la columna "Disponible" del Resumen del equipo.
 
 ---
 
@@ -282,11 +286,11 @@ Guardado en `window.__vac.adjustments`.
 function computeRealAvailable(balanceRow, adjustmentsForEmployee){
   const totalAnual = balanceRow?.effective_annual_days
     ?? ((balanceRow?.annual_days ?? 0) + (balanceRow?.extra_days ?? 0));
-  const tomados    = balanceRow?.days_approved  ?? 0;  // simplificación: ver §5.4
+  const aprobados  = balanceRow?.days_approved  ?? 0;  // ver §5.4 sobre el alcance temporal
   const pendientes = (balanceRow?.days_pending  ?? 0) + (balanceRow?.days_tentative ?? 0);
   const ajustes    = (adjustmentsForEmployee || []).reduce((s, a) => s + (a.delta_days|0), 0);
-  const disponible = totalAnual - tomados - pendientes - ajustes;
-  return { totalAnual, tomados, pendientes, ajustes, disponible };
+  const disponible = totalAnual - aprobados - pendientes - ajustes;
+  return { totalAnual, aprobados, pendientes, ajustes, disponible };
 }
 ```
 
@@ -295,16 +299,17 @@ function computeRealAvailable(balanceRow, adjustmentsForEmployee){
 2. **Resumen del equipo** — tabla admin (1 fila × empleado).
 3. **Modal de ajuste manual** — preview "balance proyectado" antes de confirmar.
 
-### 5.4. Caveat sobre "Tomados"
+### 5.4. Caveat sobre "Aprobados" (vs "Tomados ya")
 
-`vac_balance_view.days_approved` cuenta **TODAS las solicitudes aprobadas del período** (sin filtrar por fecha). El spec original dice "Tomados = aprobadas con `end_date < CURRENT_DATE`".
+`vac_balance_view.days_approved` cuenta **TODAS las solicitudes aprobadas del período** (sin filtrar por fecha — incluye las que todavía no ocurrieron).
 
-**Decisión pragmática:** dejar "Tomados" = `days_approved` de la view (todas las aprobadas, hayan ocurrido o no). Razón:
-- Cambia la fórmula del balance — si separamos "Tomados (pasados)" vs "Aprobados futuros", el "Disponible" actual también cambia.
-- Hoy el cálculo del módulo es: `annual − (aprobada + pendiente + tentativa)`. La tabla nueva debe ser consistente.
-- Si más adelante se quiere distinguir "Tomados ya" vs "Programados a futuro", se hace en una iteración posterior.
+El handoff original distinguía "Tomados" (pasados) vs "Aprobados" (incluye futuros). **Esa distinción se descarta en esta iteración** por consistencia con el cálculo existente del módulo:
 
-**Spec ajustado:** las 5 columnas son **Total / Aprobados / Pendientes (incluye tentativa) / Ajustes / Disponible**. Renombrar "Tomados" → "Aprobados" en la tabla y en el plan original.
+- Hoy `vac_balance_view.days_remaining = annual_days − (aprobada + pendiente + tentativa)`.
+- Mantener la misma semántica: la columna se llama **"Aprobados"** y suma todo lo aprobado del período.
+- Si más adelante se quiere distinguir "Tomados ya" (pasados) vs "Programados a futuro" (aprobados pero no ocurridos), es una iteración posterior con más cambios en la view.
+
+**Columnas finales del Resumen del equipo:** Empleado / Total anual / Aprobados / Pendientes (incluye tentativa) / Ajustes / Disponible / Acciones.
 
 ### 5.5. Eventos y refrescos
 
@@ -389,10 +394,10 @@ Q3 inmutabilidad lo cubre la ausencia de policies UPDATE/DELETE. No hace falta t
    - Delta = -50, reason "test" → preview muestra "Disponible proyectado: X-50".
    - Confirma → INSERT exitoso, modal cierra, fila X actualiza.
 5. Admin re-clickea "Ajuste manual" en X y carga +50 con reason "Corrige test" → fila X vuelve al original.
-6. Admin abre "Mi calendario" estando logueado como empleado X (test cross-account):
-   - Card "Ajustes manuales" visible con suma firmada.
-   - Tooltip muestra los 2 ajustes con motivos y nombre del admin que los hizo.
-7. Empleado Y (no admin) en su "Mi calendario": NO ve los ajustes de X (RLS).
+6. Empleado X (con cuenta propia, NO admin) entra a "Mi calendario":
+   - Card "Ajustes manuales" visible con suma firmada (= 0 si los 2 ajustes del paso 5 se compensan, o el delta neto si no).
+   - Tooltip muestra los ajustes con motivos y nombre del admin que los hizo.
+7. Empleado Y (otro empleado, NO admin) en su "Mi calendario": NO ve los ajustes de X (RLS — la card no aparece para Y).
 8. Empleado X intenta hacer SELECT directo a `vac_balance_adjustments` con su token → ve solo los suyos.
 9. Empleado X intenta hacer INSERT directo → 403 (RLS).
 10. Admin intenta hacer UPDATE / DELETE directo → 403 (sin policy).
