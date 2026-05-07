@@ -10316,27 +10316,50 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function renderStatsStrip(){
     const b = window.__vac.balance;
     const e = window.__vacAuth?.employee;
-    const annual = effectiveAnnualDays(b, e);
+    const adjs = window.__vac.adjustments || [];
+    const r = computeRealAvailable(b, adjs);
+
     const set = (id, v) => { const el = $(id); if(el) el.textContent = String(v); };
-    set('vac-stat-total', annual);
-    set('vac-stat-approved', b?.days_approved ?? 0);
-    set('vac-stat-pending', b?.days_pending ?? 0);
-    set('vac-stat-remaining', b?.days_remaining ?? annual);
+    set('vac-stat-total', r.totalAnual);
+    set('vac-stat-approved', r.aprobados);
+    set('vac-stat-pending', r.pendientes);
+    set('vac-stat-remaining', r.disponible);
 
     // Card "Día de cumpleaños" — informativa, NO afecta balance.
     const card = $('vac-stat-bday-card');
     const valEl = $('vac-stat-bday-value');
     const subEl = $('vac-stat-bday-sub');
-    if(!card || !valEl || !subEl) return;
-    const day = e?.birthday_day, month = e?.birthday_month;
-    if(day && month){
-      card.classList.remove('vac-stat--empty');
-      valEl.innerHTML = `1<span class="vac-stat-unit">día</span>`;
-      subEl.textContent = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}`;
-    } else {
-      card.classList.add('vac-stat--empty');
-      valEl.textContent = 'Pedile al admin que cargue tu cumpleaños';
-      subEl.textContent = '';
+    if(card && valEl && subEl){
+      const day = e?.birthday_day, month = e?.birthday_month;
+      if(day && month){
+        card.classList.remove('vac-stat--empty');
+        valEl.innerHTML = `1<span class="vac-stat-unit">día</span>`;
+        subEl.textContent = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}`;
+      } else {
+        card.classList.add('vac-stat--empty');
+        valEl.textContent = 'Pedile al admin que cargue tu cumpleaños';
+        subEl.textContent = '';
+      }
+    }
+
+    // Card "Ajustes manuales" — solo visible si hay ajustes propios cargados por admin.
+    const adjCard = $('vac-stat-adj-card');
+    const adjVal  = $('vac-stat-adj-value');
+    const adjSub  = $('vac-stat-adj-sub');
+    if(adjCard && adjVal && adjSub){
+      if(adjs.length === 0){
+        adjCard.style.display = 'none';
+      } else {
+        adjCard.style.display = '';
+        const sign = r.ajustes > 0 ? '+' : '';
+        adjVal.textContent = `${sign}${r.ajustes}`;
+        adjVal.classList.toggle('is-positive', r.ajustes > 0);
+        adjVal.classList.toggle('is-negative', r.ajustes < 0);
+        adjSub.onclick = () => openMyAdjustmentsModal(adjs);
+        adjSub.onkeydown = (ev) => {
+          if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openMyAdjustmentsModal(adjs); }
+        };
+      }
     }
   }
 
