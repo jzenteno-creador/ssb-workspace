@@ -10288,6 +10288,22 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return e?.annual_days ?? 0;
   }
 
+  // Helper: cómputo del "disponible real" — única fuente de verdad para 3 consumidores
+  // (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview).
+  // Pure function: mismos inputs → mismos outputs, sin side effects.
+  // balanceRow: fila de vac_balance_view (puede ser null si el empleado no tiene fila)
+  // adjustmentsForEmployee: array de filas de vac_balance_adjustments YA filtradas
+  //   por employee_id + period_year (el caller hace el filtro).
+  function computeRealAvailable(balanceRow, adjustmentsForEmployee){
+    const totalAnual = balanceRow?.effective_annual_days
+      ?? ((balanceRow?.annual_days ?? 0) + (balanceRow?.extra_days ?? 0));
+    const aprobados  = balanceRow?.days_approved  ?? 0;
+    const pendientes = (balanceRow?.days_pending  ?? 0) + (balanceRow?.days_tentative ?? 0);
+    const ajustes    = (adjustmentsForEmployee || []).reduce((s, a) => s + (a.delta_days|0), 0);
+    const disponible = totalAnual - aprobados - pendientes - ajustes;
+    return { totalAnual, aprobados, pendientes, ajustes, disponible };
+  }
+
   // ── Render: stats strip ──
   function renderStatsStrip(){
     const b = window.__vac.balance;
