@@ -13,6 +13,7 @@
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- 1. Tabla
+-- NOTE: not idempotent — one-shot apply only. A double-apply errors out by design (Phase 2 checkpoint).
 create table public.vac_balance_adjustments (
   id uuid primary key default gen_random_uuid(),
   employee_id uuid not null references public.vac_employees(id) on delete restrict,
