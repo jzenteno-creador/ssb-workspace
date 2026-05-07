@@ -93,7 +93,7 @@ create table vac_balance_adjustments (
   period_year int not null,
   delta_days int not null check (delta_days <> 0 and delta_days between -100 and 100),
   reason text not null check (length(btrim(reason)) >= 3),
-  created_by uuid not null references vac_employees(id) on delete set null,
+  created_by uuid references vac_employees(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -186,7 +186,7 @@ create policy vac_adj_insert on vac_balance_adjustments
 
 **Body (DOM dinámico, sin extender `openModal()` API):**
 - Header informativo: nombre del empleado.
-- Card "Balance actual": Total / Tomados / Pendientes / Ajustes / Disponible (read-only).
+- Card "Balance actual": Total / Aprobados / Pendientes / Ajustes / Disponible (read-only).
 - Selector `<select id="vac-adj-period">` con período actual default + 2 anteriores + 1 siguiente.
 - Input `<input type="number" id="vac-adj-delta" min="-100" max="100" step="1">`. Sin valor default (forzar pensamiento del admin).
 - Textarea `<textarea id="vac-adj-reason" rows="3">` con label **"Motivo (visible para el empleado afectado)"** y `required minlength="3"`.
@@ -280,7 +280,7 @@ Guardado en `window.__vac.adjustments`.
  * @param {Object|null} balanceRow - row from vac_balance_view (may be null)
  * @param {Array<Object>} adjustmentsForEmployee - rows of vac_balance_adjustments
  *        for the same employee + same period (caller filters)
- * @returns {{tomados:number, pendientes:number, ajustes:number,
+ * @returns {{aprobados:number, pendientes:number, ajustes:number,
  *            totalAnual:number, disponible:number}}
  */
 function computeRealAvailable(balanceRow, adjustmentsForEmployee){
