@@ -11615,6 +11615,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         tdAdj.setAttribute('role', 'button');
         tdAdj.title = 'Ver histórico';
         tdAdj.onclick = () => openAdjustmentHistoryModal(e, adjs);
+        tdAdj.onkeydown = (ev) => { if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openAdjustmentHistoryModal(e, adjs); } };
       }
       tr.appendChild(tdAdj);
 
