@@ -11638,6 +11638,206 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
   }
 
+  // ── Modal: Ajuste manual ──
+  function openAdjustmentModal(employee, balance, currentAdjs){
+    const periodYear = getCurrentPeriodYear();
+
+    // Body DOM
+    const body = document.createElement('div');
+
+    const head = document.createElement('div');
+    head.className = 'vac-form-row';
+    head.innerHTML = `<div class="vac-form-label">Empleado</div><div class="vac-side-strong"></div>`;
+    head.querySelector('.vac-side-strong').textContent = employee.full_name;
+    body.appendChild(head);
+
+    // Card balance actual
+    const baseR = computeRealAvailable(balance, currentAdjs);
+    const cardActual = document.createElement('div');
+    cardActual.className = 'vac-form-row';
+    cardActual.innerHTML = `
+      <div class="vac-form-label">Balance actual</div>
+      <div class="vac-side-hint">
+        Total ${baseR.totalAnual} · Aprobados ${baseR.aprobados} · Pendientes ${baseR.pendientes}
+        · Ajustes ${baseR.ajustes >= 0 ? '+' : ''}${baseR.ajustes}
+        · <strong>Disponible ${baseR.disponible}</strong>
+      </div>`;
+    body.appendChild(cardActual);
+
+    // Selector de período (actual + 2 anteriores + 1 siguiente)
+    const periodWrap = document.createElement('div');
+    periodWrap.className = 'vac-form-row';
+    periodWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-period">Período</label>
+      <select id="vac-adj-period" class="vac-form-select"></select>`;
+    body.appendChild(periodWrap);
+    const periodSel = periodWrap.querySelector('#vac-adj-period');
+    for(const y of [periodYear-2, periodYear-1, periodYear, periodYear+1]){
+      const opt = document.createElement('option');
+      opt.value = String(y);
+      opt.textContent = `${y}-10-01 → ${y+1}-09-30`;
+      if(y === periodYear) opt.selected = true;
+      periodSel.appendChild(opt);
+    }
+
+    // Delta input
+    const deltaWrap = document.createElement('div');
+    deltaWrap.className = 'vac-form-row';
+    deltaWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-delta">Delta (días) <span class="vac-side-hint">— positivo suma, negativo resta. Rango: -100 a +100, no cero.</span></label>
+      <input id="vac-adj-delta" class="vac-form-input" type="number" min="-100" max="100" step="1" inputmode="numeric">`;
+    body.appendChild(deltaWrap);
+
+    // Reason textarea (label EXPLÍCITO de visibilidad)
+    const reasonWrap = document.createElement('div');
+    reasonWrap.className = 'vac-form-row';
+    reasonWrap.innerHTML = `
+      <label class="vac-form-label" for="vac-adj-reason">Motivo (visible para el empleado afectado)</label>
+      <textarea id="vac-adj-reason" class="vac-form-input" rows="3" required minlength="3" placeholder="Ej: Días tomados antes del 1-oct-25 a cuenta del nuevo período."></textarea>`;
+    body.appendChild(reasonWrap);
+
+    // Card balance proyectado
+    const cardProj = document.createElement('div');
+    cardProj.className = 'vac-form-row';
+    cardProj.innerHTML = `
+      <div class="vac-form-label">Balance proyectado</div>
+      <div class="vac-side-hint" id="vac-adj-projected">Ingresá un delta para ver el proyectado.</div>`;
+    body.appendChild(cardProj);
+
+    // Footer
+    const footer = document.createElement('div');
+    const btnCancel = document.createElement('button');
+    btnCancel.type = 'button';
+    btnCancel.className = 'vac-btn-ghost';
+    btnCancel.textContent = 'Cancelar';
+    btnCancel.onclick = closeModal;
+    const btnConfirm = document.createElement('button');
+    btnConfirm.type = 'button';
+    btnConfirm.className = 'vac-btn-primary';
+    btnConfirm.textContent = 'Confirmar ajuste';
+    btnConfirm.disabled = true;
+    footer.append(btnCancel, btnConfirm);
+
+    // Live update del proyectado
+    const inpDelta  = deltaWrap.querySelector('#vac-adj-delta');
+    const inpReason = reasonWrap.querySelector('#vac-adj-reason');
+    const proj      = cardProj.querySelector('#vac-adj-projected');
+
+    const recompute = () => {
+      const d = parseInt(inpDelta.value, 10);
+      const reasonOk = (inpReason.value || '').trim().length >= 3;
+      const deltaOk = Number.isFinite(d) && d !== 0 && d >= -100 && d <= 100;
+      btnConfirm.disabled = !(deltaOk && reasonOk);
+      btnConfirm.style.background = deltaOk && d < 0 ? 'var(--red)' : '';
+      if(deltaOk){
+        const projected = computeRealAvailable(balance, [...currentAdjs, { delta_days: d }]);
+        proj.innerHTML = `Disponible proyectado: <strong>${projected.disponible}</strong> (delta ${d >= 0 ? '+' : ''}${d})`;
+      } else if (inpDelta.value === ''){
+        proj.textContent = 'Ingresá un delta para ver el proyectado.';
+      } else {
+        proj.textContent = 'Delta inválido (no puede ser 0 ni superar ±100).';
+      }
+    };
+    inpDelta.addEventListener('input', recompute);
+    inpReason.addEventListener('input', recompute);
+
+    btnConfirm.onclick = async () => {
+      const d = parseInt(inpDelta.value, 10);
+      const reason = (inpReason.value || '').trim();
+      const py = parseInt(periodSel.value, 10);
+      if(!Number.isFinite(d) || d === 0 || d < -100 || d > 100) return;
+      if(reason.length < 3) return;
+
+      btnConfirm.disabled = true;
+      btnConfirm.textContent = 'Guardando...';
+
+      const { error } = await supa.from('vac_balance_adjustments').insert({
+        employee_id: employee.id,
+        period_year: py,
+        delta_days: d,
+        reason: reason
+        // created_by: lo setea el default DB con vac_internal.vac_my_employee_id()
+      });
+
+      if(error){
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = 'Confirmar ajuste';
+        alert('Error al guardar: ' + (error.message || JSON.stringify(error)));
+        return;
+      }
+
+      closeModal();
+      await loadAdminData();
+      renderTeamSummary();
+      // Si el admin se ajustó a sí mismo, refrescar Mi calendario
+      if(window.__vacAuth?.employee?.id === employee.id){
+        await loadMyData();
+        renderStatsStrip();
+      }
+    };
+
+    openModal({
+      title: 'Ajuste manual',
+      sub: `Saldo del empleado en el período seleccionado.`,
+      body,
+      footer
+    });
+  }
+
+  // ── Modal: histórico de ajustes para un empleado ──
+  function openAdjustmentHistoryModal(employee, adjs){
+    const body = document.createElement('div');
+    const head = document.createElement('div');
+    head.className = 'vac-side-hint';
+    head.textContent = `${adjs.length} ajuste${adjs.length === 1 ? '' : 's'} en el período actual`;
+    body.appendChild(head);
+
+    const list = document.createElement('div');
+    list.style.marginTop = '12px';
+
+    for(const a of adjs){
+      const item = document.createElement('div');
+      item.className = 'vac-item';
+      item.style.borderLeftColor = a.delta_days >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const dates = document.createElement('div');
+      dates.className = 'vac-item-dates';
+      const d = new Date(a.created_at);
+      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
+      item.appendChild(dates);
+
+      const meta = document.createElement('div');
+      meta.className = 'vac-item-meta';
+      const adminName = a.vac_employees?.full_name || (a.created_by ? '(empleado eliminado)' : '—');
+      meta.textContent = `Por ${adminName}`;
+      item.appendChild(meta);
+
+      const note = document.createElement('div');
+      note.className = 'vac-item-note';
+      note.textContent = a.reason;
+      item.appendChild(note);
+
+      list.appendChild(item);
+    }
+
+    body.appendChild(list);
+
+    const footer = document.createElement('div');
+    const btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.className = 'vac-btn-primary';
+    btnClose.textContent = 'Cerrar';
+    btnClose.onclick = closeModal;
+    footer.appendChild(btnClose);
+
+    openModal({
+      title: `Ajustes de ${employee.full_name}`,
+      sub: 'Histórico inmutable. Para corregir un ajuste, cargá uno opuesto.',
+      body,
+      footer
+    });
+  }
+
   // ── Render: tabla de pendientes ──
   function renderPendientes(){
     const tbody = $('vac-pend-tbody');
