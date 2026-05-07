@@ -87,46 +87,74 @@ DELETE  -- sin policy
 ### Tabla nueva: `vac_balance_adjustments`
 
 ```sql
-create table vac_balance_adjustments (
+create table public.vac_balance_adjustments (
   id uuid primary key default gen_random_uuid(),
-  employee_id uuid not null references vac_employees(id) on delete restrict,
+  employee_id uuid not null references public.vac_employees(id) on delete restrict,
   period_year int not null,
   delta_days int not null check (delta_days <> 0 and delta_days between -100 and 100),
   reason text not null check (length(btrim(reason)) >= 3),
-  created_by uuid references vac_employees(id) on delete set null,
+  created_by uuid references public.vac_employees(id) on delete set null
+    default (select vac_internal.vac_my_employee_id()),
   created_at timestamptz not null default now()
 );
-
-create index idx_vac_balance_adjustments_employee_period
-  on vac_balance_adjustments(employee_id, period_year);
-create index idx_vac_balance_adjustments_created_by
-  on vac_balance_adjustments(created_by);
 ```
 
 **Notas:**
 - `ON DELETE RESTRICT` en `employee_id` — no permitir borrar empleado con ajustes (soft delete está OK porque pone `active=false`, no borra la fila).
 - `ON DELETE SET NULL` en `created_by` — preservar ajustes aunque el admin sea borrado físicamente (consistente con `vac_requests.approved_by` post audit-fix B1).
 - `reason` con `length(btrim(reason)) >= 3` para evitar motivos vacíos o triviales tipo "x".
+- `default (select vac_internal.vac_my_employee_id())` — `created_by` se autocompleta con el employee_id del admin que ejecuta el INSERT. El frontend no necesita pasarlo (queda explícito por consistencia, pero la RLS hardened lo enforced igual — ver más abajo).
 - **Sin** snapshot `balance_before` / `balance_after` — el balance se computa siempre on-the-fly, snapshots se pueden desfasar.
+
+### Índices
+
+```sql
+-- Composite con period_year como leading column — cubre la query del admin (filtro
+-- solo por period_year) y la query del empleado (filtro por employee_id + period_year).
+-- Si fuera (employee_id, period_year), la query del admin haría seq scan.
+create index idx_vac_balance_adjustments_period_employee
+  on public.vac_balance_adjustments(period_year, employee_id);
+
+create index idx_vac_balance_adjustments_created_by
+  on public.vac_balance_adjustments(created_by);
+```
 
 ### RLS
 
 ```sql
-alter table vac_balance_adjustments enable row level security;
+alter table public.vac_balance_adjustments enable row level security;
 
-create policy vac_adj_select on vac_balance_adjustments
+create policy vac_adj_select on public.vac_balance_adjustments
   for select
   using (
     employee_id = (select vac_internal.vac_my_employee_id())
     or (select vac_internal.vac_is_admin())
   );
 
-create policy vac_adj_insert on vac_balance_adjustments
+-- HARDENED: created_by debe ser el propio admin (anti-spoofing).
+-- Si la policy fuera solo `vac_is_admin()`, un admin podría falsamente atribuir
+-- el ajuste a otro admin via API directa.
+create policy vac_adj_insert on public.vac_balance_adjustments
   for insert
-  with check ((select vac_internal.vac_is_admin()));
+  with check (
+    (select vac_internal.vac_is_admin())
+    and created_by = (select vac_internal.vac_my_employee_id())
+  );
 
--- UPDATE / DELETE: sin policies → bloqueados (Q3 inmutabilidad)
+-- UPDATE / DELETE: sin policies → bloqueados por RLS default deny (Q3 inmutabilidad)
 ```
+
+### Defensa en profundidad — grants
+
+```sql
+-- Capa adicional sobre la ausencia de policies UPDATE/DELETE.
+-- Si en el futuro alguien agrega una policy UPDATE por error, los grants
+-- ausentes siguen bloqueando la operación. Inmutabilidad con 2 capas.
+revoke update, delete on public.vac_balance_adjustments from authenticated;
+revoke update, delete on public.vac_balance_adjustments from anon;
+```
+
+**Nota sobre grants:** en Supabase, las tablas en schema `public` reciben SELECT/INSERT/UPDATE/DELETE automáticamente para `authenticated` y `anon` vía PostgREST. NO hace falta `GRANT` explícito de SELECT/INSERT — la RLS se ocupa del control de acceso. Solo se hacen los `REVOKE` arriba para reforzar inmutabilidad.
 
 ### `vac_balance_view`: SIN cambios.
 
@@ -196,7 +224,7 @@ create policy vac_adj_insert on vac_balance_adjustments
 
 **Onsubmit:**
 1. Validaciones cliente: delta ≠ 0, en [-100,100], reason.trim().length ≥ 3.
-2. INSERT en `vac_balance_adjustments` con `created_by = window.__vacAuth.employee.id`.
+2. INSERT en `vac_balance_adjustments` con `{employee_id, period_year, delta_days, reason}`. `created_by` se autocompleta por default DB + RLS lo enforced. El frontend NO lo pasa (evita confusión y aprovecha el default).
 3. Si éxito: cerrar modal + recargar `loadAdminData()` + re-render del bloque.
 4. Toast de confirmación.
 
@@ -346,20 +374,54 @@ applied.sql      # tabla + índices + RLS + helpers (si hace falta) + grants
 rollback.sql     # drop policies + drop indexes + drop table
 ```
 
-### applied.sql resumen
+### applied.sql (DDL final — ya validado por postgres-best-practices:supabase)
 
 ```sql
--- 1. Tabla con CHECKs
-create table vac_balance_adjustments (...);
+-- ════════════════════════════════════════════════════════════════════════════
+-- VACACIONES — ajustes manuales auditados (feature 2026-05-07)
+-- Q1-Q6 cerrados en docs/superpowers/specs/2026-05-07-vacaciones-admin-team-summary-design.md
+-- ════════════════════════════════════════════════════════════════════════════
 
--- 2. Índices (employee_id+period_year, created_by)
-create index ...;
+-- 1. Tabla
+create table public.vac_balance_adjustments (
+  id uuid primary key default gen_random_uuid(),
+  employee_id uuid not null references public.vac_employees(id) on delete restrict,
+  period_year int not null,
+  delta_days int not null check (delta_days <> 0 and delta_days between -100 and 100),
+  reason text not null check (length(btrim(reason)) >= 3),
+  created_by uuid references public.vac_employees(id) on delete set null
+    default (select vac_internal.vac_my_employee_id()),
+  created_at timestamptz not null default now()
+);
+
+-- 2. Índices (period_year leading column → cubre admin + empleado queries)
+create index idx_vac_balance_adjustments_period_employee
+  on public.vac_balance_adjustments(period_year, employee_id);
+create index idx_vac_balance_adjustments_created_by
+  on public.vac_balance_adjustments(created_by);
 
 -- 3. RLS
-alter table vac_balance_adjustments enable row level security;
-create policy vac_adj_select ...;
-create policy vac_adj_insert ...;
--- UPDATE/DELETE sin policy
+alter table public.vac_balance_adjustments enable row level security;
+
+create policy vac_adj_select on public.vac_balance_adjustments
+  for select
+  using (
+    employee_id = (select vac_internal.vac_my_employee_id())
+    or (select vac_internal.vac_is_admin())
+  );
+
+create policy vac_adj_insert on public.vac_balance_adjustments
+  for insert
+  with check (
+    (select vac_internal.vac_is_admin())
+    and created_by = (select vac_internal.vac_my_employee_id())
+  );
+
+-- UPDATE / DELETE: sin policies → bloqueado por RLS default deny (Q3)
+
+-- 4. Defensa en profundidad
+revoke update, delete on public.vac_balance_adjustments from authenticated;
+revoke update, delete on public.vac_balance_adjustments from anon;
 ```
 
 ### Sin trigger
