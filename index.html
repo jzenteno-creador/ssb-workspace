@@ -11545,6 +11545,98 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return conflicts;
   }
 
+  // ── Render: Resumen del equipo (admin) ──
+  function renderTeamSummary(){
+    const tbody = $('vac-team-tbody');
+    const empty = $('vac-team-empty');
+    if(!tbody) return;
+
+    const balances    = window.__vac.admin.balances    || [];
+    const adjustments = window.__vac.admin.adjustments || [];
+    const employees   = (window.__vac.admin.employees || []).filter(e => e.active);
+
+    if(employees.length === 0){
+      tbody.innerHTML = '';
+      if(empty) empty.style.display = 'block';
+      tbody.parentElement.style.display = 'none';
+      return;
+    }
+    if(empty) empty.style.display = 'none';
+    tbody.parentElement.style.display = '';
+
+    const balanceByEmp = new Map();
+    for(const b of balances) balanceByEmp.set(b.employee_id, b);
+
+    const adjByEmp = new Map();
+    for(const a of adjustments){
+      if(!adjByEmp.has(a.employee_id)) adjByEmp.set(a.employee_id, []);
+      adjByEmp.get(a.employee_id).push(a);
+    }
+
+    tbody.innerHTML = '';
+    for(const e of employees){
+      const balance = balanceByEmp.get(e.id) || { annual_days: e.annual_days, extra_days: e.extra_days || 0, days_approved: 0, days_pending: 0, days_tentative: 0 };
+      const adjs = adjByEmp.get(e.id) || [];
+      const r = computeRealAvailable(balance, adjs);
+
+      const tr = document.createElement('tr');
+      if(r.disponible < 0) tr.classList.add('vac-team-row--negative');
+
+      const tdName = document.createElement('td');
+      tdName.textContent = e.full_name;
+      tr.appendChild(tdName);
+
+      const tdTotal = document.createElement('td');
+      tdTotal.textContent = String(r.totalAnual);
+      tr.appendChild(tdTotal);
+
+      const tdAprob = document.createElement('td');
+      tdAprob.textContent = String(r.aprobados);
+      tr.appendChild(tdAprob);
+
+      const tdPend = document.createElement('td');
+      tdPend.textContent = String(r.pendientes);
+      tr.appendChild(tdPend);
+
+      const tdAdj = document.createElement('td');
+      tdAdj.classList.add('vac-team-ajustes');
+      if(r.ajustes > 0){
+        tdAdj.classList.add('is-positive');
+        tdAdj.textContent = `+${r.ajustes}`;
+      } else if(r.ajustes < 0){
+        tdAdj.classList.add('is-negative');
+        tdAdj.textContent = String(r.ajustes);
+      } else {
+        tdAdj.textContent = '—';
+      }
+      if(adjs.length > 0){
+        tdAdj.classList.add('vac-team-ajustes-link');
+        tdAdj.tabIndex = 0;
+        tdAdj.setAttribute('role', 'button');
+        tdAdj.title = 'Ver histórico';
+        tdAdj.onclick = () => openAdjustmentHistoryModal(e, adjs);
+      }
+      tr.appendChild(tdAdj);
+
+      const tdDisp = document.createElement('td');
+      tdDisp.classList.add('vac-team-disponible');
+      tdDisp.textContent = String(r.disponible);
+      tr.appendChild(tdDisp);
+
+      const tdAct = document.createElement('td');
+      tdAct.style.textAlign = 'right';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vac-mini-btn';
+      btn.textContent = 'Ajuste manual';
+      btn.onclick = () => openAdjustmentModal(e, balance, adjs);
+      tdAct.appendChild(btn);
+      tr.appendChild(tdAct);
+
+      tbody.appendChild(tr);
+    }
+  }
+
   // ── Render: tabla de pendientes ──
   function renderPendientes(){
     const tbody = $('vac-pend-tbody');
@@ -11751,6 +11843,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast('Solicitud aprobada');
     await loadAdminData();
     renderPendientes();
+    renderTeamSummary();
     updatePendingBadge();
     // Las stats personales del solicitante quedan obsoletas; si vuelve a "Mi calendario"
     // se refrescará al entrar (initialized=true pero hooks re-pegan render). Para que
@@ -11807,6 +11900,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast('Solicitud rechazada');
     await loadAdminData();
     renderPendientes();
+    renderTeamSummary();
     updatePendingBadge();
     _miState.initialized = false;
     return true;
@@ -12083,6 +12177,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
     await loadAdminData();
     renderEmpleados();
+    renderTeamSummary();
     // Refrescar caches dependientes: banner de cumpleaños + team
     await loadGlobalEmployees();
     renderBirthdayLine();
@@ -12109,6 +12204,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     showToast(`Empleado ${makeActive ? 'reactivado' : 'desactivado'}`);
     await loadAdminData();
     renderEmpleados();
+    renderTeamSummary();
   }
 
   // ── Modal: feriado (nuevo / editar) ──
@@ -12404,6 +12500,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       showToast(`Importadas ${lastRows.length} solicitudes`);
       await loadAdminData();
       renderPendientes();
+      renderTeamSummary();
       updatePendingBadge();
       closeModal();
     };
@@ -12436,6 +12533,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     renderPendientes();
     renderEmpleados();
+    renderTeamSummary();
     renderFeriados();
     // Si entré por click en "Revisar" del banner, hacer scroll a pendientes
     if(window.__vac.admin.scrollAfterEnter === 'pendientes'){
