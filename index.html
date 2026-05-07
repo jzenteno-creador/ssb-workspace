@@ -10247,6 +10247,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.backupRequests = [];
     window.__vac.holidays = [];
     window.__vac.balance = null;
+    window.__vac.adjustments = [];
     window.__vac.editingId = null;
     _miState.initialized = false;
     if(window.__vac.team) clearTeamData();
@@ -10270,14 +10271,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       supa.from('vac_holidays').select('*').gte('date', startIso).lte('date', endIso).order('date', { ascending: true }),
       backupIds.length
         ? supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
-        : Promise.resolve({ data: [], error: null })
+        : Promise.resolve({ data: [], error: null }),
+      // Ajustes manuales del período actual del empleado autenticado (RLS solo permite los propios o si es admin — acá buscamos los propios)
+      supa.from('vac_balance_adjustments')
+        .select('id,period_year,delta_days,reason,created_at,created_by,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
+        .eq('employee_id', empId)
+        .eq('period_year', periodYear)
+        .order('created_at', { ascending: false })
     ];
-    const [bRes, rRes, hRes, bkRes] = await Promise.all(queries);
+    const [bRes, rRes, hRes, bkRes, aRes] = await Promise.all(queries);
 
     window.__vac.balance        = bRes?.data || null;
     window.__vac.requests       = rRes?.data || [];
     window.__vac.holidays       = hRes?.data || [];
     window.__vac.backupRequests = bkRes?.data || [];
+    window.__vac.adjustments    = aRes?.data || [];
   }
 
   // Helper: días anuales efectivos (annual_days + extra_days). Lo lee de la view
