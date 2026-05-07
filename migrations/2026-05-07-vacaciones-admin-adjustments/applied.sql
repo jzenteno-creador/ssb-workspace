@@ -21,7 +21,7 @@ create table public.vac_balance_adjustments (
   delta_days int not null check (delta_days <> 0 and delta_days between -100 and 100),
   reason text not null check (length(btrim(reason)) >= 3),
   created_by uuid references public.vac_employees(id) on delete set null
-    default (select vac_internal.vac_my_employee_id()),
+    default vac_internal.vac_my_employee_id(),
   created_at timestamptz not null default now()
 );
 
