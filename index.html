@@ -1174,10 +1174,34 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-stat-adj-link:hover{color:var(--text)}
 #panel-vacaciones .vac-team-row--negative td{background:var(--red-bg)}
 #panel-vacaciones .vac-team-row--negative .vac-team-disponible{color:var(--red);font-weight:700}
+/* Disponible = 0: sobreconsumo crítico pero no negativo. Background sutil
+   y borde lateral rojo para diferenciarlo de la fila --negative que es
+   estado peor. */
+#panel-vacaciones .vac-team-row--exhausted td{background:rgba(239,100,97,.06)}
+#panel-vacaciones .vac-team-row--exhausted .vac-team-disponible{color:var(--amber);font-weight:700}
 #panel-vacaciones .vac-team-ajustes{font-variant-numeric:tabular-nums}
 #panel-vacaciones .vac-team-ajustes.is-positive{color:var(--green);font-weight:600}
 #panel-vacaciones .vac-team-ajustes.is-negative{color:var(--red);font-weight:600}
 #panel-vacaciones .vac-team-ajustes-link{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+/* Coloreado condicional Aprobados/Pendientes — solo si > 0, sino se mantiene
+   neutro (los ceros no aportan info de "estado"). */
+#panel-vacaciones .vac-team-aprobados.is-active{color:var(--green);font-weight:600}
+#panel-vacaciones .vac-team-pendientes.is-active{color:var(--amber);font-weight:600}
+/* Barra de progreso del Disponible: fina, debajo del número, ancho según
+   consumo (aprobados+pendientes / totalAnual). Usa display:block para
+   reservar espacio sin forzar wrap del número. */
+#panel-vacaciones .vac-team-bar{
+  display:block;height:3px;width:60px;
+  background:rgba(127,127,127,.15);border-radius:2px;
+  margin-top:5px;overflow:hidden;
+}
+#panel-vacaciones .vac-team-bar-fill{
+  display:block;height:100%;border-radius:2px;
+  transition:width .25s ease;
+}
+#panel-vacaciones .vac-team-bar-fill.is-healthy{background:var(--green)}
+#panel-vacaciones .vac-team-bar-fill.is-warning{background:var(--amber)}
+#panel-vacaciones .vac-team-bar-fill.is-danger{background:var(--red)}
 
 /* ── Mi calendario: layout calendario + side ── */
 #panel-vacaciones .vac-cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px}
@@ -1218,11 +1242,32 @@ body.dark .vac-approval-text strong{color:var(--amber)}
   font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.1em;
   color:var(--muted);text-align:center;padding:6px 0;font-weight:700;font-family:var(--mono);
 }
+/* Override scopeado al calendario: las CSS vars globales *-bg son
+   intencionalmente sutiles (ej: --green-bg=#e6f9f4 en light) para tablas
+   y badges. En la grilla del calendario necesitamos un highlight más
+   punchy sin tocar el resto de la app, así que las redefinimos solo
+   dentro de .vac-cal-grid con valores rgba derivados de los colores
+   semánticos. Mismo valor en light/dark — se ven idénticas. */
+#panel-vacaciones .vac-cal-grid{
+  --green-bg:rgba(62,207,142,.18);
+  --amber-bg:rgba(245,166,35,.16);
+  --purple-bg:rgba(167,139,250,.16);
+  --red-bg:rgba(239,100,97,.14);
+  --pink-bg:rgba(236,72,153,.14);
+}
 #panel-vacaciones .vac-cal-day{
   aspect-ratio:1.25/1;border:1px solid var(--border);border-radius:6px;
-  padding:6px 8px;font-size:var(--fs-sm);background:var(--surface);
+  padding:6px 8px 8px;font-size:var(--fs-sm);background:var(--surface);
   position:relative;display:flex;flex-direction:column;
 }
+/* Highlight continuo de status — selectores escalados al specificity
+   correcto (1 ID + 2 class) para superar al base .vac-cal-day. La
+   regla global .vac-aprobada (línea 1027) sigue válida para tags,
+   swatches y otros usos NO calendario. */
+#panel-vacaciones .vac-cal-day.vac-aprobada{ background:var(--green-bg);  border-color:var(--green-bd); }
+#panel-vacaciones .vac-cal-day.vac-pendiente{ background:var(--amber-bg);  border-color:var(--amber-bd); }
+#panel-vacaciones .vac-cal-day.vac-feriado  { background:var(--red-bg);    border-color:var(--red-bd);   }
+/* Tentativa: rayado sobre el highlight (ya estaba con repeating-linear-gradient). */
 #panel-vacaciones .vac-cal-day--muted{opacity:.35}
 #panel-vacaciones .vac-cal-day--today{border:2px solid var(--blue)}
 #panel-vacaciones .vac-cal-day--today .vac-cal-day-num{color:var(--blue);font-weight:700}
@@ -1244,26 +1289,37 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-cal-day.vac-feriado .vac-cal-day-tag{color:var(--red)}
 #panel-vacaciones .vac-cal-day.vac-no-laborable .vac-cal-day-tag{color:var(--amber)}
 
+/* Back-up — patrón continuo. Si la celda tiene además status (aprobada
+   /pendiente/tentativa), las clases de status van DESPUÉS en el JS y
+   ganan en CSS por orden de declaración + igual specificity. La rule
+   .vac-backup se aplica solo cuando NO hay status (caso típico). El
+   chip "🛡️ Nombre" se renderiza solo en el primer día del bloque
+   contiguo por el tracker prevHasBackup en JS. */
+#panel-vacaciones .vac-cal-day.vac-backup{
+  background:rgba(236,72,153,.10);
+  border-color:rgba(236,72,153,.28);
+}
+
 /* Markers extra (cumple, back-up) — fila inferior compacta */
 #panel-vacaciones .vac-cal-day-badges{
   display:flex;flex-wrap:wrap;gap:3px;
-  margin-top:auto;line-height:1;
+  margin-top:auto;margin-bottom:2px;line-height:1;
   font-family:var(--mono);
 }
 #panel-vacaciones .vac-cal-day-badges + .vac-cal-day-tag{margin-top:3px}
 #panel-vacaciones .vac-cal-day-badge{
-  font-size:9px;padding:1px 4px;border-radius:3px;
+  font-size:9px;padding:2px 4px;border-radius:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   max-width:100%;letter-spacing:.02em;font-weight:600;
-  border:1px solid transparent;
+  border:1px solid transparent;line-height:1.1;
 }
 #panel-vacaciones .vac-cal-day-badge--bday{
-  background:rgba(236,72,153,.12);color:#db2777;
-  border-color:rgba(236,72,153,.25);
+  background:rgba(236,72,153,.16);color:#db2777;
+  border-color:rgba(236,72,153,.32);
 }
 #panel-vacaciones .vac-cal-day-badge--backup{
-  background:rgba(59,130,246,.12);color:#1d4ed8;
-  border-color:rgba(59,130,246,.28);
+  background:rgba(59,130,246,.14);color:#1d4ed8;
+  border-color:rgba(59,130,246,.32);
 }
 
 /* Side panel */
@@ -10598,6 +10654,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // ininterrumpida con un único "Aprob." al inicio, en vez de
     // repetir la etiqueta en cada celda.
     let prevStatusType = null;
+    let prevHasBackup = false;
     for(let d = 1; d <= lastDay.getDate(); d++){
       const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const st = dayState[iso];
@@ -10627,6 +10684,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
       prevStatusType = isRequestStatus ? st.type : null;
 
+      // BACK-UP: tracking del bloque contiguo de cobertura. La clase
+      // .vac-backup aplica solo si NO hay status del propio user
+      // (aprobada/pend/tent gana visualmente; el chip 🛡️ del primer
+      // día sigue mostrándose para no perder la info).
+      const bkList = backupCoverByIso.get(iso) || [];
+      const hasBackup = bkList.length > 0;
+      const isFirstBackup = hasBackup && !prevHasBackup;
+      if(hasBackup && !isRequestStatus){
+        classes.push('vac-backup');
+      }
+      prevHasBackup = hasBackup;
+
       // Badges extra — cumpleaños del equipo (mes 1-12 vs m zero-based).
       const badges = [];
       const bdayList = bdaysByDayMonth.get(`${d}-${m+1}`) || [];
@@ -10637,11 +10706,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
           : `${bdayList.length} cumples`;
         badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--bday" title="🎂 ${escHtml(names)}">🎂 ${escHtml(visible)}</span>`);
       }
-      // Badge BACK-UP — el usuario cubre a alguien que está de vacaciones
-      // ese día. Si cubre a 1 persona: muestra primer nombre. Si cubre
-      // a 2+: muestra el conteo, nombres + status en tooltip.
-      const bkList = backupCoverByIso.get(iso) || [];
-      if(bkList.length){
+      // Badge BACK-UP — chip SOLO en el primer día del bloque contiguo.
+      // Los días siguientes mantienen el background pink (clase
+      // .vac-backup) sin repetir el chip, igual al patrón de aprobada.
+      if(hasBackup && isFirstBackup){
         const detail = bkList.map(b => `${b.name} (${b.status})`).join(' · ');
         const visible = bkList.length === 1
           ? `🛡️ ${bkList[0].name.split(' ')[0] || bkList[0].name}`
@@ -11878,6 +11946,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
       const tr = document.createElement('tr');
       if(r.disponible < 0) tr.classList.add('vac-team-row--negative');
+      else if(r.disponible === 0) tr.classList.add('vac-team-row--exhausted');
 
       const tdName = document.createElement('td');
       tdName.textContent = e.full_name;
@@ -11896,10 +11965,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       tr.appendChild(tdTotal);
 
       const tdAprob = document.createElement('td');
+      tdAprob.classList.add('vac-team-aprobados');
+      if(r.aprobados > 0) tdAprob.classList.add('is-active');
       tdAprob.textContent = String(r.aprobados);
       tr.appendChild(tdAprob);
 
       const tdPend = document.createElement('td');
+      tdPend.classList.add('vac-team-pendientes');
+      if(r.pendientes > 0) tdPend.classList.add('is-active');
       tdPend.textContent = String(r.pendientes);
       tr.appendChild(tdPend);
 
@@ -11926,7 +11999,29 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
       const tdDisp = document.createElement('td');
       tdDisp.classList.add('vac-team-disponible');
-      tdDisp.textContent = String(r.disponible);
+      // Barra de progreso de consumo: (aprobados+pendientes) / totalAnual.
+      // total=0 (empleado sin annual_days) -> pct=0, barra vacía. Negativo
+      // (sobre-consumo por ajustes) -> pct se clampea a 1, barra llena
+      // roja. Mismo treshold que la card stats-strip: >75% es warning,
+      // 100%+ o disponible<=0 es danger.
+      const consumed = r.aprobados + r.pendientes - Math.max(0, r.ajustes);
+      const denom = r.totalAnual > 0 ? r.totalAnual : 1;
+      const pctRaw = consumed / denom;
+      const pctClamped = Math.max(0, Math.min(1, pctRaw));
+      const pctWidth = Math.round(pctClamped * 100);
+      let barStateCls = 'is-healthy';
+      if(r.disponible <= 0 || pctRaw >= 1) barStateCls = 'is-danger';
+      else if(pctRaw > 0.75) barStateCls = 'is-warning';
+      const numSpan = document.createElement('span');
+      numSpan.textContent = String(r.disponible);
+      tdDisp.appendChild(numSpan);
+      const bar = document.createElement('span');
+      bar.className = 'vac-team-bar';
+      const barFill = document.createElement('span');
+      barFill.className = `vac-team-bar-fill ${barStateCls}`;
+      barFill.style.width = `${pctWidth}%`;
+      bar.appendChild(barFill);
+      tdDisp.appendChild(bar);
       tr.appendChild(tdDisp);
 
       const tdAct = document.createElement('td');
