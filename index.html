@@ -10574,6 +10574,22 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!bdaysByDayMonth.has(k)) bdaysByDayMonth.set(k, []);
       bdaysByDayMonth.get(k).push(e);
     }
+    //   2) BACK-UP: días donde alguien que el usuario cubre está de
+    //   vacaciones (pend/tent/aprob). __vac.backupRequests ya filtra
+    //   por backup_employee_ids del usuario actual y por status no
+    //   rechazada en loadMyData(). Pre-compute Map iso -> [{name,status}].
+    const backupCoverByIso = new Map();
+    for(const r of (window.__vac.backupRequests || [])){
+      const startBk = parseIsoDate(r.start_date);
+      const endBk   = parseIsoDate(r.end_date);
+      if(!startBk || !endBk) continue;
+      const name = r.vac_employees?.full_name || '?';
+      for(let cur = new Date(startBk); cur <= endBk; cur.setDate(cur.getDate()+1)){
+        const isoBk = toIsoDate(cur);
+        if(!backupCoverByIso.has(isoBk)) backupCoverByIso.set(isoBk, []);
+        backupCoverByIso.get(isoBk).push({ name, status: r.status });
+      }
+    }
     // Días del mes — highlight de fondo continuo para rangos de
     // solicitudes (la clase .vac-aprobada/.vac-pendiente/.vac-tentativa
     // ya pinta el fondo). La etiqueta textual se muestra SOLO en el
@@ -10620,6 +10636,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
           ? (bdayList[0].full_name.split(' ')[0] || bdayList[0].full_name)
           : `${bdayList.length} cumples`;
         badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--bday" title="🎂 ${escHtml(names)}">🎂 ${escHtml(visible)}</span>`);
+      }
+      // Badge BACK-UP — el usuario cubre a alguien que está de vacaciones
+      // ese día. Si cubre a 1 persona: muestra primer nombre. Si cubre
+      // a 2+: muestra el conteo, nombres + status en tooltip.
+      const bkList = backupCoverByIso.get(iso) || [];
+      if(bkList.length){
+        const detail = bkList.map(b => `${b.name} (${b.status})`).join(' · ');
+        const visible = bkList.length === 1
+          ? `🛡️ ${bkList[0].name.split(' ')[0] || bkList[0].name}`
+          : `🛡️ ${bkList.length} pers.`;
+        badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--backup" title="Cubrís a: ${escHtml(detail)}">${escHtml(visible)}</span>`);
       }
 
       const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
