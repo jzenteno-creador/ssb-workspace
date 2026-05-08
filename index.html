@@ -10384,9 +10384,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // aparte como aclaración.
     const annual = b?.annual_days ?? e?.annual_days ?? 0;
     const extra  = b?.extra_days  ?? e?.extra_days  ?? 0;
-    const subEl = $('vac-stat-total-sub');
-    if(subEl){
-      subEl.textContent = extra > 0
+    const subElTotal = $('vac-stat-total-sub');
+    if(subElTotal){
+      subElTotal.textContent = extra > 0
         ? `${weeksLabel(annual)} + ${extra} extra`
         : weeksLabel(annual);
     }
