@@ -285,3 +285,41 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - Warning de overlap con back-up: lado empleado en preview del form (status incluido en copy, gramática singular/plural). Lado admin en `approveRequest` con `confirm()` previo al UPDATE — Cancel aborta sin tocar nada. Reusa `computeBackupConflicts(req)` existente.
 - Migration files: `migrations/2026-05-08-vacaciones-habiles/` (4 SQLs en orden + `applied.sql` consolidado + `rollback.sql` + `before.sql` snapshot + README).
 - Plan canon: `docs/superpowers/plans/2026-05-08-vacaciones-habiles.md`.
+
+## Decisiones inamovibles · Mi calendario + Resumen equipo (2026-05-08, branch `feat/vacaciones-final`)
+
+Branch `feat/vacaciones-final` mergeada en master (`577b8dc`). 9 commits totales: 3 fixes + 4 features + 2 iteraciones UI.
+
+### Fixes
+- **`renderTeamSummary` guard `isAdmin`** (línea ~11737): defensa en profundidad. Returns early si `!window.__vacAuth?.isAdmin`. La protección de subtab seguía siendo la primera línea.
+- **`loadAdminData` query `vac_balance_view` filtra `current_period_year`** (no `period_year` — la columna real de la view es `current_period_year`, verificar siempre con `information_schema` antes de filtrar). Defensivo, no exploitable hoy.
+- **Sanitizar `alert(error.message)`** del modal de ajuste admin: `console.error('vac:adjustment:save', error)` + alert genérico user-friendly. Antes filtraba internals Postgres/RLS (códigos 23505, nombres de constraints) al modal.
+
+### Features Mi calendario (`renderMonthGrid`)
+- **Feriados con nombre real** en celda. El array `__vac.holidays` ya trae `h.name`. Tag muestra nombre, CSS `text-overflow:ellipsis` trunca largos, `title` mantiene completo.
+- **Highlight continuo + tag solo en primer día contiguo** del bloque del mismo status. Tracker `prevStatusType`. Cubre 2 rangos en mismo mes (2 tags) y rango cruzando month boundary (1 tag por mes).
+- **Cumpleaños del equipo activo** en cada celda que matchea `birthday_day/birthday_month` con cualquier `vac_employees.active=true`. Query nueva en `loadMyData()` (redundante con `loadGlobalEmployees()` que es fire-and-forget — red de seguridad anti-race). Badge centrado verticalmente vía CSS grid 4-row.
+- **Indicador BACK-UP** rojo en cada día donde el user cubre a alguien con request `pendiente/tentativa/aprobada`. Background `rgba(220,38,38,.22)` para distinguir de morado de tentativa. Chip `🛡️ Nombre completo` repetido en cada día (sin tracker `prevHasBackup` — el bloque rojo sin texto no comunicaba qué cubría). Si cubre 2+: `🛡️ N pers.` + tooltip detalle.
+
+### Layout celda calendario (CSS)
+- **Cambio de `flex column` a `grid 4-row`**: `auto 1fr auto auto` → row 1 = num, row 2 = bday (centro vertical, 1fr), row 3 = badges, row 4 = tag. Rows vacías colapsan automáticamente.
+- **Override de CSS vars scopeado a `#panel-vacaciones .vac-cal-grid`** para boost de saturación de los `*-bg` solo en el calendario, sin tocar tablas/badges/etc. del resto de la app:
+  ```css
+  --green-bg: rgba(62,207,142,.18);
+  --amber-bg: rgba(245,166,35,.16);
+  --purple-bg: rgba(167,139,250,.16);
+  --red-bg:   rgba(239,100,97,.14);
+  --pink-bg:  rgba(236,72,153,.14);
+  ```
+- **Specificity escalada**: `#panel-vacaciones .vac-cal-day.vac-aprobada{background:var(--green-bg)}` (1 ID + 2 class = 0,1,2,0) supera al `#panel-vacaciones .vac-cal-day{background:var(--surface)}` base (1 ID + 1 class = 0,1,1,0). **Lección: el bug del Commit 5 fue justo este — la regla global `.vac-aprobada` de specificity `0,0,1,0` no aplicaba en el calendario porque la pisaba el selector de la celda. Ahora el override usa el specificity correcto.**
+
+### Resumen del equipo (`renderTeamSummary`)
+- **Barra de progreso del Disponible** (3px × 60px debajo del número): `consumed = aprobados + pendientes - max(0, ajustes positivos)` / `totalAnual`. Color `is-healthy` ≤75%, `is-warning` >75% <100%, `is-danger` ≥100% o disponible ≤ 0. Width clamp [0,1] tolera disponible negativo.
+- **Coloreado condicional**: `.vac-team-aprobados.is-active` (verde si > 0), `.vac-team-pendientes.is-active` (amber si > 0). Los ceros quedan neutros.
+- **Nueva clase `.vac-team-row--exhausted`** para fila con disponible exactamente 0 (background sutil amber). La existente `--negative` (rojo) sigue cubriendo disponible < 0.
+
+### Decisiones de UX inamovibles
+- **Verificación visual obligatoria** en cualquier cambio CSS/JS visual. El bug del Commit 5 (`.vac-aprobada` overrideado por specificity) se detectó solo cuando John smoke-testeó local — 4 commits después.
+- **Granularidad de commits**: features nuevas → commits granulares (un commit por feature, permite bisect/revert quirúrgico). Iteración UI sobre features ya hechas → un commit final cuando se ve bien.
+- **BACK-UP repite chip cada día**: prioridad a claridad sobre minimalismo, decisión explícita.
+- **Bday tiene `font-family:var(--font)` (sans normal)**, no mono — es nombre de persona, no código.
