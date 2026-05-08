@@ -1,132 +1,104 @@
-# Handoff de sesión — 2026-05-08 · tarifa-schedule (master) · CIERRE COMPLETO
+# Handoff sesión SSB Workspace · 2026-05-08 (cierre con `break`)
 
-## Resumen
+## Estado actual
 
-Migración integral del módulo Vacaciones de **días corridos → días hábiles**
-+ feature de **warning por overlap con back-up** (preview empleado mejorado +
-gate `confirm()` en aprobación admin). 5 commits feature + 1 merge,
-deployado vía Netlify, smoke-tests UI parcialmente verificados por John.
+- Branch `feat/vacaciones-final` mergeada a master (`577b8dc`) y deployada vía Netlify.
+- Producción: `https://ssb-workspace.netlify.app/` con módulo Vacaciones COMPLETO (Mi calendario + Resumen del equipo + back-up + cumpleaños del equipo).
+- Repos al día y pusheados:
+  - `tarifa-schedule`: último commit `a5e051b docs: actualizar CLAUDE.md con módulo Vacaciones`
+  - `claude-config`: último commit `8665685 docs: lecciones Stage 5 agent-browser + sesión vacaciones-final`
+- Branches mergeadas borradas: `feat/vacaciones-final` (local + remote).
+- Working tree del proyecto: **clean**.
 
-Bug pre-existente "días corridos no descuenta feriados" **resuelto gratis**
-con la migración (un feriado nunca es día hábil por definición).
-
-## Estado al cierre
-
-- **Branch master:** `5c0e275` (merge no-ff de `feat/vacaciones-habiles`).
-  Sincronizada con `origin/master`.
-- **Working tree:** limpio.
-- **Producción (`https://ssb-workspace.netlify.app`):** auto-deploy disparado
-  en push a master. Pendiente verificar deploy ID en Netlify.
-- **DB (`xkppkzfxgtfsmfooozsm`):** 4 migraciones aplicadas en orden +
-  TRUNCATE `vac_balance_adjustments` ad-hoc. Schema final:
-  - `count_business_days(date, date)` SECURITY DEFINER, EXECUTE solo
-    `authenticated` (anon revocado tras advisor warn).
-  - `vac_employees.annual_days` CHECK `IN (10,15,20,25)`, default 10. Mapping
-    aplicado: 14→10, 21→15, 28→20, 35→25 (10 empleados activos).
-  - `vac_compute_request_fields` con `tg_op` condicional: en UPDATE solo
-    recalcula `days_count` si cambian `start_date` o `end_date`.
-  - `vac_balance_adjustments` con 0 filas (Belén -9 truncada).
-- **Saldo manual:** John ajustó `annual_days` y/o cargó ajustes manuales
-  para algunos empleados como decisión operativa fuera de scope técnico
-  (ver `vac_balance_view` en producción).
-
-## Commits de esta sesión (6 total: 5 feature + 1 merge)
+## Commits clave de esta sesión
 
 ```
-5c0e275 Merge feat/vacaciones-habiles
-30af6ff feat(vacaciones): warning de superposición con backup (lado admin + copy mejorado lado empleado)
-1ed91aa fix(vacaciones): redeclaración de subEl rompía bootstrap del módulo
-fcbbbf2 feat(vacaciones): cliente cuenta hábiles con feriados
-2b95238 feat(vacaciones): UI a días hábiles + leyenda informativa
-34f78c8 feat(vacaciones): SQL backend en días hábiles + count_business_days
+a5e051b docs: actualizar CLAUDE.md con módulo Vacaciones
+577b8dc Merge feat/vacaciones-final: Mi calendario + Resumen equipo
+8ea4eeb feat(calendar): back-up rojo + chip cada día + cumple centrado + nombre completo
+c8ba779 feat(calendar): mejoras UI Mi calendario + Resumen equipo
+8956ea4 feat(calendar): indicador back-up en días que cubrís
+3f94946 feat(calendar): cumpleaños del equipo activo en celda
+363c798 feat(calendar): highlight continuo + tag solo en primer día contiguo
+d94ed12 feat(calendar): mostrar nombre del feriado en la celda
+77c3d14 fix(vacaciones): sanitizar mensaje de error en modal de ajuste admin
+569f7a1 fix(vacaciones): filtro defensivo current_period_year en query admin de vac_balance_view
+0fad2e6 fix(vacaciones): guard isAdmin al inicio de renderTeamSummary
 ```
 
-## Cobertura E2E
+(En `claude-config`: `bfc3d05 feat(skills): add agent-browser global skill` + `8665685 docs: lecciones Stage 5 agent-browser`).
 
-**Backend (automatizado vía SQL):** 17/17 PASS
-- count_business_days: 8 casos (feriado en medio, finde puro, vie, cruza
-  feriado, semana normal, fin de año con Navidad+finde, Año Nuevo, año sin
-  cobertura → P0001).
-- Histórico: 16 aprobadas / 115 días corridos preservados en period_year=2025.
-- Tramos: 2 emp × 10 días, 4 × 15, 4 × 20.
-- vac_balance_view: 10 empleados con totales coherentes.
-- Trigger condicional: INSERT calcula (5), UPDATE status preserva (5),
-  UPDATE end_date recalcula (1).
-- Advisors: anon WARN evitado, auth WARN aceptado/by-design.
+## Reglas establecidas mantenidas
 
-**Frontend (manual John, parcial):** core verificado (booteo OK, smoke
-visuales aprobados), batería completa diferida a próxima sesión con
-browser MCP.
+- **Voseo argentino modo cavernícola**, conclusión primero, justificación después.
+- **Una pregunta a la vez** cuando hay decisión que tomar.
+- **Prompts a Claude Code en cuadro técnico estructurado** (contexto, tareas, stop conditions, decisiones autónomas permitidas, verify, autocrítica obligatoria).
+- **EXPLORE → PLAN → IMPLEMENT → VERIFY** con stop-points obligatorios entre fases.
+- **Autocrítica al final** de cada respuesta no trivial: cita vs interpretación, qué minimicé, inconsistencias, edge cases.
+- Si Claude Code falla 2 veces seguidas → `/clear` y reintentar con prompt más acotado.
 
-## Bug pre-existente resuelto
+## Lecciones nuevas de esta sesión
 
-**"Cálculo de días corridos no descuenta feriados"** — reportado por Belén
-2026-05-07. Resuelto automáticamente con la migración: el trigger SQL ahora
-usa `count_business_days` que excluye `vac_holidays` por definición.
-**La memoria `project_bug_dias_corridos_feriados.md` puede archivarse.**
+1. **Granularidad de commits**: features nuevas → un commit por feature (permite `git bisect`, `git revert` quirúrgico). Iteración UI sobre features ya hechas → un commit final cuando se ve bien (granularidad intermedia no aporta).
+2. **Verificación visual obligatoria** en cambios CSS/JS visuales. Asumir que se ve bien por lectura de código es el camino al bug. Caso real: `.vac-aprobada` con `background:var(--green-bg)` declarado pero overrideado por specificity (`#panel-vacaciones .vac-cal-day` con 1 ID + 1 class > regla global con 1 class). Nunca se vio en pantalla hasta el smoke test local 4 commits después.
+3. **Agents Explore subordinados pueden mentir.** Validar findings con `grep` cruzado antes de actuar. Caso real: agent ubicó query en `loadTeamData` cuando la deuda era `loadAdminData`.
+4. **Daemon agent-browser respawnea entre invocations** (corrige lección anterior de "PID estable"). PIDs observados en una misma sesión: `619283 → 623917 → 627758`. Stop conditions deben verificar daemon vivo (cualquier PID), no PID específico.
+5. **Snapshot prematuro en SPA autenticada**: `agent-browser open --session-name ssb-workspace` + `wait --load networkidle` NO basta. Hace falta `sleep 1` extra para que React desmonte el form de login y monte la app post-bootstrap. Sin el wait, el snapshot captura el limbo "Sincronizando información…" con login form aún en DOM.
 
-## DEUDA VIVA arrastrada del handoff anterior (NO atacada en esta sesión)
+## Tema NUEVO a revisar en la próxima sesión
 
-Sigue pendiente del feature Vacaciones Admin Adjustments (2026-05-07):
+### Cumpleaños — día libre no se descuenta del saldo (flageado por John 2026-05-08)
 
-1. **MEDIUM** — `renderTeamSummary` sin guard `isAdmin` (defensivo, no
-   exploitable hoy).
-2. **LOW** — `alert(error.message)` en modal de ajuste filtra mensajes
-   Supabase crudos (admin-only screen).
-3. **LOW** — query `vac_balance_view` admin sin filtro defensivo de
-   `period_year`.
-4. **INFO** — `openAdjustmentModal` ~130 líneas, candidato a refactor
-   en helpers.
-5. **DIFERIDO** — Test 8 RLS asimétrica (SELECT directo de Belén desde
-   DevTools).
-6. **DIFERIDO** — Cleanup de branches mergeadas: `feat/vacaciones-habiles`
-   (esta), `feat/vacaciones-admin-adjustments`, `feat/auth-and-rebrand`,
-   `feat/vacaciones`, `feature/tarifas-terrestres-dow`.
+John reportó que el día de cumpleaños "se considera como un día de vacaciones más" pero no se está descontando. **Antes de tocar código, clarificar cuál de estas 2 interpretaciones es la correcta:**
 
-Memoria de referencia: `project_deuda_post_vacaciones_admin_2026-05-07.md`.
+1. **Cumple como día EXTRA encima de `annual_days`**: equivalente a `effective_annual_days = annual_days + extra_days + 1`. Si hoy no se suma, falta `+1` en `vac_balance_view` o en `computeRealAvailable`.
+2. **Cumple como día que cuenta CONTRA `annual_days`**: si el empleado lo carga como solicitud, debería descontar igual que cualquier otro. Si no descuenta, hay bug en `count_business_days` o en el trigger `vac_compute_request_fields` (capaz lo está filtrando como si fuera feriado).
 
-## PRÓXIMA SESIÓN — Features nuevos pedidos por John (Mi calendario)
+**Política actual documentada (CLAUDE.md project):** *"Cumpleaños (1 día libre por empleado): NO se descuenta automáticamente — gestión manual entre solicitante y admin (vía nota en la solicitud)"*. La card del stats-strip es informativa, no afecta balance. Cambio de política implica decisión con supervisor.
 
-a. **Feriado con nombre** — mostrar "25/05 Revolución de Mayo" en lugar de
-   solo "FERIADO" en la celda del calendario.
-b. **Cumpleaños del equipo** — visualizar en Mi calendario los cumpleaños
-   de todos los empleados activos (hoy solo se ve el propio).
-c. **Indicador "BACK-UP · [Nombre]"** — en cada día donde una persona a la
-   que el usuario actual cubre como back-up está de vacaciones (status
-   `pendiente`/`tentativa`/`aprobada`), marcar la celda con esa etiqueta.
-d. **Visual de aprobadas** — hoy se renderiza etiqueta "APROB." por día
-   individual. Evaluar franja continua o highlight limpio para el rango
-   completo.
+**Plan inicial sugerido:**
+- Pedir caso concreto: nombre del empleado, fecha del cumple, fecha de la solicitud.
+- Query directa a `vac_balance_view` y `vac_requests` de ese empleado para ver el cómputo real.
+- Decidir interpretación correcta antes de tocar código.
 
-## PRÓXIMA SESIÓN — Capability nueva
+Memoria de referencia: `project_bug_cumpleanos_dia_libre.md`.
 
-Conectar **MCP "Claude in Chrome"** en Claude Code para que las próximas
-verificaciones E2E UI las haga directamente el agente en lugar de listarlas
-para que John las corra manualmente. Beneficio: cierra el loop de smoke
-testing en una sesión sin pausa manual.
+## Deudas vivas actualizadas
 
-## Restricciones que se siguen respetando
+### Operativas
+- **Rename repo GitHub** `tarifa-schedule` → `ssb-workspace` + update remote en VS Code. Solo se cambió URL Netlify.
+- **Cleanup de branches mergeadas viejas** en `tarifa-schedule`: `feat/vacaciones-admin-adjustments`, `feat/auth-and-rebrand`, `feat/vacaciones`, `feature/tarifas-terrestres-dow` (la nueva `feat/vacaciones-final` ya se borró).
+- **Housekeeping `claude-config`**: `settings.json` modified, `plugins/marketplaces/claude-plugins-official/.claude-plugin/marketplace.json` modified, `plugins/.../external_plugins/supabase/.claude-plugin/plugin.json` y `.mcp.json` deleted, `tasks/` untracked. Decidir si commitear, gitignorear, o revertir.
 
-- No tocar n8n workflows ni Gmail.
-- No tocar validador-aduanal ni export-control.
-- No hacer rename `tarifa-schedule` → `ssb-workspace` (diferido).
-- Histórico aprobadas pre-2026-05-08 queda en corridos (decisión).
-- `vac_balance_adjustments` recarga es manual de John, no automatizada.
+### Bugs visuales menores
+- **`var(--red-bg)` global lavado en light theme** (#fff0f0) — afecta la fila `.vac-team-row--negative` del Resumen del equipo (mismo síntoma que tenía `.vac-aprobada` antes del fix de specificity). El fix está localizado en `.vac-cal-grid` para el calendario, pero el Resumen del equipo NO recibe ese override. Si querés rojo más visible en filas negativas, repetir el patrón scopeado.
+- **Inconsistencia de 3 rojos en la app**: `var(--red)` global (`#ef6461` dark / `#c0392b` light), `var(--red-bg)` global, y `rgba(220,38,38,.22)` hardcoded del back-up del calendario (`#dc2626`/red-600 de Tailwind). Funcionalmente OK, visualmente capaz se sienten dos rojos distintos sin razón. Decidir si normalizar.
+- **CSS class mismatch pre-existente**: JS hace `classes.push('vac-' + 'no_laborable')` → `vac-no_laborable` (underscore), CSS selector `.vac-no-laborable` (guión). Bug de pintado preexistente, fuera de scope.
 
-## Archivos modificados en esta sesión
+### Refactor / tests pendientes
+- **Refactor `openAdjustmentModal`** (~135 líneas, candidato).
+- **Test 8 RLS asimétrica** (DIFERIDO desde sesión anterior — verificar SELECT directo desde DevTools de un empleado contra `vac_balance_adjustments` ajenos).
 
-```
-docs/superpowers/plans/2026-05-08-vacaciones-habiles.md         (nuevo, 948 líneas)
-migrations/2026-05-08-vacaciones-habiles/
-  ├── 01-count-business-days.sql                                (nuevo)
-  ├── 02-update-annual-days.sql                                 (nuevo)
-  ├── 03-replace-trigger.sql                                    (nuevo)
-  ├── 04-truncate-adjustments.sql                               (nuevo)
-  ├── applied.sql                                               (nuevo, consolidado)
-  ├── before.sql                                                (nuevo, snapshot)
-  ├── rollback.sql                                              (nuevo)
-  └── README.md                                                 (nuevo)
-index.html                                                      (~155 líneas net)
-CLAUDE.md (proyecto)                                            (sección nueva)
-SESSION_HANDOFF.md                                              (este archivo)
-```
+## Próximos flows posibles
+
+- **Resolver cumpleaños/saldo** (item nuevo de arriba — probablemente el primer task de la próxima sesión).
+- Atacar deudas LOW (refactor `openAdjustmentModal`, normalización de paleta de rojos).
+- Rename de repo `tarifa-schedule` → `ssb-workspace` end-to-end.
+- Smoke test con `agent-browser` headless de la prod recién deployada (la sesión persistida en `~/.agent-browser/sessions/ssb-workspace-default.json` sigue válida ~30 días desde 2026-05-08).
+- Otras features que aparezcan del feedback de Belén / equipo.
+
+## Setup verificado live (NO re-instalar)
+
+- `agent-browser 0.27.0` global vía npm.
+- Chrome for Testing `148.0.7778.97` en `~/.agent-browser/browsers/`.
+- Skill `agent-browser` en `~/.claude/skills/agent-browser/SKILL.md` (con sección "Lecciones de Stage 5" actualizada en commit `8665685`).
+- Sesión persistida en `~/.agent-browser/sessions/ssb-workspace-default.json` (válida ~30 días desde 2026-05-08, cookies+localStorage de SSB Workspace).
+- WSLg activo (`WAYLAND_DISPLAY=wayland-0`, `DISPLAY=:0`) — `--headed` funciona.
+- `jq` NO instalado en el WSL, usar `python3 -c 'import json,sys;...'` para parsear `--json` outputs.
+
+## Identifiers
+
+- Supabase project: `xkppkzfxgtfsmfooozsm`
+- n8n Cloud: `jzenteno.app.n8n.cloud`
+- Netlify: `ssb-workspace.netlify.app`
+- GitHub: `jzenteno-creador/tarifa-schedule` (rename pendiente a `ssb-workspace`)
