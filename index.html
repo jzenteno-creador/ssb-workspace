@@ -1258,7 +1258,14 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-cal-day{
   aspect-ratio:1.25/1;border:1px solid var(--border);border-radius:6px;
   padding:6px 8px 8px;font-size:var(--fs-sm);background:var(--surface);
-  position:relative;display:flex;flex-direction:column;
+  position:relative;
+  /* Grid 4 rows: num (top) / bday (centro vertical, 1fr toma sobrante)
+     / badges (bottom) / tag (bottom-most). Las rows 2-4 son auto
+     cuando vacías y colapsan, así el layout se acomoda solo. */
+  display:grid;
+  grid-template-rows:auto 1fr auto auto;
+  grid-template-columns:1fr;
+  row-gap:2px;
 }
 /* Highlight continuo de status — selectores escalados al specificity
    correcto (1 ID + 2 class) para superar al base .vac-cal-day. La
@@ -1271,9 +1278,12 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-cal-day--muted{opacity:.35}
 #panel-vacaciones .vac-cal-day--today{border:2px solid var(--blue)}
 #panel-vacaciones .vac-cal-day--today .vac-cal-day-num{color:var(--blue);font-weight:700}
-#panel-vacaciones .vac-cal-day-num{font-weight:600;font-variant-numeric:tabular-nums}
+#panel-vacaciones .vac-cal-day-num{
+  grid-row:1;font-weight:600;font-variant-numeric:tabular-nums;
+}
 #panel-vacaciones .vac-cal-day-tag{
-  font-size:9px;color:var(--muted);margin-top:auto;
+  grid-row:4;
+  font-size:9px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.05em;font-weight:600;
   font-family:var(--mono);line-height:1.1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -1289,37 +1299,49 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-cal-day.vac-feriado .vac-cal-day-tag{color:var(--red)}
 #panel-vacaciones .vac-cal-day.vac-no-laborable .vac-cal-day-tag{color:var(--amber)}
 
-/* Back-up — patrón continuo. Si la celda tiene además status (aprobada
-   /pendiente/tentativa), las clases de status van DESPUÉS en el JS y
-   ganan en CSS por orden de declaración + igual specificity. La rule
-   .vac-backup se aplica solo cuando NO hay status (caso típico). El
-   chip "🛡️ Nombre" se renderiza solo en el primer día del bloque
-   contiguo por el tracker prevHasBackup en JS. */
+/* Back-up — patrón continuo en ROJO INTENSO (no rosa, no morado: el
+   morado lo ocupa tentativa). Saturación más alta que aprobada/pend
+   para que el bloque comunique alarma "estoy cubriendo". El chip
+   🛡️ se repite en CADA día del rango por decisión UX explícita
+   del user (un bloque rojo sin texto no comunica qué cubre). Cuando
+   la celda tiene además status del propio user (aprobada/pend/tent),
+   esas clases ganan visualmente y .vac-backup no se aplica. */
 #panel-vacaciones .vac-cal-day.vac-backup{
-  background:rgba(236,72,153,.10);
-  border-color:rgba(236,72,153,.28);
+  background:rgba(220,38,38,.22);
+  border-color:rgba(220,38,38,.45);
 }
 
-/* Markers extra (cumple, back-up) — fila inferior compacta */
-#panel-vacaciones .vac-cal-day-badges{
-  display:flex;flex-wrap:wrap;gap:3px;
-  margin-top:auto;margin-bottom:2px;line-height:1;
-  font-family:var(--mono);
+/* Cumpleaños — badge centrado verticalmente en la celda. Es row 2 del
+   grid (1fr), centrado con align-self/justify-self. Un toque más
+   grande que el badge bottom para destacar (es celebratorio). */
+#panel-vacaciones .vac-cal-day-bday{
+  grid-row:2;align-self:center;justify-self:center;
+  font-size:10px;padding:2px 6px;border-radius:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:calc(100% - 4px);
+  letter-spacing:.02em;font-weight:600;line-height:1.15;
+  background:rgba(236,72,153,.16);color:#db2777;
+  border:1px solid rgba(236,72,153,.32);
+  font-family:var(--font);
+  text-align:center;
 }
-#panel-vacaciones .vac-cal-day-badges + .vac-cal-day-tag{margin-top:3px}
+
+/* Container del back-up (row 3 — bottom). Solo back-up cabe acá ahora;
+   antes vivía el bday también. */
+#panel-vacaciones .vac-cal-day-badges{
+  grid-row:3;
+  display:flex;flex-wrap:wrap;gap:3px;
+  line-height:1;font-family:var(--mono);
+}
 #panel-vacaciones .vac-cal-day-badge{
   font-size:9px;padding:2px 4px;border-radius:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   max-width:100%;letter-spacing:.02em;font-weight:600;
   border:1px solid transparent;line-height:1.1;
 }
-#panel-vacaciones .vac-cal-day-badge--bday{
-  background:rgba(236,72,153,.16);color:#db2777;
-  border-color:rgba(236,72,153,.32);
-}
 #panel-vacaciones .vac-cal-day-badge--backup{
-  background:rgba(59,130,246,.14);color:#1d4ed8;
-  border-color:rgba(59,130,246,.32);
+  background:rgba(220,38,38,.18);color:#b91c1c;
+  border-color:rgba(220,38,38,.4);
 }
 
 /* Side panel */
@@ -10654,7 +10676,6 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // ininterrumpida con un único "Aprob." al inicio, en vez de
     // repetir la etiqueta en cada celda.
     let prevStatusType = null;
-    let prevHasBackup = false;
     for(let d = 1; d <= lastDay.getDate(); d++){
       const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const st = dayState[iso];
@@ -10684,35 +10705,39 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
       prevStatusType = isRequestStatus ? st.type : null;
 
-      // BACK-UP: tracking del bloque contiguo de cobertura. La clase
-      // .vac-backup aplica solo si NO hay status del propio user
-      // (aprobada/pend/tent gana visualmente; el chip 🛡️ del primer
-      // día sigue mostrándose para no perder la info).
+      // BACK-UP: clase .vac-backup en cada día con cobertura (rojo
+      // intenso, comunica alarma). Aplica solo si NO hay status del
+      // propio user (aprobada/pend/tent gana visualmente). Sin tracker
+      // prevHasBackup: el chip se renderiza en CADA día del rango por
+      // decisión UX explícita — el bloque rojo sin texto no comunica
+      // qué se cubre.
       const bkList = backupCoverByIso.get(iso) || [];
       const hasBackup = bkList.length > 0;
-      const isFirstBackup = hasBackup && !prevHasBackup;
       if(hasBackup && !isRequestStatus){
         classes.push('vac-backup');
       }
-      prevHasBackup = hasBackup;
 
-      // Badges extra — cumpleaños del equipo (mes 1-12 vs m zero-based).
-      const badges = [];
+      // Cumpleaños — badge separado del container .vac-cal-day-badges,
+      // se renderiza en row 2 del grid (centro vertical de la celda).
+      // Nombre completo, no split. CSS trunca con ellipsis si no entra.
+      let bdayHtml = '';
       const bdayList = bdaysByDayMonth.get(`${d}-${m+1}`) || [];
       if(bdayList.length){
         const names = bdayList.map(e => e.full_name).join(', ');
         const visible = bdayList.length === 1
-          ? (bdayList[0].full_name.split(' ')[0] || bdayList[0].full_name)
+          ? bdayList[0].full_name
           : `${bdayList.length} cumples`;
-        badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--bday" title="🎂 ${escHtml(names)}">🎂 ${escHtml(visible)}</span>`);
+        bdayHtml = `<div class="vac-cal-day-bday" title="🎂 ${escHtml(names)}">🎂 ${escHtml(visible)}</div>`;
       }
-      // Badge BACK-UP — chip SOLO en el primer día del bloque contiguo.
-      // Los días siguientes mantienen el background pink (clase
-      // .vac-backup) sin repetir el chip, igual al patrón de aprobada.
-      if(hasBackup && isFirstBackup){
+
+      // Badge BACK-UP — chip en CADA día del rango (no solo en el
+      // primero). Nombre completo. Si cubre 2+ personas el mismo día:
+      // chip "🛡️ N pers." con tooltip de nombres + status.
+      const badges = [];
+      if(hasBackup){
         const detail = bkList.map(b => `${b.name} (${b.status})`).join(' · ');
         const visible = bkList.length === 1
-          ? `🛡️ ${bkList[0].name.split(' ')[0] || bkList[0].name}`
+          ? `🛡️ ${bkList[0].name}`
           : `🛡️ ${bkList.length} pers.`;
         badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--backup" title="Cubrís a: ${escHtml(detail)}">${escHtml(visible)}</span>`);
       }
@@ -10720,7 +10745,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
       const tagHtml = tag ? `<span class="vac-cal-day-tag">${escHtml(tag)}</span>` : '';
       const badgesHtml = badges.length ? `<div class="vac-cal-day-badges">${badges.join('')}</div>` : '';
-      out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${badgesHtml}${tagHtml}</div>`);
+      out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${bdayHtml}${badgesHtml}${tagHtml}</div>`);
     }
     // Días del mes siguiente (muted)
     for(let i = 1; i <= trailing; i++){
