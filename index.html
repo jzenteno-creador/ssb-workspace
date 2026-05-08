@@ -1162,6 +1162,9 @@ body.dark .vac-approval-text strong{color:var(--amber)}
   margin-top:4px;font-size:var(--fs-2xs);color:var(--muted);
   font-family:var(--mono);font-weight:600;
 }
+#panel-vacaciones .vac-team-cell-sub{
+  font-size:var(--fs-2xs);color:var(--muted);font-weight:500;margin-left:4px;
+}
 #panel-vacaciones .vac-stat--bday .vac-stat-value{color:var(--purple)}
 #panel-vacaciones .vac-stat--empty .vac-stat-value{color:var(--muted);font-size:var(--fs-sm);font-weight:600;line-height:1.4;font-family:var(--font);letter-spacing:0}
 #panel-vacaciones .vac-stat--adj .vac-stat-value{font-variant-numeric:tabular-nums}
@@ -2830,7 +2833,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
         <div class="vac-disclaimer-line">Período vacacional: <strong>1° de octubre al 30 de septiembre</strong>. Los días disponibles se renuevan cada 1° de octubre.</div>
         <div class="vac-disclaimer-line vac-disclaimer-bday" id="vac-bday-line" style="display:none"></div>
         <div class="vac-disclaimer-line vac-disclaimer-bday-hint">Recordá: cada empleado tiene <strong>1 día libre por su cumpleaños</strong>, idealmente en su mes.</div>
-        <div class="vac-disclaimer-line vac-disclaimer-bday-hint">Período máximo para tomarse seguido: <strong>2 semanas (14 días corridos)</strong>.</div>
+        <div class="vac-disclaimer-line vac-disclaimer-bday-hint">Período máximo para tomarse seguido: <strong>10 días hábiles (2 semanas)</strong>.</div>
       </div>
     </div>
 
@@ -2848,6 +2851,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
         <div class="vac-stat">
           <div class="vac-stat-label">Total anual</div>
           <div class="vac-stat-value"><span id="vac-stat-total">—</span><span class="vac-stat-unit">días</span></div>
+          <div class="vac-stat-sub" id="vac-stat-total-sub">—</div>
         </div>
         <div class="vac-stat">
           <div class="vac-stat-label">Aprobados</div>
@@ -3016,7 +3020,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
             <div class="vac-form-summary">
               <div class="vac-form-summary-row">
                 <div>
-                  <span class="vac-form-big" id="vac-form-days">0</span><span class="vac-form-muted"> días corridos</span>
+                  <span class="vac-form-big" id="vac-form-days">0</span><span class="vac-form-muted"> días hábiles</span>
                   <div class="vac-form-range mono" id="vac-form-range">—</div>
                 </div>
                 <div style="text-align:right">
@@ -10296,6 +10300,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return e?.annual_days ?? 0;
   }
 
+  // Convierte annual_days (LCT × 5) en su equivalente en semanas para mostrar
+  // como leyenda muted. NO usa total = annual + extra: extra_days es un
+  // premio one-time, no escala el tramo LCT.
+  function weeksLabel(annualDays){
+    const w = Math.round((annualDays || 0) / 5);
+    return `${w} ${w === 1 ? 'semana' : 'semanas'}`;
+  }
+
   // Helper: cómputo del "disponible real" — única fuente de verdad para 3 consumidores
   // (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview).
   // Pure function: mismos inputs → mismos outputs, sin side effects.
@@ -10325,6 +10337,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     set('vac-stat-approved', r.aprobados);
     set('vac-stat-pending', r.pendientes);
     set('vac-stat-remaining', r.disponible);
+
+    // Leyenda informativa: equivalencia LCT en semanas (sobre annual_days,
+    // no sobre el total con extra_days). Si hay extra_days, se muestra
+    // aparte como aclaración.
+    const annual = b?.annual_days ?? e?.annual_days ?? 0;
+    const extra  = b?.extra_days  ?? e?.extra_days  ?? 0;
+    const subEl = $('vac-stat-total-sub');
+    if(subEl){
+      subEl.textContent = extra > 0
+        ? `${weeksLabel(annual)} + ${extra} extra`
+        : weeksLabel(annual);
+    }
 
     // Card "Día de cumpleaños" — informativa, NO afecta balance.
     const card = $('vac-stat-bday-card');
@@ -11674,7 +11698,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       tr.appendChild(tdName);
 
       const tdTotal = document.createElement('td');
-      tdTotal.textContent = String(r.totalAnual);
+      const annualBase = balance.annual_days ?? e.annual_days ?? 0;
+      const extraBase  = balance.extra_days  ?? e.extra_days  ?? 0;
+      // Número grande = totalAnual (annual + extra). Leyenda muted = solo
+      // tramo LCT en semanas, derivado de annual_days. Si hay extra_days,
+      // se incluye como sufijo aclarativo.
+      const subTxt = extraBase > 0
+        ? `${weeksLabel(annualBase)} + ${extraBase} extra`
+        : weeksLabel(annualBase);
+      tdTotal.innerHTML = `${r.totalAnual} <span class="vac-team-cell-sub">(${escHtml(subTxt)})</span>`;
       tr.appendChild(tdTotal);
 
       const tdAprob = document.createElement('td');
@@ -12292,10 +12324,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         <div>
           <label class="vac-form-label" for="vac-emp-days">Días anuales</label>
           <select id="vac-emp-days" class="vac-form-select">
-            <option value="14" ${emp?.annual_days === 14 ? 'selected' : ''}>14 días</option>
-            <option value="21" ${(!emp || emp.annual_days === 21) ? 'selected' : ''}>21 días</option>
-            <option value="28" ${emp?.annual_days === 28 ? 'selected' : ''}>28 días</option>
-            <option value="35" ${emp?.annual_days === 35 ? 'selected' : ''}>35 días</option>
+            <option value="10" ${emp?.annual_days === 10 ? 'selected' : ''}>10 días hábiles (2 semanas)</option>
+            <option value="15" ${(!emp || emp.annual_days === 15) ? 'selected' : ''}>15 días hábiles (3 semanas)</option>
+            <option value="20" ${emp?.annual_days === 20 ? 'selected' : ''}>20 días hábiles (4 semanas)</option>
+            <option value="25" ${emp?.annual_days === 25 ? 'selected' : ''}>25 días hábiles (5 semanas)</option>
           </select>
         </div>
       </div>
