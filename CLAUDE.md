@@ -273,3 +273,15 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - **Módulo Vacaciones — completo (5 fases + extensiones)**
 - **Auth global obligatoria** — toda la app vive detrás del gate, gating por `vac_employees`
 - **Vacaciones — ajuste manual auditado (2026-05-07)** — admin carga ajustes inmutables (`vac_balance_adjustments`) sobre el saldo disponible de cualquier empleado, sin tocar `annual_days` ni `extra_days`. Empleado afectado ve los suyos con motivo en Mi calendario; admin ve todos. Cómputo del "disponible real" en frontend vía `computeRealAvailable(balanceRow, adjustments)` (única función pura, 3 consumidores). NO se modifica `vac_balance_view`. RLS hardened: INSERT exige `created_by = vac_my_employee_id()` (anti-spoofing). UPDATE/DELETE bloqueados por ausencia de policy + revoke de grants (Q3 inmutabilidad). **Convención: delta positivo SUMA al saldo, negativo lo descuenta.**
+
+## Decisiones inamovibles · Migración días hábiles (2026-05-08)
+
+- Saldo en hábiles, no corridos. Tramos LCT × 5 = `10/15/20/25` (`annual_days` CHECK + default 10).
+- `count_business_days(start, end)` SECURITY DEFINER excluye sáb/dom/feriados de `vac_holidays`. Tira `P0001 'no hay feriados cargados para el año X'` si el año del rango no tiene cobertura. EXECUTE solo a `authenticated` (anon revocado tras advisor).
+- Trigger `vac_compute_request_fields` recalcula `days_count` solo si cambian `start_date` o `end_date` (UPDATE de `status`/`note` preserva el valor original). `period_year` y `updated_at` se siguen derivando siempre.
+- Cliente: `countBusinessDays(start, end)` JS replica la lógica usando `window.__vac.holidays` (cargado sin filtro de fecha en `loadMyData`). Lanza `Error{code:'NO_HOLIDAYS_FOR_YEAR'}` si falta cobertura. `daysBetweenInclusive` se mantiene **solo para `renderTeamGantt`** (rango calendario del Gantt anual).
+- Histórico de `vac_requests` aprobadas pre-2026-05-08 conservado en corridos por decisión (period_year=2025 ya cerró, no afecta saldo actual).
+- `vac_balance_adjustments` truncada en migración; recargar manual post-migración con valores en hábiles.
+- Warning de overlap con back-up: lado empleado en preview del form (status incluido en copy, gramática singular/plural). Lado admin en `approveRequest` con `confirm()` previo al UPDATE — Cancel aborta sin tocar nada. Reusa `computeBackupConflicts(req)` existente.
+- Migration files: `migrations/2026-05-08-vacaciones-habiles/` (4 SQLs en orden + `applied.sql` consolidado + `rollback.sql` + `before.sql` snapshot + README).
+- Plan canon: `docs/superpowers/plans/2026-05-08-vacaciones-habiles.md`.
