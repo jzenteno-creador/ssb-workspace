@@ -10539,14 +10539,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       let tag = '';
       if(iso === todayIso) classes.push('vac-cal-day--today');
       if(st){
-        const tagMap = { aprobada:'Aprob.', pendiente:'Pend.', tentativa:'Tent.', feriado:'Feriado', no_laborable:'No lab.' };
+        const tagMap = { aprobada:'Aprob.', pendiente:'Pend.', tentativa:'Tent.', no_laborable:'No lab.' };
         classes.push('vac-' + st.type);
-        tag = tagMap[st.type] || '';
+        // Para feriados: mostrar el nombre real del feriado en la celda
+        // (el array ya viene con h.name, antes se mostraba la constante
+        // "Feriado" perdiendo info útil para el usuario).
+        if(st.type === 'feriado') tag = st.label || 'Feriado';
+        else tag = tagMap[st.type] || '';
       } else if(iso === todayIso){
         tag = 'Hoy';
       }
       const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
-      const tagHtml = tag ? `<span class="vac-cal-day-tag">${tag}</span>` : '';
+      const tagHtml = tag ? `<span class="vac-cal-day-tag">${escHtml(tag)}</span>` : '';
       out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${tagHtml}</div>`);
     }
     // Días del mes siguiente (muted)
