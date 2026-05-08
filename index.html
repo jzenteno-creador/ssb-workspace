@@ -11733,6 +11733,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   // ── Render: Resumen del equipo (admin) ──
   function renderTeamSummary(){
+    if(!window.__vacAuth?.isAdmin) return;
     const tbody = $('vac-team-tbody');
     const empty = $('vac-team-empty');
     if(!tbody) return;
