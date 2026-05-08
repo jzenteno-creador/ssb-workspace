@@ -1244,6 +1244,28 @@ body.dark .vac-approval-text strong{color:var(--amber)}
 #panel-vacaciones .vac-cal-day.vac-feriado .vac-cal-day-tag{color:var(--red)}
 #panel-vacaciones .vac-cal-day.vac-no-laborable .vac-cal-day-tag{color:var(--amber)}
 
+/* Markers extra (cumple, back-up) — fila inferior compacta */
+#panel-vacaciones .vac-cal-day-badges{
+  display:flex;flex-wrap:wrap;gap:3px;
+  margin-top:auto;line-height:1;
+  font-family:var(--mono);
+}
+#panel-vacaciones .vac-cal-day-badges + .vac-cal-day-tag{margin-top:3px}
+#panel-vacaciones .vac-cal-day-badge{
+  font-size:9px;padding:1px 4px;border-radius:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:100%;letter-spacing:.02em;font-weight:600;
+  border:1px solid transparent;
+}
+#panel-vacaciones .vac-cal-day-badge--bday{
+  background:rgba(236,72,153,.12);color:#db2777;
+  border-color:rgba(236,72,153,.25);
+}
+#panel-vacaciones .vac-cal-day-badge--backup{
+  background:rgba(59,130,246,.12);color:#1d4ed8;
+  border-color:rgba(59,130,246,.28);
+}
+
 /* Side panel */
 #panel-vacaciones .vac-side-section{padding:14px 18px;border-bottom:1px solid var(--border)}
 #panel-vacaciones .vac-side-section:last-child{border-bottom:none}
@@ -10322,15 +10344,25 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         .select('id,period_year,delta_days,reason,created_at,created_by,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
         .eq('employee_id', empId)
         .eq('period_year', periodYear)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }),
+      // Empleados activos con cumpleaños — para marcar los cumples del
+      // equipo en el calendario mensual de Mi calendario. La RLS de
+      // vac_employees permite SELECT a cualquier authenticated, así que
+      // cualquier empleado logueado puede listar a los demás (mismo
+      // alcance que la vista Equipo).
+      supa.from('vac_employees')
+        .select('id,full_name,birthday_day,birthday_month')
+        .eq('active', true)
+        .order('full_name', { ascending: true })
     ];
-    const [bRes, rRes, hRes, bkRes, aRes] = await Promise.all(queries);
+    const [bRes, rRes, hRes, bkRes, aRes, eRes] = await Promise.all(queries);
 
     window.__vac.balance        = bRes?.data || null;
     window.__vac.requests       = rRes?.data || [];
     window.__vac.holidays       = hRes?.data || [];
     window.__vac.backupRequests = bkRes?.data || [];
     window.__vac.adjustments    = aRes?.data || [];
+    window.__vac.allEmployees   = eRes?.data || [];
   }
 
   // Helper: días anuales efectivos (annual_days + extra_days). Lo lee de la view
@@ -10531,6 +10563,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const d = new Date(y, m, 1 - i);
       out.push(`<div class="vac-cal-day vac-cal-day--muted"><span class="vac-cal-day-num">${d.getDate()}</span></div>`);
     }
+    // Pre-compute markers extra que se renderizan abajo de la celda:
+    //   1) Cumpleaños del equipo: agrupados por día/mes (mes 1-12).
+    //   Empleados activos sin birthday seteado se ignoran (filter null).
+    const allEmps = window.__vac.allEmployees || [];
+    const bdaysByDayMonth = new Map();
+    for(const e of allEmps){
+      if(!e.birthday_day || !e.birthday_month) continue;
+      const k = `${e.birthday_day}-${e.birthday_month}`;
+      if(!bdaysByDayMonth.has(k)) bdaysByDayMonth.set(k, []);
+      bdaysByDayMonth.get(k).push(e);
+    }
     // Días del mes — highlight de fondo continuo para rangos de
     // solicitudes (la clase .vac-aprobada/.vac-pendiente/.vac-tentativa
     // ya pinta el fondo). La etiqueta textual se muestra SOLO en el
@@ -10567,9 +10610,22 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         tag = 'Hoy';
       }
       prevStatusType = isRequestStatus ? st.type : null;
+
+      // Badges extra — cumpleaños del equipo (mes 1-12 vs m zero-based).
+      const badges = [];
+      const bdayList = bdaysByDayMonth.get(`${d}-${m+1}`) || [];
+      if(bdayList.length){
+        const names = bdayList.map(e => e.full_name).join(', ');
+        const visible = bdayList.length === 1
+          ? (bdayList[0].full_name.split(' ')[0] || bdayList[0].full_name)
+          : `${bdayList.length} cumples`;
+        badges.push(`<span class="vac-cal-day-badge vac-cal-day-badge--bday" title="🎂 ${escHtml(names)}">🎂 ${escHtml(visible)}</span>`);
+      }
+
       const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
       const tagHtml = tag ? `<span class="vac-cal-day-tag">${escHtml(tag)}</span>` : '';
-      out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${tagHtml}</div>`);
+      const badgesHtml = badges.length ? `<div class="vac-cal-day-badges">${badges.join('')}</div>` : '';
+      out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${badgesHtml}${tagHtml}</div>`);
     }
     // Días del mes siguiente (muted)
     for(let i = 1; i <= trailing; i++){
