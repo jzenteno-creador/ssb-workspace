@@ -10531,24 +10531,42 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const d = new Date(y, m, 1 - i);
       out.push(`<div class="vac-cal-day vac-cal-day--muted"><span class="vac-cal-day-num">${d.getDate()}</span></div>`);
     }
-    // Días del mes
+    // Días del mes — highlight de fondo continuo para rangos de
+    // solicitudes (la clase .vac-aprobada/.vac-pendiente/.vac-tentativa
+    // ya pinta el fondo). La etiqueta textual se muestra SOLO en el
+    // primer día de cada bloque contiguo del mismo estado dentro del
+    // mes — así un rango aprobado largo se ve como una franja
+    // ininterrumpida con un único "Aprob." al inicio, en vez de
+    // repetir la etiqueta en cada celda.
+    let prevStatusType = null;
     for(let d = 1; d <= lastDay.getDate(); d++){
       const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const st = dayState[iso];
       const classes = ['vac-cal-day'];
       let tag = '';
       if(iso === todayIso) classes.push('vac-cal-day--today');
+      const isRequestStatus = st && (st.type === 'aprobada' || st.type === 'pendiente' || st.type === 'tentativa');
+      const isFirstOfBlock = isRequestStatus && prevStatusType !== st.type;
       if(st){
         const tagMap = { aprobada:'Aprob.', pendiente:'Pend.', tentativa:'Tent.', no_laborable:'No lab.' };
         classes.push('vac-' + st.type);
         // Para feriados: mostrar el nombre real del feriado en la celda
         // (el array ya viene con h.name, antes se mostraba la constante
         // "Feriado" perdiendo info útil para el usuario).
-        if(st.type === 'feriado') tag = st.label || 'Feriado';
-        else tag = tagMap[st.type] || '';
+        if(st.type === 'feriado'){
+          tag = st.label || 'Feriado';
+        } else if(isRequestStatus){
+          // Tag textual SOLO en el primer día del bloque contiguo.
+          // El highlight de fondo sigue presente en TODOS los días del
+          // rango porque la clase .vac-<status> aplica per-celda.
+          tag = isFirstOfBlock ? (tagMap[st.type] || '') : '';
+        } else {
+          tag = tagMap[st.type] || '';
+        }
       } else if(iso === todayIso){
         tag = 'Hoy';
       }
+      prevStatusType = isRequestStatus ? st.type : null;
       const titleAttr = st ? ` title="${escHtml(st.label)}"` : '';
       const tagHtml = tag ? `<span class="vac-cal-day-tag">${escHtml(tag)}</span>` : '';
       out.push(`<div class="${classes.join(' ')}"${titleAttr}><span class="vac-cal-day-num">${d}</span>${tagHtml}</div>`);
