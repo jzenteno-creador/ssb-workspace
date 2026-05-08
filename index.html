@@ -10226,10 +10226,48 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const [y,m,d] = s.split('-');
     return `${d}/${m}/${y}`;
   }
+  // Días calendario inclusive (incluye fines de semana y feriados).
+  // Uso interno: render del Gantt anual (necesita el ancho total de píxeles
+  // del rango Oct→Sep) y cualquier cómputo de "longitud bruta del rango".
+  // NO usar para validar saldo de vacaciones — para eso, countBusinessDays.
   function daysBetweenInclusive(startIso, endIso){
     const a = parseIsoDate(startIso), b = parseIsoDate(endIso);
     if(!a || !b) return 0;
     return Math.round((b - a) / 86400000) + 1;
+  }
+
+  // Cuenta días hábiles inclusive [start,end] en cliente. Excluye sáb/dom y
+  // filas de window.__vac.holidays. Lanza Error si falta cobertura por año
+  // (algún año del rango sin ningún feriado cargado en vac_holidays).
+  // La fuente de verdad es count_business_days() en SQL — esta función
+  // existe solo para preview/validación instantánea sin round-trip.
+  function countBusinessDays(startIso, endIso){
+    const a = parseIsoDate(startIso), b = parseIsoDate(endIso);
+    if(!a || !b) return 0;
+    if(b < a) return 0;
+
+    const holidays = window.__vac.holidays || [];
+    const holidaySet = new Set(holidays.map(h => h.date));
+    const yearsCovered = new Set(holidays.map(h => Number(String(h.date).slice(0, 4))));
+
+    for(let y = a.getFullYear(); y <= b.getFullYear(); y++){
+      if(!yearsCovered.has(y)){
+        const err = new Error(`Cargá los feriados del año ${y} antes de pedir vacaciones en ese período.`);
+        err.code = 'NO_HOLIDAYS_FOR_YEAR';
+        err.year = y;
+        throw err;
+      }
+    }
+
+    let n = 0;
+    const cur = new Date(a);
+    while(cur <= b){
+      const dow = cur.getDay(); // 0=dom, 6=sáb
+      const iso = toIsoDate(cur);
+      if(dow !== 0 && dow !== 6 && !holidaySet.has(iso)) n++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return n;
   }
   function rangesOverlap(aStart, aEnd, bStart, bEnd){
     // Comparación lexicográfica de YYYY-MM-DD == cronológica
@@ -10272,7 +10310,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const queries = [
       supa.from('vac_balance_view').select('*').eq('employee_id', empId).maybeSingle(),
       supa.from('vac_requests').select('*').eq('employee_id', empId).eq('period_year', periodYear).order('start_date', { ascending: false }),
-      supa.from('vac_holidays').select('*').gte('date', startIso).lte('date', endIso).order('date', { ascending: true }),
+      // Cargar TODOS los feriados (small dataset ~35 filas hoy) para que
+      // countBusinessDays pueda chequear cobertura del año al pedir rangos
+      // fuera del período actual (ej. mes próximo al período siguiente).
+      supa.from('vac_holidays').select('*').order('date', { ascending: true }),
       backupIds.length
         ? supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
         : Promise.resolve({ data: [], error: null }),
@@ -10641,7 +10682,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(toEl.value !== to)     toEl.value   = to;
       fromIso = from; toIso = to;
     }
-    const days = (fromIso && toIso) ? daysBetweenInclusive(fromIso, toIso) : 0;
+    let days = 0;
+    let coverageErr = null;
+    if(fromIso && toIso){
+      try {
+        days = countBusinessDays(fromIso, toIso);
+      } catch(ex){
+        if(ex && ex.code === 'NO_HOLIDAYS_FOR_YEAR') coverageErr = ex.message;
+        else throw ex;
+      }
+    }
     $('vac-form-days').textContent = days < 0 ? 0 : days;
     $('vac-form-range').textContent = (fromIso && toIso) ? `${formatDmy(fromIso)} al ${formatDmy(toIso)} inclusive` : '—';
 
@@ -10666,8 +10716,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const errEl = $('vac-form-error');
     const submitBtn = $('vac-form-submit');
     let err = '';
-    if(fromIso && toIso && parseIsoDate(toIso) < parseIsoDate(fromIso)){
+    if(coverageErr){
+      err = coverageErr;
+    } else if(fromIso && toIso && parseIsoDate(toIso) < parseIsoDate(fromIso)){
       err = 'La fecha "Hasta" debe ser posterior o igual a "Desde".';
+    } else if(fromIso && toIso && days === 0){
+      err = 'La selección no contiene días hábiles (sólo fines de semana o feriados).';
     } else if(days > 0 && projected < 0){
       err = `Excedés tu saldo. Pedís ${days} días pero te quedan ${remaining}.`;
     }
@@ -10706,6 +10760,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!fromIso || !toIso) return;
 
     const submitBtn = $('vac-form-submit');
+
+    // Defensa en profundidad: validar cobertura de feriados antes del INSERT.
+    // Si esto falla, el trigger SQL también fallaría con el mismo error pero
+    // con peor UX (mensaje crudo + alert genérico). Acá lo capturamos antes.
+    let plannedDays = 0;
+    try { plannedDays = countBusinessDays(fromIso, toIso); }
+    catch(ex){
+      if(ex && ex.code === 'NO_HOLIDAYS_FOR_YEAR'){ alert(ex.message); return; }
+      throw ex;
+    }
+    if(plannedDays <= 0){
+      alert('La selección no contiene días hábiles (sólo fines de semana o feriados).');
+      return;
+    }
+
     if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Guardando…'; }
 
     let err = null;
