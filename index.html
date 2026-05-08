@@ -11962,7 +11962,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(error){
         btnConfirm.disabled = false;
         btnConfirm.textContent = 'Confirmar ajuste';
-        alert('Error al guardar: ' + (error.message || JSON.stringify(error)));
+        // El detalle real del error puede contener internals de Postgres/RLS
+        // (códigos como 23505, mensajes con nombres de constraints, etc.).
+        // No los exponemos al usuario; van a console para debug del admin.
+        console.error('vac:adjustment:save', error);
+        alert('No se pudo guardar el ajuste. Revisá los datos y volvé a intentar; si persiste, mirá la consola del navegador.');
         return;
       }
 
