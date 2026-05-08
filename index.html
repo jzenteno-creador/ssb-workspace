@@ -10738,11 +10738,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(fromIso && toIso && days > 0 && (window.__vac.backupRequests || []).length){
         const overlaps = window.__vac.backupRequests.filter(b => rangesOverlap(fromIso, toIso, b.start_date, b.end_date));
         if(overlaps.length){
+          const STATUS_LABEL = { aprobada: 'aprobadas', pendiente: 'pendientes', tentativa: 'tentativas' };
           const items = overlaps.map(o => {
             const name = escHtml(o.vac_employees?.full_name || '?');
-            return `${name} (${formatDmy(o.start_date)} al ${formatDmy(o.end_date)})`;
-          }).join(', ');
-          warnHtml = `<strong>Atención:</strong> tu back-up ${items} también tiene vacaciones en ese rango. La solicitud se puede enviar igual.`;
+            const st   = STATUS_LABEL[o.status] || escHtml(o.status);
+            return `${name} (${st} del ${formatDmy(o.start_date)} al ${formatDmy(o.end_date)})`;
+          });
+          if(items.length === 1){
+            warnHtml = `<strong>⚠ Atención:</strong> tu back-up ${items[0]} también tiene vacaciones que se superponen con tu pedido. La solicitud se puede enviar igual.`;
+          } else {
+            warnHtml = `<strong>⚠ Atención:</strong> tus back-ups: ${items.join('; ')} tienen vacaciones que se superponen con tu pedido. La solicitud se puede enviar igual.`;
+          }
         }
       }
       warnEl.innerHTML = warnHtml;
@@ -12224,6 +12230,24 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Aprobar / Rechazar ──
   async function approveRequest(id){
     if(!window.__vacAuth?.isAdmin) return;
+
+    // Gate de overlap con back-ups del solicitante. Reusamos el helper
+    // existente computeBackupConflicts (lee window.__vac.admin.backupRequests
+    // que ya filtra por period_year actual y status != rechazada).
+    const req = (window.__vac.admin?.pendientes || []).find(r => r.id === id);
+    if(req){
+      const conflicts = computeBackupConflicts(req);
+      if(conflicts.length){
+        const STATUS_LABEL = { aprobada: 'aprobadas', pendiente: 'pendientes', tentativa: 'tentativas' };
+        const lines = conflicts.map(c => {
+          const st = STATUS_LABEL[c.status] || c.status;
+          return `• ${c.backupName} (${st} del ${formatDmy(c.start_date)} al ${formatDmy(c.end_date)})`;
+        }).join('\n');
+        const ok = confirm(`⚠ Solapa con back-up(s) del solicitante:\n\n${lines}\n\n¿Aprobar igual?`);
+        if(!ok) return;
+      }
+    }
+
     const adminId = window.__vacAuth.employee.id;
     const { error } = await supa.from('vac_requests')
       .update({ status: 'aprobada', approved_by: adminId, approved_at: new Date().toISOString(), rejection_reason: null })
@@ -12305,7 +12329,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       ['Empleado', escHtml(r.vac_employees?.full_name || '?')],
       ['Email', escHtml(r.vac_employees?.email || '—')],
       ['Período', `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`],
-      ['Días corridos', `${r.days_count}`],
+      ['Días hábiles', `${r.days_count}`],
       ['Estado', '<span class="vac-chip" style="background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)">Pendiente</span>'],
       ['Cargada', new Date(r.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })],
       ['Nota', r.note ? escHtml(r.note) : '<span style="color:var(--muted);font-style:italic">—</span>']
