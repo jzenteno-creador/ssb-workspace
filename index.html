@@ -748,6 +748,15 @@ body:not(.is-authed) .sched-tools-bar{display:none !important}
 .auth-card .auth-status.err{color:#f87171}
 .auth-card .auth-status.info{color:#93c5fd}
 .auth-card .auth-state[hidden]{display:none}
+/* Password show/hide toggle — utility reusable */
+.password-field{position:relative;display:flex;align-items:stretch}
+.password-field > input{flex:1;padding-right:42px}
+.password-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;border:none;border-radius:6px;color:currentColor;opacity:.55;cursor:pointer;padding:0;transition:opacity .15s,background .15s}
+.password-toggle:hover{opacity:1;background:rgba(127,127,127,.12)}
+.password-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;display:block;pointer-events:none}
+.password-toggle .pwt-eye-off{display:none}
+.password-toggle[aria-pressed="true"] .pwt-eye{display:none}
+.password-toggle[aria-pressed="true"] .pwt-eye-off{display:block}
 /* Botón logout en topbar */
 .btn-top.btn-logout{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.28);color:rgba(255,255,255,.85);padding:7px 11px}
 .btn-top.btn-logout:hover{background:rgba(239,68,68,.22);border-color:rgba(239,68,68,.5)}
@@ -2158,7 +2167,13 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
         <label for="auth-login-email">Email</label>
         <input type="email" id="auth-login-email" name="email" required autocomplete="email" inputmode="email" placeholder="usuario@ssbint.com">
         <label for="auth-login-pw">Contraseña</label>
-        <input type="password" id="auth-login-pw" name="current-password" required autocomplete="current-password" minlength="8">
+        <div class="password-field">
+          <input type="password" id="auth-login-pw" name="current-password" required autocomplete="current-password" minlength="8">
+          <button type="button" class="password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" aria-controls="auth-login-pw" data-toggle-target="auth-login-pw">
+            <svg class="pwt-eye" aria-hidden="true" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="pwt-eye-off" aria-hidden="true" viewBox="0 0 24 24"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.5 19.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a19.45 19.45 0 0 1-2.59 3.43"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
         <button type="submit" class="auth-btn primary" id="auth-login-btn">Ingresar</button>
         <div class="auth-status" id="auth-login-status" role="status" aria-live="polite"></div>
       </form>
@@ -9961,9 +9976,30 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
   }
 
+  // ── Utility reusable: toggle mostrar/ocultar contraseña ──
+  function setupPasswordToggles(root){
+    (root || document).querySelectorAll('.password-toggle').forEach(btn => {
+      if(btn._pwtWired) return;
+      btn._pwtWired = true;
+      const targetId = btn.dataset.toggleTarget;
+      const input = targetId
+        ? document.getElementById(targetId)
+        : btn.parentElement && btn.parentElement.querySelector('input');
+      if(!input) return;
+      btn.addEventListener('click', () => {
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', String(isHidden));
+        btn.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      });
+    });
+  }
+  window.setupPasswordToggles = setupPasswordToggles;
+
   // ── Wire-up de los forms del gate ──
   function wireUp(){
     const g = gate(); if(!g) return;
+    setupPasswordToggles(g);
     // Navegación entre estados
     g.querySelectorAll('[data-goto]').forEach(b => {
       if(b._wired) return;
