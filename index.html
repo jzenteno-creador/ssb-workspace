@@ -5782,18 +5782,19 @@ function _applySchedFilterImpl(){
   renderSchedModule(rows);
 }
 
-function updateCascadeOpts(rows, vO, vD) {
-  // Destinations available from selected origin
-  if(vO) {
-    const dests=[...new Set(rows.map(r=>r.DESTINO).filter(Boolean))].sort();
-    const dEl=document.getElementById('f-s-destino');
-    if(dEl&&document.activeElement===dEl) onAcFocus('s-destino');
-  }
-  // Vessels available for selected origin+dest
-  if(vO||vD) {
-    const vEl=document.getElementById('f-s-vessel');
-    if(vEl&&document.activeElement===vEl) onAcFocus('s-vessel');
-  }
+function updateCascadeOpts() {
+  // Parte B: recalcular las opciones de destino/vessel si su dropdown está ABIERTO, ante
+  // cualquier cambio de origen/destino — sin depender del foco (antes solo refrescaba si el
+  // input estaba enfocado, así que elegir origen con click dejaba destino stale) y sin abrir
+  // dropdowns cerrados. El `dests` anterior era código muerto (onAcFocus ya recalcula vía opts).
+  ['s-destino','s-vessel'].forEach(f=>{
+    const drop=document.getElementById('drop-'+f);
+    if(!drop||!drop.classList.contains('open'))return;
+    const inp=document.getElementById('f-'+f);
+    const v=inp?inp.value:'';
+    const o=opts(f);
+    openDrop(f, v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o, v);
+  });
 }
 
 // Country flags
