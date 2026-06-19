@@ -391,6 +391,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .efa-filters select,.efa-filters input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:var(--font);font-size:12px}
 .efa-filters .ef-tg{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
 .efa-filters .ef-tg.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+/* FIX layout (preexistente): los .ac-in de la barra Admin BID no tenían width y tomaban el
+   ancho default del <input> (~170px), desbordando su .ac-wrap (140/120px) y tapando el label
+   vecino (ORIGEN se leía "EN", etc.). width:100% + box-sizing:border-box global → el input
+   llena su wrap sin desbordar. Scopeado a .efa-filters: EFA no tiene .ac-in ahí; otras solapas
+   usan .filter-bar/.sched-filter-bar, no se tocan. */
+.efa-filters .ac-in{width:100%}
 /* ── EFA GANTT BARS & SHIPS ── */
 .gc-ship {
   width: 14px;
@@ -6570,9 +6576,12 @@ function _renderAdminBIDImpl(){
   // Estilo planilla Excel: header sticky (CSS .bid-xls thead th), filas alternas, font 11px, table-layout:fixed (CSS .bid-xls)
   // Widths absolutos commit 6 decisión M: suma 1388px, cabe 1440 viewport; Comentario 340 con ellipsis+data-tip
   const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:85,Hasta:85,Estado:100,Quarter:70,Comentario:340,Acciones:80};
-  let html='<table class="bid-xls" style="width:1388px;border-collapse:collapse;font-size:11px;font-family:var(--font)"><thead><tr>';
+  // FIX layout: width:100% para llenar el contenedor (antes width:1388px fijo dejaba vacío el
+  // lado derecho en pantallas anchas). min-width:1388px preserva el mínimo (scroll en angostas).
+  // El espacio extra va a Comentario (única columna width:auto abajo).
+  let html='<table class="bid-xls" style="width:100%;min-width:1388px;border-collapse:collapse;font-size:11px;font-family:var(--font)"><thead><tr>';
   html+=`<th style="padding:5px 6px;width:${COLW.CHK}px;border:1px solid var(--border)"><input type="checkbox" id="bid-check-all" onchange="bidToggleAll(this.checked)"></th>`;
-  ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{html+=`<th style="padding:5px 6px;text-align:left;border:1px solid var(--border);white-space:nowrap;font-weight:700;font-size:11px;width:${COLW[h]}px">${h}</th>`;});
+  ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{const w=h==='Comentario'?`width:auto;min-width:${COLW[h]}px`:`width:${COLW[h]}px`;html+=`<th style="padding:5px 6px;text-align:left;border:1px solid var(--border);white-space:nowrap;font-weight:700;font-size:11px;${w}">${h}</th>`;});
   html+='</tr></thead><tbody>';
   list.forEach((r,idx)=>{
     const ri=r._rowIndex;
