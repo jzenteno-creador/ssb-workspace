@@ -19,8 +19,20 @@ Crea:
 2. `02-seed-canonicos.sql`
 3. `03-log-trigger.sql`
 4. `04-rls.sql`
+5. `05-harden.sql`
+6. `06-data-insert.sql`
+7. `07-views.sql`  ← Paso 3 (frontend): views de lectura
 
-Rollback: `rollback.sql` (orden inverso, reversible total).
+Rollback: `rollback.sql` (orden inverso, reversible total — incluye drop de las views).
+
+## Paso 3 (frontend) · 07-views.sql — APLICADO (2026-06-18)
+Views de lectura con nombres canónicos planos para que el front no arme joins en JS:
+- `v_tarifas_maritimas` (autorizada por John): tarifa activa + naviera/origen/destino resueltos (+ país).
+- `v_recargos_efa` (extensión deliberada, misma técnica/motivo): recargo EFA activo + nombres resueltos.
+
+Ambas con `security_invoker = on` (NO bypassean RLS; corren con permisos del caller anon, que ya
+tiene SELECT público sobre las tablas base). `grant select ... to anon, authenticated`.
+Son views MARÍTIMAS con columnas propias — NO copia de `v_tarifas_terrestres`.
 
 ## Decisiones tomadas
 - Estados: set cerrado de 4 (`CONFIRMADA/PENDIENTE/NO DISPONIBLE/NO COTIZADO`).

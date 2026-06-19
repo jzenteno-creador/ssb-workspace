@@ -1,8 +1,12 @@
 -- ============================================================================
--- Tanda 1 · Paso 1 · rollback.sql
--- Revierte TODO lo aditivo de este paso. 100% reversible (no toca nada previo).
--- Orden inverso por dependencias (triggers/función antes que tablas).
+-- Tanda 1 · Paso 1+3 · rollback.sql
+-- Revierte TODO lo aditivo de esta tanda. 100% reversible (no toca nada previo).
+-- Orden inverso por dependencias (views → triggers/función → tablas).
 -- ============================================================================
+
+-- Paso 3 · views de lectura (07-views.sql)
+drop view if exists public.v_recargos_efa;
+drop view if exists public.v_tarifas_maritimas;
 
 drop trigger if exists trg_recargos_efa_log      on public.recargos_efa;
 drop trigger if exists trg_tarifas_maritimas_log on public.tarifas_maritimas;
