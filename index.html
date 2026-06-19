@@ -3762,6 +3762,12 @@ function loadTarifas(data) {
       efaNum:null, efaDesde:'', efaHasta:'',
     }));
 
+  // Parte B (saneo fantasma · Tarifas BID): sacar de selC/selE valores que ya no existen
+  // tras recargar (carrier/equipo dado de baja) → dejan de filtrar a 0 sin botón visible.
+  { const cs=new Set(rates.map(r=>r.carrier).filter(Boolean)), es=new Set(rates.map(r=>r.equipo).filter(Boolean));
+    for(const c of [...selC]) if(!cs.has(c)) selC.delete(c);
+    for(const e of [...selE]) if(!es.has(e)) selE.delete(e); }
+
   buildCarrierBtns();
   buildEquipoBtns();
   applyFilter();
@@ -5234,17 +5240,25 @@ function opts(f){
     return[...new Set(rates.map(r=>r[map[field]]).filter(Boolean))].sort();
   }
   if(f.startsWith('bid-')){
-    // Cascada: carrier → origen → destino → equipo
+    // Filtros coordinados (Parte B): leave-one-out + match SUBSTRING (texto libre),
+    // coherente con getBidFiltered. Las opciones de cada campo se derivan de las filas
+    // que pasan los OTROS 3 filtros (no el propio) → el dropdown del hijo refleja lo que
+    // la tabla mostrará y nunca queda vacío por tipear parcial en un padre.
     const field=f.replace('bid-','');
-    const vC=(document.getElementById('f-bid-carrier')||{}).value||'';
-    const vO=(document.getElementById('f-bid-origen')||{}).value||'';
-    const vD=(document.getElementById('f-bid-destino')||{}).value||'';
-    let src=rates;
-    if(field!=='carrier'&&vC) src=src.filter(r=>r.carrier===vC);
-    if((field==='destino'||field==='equipo')&&vO) src=src.filter(r=>r.origen===vO);
-    if(field==='equipo'&&vD) src=src.filter(r=>r.destino===vD);
-    const map={carrier:'carrier',origen:'origen',destino:'destino',equipo:'equipo'};
-    return[...new Set(src.map(r=>r[map[field]]).filter(Boolean))].sort();
+    const fv={
+      carrier:(document.getElementById('f-bid-carrier')||{}).value||'',
+      origen :(document.getElementById('f-bid-origen') ||{}).value||'',
+      destino:(document.getElementById('f-bid-destino')||{}).value||'',
+      equipo :(document.getElementById('f-bid-equipo') ||{}).value||'',
+    };
+    const sub=(rowVal,q)=>!q||(rowVal||'').toUpperCase().includes(q.toUpperCase());
+    const src=rates.filter(r=>
+      (field==='carrier'||sub(r.carrier,fv.carrier)) &&
+      (field==='origen' ||sub(r.origen, fv.origen )) &&
+      (field==='destino'||sub(r.destino,fv.destino)) &&
+      (field==='equipo' ||sub(r.equipo, fv.equipo ))
+    );
+    return[...new Set(src.map(r=>r[field]).filter(Boolean))].sort();
   }
   if(f.startsWith('s-')){
     // Cascading: filter available options based on current selections
@@ -6683,17 +6697,17 @@ let bidImportParsed=[];
 function uniqSorted(arr){return [...new Set(arr.filter(Boolean))].sort();}
 
 function buildBidFilterOptions(){
-  // Con autocomplete las opciones se calculan en opts() bajo demanda — solo validamos
-  // que los valores actuales sigan existiendo dentro del set en cascada. Si dejaron de existir
-  // (porque cambió un filtro padre) los limpiamos para no dejar filtros "fantasma".
-  const fields=['carrier','origen','destino','equipo'];
-  fields.forEach(f=>{
-    const inp=document.getElementById('f-bid-'+f);if(!inp)return;
-    // No tocar el input que el usuario está tipeando — evita race con onAcIn
-    if(document.activeElement===inp)return;
-    const v=inp.value.trim();if(!v)return;
-    const valid=opts('bid-'+f);
-    if(!valid.includes(v)){inp.value='';inp.classList.remove('sel');const x=document.getElementById('x-bid-'+f);if(x)x.classList.remove('show');}
+  // Parte B: en vez de BORRAR el valor del hijo cuando cambia un padre (lo que hacía
+  // desaparecer el filtro de destino al tipear el carrier), RECALCULAMOS las opciones del
+  // dropdown bid que esté ABIERTO con la regla unificada (substring + leave-one-out).
+  // Los valores tipeados NO se tocan: la tabla filtra por substring igual.
+  ['carrier','origen','destino','equipo'].forEach(f=>{
+    const drop=document.getElementById('drop-bid-'+f);
+    if(!drop||!drop.classList.contains('open'))return;
+    const inp=document.getElementById('f-bid-'+f);
+    const v=inp?inp.value:'';
+    const o=opts('bid-'+f);
+    openDrop('bid-'+f, v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o, v);
   });
 }
 
