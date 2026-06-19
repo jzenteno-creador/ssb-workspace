@@ -391,6 +391,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .efa-filters select,.efa-filters input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-family:var(--font);font-size:12px}
 .efa-filters .ef-tg{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
 .efa-filters .ef-tg.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+/* FIX layout (preexistente): los .ac-in de la barra Admin BID no tenían width y tomaban el
+   ancho default del <input> (~170px), desbordando su .ac-wrap (140/120px) y tapando el label
+   vecino (ORIGEN se leía "EN", etc.). width:100% + box-sizing:border-box global → el input
+   llena su wrap sin desbordar. Scopeado a .efa-filters: EFA no tiene .ac-in ahí; otras solapas
+   usan .filter-bar/.sched-filter-bar, no se tocan. */
+.efa-filters .ac-in{width:100%}
 /* ── EFA GANTT BARS & SHIPS ── */
 .gc-ship {
   width: 14px;
