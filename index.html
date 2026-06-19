@@ -8178,16 +8178,44 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     })[kind] || null;
   }
 
-  // Devuelve todas las opciones únicas para un kind, sorted alfabéticamente.
+  // ── Filtros coordinados (facetas leave-one-out) · Parte B / Tanda 1 ──
+  // Normalización canónica para match de multi-selects (valores cerrados): upper+trim.
+  // Hoy el dato ya viene upper+trim (verificado), así que es defensivo (datos sucios futuros).
+  const _ttNorm = s => (s == null ? '' : String(s)).trim().toUpperCase();
+  const _TT_FIELD = { paises:'pais_destino', carriers:'carrier', departures:'departure', aduanas:'customs_exit', destinations:'destination' };
+  const _TT_KINDS = ['paises','carriers','departures','aduanas','destinations'];
+  // ¿La fila pasa el filtro de `kind`? (Set vacío = pasa). Match normalizado en ambos lados.
+  function _ttRowMatchesKind(r, kind){
+    const sel = _getSetByKind(kind);
+    if(!sel || !sel.size) return true;
+    return sel.has(_ttNorm(r[_TT_FIELD[kind]]));
+  }
+  // Filas que pasan TODOS los filtros excepto `exceptKind` (leave-one-out).
+  // exceptKind=null → aplica los 5 (= filtrado real).
+  function _rowsFilteredExcept(exceptKind){
+    if(!_ttData) return [];
+    return _ttData.filter(r => _TT_KINDS.every(k => k === exceptKind || _ttRowMatchesKind(r, k)));
+  }
+  // Saca de cada Set los valores que ya no existen en el dataset (filtros fantasma de
+  // localStorage tras soft-delete / cambio de grafía). Requiere _ttData ya cargado.
+  function _sanitizeTTFilters(){
+    if(!_ttData) return;
+    for(const kind of _TT_KINDS){
+      const sel = _getSetByKind(kind); if(!sel || !sel.size) continue;
+      const valid = new Set(_ttData.map(r => _ttNorm(r[_TT_FIELD[kind]])).filter(Boolean));
+      let changed = false;
+      for(const v of [...sel]) if(!valid.has(v)){ sel.delete(v); changed = true; }
+      if(changed) _saveSet(STORAGE[kind], sel);
+    }
+  }
+
+  // Opciones de un kind: derivadas del dataset filtrado por TODOS los OTROS filtros
+  // (leave-one-out) → nunca ofrece una opción que, combinada con lo ya elegido, da 0 filas.
+  // No filtra por el propio kind, así se puede ampliar/cambiar la selección de ese eje.
   function _getAllOptionsByKind(kind){
     const set = new Set();
-    for(const r of (_ttData || [])){
-      let v;
-      if(kind === 'paises')            v = (r.pais_destino || '').trim();
-      else if(kind === 'carriers')     v = (r.carrier || '').trim();
-      else if(kind === 'departures')   v = (r.departure || '').trim();
-      else if(kind === 'aduanas')      v = (r.customs_exit || '').trim();
-      else if(kind === 'destinations') v = (r.destination || '').trim();
+    for(const r of _rowsFilteredExcept(kind)){
+      const v = _ttNorm(r[_TT_FIELD[kind]]);
       if(v) set.add(v);
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'es'));
@@ -8299,10 +8327,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function _togFilter(kind, value){
     const sel = _getSetByKind(kind);
     if(!sel) return;
-    const k = String(value || '');
+    const k = _ttNorm(value);
+    if(!k) return;
     if(sel.has(k)) sel.delete(k); else sel.add(k);
     _saveSet(STORAGE[kind], sel);
-    _renderUI(kind);
+    // Refrescar los 5: cambiar un filtro cambia las opciones leave-one-out de los otros.
+    for(const kk of _TT_KINDS) _renderUI(kk);
     _doApplyTTFilter();
   }
 
@@ -9659,23 +9689,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   // ── Filtrado y render de tabla ──
+  // Filtrado real = leave-one-out sin excepción (match normalizado, misma regla que las opciones).
   function _filterRows(){
-    if(!_ttData) return [];
-    const F = {
-      paises:       _ttSelPaises,
-      carriers:     _ttSelCarriers,
-      departures:   _ttSelDepartures,
-      aduanas:      _ttSelAduanas,
-      destinations: _ttSelDestinations
-    };
-    return _ttData.filter(r => {
-      if(F.paises.size       && !F.paises.has(r.pais_destino))       return false;
-      if(F.carriers.size     && !F.carriers.has(r.carrier))          return false;
-      if(F.departures.size   && !F.departures.has(r.departure))      return false;
-      if(F.aduanas.size      && !F.aduanas.has(r.customs_exit))      return false;
-      if(F.destinations.size && !F.destinations.has(r.destination))  return false;
-      return true;
-    });
+    return _rowsFilteredExcept(null);
   }
 
   function _renderConsulta(rows){
@@ -9801,8 +9817,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _ttLastFetch = now;
     console.log('[TT] ' + all.length + ' tarifas + ' + _ttCarriers.length + ' carriers cargados.');
 
-    _buildFilterRow();
-    _initSelections();
+    _initSelections();       // hidratar Sets desde localStorage ANTES de construir dropdowns
+    _sanitizeTTFilters();    // descartar filtros fantasma (valores que ya no existen en el dataset)
+    _buildFilterRow();       // dropdowns/chips ya reflejan la selección saneada
     _renderEditorPill();
     _populateDatalists();
     _doApplyTTFilterImpl();
