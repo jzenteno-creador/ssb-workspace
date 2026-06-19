@@ -5040,7 +5040,7 @@ async function confirmImport(){
   }
   btn.textContent='✓ Importar';
   if(fail===0){
-    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados a Google Sheets</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
+    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
     btn.style.display='none';
   } else {
     body.innerHTML=`<div style="padding:14px;font-size:12px"><div style="font-weight:700;color:#c00;margin-bottom:8px">⚠ Importación parcial: ${done} OK · ${fail} errores</div><div style="max-height:160px;overflow:auto;background:#fee;border:1px solid #fcc;border-radius:4px;padding:8px;font-family:monospace;font-size:10px;white-space:pre-wrap;margin-bottom:10px">${errors.join('\n')}</div>${done>0?`<div style="text-align:center"><button class="efa-mod-btn primary" onclick="location.reload()">🔄 Recargar página</button></div>`:''}</div>`;
@@ -5140,6 +5140,72 @@ function _mmErr(error){
   return (error && (error.message||error.hint)) || 'Error al escribir en la base';
 }
 
+// Resuelve nombre→id contra el catálogo canónico (+ alias). Si NO matchea NI
+// catálogo NI alias (destino/naviera genuinamente nuevo), pregunta si agregarlo
+// (puerto pide país, que es NOT NULL). Devuelve el id (existente o recién creado).
+// Cancelar aborta el guardado. Los alias siguen siendo el guardrail contra grafías
+// sucias conocidas (ej. MANAOS→MANAUS): si matchea alias, resuelve sin preguntar.
+async function _mmResolveOrCreate(kind, name){
+  await _mmEnsureLookups();
+  const map = kind==='naviera' ? _mmLookups.navMap : _mmLookups.puertoMap;
+  const raw = (name==null?'':String(name)).trim();
+  if(!raw) throw new Error((kind==='naviera'?'Naviera':'Puerto')+' vacío: completá el campo antes de guardar.');
+  const norm = raw.toUpperCase();
+  const hit = map.get(norm);
+  if(hit) return hit;                                    // match catálogo o alias → normal
+  const conf = await _mmConfirmNewCatalog(kind, raw);     // genuinamente nuevo → confirmar alta
+  if(!conf) throw new Error('Alta cancelada: no se agregó "'+raw+'" al catálogo; la tarifa no se guardó.');
+  const supa = window.__ssb.supa;
+  const nombre = norm;                                   // catálogo canónico = MAYÚSCULAS (igual al seed)
+  let ins, error;
+  if(kind==='naviera'){
+    ({ data:ins, error } = await supa.from('navieras').insert({ nombre }).select('id,nombre').single());
+  } else {
+    ({ data:ins, error } = await supa.from('puertos').insert({ nombre, pais: conf.pais }).select('id,nombre').single());
+  }
+  if(error) throw new Error(_mmErr(error));
+  map.set(norm, ins.id);                                 // refrescar catálogo en memoria (sin reload completo)
+  if(kind==='naviera') _mmLookups.idNav.set(ins.id, ins.nombre); else _mmLookups.idPort.set(ins.id, ins.nombre);
+  return ins.id;
+}
+
+// Modal de confirmación de alta de catálogo. Promise → {pais} (puerto) / {} (naviera)
+// si confirma; false si cancela. Muestra el nombre tipeado para cazar typos.
+function _mmConfirmNewCatalog(kind, name){
+  return new Promise(resolve=>{
+    const isPort = kind==='puerto';
+    const ov = document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#1e293b);color:var(--text,#e2e8f0);border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px;max-width:440px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.5);font-family:var(--font,system-ui,sans-serif)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">${isPort?'Puerto':'Naviera'} no está en el catálogo</div>
+      <div style="font-size:13px;color:var(--muted,#94a3b8);margin-bottom:12px">Vas a <b>agregar al catálogo canónico</b> ${isPort?'el puerto':'la naviera'}:</div>
+      <div style="font-size:16px;font-weight:700;padding:8px 12px;background:var(--faint,rgba(255,255,255,.06));border-radius:6px;margin-bottom:14px;word-break:break-word">${esc(name)}</div>
+      ${isPort?`<label style="display:block;font-size:12px;font-weight:600;color:var(--muted,#94a3b8);margin-bottom:4px">País <span style="color:#ef4444">*</span></label>
+      <input id="_mm-newcat-pais" type="text" placeholder="Ej: Brasil" autocomplete="off" style="width:100%;padding:8px 10px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:6px;background:var(--bg,#0f172a);color:var(--text,#e2e8f0);box-sizing:border-box">
+      <div id="_mm-newcat-err" style="font-size:11px;color:#ef4444;min-height:15px;margin:4px 0 8px"></div>`:'<div style="height:8px"></div>'}
+      <div style="font-size:11px;color:var(--muted,#94a3b8);margin-bottom:16px">Revisá que no sea un error de tipeo: si confirmás queda en el catálogo permanente.</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" id="_mm-newcat-cancel" style="padding:8px 14px;border-radius:6px;border:1px solid var(--border,rgba(255,255,255,.15));background:transparent;color:var(--text,#e2e8f0);cursor:pointer;font-size:13px">Cancelar</button>
+        <button type="button" id="_mm-newcat-ok" style="padding:8px 14px;border-radius:6px;border:none;background:var(--teal,#14b8a6);color:#fff;cursor:pointer;font-size:13px;font-weight:600">Agregar y guardar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const done=v=>{ ov.remove(); document.removeEventListener('keydown',onKey); resolve(v); };
+    const onKey=e=>{ if(e.key==='Escape')done(false); };
+    document.addEventListener('keydown',onKey);
+    ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(false); });
+    ov.querySelector('#_mm-newcat-cancel').onclick=()=>done(false);
+    ov.querySelector('#_mm-newcat-ok').onclick=()=>{
+      if(isPort){
+        const pais=(document.getElementById('_mm-newcat-pais').value||'').trim();
+        if(!pais){ document.getElementById('_mm-newcat-err').textContent='El país es obligatorio.'; return; }
+        done({ pais });
+      } else done({});
+    };
+    setTimeout(()=>{ try{ (ov.querySelector('#_mm-newcat-pais')||ov.querySelector('#_mm-newcat-ok')).focus(); }catch(_){} },30);
+  });
+}
+
 async function postEfaAction(payload){
   const supa = window.__ssb && window.__ssb.supa;
   if(!supa) throw new Error('cliente Supabase global no disponible');
@@ -5147,7 +5213,6 @@ async function postEfaAction(payload){
   const id = payload && (payload.id != null ? payload.id : payload.rowIndex);
   const email = (window.__ssbAuth && window.__ssbAuth.email) || null;
   await _mmEnsureLookups();
-  const { navMap, puertoMap } = _mmLookups;
   const isTarifa = /tarifa/i.test(action);
   const tabla = isTarifa ? 'tarifas_maritimas' : 'recargos_efa';
 
@@ -5162,16 +5227,15 @@ async function postEfaAction(payload){
   }
 
   const d = payload.data || {};
-  const resolveNav = name => { const v=navMap.get((name==null?'':String(name)).trim().toUpperCase()); if(!v) throw new Error('Naviera no reconocida: "'+(name||'')+'". Cargala en el catálogo canónico (migración) antes de usarla.'); return v; };
-  const resolvePort= name => { const v=puertoMap.get((name==null?'':String(name)).trim().toUpperCase()); if(!v) throw new Error('Puerto no reconocido: "'+(name||'')+'". Cargalo en el catálogo canónico (migración) antes de usarlo.'); return v; };
 
   let row;
   if(isTarifa){
     const tRaw = d['TARIFA USD'];
+    const naviera_id = await _mmResolveOrCreate('naviera', d['CARRIER']);
+    const origen_id  = await _mmResolveOrCreate('puerto',  d['PUERTO DE EMBARQUE']);
+    const destino_id = await _mmResolveOrCreate('puerto',  d['DESTINO']);
     row = {
-      naviera_id: resolveNav(d['CARRIER']),
-      origen_id : resolvePort(d['PUERTO DE EMBARQUE']),
-      destino_id: resolvePort(d['DESTINO']),
+      naviera_id, origen_id, destino_id,
       equipo    : _mmNormEquipo(d['EQUIPO']),
       tarifa_usd: (tRaw===''||tRaw==null) ? null : Number(tRaw),
       estado    : (d['ESTADO TARIFA']==null?'':String(d['ESTADO TARIFA'])).trim(),
@@ -5183,10 +5247,11 @@ async function postEfaAction(payload){
       updated_by: email, update_reason: null,
     };
   } else {
+    const naviera_id = await _mmResolveOrCreate('naviera', d['CARRIER']);
+    const origen_id  = await _mmResolveOrCreate('puerto',  d['ORIGEN']);
+    const destino_id = await _mmResolveOrCreate('puerto',  d['DESTINO']);
     row = {
-      naviera_id: resolveNav(d['CARRIER']),
-      origen_id : resolvePort(d['ORIGEN']),
-      destino_id: resolvePort(d['DESTINO']),
+      naviera_id, origen_id, destino_id,
       equipo    : _mmNormEquipo(d['EQUIPO']),
       monto_usd : Number(d['MONTO USD']),
       vigencia_desde: _mmToISO(d['INICIO']),
@@ -6629,7 +6694,7 @@ function exportSchedExcel(){
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Fin vigencia</label><input id="bid-m-hasta" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Estado</label>
           <select id="bid-m-estado" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
-            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option>
+            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option><option value="NO COTIZADO">NO COTIZADO</option>
           </select>
         </div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Quarter</label>

@@ -4,6 +4,11 @@
 -- Orden inverso por dependencias (views → triggers/función → tablas).
 -- ============================================================================
 
+-- Paso 3 · alta de catálogo desde UI (08-catalog-insert.sql)
+drop policy if exists "navieras_insert_open" on public.navieras;
+drop policy if exists "puertos_insert_open"  on public.puertos;
+revoke insert on public.navieras, public.puertos from anon, authenticated;
+
 -- Paso 3 · views de lectura (07-views.sql)
 drop view if exists public.v_recargos_efa;
 drop view if exists public.v_tarifas_maritimas;
