@@ -6823,7 +6823,9 @@ function _renderAdminBIDImpl(){
   const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
   // Estilo planilla Excel: header sticky (CSS .bid-xls thead th), filas alternas, font 11px, table-layout:fixed (CSS .bid-xls)
   // Widths absolutos commit 6 decisión M: suma 1388px, cabe 1440 viewport; Comentario 340 con ellipsis+data-tip
-  const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:85,Hasta:85,Estado:100,Quarter:70,Comentario:340,Acciones:80};
+  // Desde/Hasta a 130px: el input type=date nativo necesita ~125px+ ('dd/mm/yyyy' + picker);
+  // a 85px cortaba el año al editar ("01/01/20"). En lectura muestran dd/mm/yy (entran de sobra).
+  const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:130,Hasta:130,Estado:100,Quarter:70,Comentario:340,Acciones:80};
   let html='<table class="bid-xls" style="width:1388px;border-collapse:collapse;font-size:11px;font-family:var(--font)"><thead><tr>';
   html+=`<th style="padding:5px 6px;width:${COLW.CHK}px;border:1px solid var(--border)"><input type="checkbox" id="bid-check-all" onchange="bidToggleAll(this.checked)"></th>`;
   ['Carrier','Origen','Destino','Equipo','Tarifa USD','Contrato','Desde','Hasta','Estado','Quarter','Comentario','Acciones'].forEach(h=>{html+=`<th style="padding:5px 6px;text-align:left;border:1px solid var(--border);white-space:nowrap;font-weight:700;font-size:11px;width:${COLW[h]}px">${h}</th>`;});
@@ -6850,7 +6852,7 @@ function _renderAdminBIDImpl(){
     html+=cell('origen',r.origen);
     html+=cell('destino',r.destino);
     html+=cell('equipo',r.equipo);
-    html+=cell('tarifa',r.tarifa!=null?(typeof r.tarifa==='number'?r.tarifa.toLocaleString('es-AR'):r.tarifa):'');
+    html+=cell('tarifa',r.tarifa!=null?(typeof r.tarifa==='number'?r.tarifa.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):r.tarifa):'');
     html+=cell('contrato',r.contrato);
     html+=cell('desde',fmtD(r.desde));
     html+=cell('hasta',fmtD(r.hasta));
