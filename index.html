@@ -2091,6 +2091,75 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   #panel-vacaciones .vac-modal-overlay{animation:none}
 }
 /* ═══════════════════════════════ FIN VACACIONES MODULE ═══════════════════════════════ */
+
+/* ═══════════════════════════════ AGENTE IA ═══════════════════════════════ */
+#panel-agente{padding:0}
+.agent-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.agent-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
+.agent-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
+.agent-new-btn{display:flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
+.agent-new-btn:hover{filter:brightness(1.1)}
+.agent-new-btn .ic{width:16px;height:16px}
+.agent-info-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:var(--fs-xs);color:var(--muted);line-height:var(--lh-loose)}
+.agent-info-card strong{color:var(--text);font-weight:600}
+.agent-info-stats{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.agent-stat{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.agent-stat:last-child{border-bottom:none}
+.agent-stat-label{color:var(--muted);font-size:var(--fs-xs)}
+.agent-stat-value{color:var(--text);font-weight:600;font-family:var(--mono);font-size:var(--fs-xs)}
+.agent-main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.agent-messages{flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:16px}
+.agent-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:10px;padding:2rem}
+.agent-welcome-icon{margin-bottom:8px}
+.agent-welcome-title{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.agent-welcome-sub{color:var(--muted);font-size:var(--fs-base);max-width:520px;line-height:var(--lh-loose)}
+.agent-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;width:100%;max-width:560px}
+.agent-suggestion{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:var(--fs-sm);color:var(--muted);cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s ease;line-height:var(--lh-base)}
+.agent-suggestion:hover{border-color:var(--blue);color:var(--text);background:var(--surface-hv);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.agent-msg{animation:agent-fade .25s ease;display:flex;gap:12px;padding:4px 0}
+.agent-msg--user{flex-direction:row-reverse}
+.agent-msg--assistant{flex-direction:row}
+.agent-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:var(--fs-xs);font-weight:700}
+.agent-msg--user .agent-avatar{background:var(--blue);color:#fff}
+.agent-msg--assistant .agent-avatar{background:var(--purple-bg);border:1px solid var(--purple-bd);color:var(--purple)}
+.agent-bubble{border-radius:16px;padding:12px 18px;font-size:var(--fs-base);line-height:var(--lh-loose);word-break:break-word;max-width:80%}
+.agent-msg--user .agent-bubble{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.agent-msg--assistant .agent-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-top-left-radius:4px}
+/* Markdown in assistant bubbles */
+.agent-msg--assistant .agent-bubble strong{color:var(--blue);font-weight:700}
+.agent-msg--assistant .agent-bubble em{color:var(--teal);font-style:italic}
+.agent-msg--assistant .agent-bubble ul,.agent-msg--assistant .agent-bubble ol{margin:6px 0 6px 18px;padding:0}
+.agent-msg--assistant .agent-bubble li{margin:3px 0}
+.agent-msg--assistant .agent-bubble p{margin:0 0 8px}
+.agent-msg--assistant .agent-bubble p:last-child{margin-bottom:0}
+.agent-msg--assistant .agent-bubble code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:var(--fs-sm)}
+.agent-msg--assistant .agent-bubble h1,.agent-msg--assistant .agent-bubble h2,.agent-msg--assistant .agent-bubble h3{margin:14px 0 6px;color:var(--text);line-height:var(--lh-tight)}
+.agent-msg--assistant .agent-bubble h1{font-size:var(--fs-xl);font-weight:700;border-bottom:1px solid var(--border);padding-bottom:6px}
+.agent-msg--assistant .agent-bubble h2{font-size:var(--fs-lg);font-weight:700}
+.agent-msg--assistant .agent-bubble h3{font-size:var(--fs-base);font-weight:600;color:var(--blue)}
+.agent-msg--assistant .agent-bubble h1:first-child,.agent-msg--assistant .agent-bubble h2:first-child,.agent-msg--assistant .agent-bubble h3:first-child{margin-top:0}
+.agent-msg--assistant .agent-bubble hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+.agent-msg--assistant .agent-bubble table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin:8px 0}
+.agent-msg--assistant .agent-bubble th{background:var(--header-bg);color:#fff;padding:6px 10px;text-align:left;font-weight:600;font-size:var(--fs-xs);letter-spacing:.03em}
+.agent-msg--assistant .agent-bubble td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.agent-msg--assistant .agent-bubble tr:nth-child(even) td{background:var(--faint)}
+.agent-msg--assistant .agent-bubble blockquote{border-left:3px solid var(--blue);padding:4px 12px;margin:8px 0;color:var(--muted);font-style:italic}
+.agent-thinking{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 18px;font-size:var(--fs-sm);color:var(--muted);margin-left:44px}
+.agent-dots{display:flex;gap:4px}
+.agent-dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:agent-bounce .6s infinite alternate}
+.agent-dots span:nth-child(2){animation-delay:.15s}
+.agent-dots span:nth-child(3){animation-delay:.3s}
+@keyframes agent-bounce{0%{opacity:.3;transform:translateY(0)}100%{opacity:1;transform:translateY(-4px)}}
+@keyframes agent-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.agent-thinking-text{transition:opacity .2s}
+.agent-input-bar{display:flex;align-items:flex-end;gap:10px;padding:14px 32px 20px;border-top:1px solid var(--border);background:var(--faint)}
+.agent-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-family:var(--font);font-size:var(--fs-base);color:var(--text);resize:none;max-height:140px;line-height:var(--lh-base);transition:border-color .15s}
+.agent-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(91,155,245,.15)}
+.agent-input::placeholder{color:var(--muted)}
+.agent-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.agent-send-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.agent-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* ═══════════════════════════════ FIN AGENTE IA ═══════════════════════════════ */
 </style>
 </head>
 <body>
@@ -2128,6 +2197,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
   </defs>
 </svg>
 
@@ -2286,6 +2356,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
   <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
   <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
+  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Agente IA</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -3318,6 +3389,51 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </div>
 <!-- ═══════════ FIN TAB: VACACIONES ═══════════ -->
 
+<!-- ═══════════ TAB: AGENTE IA ═══════════ -->
+<div class="tab-panel" id="panel-agente">
+  <div class="agent-layout">
+    <div class="agent-sidebar">
+      <button type="button" class="agent-new-btn" onclick="agentReset()">
+        <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Nueva conversacion
+      </button>
+      <div class="agent-sidebar-title">Datos cargados</div>
+      <div class="agent-info-card">
+        <strong>Contexto del agente</strong>
+        <div class="agent-info-stats" id="agent-stats">
+          <div class="agent-stat"><span class="agent-stat-label">Tarifas BID</span><span class="agent-stat-value" id="agent-stat-rates">0</span></div>
+          <div class="agent-stat"><span class="agent-stat-label">Schedule</span><span class="agent-stat-value" id="agent-stat-sched">0</span></div>
+          <div class="agent-stat"><span class="agent-stat-label">EFA</span><span class="agent-stat-value" id="agent-stat-efa">0</span></div>
+        </div>
+      </div>
+      <div class="agent-info-card">
+        El agente analiza los datos sincronizados en el workspace. Mientras mas datos haya cargados, mejores las respuestas.
+      </div>
+    </div>
+    <div class="agent-main">
+      <div class="agent-messages" id="agent-messages">
+        <div class="agent-welcome" id="agent-welcome">
+          <div class="agent-welcome-icon"><svg class="ic" style="width:52px;height:52px;color:var(--blue)" aria-hidden="true"><use href="#i-bot"/></svg></div>
+          <div class="agent-welcome-title">Agente SSB</div>
+          <p class="agent-welcome-sub">Preguntame sobre tarifas BID, schedule de buques, EFA o detention. Analizo los datos cargados en el workspace en tiempo real.</p>
+          <div class="agent-suggestions" id="agent-suggestions">
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Cual es la tarifa mas barata a Brasil?</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Que buques salen este mes?</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Compara tarifas de Hapag vs Maersk</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Resume las tarifas vigentes por carrier</button>
+          </div>
+        </div>
+      </div>
+      <div class="agent-input-bar">
+        <textarea id="agent-input" class="agent-input" placeholder="Escribi tu consulta..." rows="1" onkeydown="agentKeydown(event)"></textarea>
+        <button type="button" class="agent-send-btn" id="agent-send-btn" onclick="agentSend()" title="Enviar">
+          <svg class="ic" aria-hidden="true" style="width:20px;height:20px"><use href="#i-upload"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: AGENTE IA ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -3436,7 +3552,7 @@ function initClockAR(){
 
 // ── TABS ──
 function switchTab(name) {
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -3450,6 +3566,7 @@ function switchTab(name) {
   if(name==='tt-dow' && window.loadTT){ loadTT(); }
   if(name==='vacaciones' && window.vacOnEnterTab){ window.vacOnEnterTab(); }
   else if(window.vacOnLeaveTab){ window.vacOnLeaveTab(); }
+  if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
 }
 
 // ── BELL ──
@@ -13354,6 +13471,188 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 })();
 </script>
 <!-- ═══════════ FIN VACACIONES MODULE ═══════════ -->
+
+<!-- ═══════════ AGENTE IA ═══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<script>
+(function(){
+  const THINKING_PHRASES = [
+    'Analizando datos...','Revisando tarifas...','Cruzando informacion...',
+    'Consultando schedule...','Procesando tu consulta...','Armando la respuesta...'
+  ];
+  let _agentMessages = [];
+  let _agentLoading = false;
+
+  // Markdown via marked.js (sanitized)
+  function mdToHtml(text){
+    if(typeof marked !== 'undefined' && marked.parse){
+      return marked.parse(text, { breaks: true });
+    }
+    // Fallback if marked not loaded
+    return '<p>' + esc(text).replace(/\n/g,'<br>') + '</p>';
+  }
+
+  function buildContext(){
+    const parts = [];
+    if(typeof rates !== 'undefined' && rates.length){
+      const header = 'Origen|Destino|Carrier|Equipo|Tarifa|Contrato|Desde|Hasta|Estado|Quarter';
+      const rows = rates.map(r =>
+        `${r.origen||'-'}|${r.destino||'-'}|${r.carrier||'-'}|${r.equipo||'-'}|${r.tarifa!=null?r.tarifa:'-'}|${r.contrato||'-'}|${r.desde||'-'}|${r.hasta||'-'}|${r.estado||'-'}|${r.quarter||'-'}`
+      );
+      parts.push(`[${rates.length} tarifas BID]\n${header}\n${rows.join('\n')}`);
+    }
+    if(typeof schedule !== 'undefined' && schedule.length){
+      const sHeader = 'Buque|Naviera|Servicio|Origen|Destino|ETD|ETA|CutOffDoc|CutOffFisico|Observaciones';
+      const sRows = schedule.slice(0, 200).map(r =>
+        `${r.BUQUE||r.buque||'-'}|${r.NAVIERA||r.naviera||'-'}|${r.SERVICIO||r.servicio||'-'}|${r.ORIGEN||r.origen||'-'}|${r.DESTINO||r.destino||'-'}|${r.ETD||r.etd||'-'}|${r.ETA||r.eta||'-'}|${r.CUT_OFF_DOC||r['CUT OFF DOC']||'-'}|${r.CUT_OFF_FISICO||r['CUT OFF FISICO']||'-'}|${r.OBSERVACIONES||r.observaciones||'-'}`
+      );
+      parts.push(`[${schedule.length} buques en schedule]\n${sHeader}\n${sRows.join('\n')}`);
+    }
+    if(typeof efaSheet !== 'undefined' && efaSheet.length){
+      parts.push(`[${efaSheet.length} registros EFA cargados]`);
+    }
+    return parts.join('\n\n') || '(sin datos cargados — pedi al usuario que sincronice)';
+  }
+
+  function updateStats(){
+    const r = document.getElementById('agent-stat-rates');
+    const s = document.getElementById('agent-stat-sched');
+    const e = document.getElementById('agent-stat-efa');
+    if(r) r.textContent = (typeof rates !== 'undefined' ? rates.length : 0);
+    if(s) s.textContent = (typeof schedule !== 'undefined' ? schedule.length : 0);
+    if(e) e.textContent = (typeof efaSheet !== 'undefined' ? efaSheet.length : 0);
+  }
+
+  function scrollBottom(){
+    const el = document.getElementById('agent-messages');
+    if(el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
+  }
+
+  function renderMessages(){
+    const container = document.getElementById('agent-messages');
+    const welcome = document.getElementById('agent-welcome');
+    if(!_agentMessages.length && !_agentLoading){
+      if(welcome) welcome.style.display = '';
+      return;
+    }
+    if(welcome) welcome.style.display = 'none';
+
+    let html = '';
+    _agentMessages.forEach(function(m){
+      const isUser = m.role === 'user';
+      const cls = isUser ? 'agent-msg--user' : 'agent-msg--assistant';
+      const avatar = isUser
+        ? '<div class="agent-avatar">Yo</div>'
+        : '<div class="agent-avatar"><svg class="ic" style="width:16px;height:16px" aria-hidden="true"><use href="#i-bot"/></svg></div>';
+      const content = isUser ? esc(m.content) : mdToHtml(m.content);
+      html += '<div class="agent-msg ' + cls + '">' + avatar + '<div class="agent-bubble">' + content + '</div></div>';
+    });
+
+    if(_agentLoading){
+      html += '<div class="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div><span class="agent-thinking-text" id="agent-thinking-text">' + THINKING_PHRASES[0] + '</span></div>';
+    }
+
+    container.innerHTML = html;
+    scrollBottom();
+  }
+
+  let _thinkInterval = null;
+  function startThinking(){
+    let idx = 0;
+    _thinkInterval = setInterval(function(){
+      idx = (idx + 1) % THINKING_PHRASES.length;
+      const el = document.getElementById('agent-thinking-text');
+      if(el) el.textContent = THINKING_PHRASES[idx];
+    }, 1800);
+  }
+  function stopThinking(){
+    if(_thinkInterval){ clearInterval(_thinkInterval); _thinkInterval = null; }
+  }
+
+  function autoResize(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  window.agentSend = async function(){
+    const input = document.getElementById('agent-input');
+    const text = (input.value || '').trim();
+    if(!text || _agentLoading) return;
+
+    input.value = '';
+    autoResize(input);
+
+    _agentMessages.push({ role: 'user', content: text });
+    _agentLoading = true;
+    renderMessages();
+    startThinking();
+    updateStats();
+
+    const sendBtn = document.getElementById('agent-send-btn');
+    if(sendBtn) sendBtn.disabled = true;
+
+    try{
+      const res = await fetch('/.netlify/functions/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: _agentMessages,
+          context: buildContext()
+        })
+      });
+
+      if(!res.ok){
+        const errData = await res.json().catch(function(){ return { error: 'HTTP ' + res.status }; });
+        throw new Error(errData.error || 'HTTP ' + res.status);
+      }
+
+      const data = await res.json();
+      _agentMessages.push({ role: 'assistant', content: data.response });
+    }catch(e){
+      _agentMessages.push({ role: 'assistant', content: 'Error: ' + e.message });
+    }finally{
+      _agentLoading = false;
+      stopThinking();
+      if(sendBtn) sendBtn.disabled = false;
+      renderMessages();
+    }
+  };
+
+  window.agentSendSuggestion = function(btn){
+    const input = document.getElementById('agent-input');
+    input.value = btn.textContent;
+    window.agentSend();
+  };
+
+  window.agentKeydown = function(e){
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      window.agentSend();
+    }
+  };
+
+  window.agentReset = function(){
+    _agentMessages = [];
+    _agentLoading = false;
+    stopThinking();
+    var sendBtn = document.getElementById('agent-send-btn');
+    if(sendBtn) sendBtn.disabled = false;
+    var welcome = document.getElementById('agent-welcome');
+    if(welcome) welcome.style.display = '';
+    document.getElementById('agent-messages').innerHTML = '';
+    document.getElementById('agent-messages').appendChild(welcome);
+    updateStats();
+  };
+
+  window.agentUpdateStats = updateStats;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var input = document.getElementById('agent-input');
+    if(input) input.addEventListener('input', function(){ autoResize(this); });
+  });
+})();
+</script>
+<!-- ═══════════ FIN AGENTE IA ═══════════ -->
 
 </body>
 </html>

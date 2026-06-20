@@ -1,6 +1,7 @@
 [build]
   command = "echo 'No build needed'"
   publish = "."
+  functions = "netlify/functions"
 
 # Headers de seguridad globales (anti-clickjacking + protección de auth gate).
 # Importante: el gate de auth confía en que la app no se cargue dentro de un

@@ -29,3 +29,6 @@ __pycache__/
 data/*.xlsx
 data/*.xlsm
 data/*.xls
+
+# Local Netlify folder
+.netlify
