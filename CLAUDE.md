@@ -15,7 +15,7 @@ afectan al equipo.
 
 - HTML/CSS/JS vanilla — toda la app vive en `index.html` (~13.400 líneas: CSS en `<style>`, lógica en `<script>` al final, sin módulos externos)
 - Persistencia: Supabase (proyecto `xkppkzfxgtfsmfooozsm`). Datos de tarifas marítimas/EFA históricamente desde Google Sheets/Excel
-- Deploy: Netlify — auto-deploy en `git push origin master` (rama es `master`, no `main`). `netlify.toml` solo setea headers de seguridad, no hay build step
+- Deploy: Netlify — auto-deploy en `git push origin master` (rama es `master`, no `main`). `netlify.toml` solo setea headers de seguridad, no hay build step. **Branch deploys DESHABILITADOS** — pushear una branch NO genera preview URL; smoke de branches = local (`http.server`)
 - Sin frameworks, sin bundlers. CDN-only (Supabase JS, fuentes). `npm` existe SOLO en `scripts/` (utilidades de seed/n8n), nunca en la app
 
 ## Comandos
@@ -39,13 +39,20 @@ python3 upload_detention.py <archivo.xlsx>
 
 No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
 
+### Smoke headless (receta, sin build/test runner)
+- Server: `python3 -m http.server 8000` como **proceso principal** del background (NO `python3 ... &` dentro de otro comando — muere al salir el wrapper). `pkill` sale con exit 144 (señal, no error).
+- Playwright global es **CommonJS**: `import pw from '<ruta>/playwright/index.js'; const {chromium}=pw` (el named import `{chromium}` falla).
+- Bypass auth en headless: `document.body.classList.add('is-authed')` + remover `#auth-gate`/`#splash`.
+- `sleep` en foreground está bloqueado en este entorno → usar `until <check>; do sleep N; done`.
+- `node --check` por cada `<script>` inline (sin `src`) antes de commitear.
+
 ## Mapa de la app — 8 tabs
 
 Cada tab es un `#tab-<x>` (botón) + `#panel-<x>` (contenido), conmutados por `switchTab(x)`. En orden:
 
 | Tab | Datos | Notas de arquitectura (ver secciones abajo) |
 |-----|-------|----------------------------------------------|
-| `tarifas` | Tarifas marítimas (Sheet/Supabase) | Vista de consulta de flete |
+| `tarifas` | Tarifas marítimas — **Supabase** `v_tarifas_maritimas` vía `loadTarifasFromSupabase()` (Apps Script legacy en `loadTarifas()`) | saneo selC/selE duplicado en ambas (deuda: unificar en helper; mientras tanto, tocar las dos) |
 | `admin-bid` | BID (carga/edición) | `renderAdminBID()` — innerHTML sin escape (deuda) |
 | `efa` | EFA Gantt | "EFA Gantt — arquitectura actual" |
 | `schedule` | Schedule marítimo (BID) | `renderSchedModule()` — XSS pre-existente en `r.OBSERVACIONES` |
@@ -119,6 +126,7 @@ Usar Live Server en VS Code — click derecho en index.html → Open with Live S
 - **CRÍTICO**: `esc()` solo escapa `&`, `<`, `>` — NO escapa comillas simples `'`. Nunca usar `esc()` dentro de atributos onclick/href con comillas simples. Usar `createElement` + `.onclick = () => fn(val)` en su lugar.
 - Supabase Realtime: siempre trackear el canal (`let _rtChannel = null`) y llamar `supa.removeChannel()` al salir del tab. Sin cleanup acumula suscripciones.
 - Filtros con `oninput`/`onchange` → agregar debounce de 250–300ms para evitar re-renders continuos
+- **`git cherry-pick -n A B C` se DETIENE en el primer conflicto** y no aplica el resto. Si commiteás en vez de `git cherry-pick --continue`, los commits siguientes se pierden sin aviso. Verificar siempre con `git rev-list --count <base>..HEAD` que entraron todos. (Si ya commiteaste: `git cherry-pick --quit` + re-aplicar los faltantes.)
 
 ## Schedule Realtime — arquitectura (completado 2026-04-10)
 
