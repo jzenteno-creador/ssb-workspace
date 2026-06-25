@@ -1,18 +1,62 @@
-# CLAUDE.md — Tarifa Schedule
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > Contexto global en ~/.claude/CLAUDE.md
 
 ## Qué es este proyecto
 
-Vista web de tarifas de flete y schedule marítimo para SSB International.
-Se comparte con el equipo y con PBB Polisur como herramienta de consulta.
-Está en producción — cambios afectan al equipo.
+Vista web de tarifas de flete y schedule marítimo para SSB International (también
+"ssb-workspace"). Se comparte con el equipo y con PBB Polisur como herramienta de
+consulta. Está en producción en `https://ssb-workspace.netlify.app` — cambios
+afectan al equipo.
 
 ## Stack
 
-- HTML/CSS/JS vanilla — archivo único index.html
-- Deploy: Netlify — auto-deploy en git push origin master (rama es `master`, no `main` — el CLAUDE.md global tenía un error en esto, ya corregido)
-- Sin frameworks, sin npm, sin bundlers
+- HTML/CSS/JS vanilla — toda la app vive en `index.html` (~13.400 líneas: CSS en `<style>`, lógica en `<script>` al final, sin módulos externos)
+- Persistencia: Supabase (proyecto `xkppkzfxgtfsmfooozsm`). Datos de tarifas marítimas/EFA históricamente desde Google Sheets/Excel
+- Deploy: Netlify — auto-deploy en `git push origin master` (rama es `master`, no `main`). `netlify.toml` solo setea headers de seguridad, no hay build step
+- Sin frameworks, sin bundlers. CDN-only (Supabase JS, fuentes). `npm` existe SOLO en `scripts/` (utilidades de seed/n8n), nunca en la app
+
+## Comandos
+
+Por ser una SPA estática de archivo único, no hay build/lint/test de la app. Los comandos viven en `scripts/` (helpers, no la app):
+
+```bash
+# Correr la app en local: Live Server en VS Code → click derecho en index.html → Open with Live Server
+# (no hay dev server por CLI; abrir el archivo directo rompe los fetch a Supabase por CORS/file://)
+
+# Deploy a producción
+git push origin master            # Netlify auto-despliega master
+
+# Seeds y utilidades (requieren cd scripts/ + npm install una vez)
+cd scripts && npm run seed-tt     # seed de Tarifas Terrestres Dow (idempotente; --force re-corre)
+cd scripts && npm run create-claude-workflow   # crea workflow n8n Claude_Conversation_Processor
+
+# Upload de planilla Detention (Python, en la raíz; requiere .env con SUPA_SERVICE_KEY)
+python3 upload_detention.py <archivo.xlsx>
+```
+
+No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
+
+## Mapa de la app — 8 tabs
+
+Cada tab es un `#tab-<x>` (botón) + `#panel-<x>` (contenido), conmutados por `switchTab(x)`. En orden:
+
+| Tab | Datos | Notas de arquitectura (ver secciones abajo) |
+|-----|-------|----------------------------------------------|
+| `tarifas` | Tarifas marítimas (Sheet/Supabase) | Vista de consulta de flete |
+| `admin-bid` | BID (carga/edición) | `renderAdminBID()` — innerHTML sin escape (deuda) |
+| `efa` | EFA Gantt | "EFA Gantt — arquitectura actual" |
+| `schedule` | Schedule marítimo (BID) | `renderSchedModule()` — XSS pre-existente en `r.OBSERVACIONES` |
+| `schedule-rt` | Supabase `schedules_master` Realtime | "Schedule Realtime — arquitectura" |
+| `detention` | Detention (Supabase) | filtros multi-select estilo `.ac-wrap` |
+| `tt-dow` | Tarifas Terrestres Dow (Supabase) | "Tarifas Terrestres Dow — arquitectura" |
+| `vacaciones` | Vacaciones (Supabase Auth + RLS) | "Módulo Vacaciones" + "Auth global" |
+
+Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
+
+> **Nota sobre referencias de línea:** las secciones más abajo citan líneas concretas (`~3329`, `~11737`, etc.). `index.html` creció a ~13.400 líneas, así que esos números están desfasados — usar `grep` por nombre de función/símbolo, no por línea.
 
 ## Correr en local
 
