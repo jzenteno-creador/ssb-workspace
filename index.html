@@ -3552,6 +3552,11 @@ function initClockAR(){
 
 // ── TABS ──
 function switchTab(name) {
+  // FIX (auditoría Tanda 1): avisar al salir de Tarifas Terrestres con cambios sin guardar.
+  const leavingTT = document.getElementById('panel-tt-dow')?.classList.contains('active') && name!=='tt-dow';
+  if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
+    if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
+  }
   ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
@@ -5320,7 +5325,19 @@ function fDate(d){
   return `${dd}/${mm}/${yy}`;
 }
 function toISO(d){if(!d)return'';if(d instanceof Date)return d.toISOString().split('T')[0];if(!isNaN(Date.parse(d)))return new Date(d).toISOString().split('T')[0];return'';}
-function daysUntil(d){if(!d||isNaN(Date.parse(d)))return null;return Math.ceil((new Date(d)-new Date())/86400000);}
+function daysUntil(d){
+  if(!d)return null;
+  const s=String(d).trim();
+  // FIX TZ: el date-only de Supabase ('YYYY-MM-DD') lo parsea new Date() como medianoche UTC
+  // (= 21:00 ART del día anterior) → una tarifa que vence HOY se marcaría vencida ~3h antes de
+  // tiempo en ART (-03). Lo normalizamos a medianoche LOCAL. El ISO con hora/Z del Apps Script
+  // ('...T03:00:00.000Z' = medianoche ART) y cualquier Date string se parsean normal.
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  let dt;
+  if(m) dt=new Date(+m[1], +m[2]-1, +m[3]);
+  else { if(isNaN(Date.parse(s)))return null; dt=new Date(s); }
+  return Math.ceil((dt-new Date())/86400000);
+}
 const noServ = r=>[r.tarifa,r.comentario,r.estado].some(v=>v&&v.toString().toUpperCase().match(/NO TIENE SERV|NO OFRE|NO DISPONIBLE/));
 const stCls  = s=>{if(!s)return'nd';const u=s.toUpperCase();if(u.includes('CONFIRM'))return'conf';if(u.includes('PEND'))return'pend';if(u.includes('NO DISP'))return'nodsp';return'nd';};
 function sortOrder(r){const e=(r.estado||'').toUpperCase();if(e.includes('CONFIRM'))return 0;if(e.includes('PEND'))return 1;return 2;}
@@ -5444,6 +5461,10 @@ function normalizeOrigen(s){
 // ── TARIFA FILTER & RENDER ──
 // A8: applyFilter debounced wrapper — impl renamed to _applyFilterImpl
 window.applyFilter = debounce(_applyFilterImpl, 250);
+// Vencida = vigencia terminada (hasta < hoy). FUENTE ÚNICA reusada por el filtro de la consulta
+// Tarifas BID y por el badge "Vencida" de buildCard — no inventar otra comparación. Sin hasta → no
+// vencida. Relativo a HOY (no al ETD): el ETD lo cubre el banner/alert aparte.
+function isTarifaVencida(r){ const d=daysUntil(r.hasta); return d!==null && d<0; }
 function _applyFilterImpl(){
   if(!rates.length)return;
   const vO  = document.getElementById('f-t-origen').value.trim();
@@ -5471,6 +5492,12 @@ function _applyFilterImpl(){
     return true;
   });
 
+  // FIX (regla: vencida = historia, no se declara): ocultar SIEMPRE las tarifas con vigencia
+  // terminada (hasta < hoy), transversal a Estado/Quarter/ETD. Mismo criterio que el badge
+  // "Vencida". Quedan en Supabase y visibles en Admin BID; en la consulta no se muestran ni se
+  // cuentan ni alimentan el total.
+  filtered = filtered.filter(r => !isTarifaVencida(r));
+
   const today=etd||new Date().toISOString().split('T')[0];
   const vig=filtered.filter(r=>{
     const d=r.desde&&!isNaN(Date.parse(r.desde))?r.desde:null;
@@ -5494,7 +5521,24 @@ function updateBanner(rates,etd,q20,q40){
   if(q20===0&&q40===0){banner.classList.remove('show');return;}
   const activas=rates.filter(r=>!noServ(r)&&isNum(r.tarifa)&&(r.estado||'').toUpperCase().includes('CONFIRM'));
   if(!activas.length){banner.classList.remove('show');return;}
-  const r=activas[0];
+  // FIX (auditoría Tanda 1 — salida sensible): el "Total a declarar" SOLO puede usar una
+  // tarifa VIGENTE para la ETD elegida. Antes tomaba activas[0] sin chequear vigencia →
+  // con ETD fuera de rango podía declarar flete con tarifa vencida.
+  const ref = etd || new Date().toISOString().split('T')[0];
+  const esVigente = x => {
+    const d = x.desde && !isNaN(Date.parse(x.desde)) ? toISO(x.desde) : null;
+    const h = x.hasta && !isNaN(Date.parse(x.hasta)) ? toISO(x.hasta) : null;
+    return (!d || d<=ref) && (!h || h>=ref);
+  };
+  const activasVig = activas.filter(esVigente);
+  if(etd && !activasVig.length){
+    // Hay confirmadas pero NINGUNA vigente para esa fecha → no mostrar un total engañoso.
+    document.getElementById('banner-amt').textContent='—';
+    document.getElementById('banner-bk').innerHTML='⚠ Sin tarifa vigente para esta fecha — verificá la vigencia antes de declarar';
+    banner.classList.add('show');
+    return;
+  }
+  const r=(etd?activasVig:activas)[0];
   const eq=(r.equipo||'').toUpperCase();
   const only20=eq.includes('20')&&!eq.includes('40');
   const only40=eq.includes('40')&&!eq.includes('20');
@@ -5513,7 +5557,7 @@ function updateBanner(rates,etd,q20,q40){
 }
 
 function renderTarifas(rates,etd,q20,q40,noVig){
-  document.getElementById('alert-area').innerHTML=noVig?`<div class="alert-bar">⚠ Sin tarifas vigentes para la fecha ETD. Mostrando todas las disponibles.</div>`:'';
+  document.getElementById('alert-area').innerHTML=noVig?`<div class="alert-bar">⚠ Sin tarifas vigentes para la fecha ETD. Mostrando el resto de tarifas no vencidas.</div>`:'';
   document.getElementById('res-ct').textContent=rates.length+' tarifa'+(rates.length!==1?'s':'')+' encontrada'+(rates.length!==1?'s':'');
   if(!rates.length){document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-ship"/></svg></div><div class="empty-ttl">No encontré tarifas con esos filtros</div><div class="empty-sub">Probá con otro puerto, carrier o ETD, o limpiá los filtros para ver todo lo disponible.</div></div>`;return;}
   const conf=rates.filter(r=>sortOrder(r)===0);
@@ -5539,7 +5583,7 @@ function buildCard(r,etd,q20,q40){
   const totalEmb=totalPorCont!==null&&qty>0?totalPorCont*qty:null;
   const diasHasta=daysUntil(r.hasta);
   const expiring=diasHasta!==null&&diasHasta>=0&&diasHasta<=7;
-  const expired=diasHasta!==null&&diasHasta<0;
+  const expired=isTarifaVencida(r);   // fuente única (las vencidas ya se filtran en _applyFilterImpl; rama defensiva)
   const destFlag=portFlag(r.destino);
 
   const tarifaDisp=ns
@@ -5664,13 +5708,13 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
     return `
     <div class="sched-card ${isDirect(r)?'direct':'transbordo'}${clickable?' clickable':''}${isSel?' selected':''}" ${onClick}>
       <div class="sched-row">
-        <div class="sc"><span class="sc-lbl">Buque</span><span class="sc-val vessel-name">${r.VESSEL||'—'}</span><span class="sc-val" style="font-size:10px;color:var(--muted)">${r.NAVIERA||''}</span></div>
+        <div class="sc"><span class="sc-lbl">Buque</span><span class="sc-val vessel-name">${esc(r.VESSEL||'—')}</span><span class="sc-val" style="font-size:10px;color:var(--muted)">${esc(r.NAVIERA||'')}</span></div>
         <div class="sc"><span class="sc-lbl">Cut Off Doc</span><span class="sc-val">${fDate(r['CUT OFF DOC'])}</span></div>
         <div class="sc"><span class="sc-lbl">Cut Off Físico</span><span class="sc-val amber">${fDate(r['CUT OFF FISICO'])}</span></div>
         <div class="sc"><span class="sc-lbl">ETD</span><span class="sc-val green">${fDate(r.ETD)}</span></div>
         <div class="sc"><span class="sc-lbl">ETA</span><span class="sc-val">${fDate(r['ETA ']||r.ETA)}</span></div>
-        <div class="sc"><span class="sc-lbl">Tránsito</span><span class="sc-val">${r.TRANSITO||'—'}</span></div>
-        <div class="sc"><span class="sc-lbl">Tipo</span><span class="days-badge ${isDirect(r)?'direct':'via'}">${r.TRASBORDOS||'—'}</span></div>
+        <div class="sc"><span class="sc-lbl">Tránsito</span><span class="sc-val">${esc(r.TRANSITO||'—')}</span></div>
+        <div class="sc"><span class="sc-lbl">Tipo</span><span class="days-badge ${isDirect(r)?'direct':'via'}">${esc(r.TRASBORDOS||'—')}</span></div>
         <div class="sc"><span class="sc-lbl">EFA</span>${efaHtml}</div>
       </div>
       ${(r.OBSERVACIONES)?`<div class="sc-obs">📝 ${esc(r.OBSERVACIONES)}</div>`:''}
@@ -8599,6 +8643,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function _hasPendingChanges(){
     return Object.keys(_ttPendingChanges).length > 0 || _ttPendingNew.length > 0;
   }
+  // FIX (auditoría Tanda 1): exponer el predicado para que switchTab (global) pueda avisar al
+  // salir de la solapa, y avisar también al recargar/cerrar la pestaña (pérdida real de datos).
+  window.__ttHasPendingChanges = _hasPendingChanges;
+  window.addEventListener('beforeunload', e => {
+    if(_hasPendingChanges()){ e.preventDefault(); e.returnValue = ''; }
+  });
   function _updatePendingPill(){
     const pill = document.getElementById('tt-edit-pending');
     const btnSave = document.getElementById('tt-btn-save');
@@ -9761,6 +9811,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Modos (segmented controls) ──
   window.switchTTMode = function(mode){
     if(!['consulta','edicion','historial'].includes(mode)) return;
+    // FIX (auditoría Tanda 1): avisar al salir del modo edición con cambios sin guardar.
+    const curMode = document.querySelector('#panel-tt-dow .tt-mode-section.active')?.dataset?.mode;
+    if(curMode==='edicion' && mode!=='edicion' && _hasPendingChanges()){
+      const n = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
+      if(!confirm('Tenés '+n+' cambio(s) sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
+    }
     // Solo aplico la clase activa a los botones del segmented control de modos
     // (que están directamente en .tt-mode-bar), no a TODOS los .tt-mode-btn
     // del panel — el modo Historial reusa la clase para sus filtros de op.
