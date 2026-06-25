@@ -3636,58 +3636,50 @@ setTimeout(()=>{const b=document.getElementById('splash-btn');if(b&&b.disabled)s
 async function syncSheet() {
   setDot('spin','Sincronizando...');
   document.getElementById('btn-sync').disabled = true;
+
+  // ── Tarifas + EFA: fuente Supabase (Tanda 1 Paso 3). Antes venían del
+  //    Apps Script (getAll); ahora se leen de la DB con nombres canónicos.
+  //    EFA primero para que efaSheet esté poblado cuando applyFilter renderice. ──
+  let tarifasOk = false;
+  try {
+    await loadEFAFromSupabase();
+    await loadTarifasFromSupabase();
+    tarifasOk = true;
+  } catch(e) {
+    console.warn('syncSheet: tarifas/EFA desde Supabase falló', e);
+  }
+
+  // ── Schedule: sigue viniendo del Apps Script vía getAll (sin cambios).
+  //    Solo usamos raw.schedule; raw.tarifas/raw.efa quedan ignorados a propósito. ──
   try {
     const ctrl = new AbortController();
     const tmo = setTimeout(()=>ctrl.abort(), 30000);
     const res = await fetch(SCRIPT_URL+'?action=getAll', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'},signal:ctrl.signal});
     clearTimeout(tmo);
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    const raw = await res.json();
-
-    // Load tarifas
-    const tarifasData = raw.tarifas || raw.data || raw;
-    if (Array.isArray(tarifasData)) loadTarifas(tarifasData);
-    else if (Array.isArray(raw)) loadTarifas(raw);
-
-    // Load EFA sheet (new source of truth, ignores old EFA cols in Tarifas)
-    if (Array.isArray(raw.efa)) loadEFA(raw.efa);
-
-    // Load schedule from Drive
-    if (raw.schedule && Array.isArray(raw.schedule) && raw.schedule.length > 0) {
-      schedule = raw.schedule;
-      scheduleFileName = raw.scheduleFile || '';
-      scheduleFileDate = raw.scheduleDate || '';
-      buildSchedCarrierBtns();
-      applySchedFilter();
-      updateSchedIndicator();
+    if (res.ok) {
+      const raw = await res.json();
+      if (raw.schedule && Array.isArray(raw.schedule) && raw.schedule.length > 0) {
+        schedule = raw.schedule;
+        scheduleFileName = raw.scheduleFile || '';
+        scheduleFileDate = raw.scheduleDate || '';
+        buildSchedCarrierBtns();
+        applySchedFilter();
+        updateSchedIndicator();
+      }
     }
+  } catch(e) {
+    console.warn('syncSheet: schedule (Apps Script) no disponible', e);
+  }
 
+  // ── Estado ──
+  if (tarifasOk) {
     const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setDot('ok','Actualizado '+t);
     splashReady('ok','✓ Información sincronizada');
-  } catch(e) {
-    // Fallback: try tarifas-only if getAll fails
-    try {
-      const res2 = await fetch(SCRIPT_URL+'?action=getTarifas', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'}});
-      const raw2 = await res2.json();
-      const data2 = raw2.data || raw2;
-      if(Array.isArray(data2)) {
-        loadTarifas(data2);
-        // pedir EFA aparte (el fallback no lo trae con getTarifas)
-        try{
-          const resE = await fetch(SCRIPT_URL+'?action=getEFA&t='+Date.now(),{redirect:'follow',method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
-          const jE = await resE.json();
-          if(Array.isArray(jE))loadEFA(jE);
-          else if(Array.isArray(jE.efa))loadEFA(jE.efa);
-        }catch(eEFA){console.warn('getEFA fallback failed',eEFA);}
-        setDot('ok','Tarifas OK · Schedule: subí el Excel');
-        splashReady('ok','✓ Tarifas + EFA sincronizados');
-      } else throw new Error('invalid');
-    } catch(e2) {
-      setDot('err','Error de conexión');
-      document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
-      splashReady('err','⚠ Error de conexión — podés ingresar igual');
-    }
+  } else {
+    setDot('err','Error de conexión');
+    document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
+    splashReady('err','⚠ Error de conexión — podés ingresar igual');
   }
   document.getElementById('btn-sync').disabled = false;
 }
@@ -3768,6 +3760,42 @@ function loadTarifas(data) {
     for(const c of [...selC]) if(!cs.has(c)) selC.delete(c);
     for(const e of [...selE]) if(!es.has(e)) selE.delete(e); }
 
+  buildCarrierBtns();
+  buildEquipoBtns();
+  applyFilter();
+}
+
+// ── LOAD TARIFAS — fuente Supabase (Tanda 1 Paso 3) ──
+// Lee la view v_tarifas_maritimas (naviera/origen/destino ya resueltos a nombre
+// canónico) y llena rates[] con la MISMA forma en memoria que produce
+// loadTarifas() desde el Apps Script — mismos nombres de propiedad, mismos
+// tipos, para que render*/efaApplies/getEfaForRow/total no se enteren del cambio.
+// CUIDADO: PostgREST serializa numeric como string ("1342.0") → Number() obligatorio.
+// IDENTIDAD (FASE B escritura): _rowIndex lleva el uuid Supabase (antes era el índice
+// de fila del Sheet). Todo el camino de edición (find/bulk/import/smartAddEFA) sigue
+// operando sobre r._rowIndex sin cambios; postEfaAction lo usa como id de la fila.
+// r.id es alias del mismo uuid (legibilidad).
+async function loadTarifasFromSupabase(){
+  const supa = window.__ssb && window.__ssb.supa;
+  if(!supa) throw new Error('cliente Supabase global no disponible');
+  const { data, error } = await supa.from('v_tarifas_maritimas').select('*');
+  if(error) throw error;
+  rates = (data||[]).map(row=>({
+    _rowIndex: row.id,                                 // uuid Supabase = identidad de la fila
+    id: row.id,
+    origen:  row.origen  || '',
+    destino: row.destino || '',
+    carrier: row.naviera || '',
+    equipo:  row.equipo  || '',
+    tarifa:  row.tarifa_usd!=null ? Number(row.tarifa_usd) : null,
+    contrato: row.contrato || '',
+    desde:   row.vigencia_desde || '',
+    hasta:   row.vigencia_hasta || '',
+    estado:  row.estado || '',
+    comentario: row.comentario || '',
+    quarter: row.quarter || '',
+    efaNum:null, efaDesde:'', efaHasta:'',
+  }));
   buildCarrierBtns();
   buildEquipoBtns();
   applyFilter();
@@ -4131,7 +4159,7 @@ function renderEfaGantt(){
           const dFmt=d=>d?fDate(d):'∞';
           const label=`${dFmt(p.desde)} → ${dFmt(p.hasta)}`;
           const tip=`${nvData.carrier} ${ruta.origen}→${ruta.destino} ${row.equipoLabel}\nUSD ${p.monto??'—'}\nVigencia: ${label}${p.comentario?'\n'+p.comentario:''}`;
-          const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal(${p._rowIndex})"`:'';
+          const onclick=p._rowIndex?`onclick="event.stopPropagation();openEfaModal('${p._rowIndex}')"`:'';
           nvHtml+=`<div class="${cls}" style="left:${left}%;width:${width}%;background:${color}" title="${tip.replace(/"/g,'&quot;')}" ${onclick}><span class="gc-period-label">${label}</span><span class="gc-amount">USD ${p.monto??'—'}</span></div>`;
         });
         ships.forEach(s=>{
@@ -4229,8 +4257,8 @@ function renderEFAResumen(){
     if(!e) return `<div class="efa-period empty">—</div>`;
     const vig = `${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'—'}`;
     const ri  = e._rowIndex;
-    const click = ri!=null?` onclick="event.stopPropagation();openEfaModal(${ri})" style="cursor:pointer" title="Click para editar"`:'';
-    const cont  = (type==='vigente'&&ri!=null)?`<button class="ep-cont" onclick="event.stopPropagation();duplicateAsContinuation(${ri})" title="Crear período siguiente">+ continuar</button>`:'';
+    const click = ri!=null?` onclick="event.stopPropagation();openEfaModal('${ri}')" style="cursor:pointer" title="Click para editar"`:'';
+    const cont  = (type==='vigente'&&ri!=null)?`<button class="ep-cont" onclick="event.stopPropagation();duplicateAsContinuation('${ri}')" title="Crear período siguiente">+ continuar</button>`:'';
     let extraCls='', warn='';
     if(type==='vigente'){
       const du=daysUntil(e.hasta);
@@ -4342,7 +4370,7 @@ function renderEFAResumenByEquipo(){
     const du=daysUntil(e.hasta);
     let extra='',warn='';
     if(du!=null && du>=0 && du<=7){extra=' expiring';warn=`<span class="ep-warn">${du}d</span>`;}
-    const click=ri!=null?` onclick="openEfaModal(${ri})" style="cursor:pointer" title="Click para editar"`:'';
+    const click=ri!=null?` onclick="openEfaModal('${ri}')" style="cursor:pointer" title="Click para editar"`:'';
     return `<div class="efa-period vigente${extra}"${click}>
       <span class="ep-amt">${usd(e.monto)}</span>
       <span class="ep-vig">${fDate(e.desde)}→${e.hasta?fDate(e.hasta):'—'}</span>
@@ -4410,12 +4438,12 @@ function renderEFAPlanilla(){
           <td>${esc(e.origen||'—')}</td>
           <td>${esc(e.destino||'—')}</td>
           <td><span class="efa-equipo-tag">${esc(e.equipo||'—')}</span></td>
-          <td class="ep-monto"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'monto')" title="Doble click para editar"`:''}>${e.monto!=null?usd(e.monto):'—'}</td>
-          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'desde')" title="Doble click para editar"`:''}>${fDate(e.desde)}</td>
-          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,${ri},'hasta')" title="Doble click para editar"`:''}>${e.hasta?fDate(e.hasta):'—'}</td>
+          <td class="ep-monto"${ri!=null?` ondblclick="efaInlineEdit(this,'${ri}','monto')" title="Doble click para editar"`:''}>${e.monto!=null?usd(e.monto):'—'}</td>
+          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,'${ri}','desde')" title="Doble click para editar"`:''}>${fDate(e.desde)}</td>
+          <td class="ep-vig"${ri!=null?` ondblclick="efaInlineEdit(this,'${ri}','hasta')" title="Doble click para editar"`:''}>${e.hasta?fDate(e.hasta):'—'}</td>
           <td><span class="ep-status ${st}">${st}</span></td>
           <td style="font-size:11px;color:var(--muted)">${esc(e.comentario||'')}</td>
-          <td class="ep-act">${ri!=null?`<button onclick="openEfaModal(${ri})" title="Editar este EFA">✏️</button><button class="del" onclick="deleteEfaRow(${ri})" title="Eliminar este EFA">🗑</button>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}</td>
+          <td class="ep-act">${ri!=null?`<button onclick="openEfaModal('${ri}')" title="Editar este EFA">✏️</button><button class="del" onclick="deleteEfaRow('${ri}')" title="Eliminar este EFA">🗑</button>`:'<span style="font-size:10px;color:var(--muted)">—</span>'}</td>
         </tr>`;
       }).join('')}
     </tbody>
@@ -4823,31 +4851,66 @@ function openLogModal(src){
 }
 function setLogSource(s){logSource=s;loadLogData();const ttl=document.getElementById('log-modal-title');if(ttl)ttl.textContent='📜 Historial de cambios — '+(s==='bid'?'BID':s==='all'?'EFA + BID':'EFA');}
 function closeLogModal(){document.getElementById('log-modal').classList.remove('open');}
+// ── HISTORIAL → SUPABASE (Tanda 1 Paso 3 · FASE C) ──
+// Lee tarifas_maritimas_log (snapshot jsonb antes/después) y expande cada entrada
+// a filas de diff por campo, reusando renderLogTable() (cols Campo/Antes/Después).
+// Resuelve naviera/origen/destino ids→nombres con los catálogos canónicos.
+const _MM_LOG_FIELD_LABELS = {naviera_id:'Naviera',origen_id:'Origen',destino_id:'Destino',equipo:'Equipo',tarifa_usd:'Tarifa USD',monto_usd:'Monto USD',estado:'Estado',vigencia_desde:'Vigencia desde',vigencia_hasta:'Vigencia hasta',contrato:'Contrato',quarter:'Quarter',comentario:'Comentario',activo:'Activo'};
+const _MM_LOG_SKIP = new Set(['id','created_at','updated_at','updated_by','update_reason']);
+function _mmLogFmt(k,v){
+  if(v==null||v==='') return '—';
+  if(k==='naviera_id') return _mmLookups.idNav.get(v)||v;
+  if(k==='origen_id'||k==='destino_id') return _mmLookups.idPort.get(v)||v;
+  if(k==='vigencia_desde'||k==='vigencia_hasta') return fDate(v);
+  if(k==='activo') return v?'Sí':'No';
+  if(k==='tarifa_usd'||k==='monto_usd') return usd(Number(v));
+  return String(v);
+}
+function _mmExpandLogEntry(e){
+  const isBid = e.tabla_origen==='tarifas_maritimas';
+  const srcTag = isBid?'BID':'EFA';
+  const bef = e.valores_anteriores||{}, aft = e.valores_nuevos||{};
+  const snap = e.operacion==='DELETE'?bef:aft;
+  const base = {
+    ts:e.changed_at, archivo:e.changed_by||'',
+    carrier:_mmLookups.idNav.get(snap.naviera_id)||snap.naviera_id||'',
+    origen:_mmLookups.idPort.get(snap.origen_id)||snap.origen_id||'',
+    destino:_mmLookups.idPort.get(snap.destino_id)||snap.destino_id||'',
+    equipo:snap.equipo||'', rowIdx:e.registro_id,
+  };
+  // Soft delete (UPDATE activo true→false) → mostrar como BAJA
+  if(e.operacion==='UPDATE' && bef.activo===true && aft.activo===false)
+    return [{...base, tipo:`${srcTag} delete`, campo:'Baja (soft delete)', old:'Activo', new:'Inactivo'}];
+  if(e.operacion==='INSERT')
+    return [{...base, tipo:`${srcTag} add`, campo:'Alta', old:'', new:isBid?(aft.tarifa_usd!=null?usd(Number(aft.tarifa_usd)):(aft.estado||'(alta)')):(aft.monto_usd!=null?usd(Number(aft.monto_usd)):'(alta)')}];
+  if(e.operacion==='DELETE')
+    return [{...base, tipo:`${srcTag} delete`, campo:'Baja', old:'(eliminada)', new:''}];
+  // UPDATE → una fila por campo cambiado
+  const keys=[...new Set([...Object.keys(bef),...Object.keys(aft)])].filter(k=>!_MM_LOG_SKIP.has(k));
+  const rows=[];
+  for(const k of keys){
+    if(JSON.stringify(bef[k])===JSON.stringify(aft[k])) continue;
+    rows.push({...base, tipo:`${srcTag} update`, campo:_MM_LOG_FIELD_LABELS[k]||k, old:_mmLogFmt(k,bef[k]), new:_mmLogFmt(k,aft[k])});
+  }
+  if(!rows.length) rows.push({...base, tipo:`${srcTag} update`, campo:'(sin cambios visibles)', old:'', new:''});
+  return rows;
+}
 async function loadLogData(){
   const body=document.getElementById('log-body');
   body.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">Cargando...</div>';
   try{
-    const res=await fetch(SCRIPT_URL+'?action=getLog&t='+Date.now(),{cache:'no-store'});
-    const j=await res.json();
-    const data=Array.isArray(j.data)?j.data:[];
-    if(data.length<2){logRows=[];renderLogTable();return;}
-    const headers=data[0].map(h=>h.toString().toUpperCase().trim());
-    const idx=name=>headers.indexOf(name);
-    const iTs=idx('TIMESTAMP'),iArch=idx('ARCHIVO'),iCampo=idx('CAMPO'),iOri=idx('ORIGEN'),iDes=idx('DESTINO'),iNav=idx('NAVIERA'),iOld=idx('VALOR ANTERIOR'),iNew=idx('VALOR NUEVO'),iTipo=idx('TIPO'),iEq=idx('EQUIPO'),iRow=idx('ROW_INDEX');
-    logRows=data.slice(1).map(r=>({
-      ts:r[iTs],archivo:iArch>=0?r[iArch]:'',campo:iCampo>=0?r[iCampo]:'',
-      origen:iOri>=0?r[iOri]:'',destino:iDes>=0?r[iDes]:'',carrier:iNav>=0?r[iNav]:'',
-      old:iOld>=0?r[iOld]:'',new:iNew>=0?r[iNew]:'',tipo:iTipo>=0?r[iTipo]:'',
-      equipo:iEq>=0?r[iEq]:'',rowIdx:iRow>=0?r[iRow]:''
-    })).filter(r=>{
-      const t=(r.tipo||'').toString().toUpperCase();
-      if(logSource==='efa')return t.startsWith('EFA');
-      if(logSource==='bid')return t.startsWith('BID');
-      return t.startsWith('EFA')||t.startsWith('BID');
-    }).reverse();
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) throw new Error('cliente Supabase global no disponible');
+    await _mmEnsureLookups();
+    let q=supa.from('tarifas_maritimas_log').select('*').order('changed_at',{ascending:false}).limit(1000);
+    if(logSource==='bid') q=q.eq('tabla_origen','tarifas_maritimas');
+    else if(logSource==='efa') q=q.eq('tabla_origen','recargos_efa');
+    const { data, error } = await q;
+    if(error) throw error;
+    logRows=(data||[]).flatMap(_mmExpandLogEntry);
     renderLogTable();
   }catch(e){
-    body.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626">Error al cargar historial: '+e.message+'</div>';
+    body.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626">Error al cargar historial: '+esc(e.message)+'</div>';
   }
 }
 function renderLogTable(){
@@ -5111,7 +5174,7 @@ async function confirmImport(){
   }
   btn.textContent='✓ Importar';
   if(fail===0){
-    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados a Google Sheets</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
+    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
     btn.style.display='none';
   } else {
     body.innerHTML=`<div style="padding:14px;font-size:12px"><div style="font-weight:700;color:#c00;margin-bottom:8px">⚠ Importación parcial: ${done} OK · ${fail} errores</div><div style="max-height:160px;overflow:auto;background:#fee;border:1px solid #fcc;border-radius:4px;padding:8px;font-family:monospace;font-size:10px;white-space:pre-wrap;margin-bottom:10px">${errors.join('\n')}</div>${done>0?`<div style="text-align:center"><button class="efa-mod-btn primary" onclick="location.reload()">🔄 Recargar página</button></div>`:''}</div>`;
@@ -5159,35 +5222,202 @@ async function smartAddEFA(data){
   return await postEfaAction({action:'addEFA',data});
 }
 
-async function postEfaAction(payload){
-  let res;
-  try{res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});}
-  catch(e){throw new Error('Network error: '+e.message);}
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  const txt=await res.text();
-  let j;
-  try{j=JSON.parse(txt);}
-  catch(e){
-    console.error('Apps Script returned non-JSON:',txt.slice(0,500));
-    throw new Error('Apps Script no devolvió JSON. Respuesta: '+txt.slice(0,200));
+// ════════ ESCRITURA → SUPABASE (Tanda 1 Paso 3 · FASE B) ════════
+// postEfaAction ya NO escribe al Apps Script/Sheet. Es un dispatcher a Supabase
+// vía window.__ssb.supa. Acepta el MISMO payload que ya arman los callers (data en
+// headers de planilla) y lo traduce a columnas de la DB resolviendo naviera/puerto
+// → id por catálogo canónico (+ alias). Soft delete = UPDATE activo=false (RLS sin
+// DELETE). updated_by = email del usuario logueado; el trigger lo copia a la bitácora.
+
+// Catálogos canónicos cacheados para resolver nombre→id.
+let _mmLookups = null;
+async function _mmEnsureLookups(){
+  if(_mmLookups) return _mmLookups;
+  const supa = window.__ssb && window.__ssb.supa;
+  if(!supa) throw new Error('cliente Supabase global no disponible');
+  const [nav, navAl, pue, pueAl] = await Promise.all([
+    supa.from('navieras').select('id,nombre'),
+    supa.from('navieras_alias').select('alias,naviera_id'),
+    supa.from('puertos').select('id,nombre'),
+    supa.from('puertos_alias').select('alias,puerto_id'),
+  ]);
+  for(const r of [nav,navAl,pue,pueAl]) if(r.error) throw r.error;
+  const norm = s => (s==null?'':String(s)).trim().toUpperCase();
+  const navMap = new Map(), puertoMap = new Map(), idNav = new Map(), idPort = new Map();
+  (nav.data||[]).forEach(n=>{navMap.set(norm(n.nombre), n.id); idNav.set(n.id, n.nombre);});
+  (navAl.data||[]).forEach(a=>navMap.set(norm(a.alias), a.naviera_id));
+  (pue.data||[]).forEach(p=>{puertoMap.set(norm(p.nombre), p.id); idPort.set(p.id, p.nombre);});
+  (pueAl.data||[]).forEach(a=>puertoMap.set(norm(a.alias), a.puerto_id));
+  _mmLookups = { navMap, puertoMap, idNav, idPort, norm };
+  return _mmLookups;
+}
+// Normaliza equipo a los 2 valores canónicos del CHECK; si no matchea lo deja pasar
+// (la DB lo rechaza con mensaje claro).
+function _mmNormEquipo(s){
+  const u=(s==null?'':String(s)).toUpperCase().replace(/['’\s]/g,'');
+  if(u.includes('40')) return "40'HC";
+  if(u.includes('20')) return "20'STD";
+  return (s==null?'':String(s)).trim();
+}
+// DMY o ISO → ISO (YYYY-MM-DD); null si vacío/ inválido.
+function _mmToISO(v){
+  if(!v) return null;
+  const s=String(v).trim();
+  const iso=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  return dmyToISO(s) || null;
+}
+function _mmErr(error){
+  console.error('postEfaAction Supabase error', error);
+  if(error && error.code==='23505') return 'Ya existe una tarifa/EFA con esa misma combinación (naviera + ruta + equipo + vigencia).';
+  if(error && error.code==='23514') return 'Valor inválido para la base (revisá equipo, estado o tarifa > 0).';
+  return (error && (error.message||error.hint)) || 'Error al escribir en la base';
+}
+
+// Resuelve nombre→id contra el catálogo canónico (+ alias). Si NO matchea NI
+// catálogo NI alias (destino/naviera genuinamente nuevo), pregunta si agregarlo
+// (puerto pide país, que es NOT NULL). Devuelve el id (existente o recién creado).
+// Cancelar aborta el guardado. Los alias siguen siendo el guardrail contra grafías
+// sucias conocidas (ej. MANAOS→MANAUS): si matchea alias, resuelve sin preguntar.
+async function _mmResolveOrCreate(kind, name){
+  await _mmEnsureLookups();
+  const map = kind==='naviera' ? _mmLookups.navMap : _mmLookups.puertoMap;
+  const raw = (name==null?'':String(name)).trim();
+  if(!raw) throw new Error((kind==='naviera'?'Naviera':'Puerto')+' vacío: completá el campo antes de guardar.');
+  const norm = raw.toUpperCase();
+  const hit = map.get(norm);
+  if(hit) return hit;                                    // match catálogo o alias → normal
+  const conf = await _mmConfirmNewCatalog(kind, raw);     // genuinamente nuevo → confirmar alta
+  if(!conf) throw new Error('Alta cancelada: no se agregó "'+raw+'" al catálogo; la tarifa no se guardó.');
+  const supa = window.__ssb.supa;
+  const nombre = norm;                                   // catálogo canónico = MAYÚSCULAS (igual al seed)
+  let ins, error;
+  if(kind==='naviera'){
+    ({ data:ins, error } = await supa.from('navieras').insert({ nombre }).select('id,nombre').single());
+  } else {
+    ({ data:ins, error } = await supa.from('puertos').insert({ nombre, pais: conf.pais }).select('id,nombre').single());
   }
-  if(j&&j.error)throw new Error(j.error);
-  if(j&&j.success===false)throw new Error(j.message||'Apps Script reportó fallo');
-  return j;
+  if(error) throw new Error(_mmErr(error));
+  map.set(norm, ins.id);                                 // refrescar catálogo en memoria (sin reload completo)
+  if(kind==='naviera') _mmLookups.idNav.set(ins.id, ins.nombre); else _mmLookups.idPort.set(ins.id, ins.nombre);
+  return ins.id;
+}
+
+// Modal de confirmación de alta de catálogo. Promise → {pais} (puerto) / {} (naviera)
+// si confirma; false si cancela. Muestra el nombre tipeado para cazar typos.
+function _mmConfirmNewCatalog(kind, name){
+  return new Promise(resolve=>{
+    const isPort = kind==='puerto';
+    const ov = document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML=`<div role="dialog" aria-modal="true" style="background:var(--surface,#1e293b);color:var(--text,#e2e8f0);border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px;max-width:440px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.5);font-family:var(--font,system-ui,sans-serif)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">${isPort?'Puerto':'Naviera'} no está en el catálogo</div>
+      <div style="font-size:13px;color:var(--muted,#94a3b8);margin-bottom:12px">Vas a <b>agregar al catálogo canónico</b> ${isPort?'el puerto':'la naviera'}:</div>
+      <div style="font-size:16px;font-weight:700;padding:8px 12px;background:var(--faint,rgba(255,255,255,.06));border-radius:6px;margin-bottom:14px;word-break:break-word">${esc(name)}</div>
+      ${isPort?`<label style="display:block;font-size:12px;font-weight:600;color:var(--muted,#94a3b8);margin-bottom:4px">País <span style="color:#ef4444">*</span></label>
+      <input id="_mm-newcat-pais" type="text" placeholder="Ej: Brasil" autocomplete="off" style="width:100%;padding:8px 10px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:6px;background:var(--bg,#0f172a);color:var(--text,#e2e8f0);box-sizing:border-box">
+      <div id="_mm-newcat-err" style="font-size:11px;color:#ef4444;min-height:15px;margin:4px 0 8px"></div>`:'<div style="height:8px"></div>'}
+      <div style="font-size:11px;color:var(--muted,#94a3b8);margin-bottom:16px">Revisá que no sea un error de tipeo: si confirmás queda en el catálogo permanente.</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" id="_mm-newcat-cancel" style="padding:8px 14px;border-radius:6px;border:1px solid var(--border,rgba(255,255,255,.15));background:transparent;color:var(--text,#e2e8f0);cursor:pointer;font-size:13px">Cancelar</button>
+        <button type="button" id="_mm-newcat-ok" style="padding:8px 14px;border-radius:6px;border:none;background:var(--teal,#14b8a6);color:#fff;cursor:pointer;font-size:13px;font-weight:600">Agregar y guardar</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    const done=v=>{ ov.remove(); document.removeEventListener('keydown',onKey); resolve(v); };
+    const onKey=e=>{ if(e.key==='Escape')done(false); };
+    document.addEventListener('keydown',onKey);
+    ov.addEventListener('mousedown',e=>{ if(e.target===ov)done(false); });
+    ov.querySelector('#_mm-newcat-cancel').onclick=()=>done(false);
+    ov.querySelector('#_mm-newcat-ok').onclick=()=>{
+      if(isPort){
+        const pais=(document.getElementById('_mm-newcat-pais').value||'').trim();
+        if(!pais){ document.getElementById('_mm-newcat-err').textContent='El país es obligatorio.'; return; }
+        done({ pais });
+      } else done({});
+    };
+    setTimeout(()=>{ try{ (ov.querySelector('#_mm-newcat-pais')||ov.querySelector('#_mm-newcat-ok')).focus(); }catch(_){} },30);
+  });
+}
+
+async function postEfaAction(payload){
+  const supa = window.__ssb && window.__ssb.supa;
+  if(!supa) throw new Error('cliente Supabase global no disponible');
+  const action = (payload && payload.action) || '';
+  const id = payload && (payload.id != null ? payload.id : payload.rowIndex);
+  const email = (window.__ssbAuth && window.__ssbAuth.email) || null;
+  await _mmEnsureLookups();
+  const isTarifa = /tarifa/i.test(action);
+  const tabla = isTarifa ? 'tarifas_maritimas' : 'recargos_efa';
+
+  // DELETE → soft delete (UPDATE activo=false). RLS no permite DELETE físico.
+  if(/^delete/i.test(action)){
+    if(id==null) throw new Error('Falta id para eliminar');
+    const { error } = await supa.from(tabla)
+      .update({ activo:false, updated_by:email, update_reason:null, updated_at:new Date().toISOString() })
+      .eq('id', id);
+    if(error) throw new Error(_mmErr(error));
+    return { success:true, id };
+  }
+
+  const d = payload.data || {};
+
+  let row;
+  if(isTarifa){
+    const tRaw = d['TARIFA USD'];
+    const naviera_id = await _mmResolveOrCreate('naviera', d['CARRIER']);
+    const origen_id  = await _mmResolveOrCreate('puerto',  d['PUERTO DE EMBARQUE']);
+    const destino_id = await _mmResolveOrCreate('puerto',  d['DESTINO']);
+    row = {
+      naviera_id, origen_id, destino_id,
+      equipo    : _mmNormEquipo(d['EQUIPO']),
+      tarifa_usd: (tRaw===''||tRaw==null) ? null : Number(tRaw),
+      estado    : (d['ESTADO TARIFA']==null?'':String(d['ESTADO TARIFA'])).trim(),
+      vigencia_desde: _mmToISO(d['INICIO VIGENCIA CONTRATO']),
+      vigencia_hasta: _mmToISO(d['FIN VIGENCIA CONTRATO']),
+      contrato  : (d['CONTRATO']==null?'':String(d['CONTRATO'])).trim() || null,
+      quarter   : (d['QUARTER']==null?'':String(d['QUARTER'])).trim() || null,
+      comentario: (d['COMENTARIOS PARA COORDINACION (TOOL TIP)']==null?'':String(d['COMENTARIOS PARA COORDINACION (TOOL TIP)'])).trim() || null,
+      updated_by: email, update_reason: null,
+    };
+  } else {
+    const naviera_id = await _mmResolveOrCreate('naviera', d['CARRIER']);
+    const origen_id  = await _mmResolveOrCreate('puerto',  d['ORIGEN']);
+    const destino_id = await _mmResolveOrCreate('puerto',  d['DESTINO']);
+    row = {
+      naviera_id, origen_id, destino_id,
+      equipo    : _mmNormEquipo(d['EQUIPO']),
+      monto_usd : Number(d['MONTO USD']),
+      vigencia_desde: _mmToISO(d['INICIO']),
+      vigencia_hasta: _mmToISO(d['FIN']),
+      comentario: (d['COMENTARIO']==null?'':String(d['COMENTARIO'])).trim() || null,
+      updated_by: email, update_reason: null,
+    };
+  }
+
+  if(/^add/i.test(action)){
+    const { data:ins, error } = await supa.from(tabla).insert(row).select('id').single();
+    if(error) throw new Error(_mmErr(error));
+    return { success:true, id: ins && ins.id };
+  }
+  if(/^update/i.test(action)){
+    if(id==null) throw new Error('Falta id para actualizar');
+    row.updated_at = new Date().toISOString();
+    const { error } = await supa.from(tabla).update(row).eq('id', id);
+    if(error) throw new Error(_mmErr(error));
+    return { success:true, id };
+  }
+  throw new Error('Acción desconocida: '+action);
 }
 
 async function reloadEfaFromSheet(){
-  await new Promise(r=>setTimeout(r,800)); // dar tiempo a Apps Script a propagar la escritura
   try{
-    const res=await fetch(SCRIPT_URL+'?action=getEFA&t='+Date.now(),{redirect:'follow',method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});
-    const j=await res.json();
-    if(Array.isArray(j))loadEFA(j);
-    else if(Array.isArray(j.efa))loadEFA(j.efa);
-    buildEfaFilterOptions();
-    renderEFATab();
+    await loadEFAFromSupabase();   // recarga desde Supabase (antes: getEFA del Apps Script)
+    if(typeof buildEfaFilterOptions==='function')buildEfaFilterOptions();
+    if(typeof renderEFATab==='function')renderEFATab();
     if(typeof applyFilter==='function')applyFilter();
     if(typeof applySchedFilter==='function')applySchedFilter();
-  }catch(e){console.warn('reloadEFA failed',e);}
+  }catch(e){console.warn('reloadEFA (Supabase) failed',e);}
 }
 
 // Persist EFA filters
@@ -5383,6 +5613,30 @@ function loadEFA(data){
         comentario:g(fk('COMENTARIO','OBSERV')),
       };
     });
+}
+
+// ── LOAD EFA — fuente Supabase (Tanda 1 Paso 3) ──
+// Lee v_recargos_efa y llena efaSheet[] con la MISMA forma que loadEFA(). Maersk
+// no tiene filas acá (all-in) → sus tarifas dan total sin recargo automáticamente.
+// numeric como string desde PostgREST → Number(). _rowIndex lleva el uuid Supabase
+// (identidad de la fila para el camino de edición); id es alias del mismo uuid.
+async function loadEFAFromSupabase(){
+  const supa = window.__ssb && window.__ssb.supa;
+  if(!supa) throw new Error('cliente Supabase global no disponible');
+  const { data, error } = await supa.from('v_recargos_efa').select('*');
+  if(error) throw error;
+  efaSheet = (data||[]).map(row=>({
+    _rowIndex: row.id,
+    id: row.id,
+    carrier: row.naviera || '',
+    origen:  row.origen  || '',
+    destino: row.destino || '',
+    equipo:  row.equipo  || '',
+    monto:   row.monto_usd!=null ? Number(row.monto_usd) : null,
+    desde:   row.vigencia_desde || '',
+    hasta:   row.vigencia_hasta || '',
+    comentario: row.comentario || '',
+  }));
 }
 
 // Devuelve el registro EFA que aplica a (carrier+origen+destino+equipo) para una ETD.
@@ -6622,7 +6876,7 @@ function exportSchedExcel(){
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Fin vigencia</label><input id="bid-m-hasta" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Estado</label>
           <select id="bid-m-estado" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
-            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option>
+            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option><option value="NO COTIZADO">NO COTIZADO</option>
           </select>
         </div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Quarter</label>
@@ -6751,7 +7005,9 @@ function _renderAdminBIDImpl(){
   const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
   // Estilo planilla Excel: header sticky (CSS .bid-xls thead th), filas alternas, font 11px, table-layout:fixed (CSS .bid-xls)
   // Widths absolutos commit 6 decisión M: suma 1388px, cabe 1440 viewport; Comentario 340 con ellipsis+data-tip
-  const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:85,Hasta:85,Estado:100,Quarter:70,Comentario:340,Acciones:80};
+  // Desde/Hasta a 130px: el input type=date nativo necesita ~125px+ ('dd/mm/yyyy' + picker);
+  // a 85px cortaba el año al editar ("01/01/20"). En lectura muestran dd/mm/yy (entran de sobra).
+  const COLW={CHK:28,Carrier:90,Origen:120,Destino:120,Equipo:80,'Tarifa USD':90,Contrato:100,Desde:130,Hasta:130,Estado:100,Quarter:70,Comentario:340,Acciones:80};
   // FIX layout: width:100% para llenar el contenedor (antes width:1388px fijo dejaba vacío el
   // lado derecho en pantallas anchas). min-width:1388px preserva el mínimo (scroll en angostas).
   // El espacio extra va a Comentario (única columna width:auto abajo).
@@ -6767,28 +7023,28 @@ function _renderAdminBIDImpl(){
     // Zebra se maneja via CSS (.bid-xls tbody tr:nth-child(odd)); selected/highlighted via classes
     const rowCls=rowSel?'bid-row-selected':(sel?'bid-row-highlighted':'');
     const dis=ri==null;
-    html+=`<tr class="bid-row ${rowCls}" data-key="${k}" data-ri="${ri||''}" onclick="bidSelectRow('${k}',${ri||'null'})">`;
-    html+=`<td style="padding:4px 6px;text-align:center;border:1px solid var(--border)" onclick="event.stopPropagation()"><input type="checkbox" ${sel?'checked':''} ${dis?'disabled':''} onchange="bidToggleSel(${ri||'null'},this.checked)"></td>`;
+    html+=`<tr class="bid-row ${rowCls}" data-key="${k}" data-ri="${ri||''}" onclick="bidSelectRow('${k}','${ri||''}')">`;
+    html+=`<td style="padding:4px 6px;text-align:center;border:1px solid var(--border)" onclick="event.stopPropagation()"><input type="checkbox" ${sel?'checked':''} ${dis?'disabled':''} onchange="bidToggleSel('${ri||''}',this.checked)"></td>`;
     const cell=(field,val,editable=true)=>{
       const v=val==null?'':val;
       const base='padding:4px 6px;border:1px solid var(--border);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
       // data-tip con texto completo para Comentario largo (patrón commit 4, decisión M commit 6)
       const tip=field==='comentario'&&v&&String(v).length>30?` data-tip="${esc(v)}"`:'';
-      if(editable&&!dis)return `<td class="bid-cell" data-field="${field}" data-ri="${ri}"${tip} style="${base};cursor:cell" onclick="event.stopPropagation();bidInlineEdit(this,${ri},'${field}')">${esc(v)}</td>`;
+      if(editable&&!dis)return `<td class="bid-cell" data-field="${field}" data-ri="${ri}"${tip} style="${base};cursor:cell" onclick="event.stopPropagation();bidInlineEdit(this,'${ri}','${field}')">${esc(v)}</td>`;
       return `<td style="${base}"${tip}>${esc(v)}</td>`;
     };
     html+=cell('carrier',r.carrier);
     html+=cell('origen',r.origen);
     html+=cell('destino',r.destino);
     html+=cell('equipo',r.equipo);
-    html+=cell('tarifa',r.tarifa!=null?(typeof r.tarifa==='number'?r.tarifa.toLocaleString('es-AR'):r.tarifa):'');
+    html+=cell('tarifa',r.tarifa!=null?(typeof r.tarifa==='number'?r.tarifa.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}):r.tarifa):'');
     html+=cell('contrato',r.contrato);
     html+=cell('desde',fmtD(r.desde));
     html+=cell('hasta',fmtD(r.hasta));
     html+=cell('estado',r.estado);
     html+=cell('quarter',r.quarter);
     html+=cell('comentario',r.comentario);
-    html+=`<td style="padding:4px 6px;white-space:nowrap;border:1px solid var(--border)" onclick="event.stopPropagation()">${ri!=null?`<button onclick="openBidModal(${ri})" title="Editar" aria-label="Editar"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg></button> <button onclick="deleteBidRow(${ri})" title="Eliminar" aria-label="Eliminar" style="background:var(--red-bg);color:var(--red)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`:'<span style="color:var(--muted);font-size:10px">sin _rowIndex</span>'}</td>`;
+    html+=`<td style="padding:4px 6px;white-space:nowrap;border:1px solid var(--border)" onclick="event.stopPropagation()">${ri!=null?`<button onclick="openBidModal('${ri}')" title="Editar" aria-label="Editar"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-pencil"/></svg></button> <button onclick="deleteBidRow('${ri}')" title="Eliminar" aria-label="Eliminar" style="background:var(--red-bg);color:var(--red)"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-trash"/></svg></button>`:'<span style="color:var(--muted);font-size:10px">sin _rowIndex</span>'}</td>`;
     html+='</tr>';
   });
   html+='</tbody></table>';
@@ -6798,7 +7054,7 @@ function _renderAdminBIDImpl(){
 }
 
 // ── Selección filas ──
-function bidToggleSel(ri,on){if(ri==null)return;if(on)bidSelected.add(ri);else bidSelected.delete(ri);bidUpdateBulkBar();}
+function bidToggleSel(ri,on){if(ri==null||ri==='')return;if(on)bidSelected.add(ri);else bidSelected.delete(ri);bidUpdateBulkBar();}
 function bidToggleAll(on){bidSelected.clear();if(on)getBidFiltered().forEach(r=>{if(r._rowIndex!=null)bidSelected.add(r._rowIndex);});renderAdminBID();}
 function bidClearSelection(){bidSelected.clear();renderAdminBID();}
 function bidUpdateBulkBar(){const bar=document.getElementById('bid-bulk-bar');const n=bidSelected.size;if(n>0){bar.style.display='block';document.getElementById('bid-bulk-count').textContent=`${n} fila${n!==1?'s':''} seleccionada${n!==1?'s':''}`;}else{bar.style.display='none';}}
@@ -6828,7 +7084,7 @@ function bidSelectRow(k,ri){
 function bidRenderImpact(){
   const tr=document.querySelector(`#bid-table-wrap tr[data-key="${CSS.escape(bidSelectedRowKey)}"]`);
   if(!tr){document.getElementById('bid-impact-panel').style.display='none';return;}
-  const ri=parseInt(tr.dataset.ri);
+  const ri=tr.dataset.ri;
   const r=rates.find(x=>x._rowIndex===ri);
   if(!r){document.getElementById('bid-impact-panel').style.display='none';return;}
   const C=(r.carrier||'').toUpperCase();
@@ -6972,15 +7228,10 @@ async function deleteBidRow(ri){
 }
 
 async function reloadTarifasFromSheet(){
-  await new Promise(r=>setTimeout(r,800));
   try{
-    const res=await fetch(SCRIPT_URL+'?action=getTarifas&t='+Date.now(),{cache:'no-store'});
-    const j=await res.json();
-    const data=Array.isArray(j)?j:(j.data||j.tarifas||[]);
-    if(Array.isArray(data))loadTarifas(data);
-    renderAdminBID();
-    if(typeof applyFilter==='function')applyFilter();
-  }catch(e){console.warn('reloadTarifas failed',e);}
+    await loadTarifasFromSupabase();   // recarga desde Supabase (ya llama buildCarrierBtns/buildEquipoBtns/applyFilter)
+    if(typeof renderAdminBID==='function')renderAdminBID();
+  }catch(e){console.warn('reloadTarifas (Supabase) failed',e);}
 }
 
 // ── BULK BID ──
