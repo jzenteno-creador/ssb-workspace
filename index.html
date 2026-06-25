@@ -3796,6 +3796,11 @@ async function loadTarifasFromSupabase(){
     quarter: row.quarter || '',
     efaNum:null, efaDesde:'', efaHasta:'',
   }));
+  // Parte B (saneo fantasma · Tarifas BID): sacar de selC/selE valores que ya no existen
+  // tras recargar (carrier/equipo dado de baja) → dejan de filtrar a 0 sin botón visible.
+  { const cs=new Set(rates.map(r=>r.carrier).filter(Boolean)), es=new Set(rates.map(r=>r.equipo).filter(Boolean));
+    for(const c of [...selC]) if(!cs.has(c)) selC.delete(c);
+    for(const e of [...selE]) if(!es.has(e)) selE.delete(e); }
   buildCarrierBtns();
   buildEquipoBtns();
   applyFilter();
