@@ -6879,25 +6879,25 @@ function exportSchedExcel(){
 </div>
 
 <!-- ═══════════ MODAL: BID ADD/EDIT ═══════════ -->
-<div class="efa-mod-bk" id="bid-modal" onclick="if(event.target===this)closeBidModal()">
+<div class="efa-mod-bk" id="bid-modal" onclick="if(event.target===this)closeBidModalGuarded()">
   <div class="efa-mod">
     <div class="efa-mod-hdr">
       <h3 id="bid-modal-title">+ Nueva tarifa BID</h3>
-      <button class="efa-mod-x" onclick="closeBidModal()">×</button>
+      <button class="efa-mod-x" onclick="closeBidModalGuarded()">×</button>
     </div>
     <div class="efa-mod-bd">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Carrier</label><input id="bid-m-carrier" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
-        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Equipo</label><input id="bid-m-equipo" type="text" placeholder="20'STD / 40'HC" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
-        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Origen</label><input id="bid-m-origen" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
-        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Destino</label><input id="bid-m-destino" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Carrier</label><input id="bid-m-carrier" type="text" list="bid-dl-carrier" autocomplete="off" placeholder="Elegí del catálogo o escribí uno nuevo" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"><datalist id="bid-dl-carrier"></datalist></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Equipo</label><select id="bid-m-equipo" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"><option value="">— elegí —</option><option>20'STD</option><option>40'HC</option></select></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Origen</label><input id="bid-m-origen" type="text" list="bid-dl-puertos" autocomplete="off" placeholder="Elegí del catálogo o escribí uno nuevo" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
+        <div><label class="required" style="font-size:11px;font-weight:700;color:var(--muted)">Destino</label><input id="bid-m-destino" type="text" list="bid-dl-puertos" autocomplete="off" placeholder="Elegí del catálogo o escribí uno nuevo" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"><datalist id="bid-dl-puertos"></datalist></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Tarifa USD</label><input id="bid-m-tarifa" type="number" step="0.01" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Contrato</label><input id="bid-m-contrato" type="text" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Inicio vigencia</label><input id="bid-m-desde" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Fin vigencia</label><input id="bid-m-hasta" type="date" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px"></div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Estado</label>
           <select id="bid-m-estado" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px">
-            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option><option value="NO COTIZADO">NO COTIZADO</option>
+            <option value="CONFIRMADA">CONFIRMADA</option><option value="PENDIENTE">PENDIENTE</option><option value="NO DISPONIBLE">NO DISPONIBLE</option>
           </select>
         </div>
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">Quarter</label>
@@ -6912,7 +6912,7 @@ function exportSchedExcel(){
     <div class="efa-mod-ft">
       <div class="efa-mod-ft-l"><button class="efa-mod-btn" id="bid-m-del" onclick="deleteBidFromModal()" style="display:none;background:#fee2e2;color:#991b1b">🗑 Eliminar</button></div>
       <div class="efa-mod-ft-r">
-        <button class="efa-mod-btn" onclick="closeBidModal()">Cancelar</button>
+        <button class="efa-mod-btn" onclick="closeBidModalGuarded()">Cancelar</button>
         <button class="efa-mod-btn primary" id="bid-m-save" onclick="saveBidFromModal()">✓ Guardar</button>
       </div>
     </div>
@@ -7134,19 +7134,30 @@ function bidRenderImpact(){
 }
 
 // ── Inline edit ──
+// Valores CERRADOS para edición inline (mismo set que el modal — sin texto libre)
+const _BID_CLOSED_FIELDS={ estado:['CONFIRMADA','PENDIENTE','NO DISPONIBLE'], quarter:['','1stQ','2ndQ','3rdQ','4thQ'], equipo:["20'STD","40'HC"] };
 function bidInlineEdit(td,ri,field){
-  if(td.querySelector('input'))return;
+  if(td.querySelector('input,select'))return;
   const src=rates.find(r=>r._rowIndex===ri);if(!src)return;
   const cur=src[field]||'';
   const isDate=field==='desde'||field==='hasta';
   const isNum=field==='tarifa';
-  const inp=document.createElement('input');
-  inp.type=isDate?'date':(isNum?'number':'text');
-  if(isNum){inp.step='0.01';inp.min='0';}
-  inp.value=isDate?(toISO(cur)||''):(cur||'');
+  const closed=_BID_CLOSED_FIELDS[field];
+  let inp;
+  if(closed){
+    inp=document.createElement('select');
+    const opts=[...closed]; if(cur&&!opts.includes(cur))opts.push(cur);   // defensa: valor legacy fuera del set
+    inp.innerHTML=opts.map(o=>`<option value="${esc(o)}">${o===''?'—':esc(o)}</option>`).join('');
+    inp.value=cur;
+  }else{
+    inp=document.createElement('input');
+    inp.type=isDate?'date':(isNum?'number':'text');
+    if(isNum){inp.step='0.01';inp.min='0';}
+    inp.value=isDate?(toISO(cur)||''):(cur||'');
+  }
   // commit 6 decisión I: background/color explícitos para evitar patch blanco en dark (UA input default ignora color-scheme sin declaración)
   inp.style.cssText='width:100%;padding:2px 4px;font:inherit;border:1px solid var(--purple);border-radius:3px;background:var(--surface);color:var(--text)';
-  const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();inp.select();
+  const orig=td.innerHTML;td.innerHTML='';td.appendChild(inp);inp.focus();if(inp.select)inp.select();
   let done=false;
   const cancel=()=>{if(done)return;done=true;td.innerHTML=orig;};
   const save=async()=>{
@@ -7159,10 +7170,11 @@ function bidInlineEdit(td,ri,field){
       const upd={...src,[field]:newVal};
       await postEfaAction({action:'updateTarifa',rowIndex:ri,data:bidPayloadFrom(upd)});
       await reloadTarifasFromSheet();
-    }catch(e){alert('Error: '+e.message);td.innerHTML=orig;}
+    }catch(e){ssbToast('No se pudo guardar: '+e.message,'error');td.innerHTML=orig;}
   };
   inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')save();else if(ev.key==='Escape')cancel();});
   inp.addEventListener('blur',save);
+  if(closed)inp.addEventListener('change',save);   // select: commitea al elegir
 }
 
 // ── Payload helper (mapea campos internos → headers Sheets) ──
@@ -7185,28 +7197,78 @@ function bidPayloadFrom(r){
 
 // ── Modal ADD/EDIT ──
 let bidModalState={mode:'add',rowIndex:null};
-function openBidModal(ri){
+// Toast in-app no bloqueante (reusa el estilo .vac-toast global; reemplaza alert() nativos del alta)
+function ssbToast(msg, kind){
+  let el=document.getElementById('ssb-toast');
+  if(!el){ el=document.createElement('div'); el.id='ssb-toast'; el.className='vac-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+  el.textContent=msg;
+  // success/error → fondo oscuro + texto blanco; info/neutral → limpio ambos y uso el
+  // contraste del CSS .vac-toast (var(--text)/var(--bg)), correcto en dark y light.
+  const darkBg = kind==='error' ? '#b91c1c' : (kind==='success' ? '#15803d' : '');
+  el.style.background = darkBg;
+  el.style.color = darkBg ? '#fff' : '';
+  el.classList.add('vac-toast--show');
+  clearTimeout(el._tid);
+  el._tid=setTimeout(()=>el.classList.remove('vac-toast--show'), 2600);
+}
+function _bidFillDatalist(dlId, values){
+  const dl=document.getElementById(dlId); if(!dl)return;
+  dl.innerHTML=(values||[]).map(v=>`<option value="${esc(v)}"></option>`).join('');
+}
+// Defensa: si un valor legacy no está entre las opciones cerradas, lo agrega marcado "(actual)"
+// para no pisarlo silenciosamente al editar. Los datos limpios nunca disparan esto.
+function _ensureSelOpt(selId, val){
+  if(val==null||val==='')return;
+  const sel=document.getElementById(selId); if(!sel)return;
+  if(![...sel.options].some(o=>o.value===val)){ const o=document.createElement('option'); o.value=val; o.textContent=val+' (actual)'; sel.appendChild(o); }
+}
+// ── Dirty-guard del modal de alta/edición ──
+let _bidModalSnapshot='';
+function _bidModalSerialize(){
+  return ['carrier','equipo','origen','destino','tarifa','contrato','desde','hasta','estado','quarter','comentario']
+    .map(f=>{const el=document.getElementById('bid-m-'+f); return el?el.value:'';}).join('');
+}
+function bidModalIsDirty(){ return _bidModalSerialize()!==_bidModalSnapshot; }
+const _bidEscHandler=(e)=>{
+  if(e.key!=='Escape')return;
+  if(document.getElementById('_mm-newcat-ok'))return;                              // el confirm de catálogo está arriba → no interferir
+  if(!document.getElementById('bid-modal').classList.contains('open'))return;
+  closeBidModalGuarded();
+};
+function closeBidModalGuarded(){
+  if(bidModalIsDirty() && !confirm('Tenés cambios sin guardar en esta tarifa. ¿Descartar y cerrar?')) return;
+  closeBidModal();
+}
+
+async function openBidModal(ri){
   bidModalState={mode:ri?'edit':'add',rowIndex:ri||null};
   document.getElementById('bid-modal-title').textContent=ri?'✏️ Editar tarifa BID':'+ Nueva tarifa BID';
   document.getElementById('bid-m-del').style.display=ri?'inline-block':'none';
   const src=ri?rates.find(r=>r._rowIndex===ri):null;
   const set=(id,v)=>{document.getElementById(id).value=v||'';};
   set('bid-m-carrier',src?.carrier);
-  set('bid-m-equipo',src?.equipo);
+  _ensureSelOpt('bid-m-equipo',src?.equipo); document.getElementById('bid-m-equipo').value=src?.equipo||'';
   set('bid-m-origen',src?.origen);
   set('bid-m-destino',src?.destino);
   set('bid-m-tarifa',src?.tarifa);
   set('bid-m-contrato',src?.contrato);
   set('bid-m-desde',toISO(src?.desde||''));
   set('bid-m-hasta',toISO(src?.hasta||''));
-  document.getElementById('bid-m-estado').value=src?.estado||'CONFIRMADA';
+  _ensureSelOpt('bid-m-estado',src?.estado); document.getElementById('bid-m-estado').value=src?.estado||'CONFIRMADA';
   document.getElementById('bid-m-quarter').value=src?.quarter||'';
   set('bid-m-comentario',src?.comentario);
   document.getElementById('bid-m-impact').style.display='none';
   ['bid-m-carrier','bid-m-equipo','bid-m-origen','bid-m-destino'].forEach(id=>{const el=document.getElementById(id);el.classList.remove('input-error','input-success');});
   document.getElementById('bid-modal').classList.add('open');
+  _bidModalSnapshot=_bidModalSerialize();                                          // baseline para dirty-guard (post-set)
+  document.addEventListener('keydown', _bidEscHandler);
+  // Comboboxes desde el catálogo canónico (navieras / puertos) — async, no bloquea la apertura
+  try{ await _mmEnsureLookups();
+    _bidFillDatalist('bid-dl-carrier',[..._mmLookups.idNav.values()].sort());
+    _bidFillDatalist('bid-dl-puertos',[..._mmLookups.idPort.values()].sort());
+  }catch(e){ console.warn('bid datalists', e); }
 }
-function closeBidModal(){document.getElementById('bid-modal').classList.remove('open');}
+function closeBidModal(){document.getElementById('bid-modal').classList.remove('open');document.removeEventListener('keydown', _bidEscHandler);}
 async function saveBidFromModal(){
   const data={
     carrier:document.getElementById('bid-m-carrier').value.trim(),
@@ -7225,22 +7287,28 @@ async function saveBidFromModal(){
   let firstBad=null;Object.entries(reqMap).forEach(([k,id])=>{const el=document.getElementById(id);if(!data[k]){el.classList.add('input-error');el.classList.remove('input-success');if(!firstBad)firstBad=el;}else{el.classList.remove('input-error');el.classList.add('input-success');}});
   if(firstBad){firstBad.focus();return;}
   const btn=document.getElementById('bid-m-save');const orig=btn.textContent;btn.disabled=true;btn.textContent='Guardando...';
+  const wasEdit=bidModalState.mode==='edit';
   try{
-    if(bidModalState.mode==='edit'){
+    if(wasEdit){
       await postEfaAction({action:'updateTarifa',rowIndex:bidModalState.rowIndex,data:bidPayloadFrom(data)});
     }else{
       await postEfaAction({action:'addTarifa',data:bidPayloadFrom(data)});
     }
     closeBidModal();
     await reloadTarifasFromSheet();
-  }catch(e){alert('Error al guardar: '+e.message);}
+    ssbToast(wasEdit?'Tarifa actualizada':'Tarifa agregada', 'success');
+  }catch(e){
+    // _mmResolveOrCreate tira "Alta cancelada: ..." cuando se cancela el alta de catálogo
+    if(/^Alta cancelada/.test(e.message||'')) ssbToast('Alta cancelada — la tarifa no se guardó', 'info');
+    else ssbToast('No se pudo guardar: '+e.message, 'error');
+  }
   finally{btn.disabled=false;btn.textContent=orig;}
 }
 async function deleteBidFromModal(){
   if(bidModalState.mode!=='edit'||bidModalState.rowIndex==null)return;
   if(!confirm('¿Eliminar esta tarifa? No se puede deshacer.'))return;
-  try{await postEfaAction({action:'deleteTarifa',rowIndex:bidModalState.rowIndex});closeBidModal();await reloadTarifasFromSheet();}
-  catch(e){alert('Error: '+e.message);}
+  try{await postEfaAction({action:'deleteTarifa',rowIndex:bidModalState.rowIndex});closeBidModal();await reloadTarifasFromSheet();ssbToast('Tarifa eliminada','success');}
+  catch(e){ssbToast('No se pudo eliminar: '+e.message,'error');}
 }
 async function deleteBidRow(ri){
   if(!confirm('¿Eliminar esta tarifa?'))return;
