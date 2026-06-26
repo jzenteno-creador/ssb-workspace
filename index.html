@@ -3823,7 +3823,17 @@ function togC(c){selC.has(c)?selC.delete(c):selC.add(c);buildCarrierBtns();apply
 
 function buildEquipoBtns(){
   const vals=[...new Set(rates.map(r=>r.equipo).filter(Boolean))].sort();
-  document.getElementById('equipo-grp').innerHTML=vals.map(e=>`<button class="eq-tog${selE.has(e)?' on':''}" onclick="togE('${e}')">${e}</button>`).join('');
+  // Fix B3: createElement + onclick en closure — el apóstrofo de 20'STD/40'HC nunca entra
+  // a un string-literal de onclick (que daba SyntaxError y mataba el toggle).
+  const grp=document.getElementById('equipo-grp');
+  grp.innerHTML='';
+  vals.forEach(e=>{
+    const b=document.createElement('button');
+    b.className='eq-tog'+(selE.has(e)?' on':'');
+    b.textContent=e;
+    b.onclick=()=>togE(e);
+    grp.appendChild(b);
+  });
 }
 function togE(e){selE.has(e)?selE.delete(e):selE.add(e);buildEquipoBtns();applyFilter();}
 function togSC(b){selSC.has(b)?selSC.delete(b):selSC.add(b);buildSchedCarrierBtns();applySchedFilter();}
@@ -5522,7 +5532,9 @@ function openDrop(f,items,q){
   if(!acs[f])acs[f]={i:-1};
   const d=document.getElementById('drop-'+f);
   if(!d)return;
-  d.innerHTML=items.length?items.map(v=>`<div class="ac-opt" data-v="${v}" onmousedown="pickAc('${f}','${v}')">${hl(v,q)}</div>`).join(''):`<div class="ac-none">Sin coincidencias</div>`;
+  // Fix B1: leer el valor del data-v (apostrophe-safe en comillas dobles) en vez de
+  // interpolarlo en el string JS del onmousedown — equipos como 20'STD/40'HC rompían el handler.
+  d.innerHTML=items.length?items.map(v=>`<div class="ac-opt" data-v="${v}" onmousedown="pickAc('${f}',this.dataset.v)">${hl(v,q)}</div>`).join(''):`<div class="ac-none">Sin coincidencias</div>`;
   d.classList.add('open');acs[f].i=-1;
 }
 function closeDrop(f){const d=document.getElementById('drop-'+f);if(d)d.classList.remove('open');if(acs[f])acs[f].i=-1;}
@@ -5566,8 +5578,12 @@ function fDate(d){
   const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
   let dt=null;
   if(d instanceof Date) dt=d;
-  else if(!isNaN(Date.parse(d))) dt=new Date(d);
-  else return d.toString().slice(0,14);
+  // Fix B2: date-only 'YYYY-MM-DD' de Supabase → constructor LOCAL (no medianoche UTC),
+  // espejo de daysUntil(). Los timestamps ISO con hora/Z y los Date se parsean normal.
+  else { const s=String(d).trim(); const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if(m) dt=new Date(+m[1],+m[2]-1,+m[3]);
+    else if(!isNaN(Date.parse(s))) dt=new Date(s);
+    else return s.slice(0,14); }
   const dd=String(dt.getDate()).padStart(2,'0');
   const mm=MES[dt.getMonth()];
   const yy=String(dt.getFullYear()).slice(-2);
