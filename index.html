@@ -5793,16 +5793,55 @@ function _applyFilterImpl(){
     const h=r.hasta&&!isNaN(Date.parse(r.hasta))?r.hasta:null;
     return(!d||d<=today)&&(!h||h>=today);
   });
-  const noVig=!!etd&&vig.length===0&&filtered.length>0;
-  const usar=etd&&vig.length>0?vig:filtered;
-  usar.sort((a,b)=>sortOrder(a)-sortOrder(b));
-
-  updateBanner(usar,etd,q20,q40);
-  renderTarifas(usar,etd,q20,q40,noVig);
-
-  // Schedule section: only show if at least one filter is active
   const hasFilter = vO||vD||selC.size>0||selE.size>0;
+
+  // ── GATE DE ETD EN LA CONSULTA (Tanda 2) ──────────────────────────────────────
+  // La tarifa a declarar SOLO se muestra con ETD + vigencia. Sin ETD o sin tarifa
+  // vigente para esa fecha → cartel, sin cards y sin total declarable. El camino
+  // feliz (CASO C) queda igual que antes.
+
+  // CASO A — sin ETD: pedir la fecha (o invitar a elegir buque, que la setea).
+  if(!etd){
+    const canVessel = !!(vO && vD && selC.size>0);
+    const tip = canVessel
+      ? ' O elegí abajo, en Buques, el buque en el que querés embarcar: al seleccionarlo se completa la fecha y se calcula la vigencia y el EFA.'
+      : ' Para elegir por buque, seteá origen, destino y carrier.';
+    renderConsultaGate('i-calendar','Falta la fecha ETD','📅 Completá la fecha ETD para ver la tarifa a declarar.'+tip);
+    // Banner sin valor declarable (mismo patrón que el guard anti-declaración de updateBanner).
+    const banner=document.getElementById('filter-banner');
+    if(q20>0||q40>0){
+      document.getElementById('banner-amt').textContent='—';
+      document.getElementById('banner-bk').innerHTML='⚠ Completá la fecha ETD para calcular el total a declarar';
+      banner.classList.add('show');
+    } else { banner.classList.remove('show'); }
+    renderSchedInTarifa(etd, vO, vD, hasFilter);   // buques VISIBLES: vía para setear el ETD
+    return;
+  }
+
+  // CASO B — ETD seteado, HAY tarifas para la ruta pero NINGUNA vigente para esa fecha.
+  // (filtered.length>0 distingue de "cero match de filtros", que cae al empty-state 5851.)
+  if(vig.length===0 && filtered.length>0){
+    renderConsultaGate('i-alert','Sin tarifa vigente','No hay tarifa vigente para declarar en esta fecha.');
+    updateBanner(filtered,etd,q20,q40);            // guard anti-declaración (5823-5829) → "—"
+    const sec=document.getElementById('sched-in-tarifa'); if(sec) sec.style.display='none';  // buques OCULTOS
+    return;
+  }
+
+  // CASO C — ETD con tarifa vigente (vig.length>0) o cero-match de filtros
+  // (filtered.length===0 → vig=[] → renderTarifas([]) pinta el empty-state 5851). Sin cambios.
+  const usar=vig;
+  usar.sort((a,b)=>sortOrder(a)-sortOrder(b));
+  updateBanner(usar,etd,q20,q40);
+  renderTarifas(usar,etd,q20,q40,false);
   renderSchedInTarifa(etd, vO, vD, hasFilter);
+}
+
+// Cartel en #list para los gates de ETD de la consulta (reusa el patrón .empty de renderTarifas).
+// iconId/title/sub son literales estáticos de los call-sites del gate — sin datos de usuario.
+function renderConsultaGate(iconId, title, sub){
+  document.getElementById('alert-area').innerHTML='';
+  document.getElementById('res-ct').textContent='';
+  document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#${iconId}"/></svg></div><div class="empty-ttl">${title}</div><div class="empty-sub">${sub}</div></div>`;
 }
 
 function updateBanner(rates,etd,q20,q40){
