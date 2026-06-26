@@ -3872,6 +3872,10 @@ function onEtdText(val) {
     if(!isNaN(dt.getTime())) {
       document.getElementById('f-etd').value = iso;
       document.getElementById('f-etd-text').style.borderColor = 'var(--green)';
+      // Sync buque↔ETD (el ETD manda): si la fecha tipeada difiere de la del buque
+      // seleccionado, deseleccionar el buque. NO se borra el ETD (es lo que se declara).
+      // Si coincide exacto, se mantiene. skipRender: el applyFilter de abajo ya re-renderiza.
+      if(selectedVessel && selectedVessel.etdISO !== iso) clearSelectedVessel(true);
       applyFilter();
       return;
     }
@@ -3879,7 +3883,11 @@ function onEtdText(val) {
   // Invalid or incomplete — clear hidden input
   document.getElementById('f-etd').value = '';
   document.getElementById('f-etd-text').style.borderColor = clean.length > 0 ? 'var(--border)' : 'var(--border)';
-  if(clean.length === 0) applyFilter();
+  if(clean.length === 0){
+    // ETD borrado a mano + buque seleccionado → deseleccionar (estado consistente).
+    if(selectedVessel) clearSelectedVessel(true);
+    applyFilter();
+  }
 }
 
 function clearTarifaFilters(){
