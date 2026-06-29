@@ -14528,14 +14528,33 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     detail.appendChild(dt);
     const viewer = el('div', 'cbl-viewer'); viewer.id = 'cbl-viewer';
     detail.appendChild(viewer);
-    cblRenderDocTabs();
+    cblRenderDocTabs(row);
     cblRenderViewer(row);
   }
 
-  // ── Doc-tabs (6) ──
-  function cblRenderDocTabs(){
+  // file-id desde un link de Drive (.../d/{id}/...) o null
+  function cblFileId(url){
+    if(!url) return null;
+    const m = String(url).match(/\/d\/([^/?#]+)/);
+    return m ? m[1] : null;
+  }
+  // Mapa de file-ids por doc-tab. Factura/PE = null hasta que el workflow persista *_file_id.
+  function cblDocsFor(row){
+    return {
+      analisis: true,
+      bl: row.bl_file_id || cblFileId(row.bl_drive_link),
+      aduana: cblFileId(row.aduana_drive_link),
+      booking: cblFileId(row.booking_drive_link),
+      factura: null,
+      pe: null,
+    };
+  }
+
+  // ── Doc-tabs (6) — disabled si no hay contenido ──
+  function cblRenderDocTabs(row){
     const bar = $('cbl-doctabs');
     if(!bar) return;
+    const docs = cblDocsFor(row);
     bar.className = 'cbl-doctabs';
     bar.innerHTML = '';
     DOC_TABS.forEach(t => {
@@ -14545,6 +14564,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const btn = el('button', cls);
       btn.type = 'button';
       btn.setAttribute('data-cbl-doc', t.key);
+      const hasContent = t.key === 'analisis' ? true : !!docs[t.key];
+      if(!hasContent){
+        btn.disabled = true;
+        btn.title = (t.key === 'factura' || t.key === 'pe')
+          ? 'Se habilita cuando el workflow persista factura_file_id / pe_file_id'
+          : 'Sin documento de Drive guardado para este control';
+      }
       btn.appendChild(svgUse(t.icon));
       btn.appendChild(document.createTextNode(t.label));
       bar.appendChild(btn);
@@ -14558,12 +14584,25 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     v.className = 'cbl-viewer';
 
     if(_cblActiveDoc !== 'analisis'){
+      // Documento de Drive (BL / Planilla Aduana / Booking). Factura/PE no llegan acá (tab disabled).
+      const docs = cblDocsFor(row);
+      const id = docs[_cblActiveDoc];
+      const label = (DOC_TABS.find(t => t.key === _cblActiveDoc) || {}).label || 'Documento';
       v.innerHTML = '';
-      const ph = el('div', 'cbl-mini');
-      const p = el('p', null, 'Visor de documento (Drive): próximo commit.');
-      p.style.cssText = 'font-size:12.5px;color:var(--cbl-ink-faint);margin:0';
-      ph.appendChild(p);
-      v.appendChild(ph);
+      if(!id){
+        v.appendChild(stateMsg('#i-file-text', 'Sin documento', 'No hay un archivo de Drive guardado para este documento.'));
+        return;
+      }
+      const hint = el('div', 'cbl-viewer-hint');
+      hint.appendChild(svgUse('#i-file-text'));
+      hint.appendChild(document.createTextNode(label + ' — embebido desde Google Drive. Se ve estando logueado en Google con acceso al Shared Drive del equipo.'));
+      v.appendChild(hint);
+      const frame = document.createElement('iframe');
+      frame.className = 'cbl-frame doc'; // SIN sandbox: Drive necesita sus cookies/scripts
+      frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
+      frame.setAttribute('allow', 'autoplay');
+      frame.title = label + ' · ' + (row.order_number || '');
+      v.appendChild(frame);
       return;
     }
 
@@ -14618,7 +14657,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(doc === _cblActiveDoc) return;
       _cblActiveDoc = doc;
       const row = _cblData.find(r => r.order_number === _cblSel);
-      cblRenderDocTabs();
+      cblRenderDocTabs(row);
       if(row) cblRenderViewer(row);
     });
   })();
