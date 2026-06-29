@@ -2357,6 +2357,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
   <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
   <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Agente IA</button>
+  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Control BL</button>
 </div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
@@ -3434,6 +3435,14 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </div>
 <!-- ═══════════ FIN TAB: AGENTE IA ═══════════ -->
 
+<!-- ═══════════ TAB: CONTROL BL ═══════════ -->
+<div class="tab-panel" id="panel-control-bl">
+  <div class="cbl-root">
+    <p style="padding:24px;color:var(--muted)">Control BL — scaffold (commit 1). La lista, el detalle y el buscador llegan en los próximos commits.</p>
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: CONTROL BL ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -3557,7 +3566,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','control-bl'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -3572,6 +3581,7 @@ function switchTab(name) {
   if(name==='vacaciones' && window.vacOnEnterTab){ window.vacOnEnterTab(); }
   else if(window.vacOnLeaveTab){ window.vacOnLeaveTab(); }
   if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
+  if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
 }
 
 // ── BELL ──
