@@ -14325,6 +14325,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 (function(){
   let _cblData = [];
   let _cblSel = null; // order_number seleccionado
+  let _cblActiveDoc = 'analisis'; // doc-tab activo; se resetea a 'analisis' SOLO al cambiar de control
+  const _cblBodyCache = {}; // body_html cacheado por order_number (sin re-fetch al volver al tab)
+  const DOC_TABS = [
+    { key:'analisis', label:'Análisis', icon:'#i-clipboard' },
+    { key:'bl', label:'BL', icon:'#i-file-text' },
+    { key:'aduana', label:'Planilla Aduana', icon:'#i-file-text' },
+    { key:'booking', label:'Booking', icon:'#i-file-text' },
+    { key:'factura', label:'Factura', icon:'#i-file-text' },
+    { key:'pe', label:'Permiso (PE)', icon:'#i-file-text' },
+  ];
 
   const $ = id => document.getElementById(id);
 
@@ -14419,6 +14429,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
     _cblSel = _cblData[0].order_number;
+    _cblActiveDoc = 'analisis';
     cblRenderList();
     cblRenderDetail(_cblData[0]);
     if(note) note.textContent = `${_cblData.length} ${_cblData.length === 1 ? 'control' : 'controles'} · últimos 7 días`;
@@ -14456,6 +14467,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   function cblSelect(orderNumber){
     _cblSel = orderNumber;
+    _cblActiveDoc = 'analisis'; // cambiar de control vuelve a Análisis (NUNCA dentro de render)
     const row = _cblData.find(r => r.order_number === orderNumber);
     cblRenderList();
     if(row) cblRenderDetail(row);
@@ -14511,15 +14523,105 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     head.appendChild(topRow);
     detail.appendChild(head);
 
-    // Contenedores rotulados para doc-tabs + visor (se llenan en el commit 4)
-    const dt = el('div'); dt.id = 'cbl-doctabs';
+    // Doc-tabs + visor (Análisis real; BL/Aduana/Booking/Factura/PE → visor Drive en commit 5)
+    const dt = el('div', 'cbl-doctabs'); dt.id = 'cbl-doctabs';
     detail.appendChild(dt);
     const viewer = el('div', 'cbl-viewer'); viewer.id = 'cbl-viewer';
-    const ph = el('p', null, 'Doc-tabs (Análisis · BL · Planilla Aduana · Booking · Factura · PE) y visor: próximo commit.');
-    ph.style.cssText = 'font-size:12.5px;color:var(--cbl-ink-faint);margin:0;padding:8px 2px';
-    viewer.appendChild(ph);
     detail.appendChild(viewer);
+    cblRenderDocTabs();
+    cblRenderViewer(row);
   }
+
+  // ── Doc-tabs (6) ──
+  function cblRenderDocTabs(){
+    const bar = $('cbl-doctabs');
+    if(!bar) return;
+    bar.className = 'cbl-doctabs';
+    bar.innerHTML = '';
+    DOC_TABS.forEach(t => {
+      let cls = 'cbl-doctab';
+      if(t.key === 'analisis') cls += ' analisis';
+      if(t.key === _cblActiveDoc) cls += ' cbl-doctab--active';
+      const btn = el('button', cls);
+      btn.type = 'button';
+      btn.setAttribute('data-cbl-doc', t.key);
+      btn.appendChild(svgUse(t.icon));
+      btn.appendChild(document.createTextNode(t.label));
+      bar.appendChild(btn);
+    });
+  }
+
+  // ── Visor: Análisis (body_html on-demand) · resto → placeholder (commit 5) ──
+  async function cblRenderViewer(row){
+    const v = $('cbl-viewer');
+    if(!v) return;
+    v.className = 'cbl-viewer';
+
+    if(_cblActiveDoc !== 'analisis'){
+      v.innerHTML = '';
+      const ph = el('div', 'cbl-mini');
+      const p = el('p', null, 'Visor de documento (Drive): próximo commit.');
+      p.style.cssText = 'font-size:12.5px;color:var(--cbl-ink-faint);margin:0';
+      ph.appendChild(p);
+      v.appendChild(ph);
+      return;
+    }
+
+    // Análisis → body_html on-demand (cache por order_number, sin re-fetch)
+    const orderNumber = row.order_number;
+    let html = _cblBodyCache[orderNumber];
+    if(html === undefined){
+      v.innerHTML = '';
+      v.appendChild(stateLoading('Cargando análisis…'));
+      const supa = window.__ssb && window.__ssb.supa;
+      if(!supa){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+      const { data, error } = await supa
+        .from('v_bl_controls_latest')
+        .select('body_html')
+        .eq('order_number', orderNumber)
+        .limit(1)
+        .maybeSingle();
+      if(error){
+        console.error('control-bl:body_html', error);
+        if(_cblActiveDoc === 'analisis' && _cblSel === orderNumber){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
+        return;
+      }
+      html = (data && data.body_html) || '';
+      _cblBodyCache[orderNumber] = html;
+    }
+    // El usuario pudo cambiar de tab/control mientras resolvía el fetch
+    if(_cblActiveDoc !== 'analisis' || _cblSel !== orderNumber) return;
+
+    v.innerHTML = '';
+    if(!html){ v.appendChild(stateMsg('#i-file-text', 'Sin análisis', 'Este control no tiene el cuerpo del análisis guardado.')); return; }
+    const hint = el('div', 'cbl-viewer-hint');
+    hint.appendChild(svgUse('#i-clipboard'));
+    hint.appendChild(document.createTextNode('Análisis del control — mismo contenido del mail. Los enlaces abren en pestaña nueva.'));
+    v.appendChild(hint);
+    const frame = document.createElement('iframe');
+    frame.className = 'cbl-frame';
+    frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+    frame.setAttribute('referrerpolicy', 'no-referrer');
+    frame.title = 'Análisis del control ' + orderNumber;
+    v.appendChild(frame);
+    frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (no atributo: esc() no escapa comillas)
+  }
+
+  // Cambio de doc-tab por event delegation: UN listener sobre #cbl-detail (no uno por tab)
+  (function(){
+    const detailEl = $('cbl-detail');
+    if(!detailEl) return;
+    detailEl.addEventListener('click', e => {
+      const tab = e.target.closest('[data-cbl-doc]');
+      if(!tab || !detailEl.contains(tab) || tab.hasAttribute('disabled')) return;
+      const doc = tab.getAttribute('data-cbl-doc');
+      if(doc === _cblActiveDoc) return;
+      _cblActiveDoc = doc;
+      const row = _cblData.find(r => r.order_number === _cblSel);
+      cblRenderDocTabs();
+      if(row) cblRenderViewer(row);
+    });
+  })();
 })();
 </script>
 
