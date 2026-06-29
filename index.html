@@ -14318,5 +14318,210 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 </script>
 <!-- ═══════════ FIN AGENTE IA ═══════════ -->
 
+<!-- ═══════════ TAB: CONTROL BL — lógica ═══════════ -->
+<script>
+/* ═══════════ Control BL — data layer (Commit 3/6) ═══════════ */
+/* Reusa window.__ssb.supa (NO crea cliente). Render XSS-safe: createElement + textContent. */
+(function(){
+  let _cblData = [];
+  let _cblSel = null; // order_number seleccionado
+
+  const $ = id => document.getElementById(id);
+
+  function el(tag, cls, txt){
+    const n = document.createElement(tag);
+    if(cls) n.className = cls;
+    if(txt != null) n.textContent = txt;
+    return n;
+  }
+  function svgUse(href, cls){
+    const NS = 'http://www.w3.org/2000/svg';
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('class', cls || 'ic'); s.setAttribute('aria-hidden', 'true');
+    const u = document.createElementNS(NS, 'use');
+    u.setAttribute('href', href);
+    s.appendChild(u);
+    return s;
+  }
+
+  // created_at (ISO timestamptz) → "DD/MM HH:MM" en hora local
+  function cblFmtCorrida(ts){
+    if(!ts) return '—';
+    const d = new Date(ts);
+    if(isNaN(d.getTime())) return '—';
+    const p = n => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  // overall_result → 'ok' | 'rev' | 'neutral'. NUNCA asumir OK.
+  function cblStatusOf(row){
+    const r = ((row && row.overall_result) || '').toString().trim().toUpperCase();
+    if(r === 'OK') return 'ok';
+    if(r === 'REVISAR') return 'rev';
+    return 'neutral';
+  }
+  const STATUS_CLASS = { ok:'is-ok', rev:'is-rev', neutral:'' };
+
+  // Badge OK / REVISAR·N / neutro (gris, texto = overall_result crudo o "—")
+  function cblBadge(row){
+    const st = cblStatusOf(row);
+    const variant = st === 'ok' ? 'ok' : st === 'rev' ? 'rev' : 'miss';
+    const b = el('span', 'cbl-badge ' + variant);
+    b.appendChild(el('span', 'cbl-dot'));
+    let txt;
+    if(st === 'ok') txt = 'OK';
+    else if(st === 'rev') txt = 'REVISAR · ' + (row.revisar_count != null ? row.revisar_count : 0);
+    else txt = row.overall_result ? String(row.overall_result) : '—';
+    b.appendChild(document.createTextNode(txt));
+    return b;
+  }
+
+  // ── Estados (.cbl-state) ──
+  function stateLoading(msg){
+    const s = el('div', 'cbl-state');
+    s.appendChild(el('div', 'cbl-spinner'));
+    s.appendChild(el('h3', null, msg || 'Cargando controles…'));
+    return s;
+  }
+  function stateMsg(icon, title, body){
+    const s = el('div', 'cbl-state');
+    s.appendChild(svgUse(icon));
+    s.appendChild(el('h3', null, title));
+    if(body) s.appendChild(el('p', null, body)); // body por textContent (seguro p/ error.message)
+    return s;
+  }
+  function setDetail(node){ const d = $('cbl-detail'); if(!d) return; d.innerHTML = ''; d.appendChild(node); }
+
+  // ── Carga (on-enter) ──
+  window.loadBlControls = async function(){
+    const supa = window.__ssb && window.__ssb.supa;
+    const master = $('cbl-master');
+    if(master) master.innerHTML = '';
+    const note = $('cbl-master-note'); if(note) note.textContent = '';
+    if(!supa){ setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+    setDetail(stateLoading());
+
+    const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const { data, error } = await supa
+      .from('v_bl_controls_latest')
+      .select('order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link')
+      .gte('created_at', since)
+      .order('created_at', { ascending: false });
+
+    if(error){
+      console.error('control-bl:load', error);
+      setDetail(stateMsg('#i-alert', 'No se pudo cargar', error.message || 'Error de consulta a la base.'));
+      return;
+    }
+    _cblData = data || [];
+    if(!_cblData.length){
+      setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Cuando el workflow registre un control de BL, va a aparecer acá.'));
+      return;
+    }
+    _cblSel = _cblData[0].order_number;
+    cblRenderList();
+    cblRenderDetail(_cblData[0]);
+    if(note) note.textContent = `${_cblData.length} ${_cblData.length === 1 ? 'control' : 'controles'} · últimos 7 días`;
+  };
+
+  // ── Lista (master) ──
+  function cblRenderList(){
+    const master = $('cbl-master');
+    if(!master) return;
+    master.innerHTML = '';
+    _cblData.forEach(row => {
+      const st = cblStatusOf(row);
+      const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
+      card.type = 'button';
+      if(row.order_number === _cblSel) card.classList.add('cbl-ctrl--sel');
+
+      const top = el('div', 'cbl-ctrl-top');
+      top.appendChild(el('span', 'cbl-ctrl-order', row.order_number || '—'));
+      top.appendChild(cblBadge(row));
+      card.appendChild(top);
+
+      if(row.carrier) card.appendChild(el('div', 'cbl-ctrl-carrier', row.carrier));
+
+      const vline = el('div', 'cbl-ctrl-vessel', row.vessel || '—');
+      if(row.voyage){ vline.appendChild(document.createTextNode(' ')); vline.appendChild(el('span', 'cbl-ctrl-route', row.voyage)); }
+      card.appendChild(vline);
+
+      const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
+      card.appendChild(el('div', 'cbl-ctrl-route', route));
+
+      card.onclick = () => cblSelect(row.order_number);
+      master.appendChild(card);
+    });
+  }
+
+  function cblSelect(orderNumber){
+    _cblSel = orderNumber;
+    const row = _cblData.find(r => r.order_number === orderNumber);
+    cblRenderList();
+    if(row) cblRenderDetail(row);
+  }
+
+  // Línea 1 del expediente: carrier · buque · viaje(mono) · POD · corrida — con pips
+  function expLine1(row){
+    const line = el('div', 'cbl-exp-line');
+    const parts = [];
+    if(row.carrier) parts.push({ bold:true, text:row.carrier });
+    if(row.vessel)  parts.push({ text:row.vessel });
+    if(row.voyage)  parts.push({ mono:true, text:row.voyage });
+    if(row.pod)     parts.push({ text:row.pod });
+    parts.push({ text: cblFmtCorrida(row.created_at) });
+    parts.forEach((p, i) => {
+      if(i > 0) line.appendChild(el('span', 'cbl-pip'));
+      if(p.bold) line.appendChild(el('b', null, p.text));
+      else line.appendChild(el('span', p.mono ? 'cbl-mono' : null, p.text));
+    });
+    return line;
+  }
+
+  // ── Detalle: encabezado de expediente + placeholder rotulado para doc-tabs (commit 4) ──
+  function cblRenderDetail(row){
+    const detail = $('cbl-detail');
+    if(!detail) return;
+    const st = cblStatusOf(row);
+    detail.innerHTML = '';
+
+    const head = el('div', ('cbl-exp-head ' + STATUS_CLASS[st]).trim());
+    const topRow = el('div', 'cbl-exp-top');
+
+    const left = el('div');
+    left.appendChild(el('div', 'cbl-exp-order', row.order_number || '—'));
+    left.appendChild(expLine1(row));
+    const l2 = el('div', 'cbl-exp-line');
+    l2.appendChild(el('span', 'cbl-mono', 'BL ' + (row.bl_number || '—')));
+    l2.appendChild(el('span', 'cbl-pip'));
+    l2.appendChild(el('span', 'cbl-mono', 'Booking ' + (row.booking_no || '—')));
+    left.appendChild(l2);
+    topRow.appendChild(left);
+
+    const right = el('div', 'cbl-exp-status');
+    right.appendChild(cblBadge(row));
+    const tally = el('div', 'cbl-exp-tally');
+    tally.appendChild(el('b', 'ok', String(row.ok_count != null ? row.ok_count : 0)));
+    tally.appendChild(document.createTextNode(' coinciden · '));
+    tally.appendChild(el('b', 'rev', String(row.revisar_count != null ? row.revisar_count : 0)));
+    tally.appendChild(document.createTextNode(' a revisar'));
+    right.appendChild(tally);
+    topRow.appendChild(right);
+
+    head.appendChild(topRow);
+    detail.appendChild(head);
+
+    // Contenedores rotulados para doc-tabs + visor (se llenan en el commit 4)
+    const dt = el('div'); dt.id = 'cbl-doctabs';
+    detail.appendChild(dt);
+    const viewer = el('div', 'cbl-viewer'); viewer.id = 'cbl-viewer';
+    const ph = el('p', null, 'Doc-tabs (Análisis · BL · Planilla Aduana · Booking · Factura · PE) y visor: próximo commit.');
+    ph.style.cssText = 'font-size:12.5px;color:var(--cbl-ink-faint);margin:0;padding:8px 2px';
+    viewer.appendChild(ph);
+    detail.appendChild(viewer);
+  }
+})();
+</script>
+
 </body>
 </html>
