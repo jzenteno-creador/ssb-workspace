@@ -14335,6 +14335,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     { key:'factura', label:'Factura', icon:'#i-file-text' },
     { key:'pe', label:'Permiso (PE)', icon:'#i-file-text' },
   ];
+  const CBL_COLS = 'order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link';
+
+  // ── Estado de búsqueda/filtros (Commit 6) ──
+  let _cblSearchData = []; // filas devueltas por la búsqueda (puede traer controles fuera de los 7 días)
+  let _cblSearched = null; // tokens (lote) u order_numbers (1-término); null = mostrar master de 7 días
+  let _cblIsLote = false;
+  const _cblFilters = new Set(); // 'ok' | 'rev' | 'miss'
 
   const $ = id => document.getElementById(id);
 
@@ -14408,13 +14415,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const master = $('cbl-master');
     if(master) master.innerHTML = '';
     const note = $('cbl-master-note'); if(note) note.textContent = '';
+    // Entrar a la solapa resetea la búsqueda (no los filtros) y recarga el master de 7 días
+    _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null;
+    const q = $('cbl-q'); if(q) q.value = '';
     if(!supa){ setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
     setDetail(stateLoading());
 
     const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     const { data, error } = await supa
       .from('v_bl_controls_latest')
-      .select('order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link')
+      .select(CBL_COLS)
       .gte('created_at', since)
       .order('created_at', { ascending: false });
 
@@ -14425,50 +14435,69 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     _cblData = data || [];
     if(!_cblData.length){
-      setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Cuando el workflow registre un control de BL, va a aparecer acá.'));
+      cblRenderLote(); cblRenderSummary();
+      setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
       return;
     }
-    _cblSel = _cblData[0].order_number;
-    _cblActiveDoc = 'analisis';
-    cblRenderList();
-    cblRenderDetail(_cblData[0]);
-    if(note) note.textContent = `${_cblData.length} ${_cblData.length === 1 ? 'control' : 'controles'} · últimos 7 días`;
+    cblAfterDataChange();
   };
 
   // ── Lista (master) ──
+  function cblMakeCard(row){
+    if(row._missing){
+      const card = el('button', 'cbl-ctrl is-missing');
+      card.type = 'button';
+      if(row.order_number === _cblSel) card.classList.add('cbl-ctrl--sel');
+      const top = el('div', 'cbl-ctrl-top');
+      top.appendChild(el('span', 'cbl-ctrl-order', row.order_number || '—'));
+      const badge = el('span', 'cbl-badge miss');
+      badge.appendChild(el('span', 'cbl-dot'));
+      badge.appendChild(document.createTextNode('no está'));
+      top.appendChild(badge);
+      card.appendChild(top);
+      const sub = el('div', 'cbl-ctrl-vessel', 'Sin control registrado');
+      sub.style.color = 'var(--cbl-ink-faint)';
+      card.appendChild(sub);
+      card.onclick = () => cblSelect(row.order_number);
+      return card;
+    }
+    const st = cblStatusOf(row);
+    const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
+    card.type = 'button';
+    if(row.order_number === _cblSel) card.classList.add('cbl-ctrl--sel');
+    const top = el('div', 'cbl-ctrl-top');
+    top.appendChild(el('span', 'cbl-ctrl-order', row.order_number || '—'));
+    top.appendChild(cblBadge(row));
+    card.appendChild(top);
+    if(row.carrier) card.appendChild(el('div', 'cbl-ctrl-carrier', row.carrier));
+    const vline = el('div', 'cbl-ctrl-vessel', row.vessel || '—');
+    if(row.voyage){ vline.appendChild(document.createTextNode(' ')); vline.appendChild(el('span', 'cbl-ctrl-route', row.voyage)); }
+    card.appendChild(vline);
+    const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
+    card.appendChild(el('div', 'cbl-ctrl-route', route));
+    card.onclick = () => cblSelect(row.order_number);
+    return card;
+  }
+
   function cblRenderList(){
     const master = $('cbl-master');
     if(!master) return;
     master.innerHTML = '';
-    _cblData.forEach(row => {
-      const st = cblStatusOf(row);
-      const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
-      card.type = 'button';
-      if(row.order_number === _cblSel) card.classList.add('cbl-ctrl--sel');
-
-      const top = el('div', 'cbl-ctrl-top');
-      top.appendChild(el('span', 'cbl-ctrl-order', row.order_number || '—'));
-      top.appendChild(cblBadge(row));
-      card.appendChild(top);
-
-      if(row.carrier) card.appendChild(el('div', 'cbl-ctrl-carrier', row.carrier));
-
-      const vline = el('div', 'cbl-ctrl-vessel', row.vessel || '—');
-      if(row.voyage){ vline.appendChild(document.createTextNode(' ')); vline.appendChild(el('span', 'cbl-ctrl-route', row.voyage)); }
-      card.appendChild(vline);
-
-      const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
-      card.appendChild(el('div', 'cbl-ctrl-route', route));
-
-      card.onclick = () => cblSelect(row.order_number);
-      master.appendChild(card);
-    });
+    const rows = cblRows();
+    if(!rows.length){
+      const empty = el('div', 'cbl-ctrl');
+      empty.style.cursor = 'default';
+      empty.appendChild(el('div', 'cbl-ctrl-vessel', (_cblFilters.size || _cblSearched) ? 'Sin resultados con este filtro o búsqueda.' : 'Sin controles.'));
+      master.appendChild(empty);
+      return;
+    }
+    rows.forEach(row => master.appendChild(cblMakeCard(row)));
   }
 
   function cblSelect(orderNumber){
     _cblSel = orderNumber;
     _cblActiveDoc = 'analisis'; // cambiar de control vuelve a Análisis (NUNCA dentro de render)
-    const row = _cblData.find(r => r.order_number === orderNumber);
+    const row = cblUniverse().find(r => r.order_number === orderNumber);
     cblRenderList();
     if(row) cblRenderDetail(row);
   }
@@ -14490,13 +14519,33 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return line;
   }
 
-  // ── Detalle: encabezado de expediente + placeholder rotulado para doc-tabs (commit 4) ──
+  // ── Detalle: MISSING ("no está"), o encabezado de expediente + doc-tabs + visor ──
   function cblRenderDetail(row){
     const detail = $('cbl-detail');
     if(!detail) return;
-    const st = cblStatusOf(row);
     detail.innerHTML = '';
 
+    if(row._missing){
+      const mini = el('div', 'cbl-mini');
+      mini.appendChild(el('div', 'cbl-exp-order', row.order_number || '—'));
+      const warn = el('div', 'cbl-issue-row');
+      warn.appendChild(svgUse('#i-alert'));
+      warn.appendChild(el('span', null, 'Esta orden no tiene control registrado.'));
+      mini.appendChild(warn);
+      const p = el('p', null, 'No se encontró un control de BL para esta orden. Puede que el workflow todavía no la haya procesado, o que no exista en el sistema.');
+      p.style.cssText = 'font-size:13px;color:var(--cbl-ink-soft);line-height:1.5;margin:0 0 4px';
+      mini.appendChild(p);
+      const ctrlBtn = el('button', 'cbl-reprocess solid');
+      ctrlBtn.type = 'button';
+      ctrlBtn.appendChild(svgUse('#i-refresh'));
+      ctrlBtn.appendChild(document.createTextNode('Controlar ahora'));
+      ctrlBtn.onclick = () => ssbToast('Próximamente — el control on-demand es una tanda futura.', 'info');
+      mini.appendChild(ctrlBtn);
+      detail.appendChild(mini);
+      return;
+    }
+
+    const st = cblStatusOf(row);
     const head = el('div', ('cbl-exp-head ' + STATUS_CLASS[st]).trim());
     const topRow = el('div', 'cbl-exp-top');
 
@@ -14518,6 +14567,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     tally.appendChild(el('b', 'rev', String(row.revisar_count != null ? row.revisar_count : 0)));
     tally.appendChild(document.createTextNode(' a revisar'));
     right.appendChild(tally);
+    const reproc = el('button', 'cbl-reprocess');
+    reproc.type = 'button';
+    reproc.appendChild(svgUse('#i-refresh'));
+    reproc.appendChild(document.createTextNode('Reprocesar BL draft'));
+    reproc.onclick = () => ssbToast('Próximamente — el reproceso del BL draft es una tanda futura.', 'info');
+    right.appendChild(reproc);
     topRow.appendChild(right);
 
     head.appendChild(topRow);
@@ -14656,10 +14711,201 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const doc = tab.getAttribute('data-cbl-doc');
       if(doc === _cblActiveDoc) return;
       _cblActiveDoc = doc;
-      const row = _cblData.find(r => r.order_number === _cblSel);
+      const row = cblUniverse().find(r => r.order_number === _cblSel);
       cblRenderDocTabs(row);
       if(row) cblRenderViewer(row);
     });
+  })();
+
+  // ════════════ Buscador + lote + filtros + "no está" (Commit 6/6) ════════════
+
+  // tokenizer: separa por espacios/tab/coma/; y dedupe preservando orden
+  function cblParseOrders(t){
+    return [...new Set(String(t == null ? '' : t).split(/[\s,;]+/).map(s => s.trim()).filter(Boolean))];
+  }
+
+  // En modo lote, resuelve un token contra order_number / booking_no / bl_number
+  function cblResolveToken(tok){
+    return _cblSearchData.find(r => r.order_number === tok || r.booking_no === tok || r.bl_number === tok) || null;
+  }
+
+  // Universo a mostrar SIN filtros: master de 7 días, o el resultado de búsqueda (con MISSING en lote)
+  function cblUniverse(){
+    if(!_cblSearched) return _cblData.slice();
+    const seen = new Set();
+    const out = [];
+    if(_cblIsLote){
+      _cblSearched.forEach(tok => {
+        const row = cblResolveToken(tok);
+        const key = row ? row.order_number : tok;
+        if(seen.has(key)) return;
+        seen.add(key);
+        out.push(row || { order_number: tok, _missing: true });
+      });
+    } else {
+      const byId = {};
+      _cblSearchData.forEach(r => { byId[r.order_number] = r; });
+      _cblSearched.forEach(o => {
+        if(seen.has(o)) return;
+        seen.add(o);
+        if(byId[o]) out.push(byId[o]);
+      });
+    }
+    return out;
+  }
+
+  // clave de filtro: 'miss' (sin control) | 'ok' | 'rev' (rev + neutral, nunca OK)
+  function cblFilterKey(row){
+    if(row._missing) return 'miss';
+    return cblStatusOf(row) === 'ok' ? 'ok' : 'rev';
+  }
+
+  // filas visibles = universo con los filtros activos aplicados
+  function cblRows(){
+    let list = cblUniverse();
+    if(_cblFilters.size) list = list.filter(r => _cblFilters.has(cblFilterKey(r)));
+    return list;
+  }
+
+  // chips de lote (verde OK / ámbar REVISAR / gris "no está") — solo en modo lote
+  function cblRenderLote(){
+    const lb = $('cbl-lotebar');
+    if(!lb) return;
+    if(!_cblSearched || !_cblIsLote){ lb.style.display = 'none'; lb.innerHTML = ''; return; }
+    lb.style.display = 'flex';
+    lb.innerHTML = '';
+    const n = _cblSearched.length;
+    lb.appendChild(el('span', 'cbl-lote-lbl', `${n} ${n === 1 ? 'orden' : 'órdenes'} pegada${n === 1 ? '' : 's'}:`));
+    _cblSearched.forEach(tok => {
+      const row = cblResolveToken(tok);
+      let cls = 'miss', tag = 'no está';
+      if(row){ if(cblStatusOf(row) === 'ok'){ cls = 'ok'; tag = 'OK'; } else { cls = 'rev'; tag = 'REVISAR'; } }
+      const chip = el('span', 'cbl-lotechip ' + cls);
+      chip.appendChild(el('b', null, tok));
+      chip.appendChild(document.createTextNode(' · ' + tag));
+      lb.appendChild(chip);
+    });
+    const clr = el('button', 'cbl-loteclear', 'limpiar');
+    clr.type = 'button';
+    clr.onclick = cblClearSearch;
+    lb.appendChild(clr);
+  }
+
+  // resumen "N órdenes · X OK · Y a revisar · Z sin control" (Z solo en modo búsqueda)
+  function cblRenderSummary(){
+    const sumEl = $('cbl-summary');
+    if(!sumEl) return;
+    const universe = cblUniverse();
+    sumEl.innerHTML = '';
+    if(!universe.length) return;
+    let ok = 0, rev = 0, miss = 0;
+    universe.forEach(r => { const k = cblFilterKey(r); if(k === 'ok') ok++; else if(k === 'miss') miss++; else rev++; });
+    const n = universe.length;
+    sumEl.appendChild(el('b', null, String(n)));
+    sumEl.appendChild(document.createTextNode(` ${n === 1 ? 'orden' : 'órdenes'} · `));
+    sumEl.appendChild(el('span', 'cbl-s-ok', ok + ' OK'));
+    sumEl.appendChild(document.createTextNode(' · '));
+    sumEl.appendChild(el('span', 'cbl-s-rev', rev + ' a revisar'));
+    if(_cblSearched){
+      sumEl.appendChild(document.createTextNode(' · '));
+      sumEl.appendChild(el('span', 'cbl-s-miss', miss + ' sin control'));
+    }
+  }
+
+  // re-render tras cambiar datos (búsqueda/filtros): lote + summary + lista + selección + detalle
+  function cblAfterDataChange(){
+    const rows = cblRows();
+    if(!rows.length){ _cblSel = null; }
+    else if(!_cblSel || !rows.some(r => r.order_number === _cblSel)){
+      _cblSel = rows[0].order_number;
+      _cblActiveDoc = 'analisis';
+    }
+    cblRenderLote();
+    cblRenderSummary();
+    cblRenderList();
+    const note = $('cbl-master-note');
+    if(note) note.textContent = _cblSearched ? '' : (_cblData.length ? `${_cblData.length} ${_cblData.length === 1 ? 'control' : 'controles'} · últimos 7 días` : '');
+    if(rows.length){
+      const sel = rows.find(r => r.order_number === _cblSel) || rows[0];
+      cblRenderDetail(sel);
+    } else {
+      setDetail(stateMsg('#i-search', 'Nada para mostrar', 'Cambiá el filtro o la búsqueda.'));
+    }
+  }
+
+  function cblClearSearch(){
+    _cblSearched = null; _cblIsLote = false; _cblSearchData = [];
+    const q = $('cbl-q'); if(q) q.value = '';
+    cblAfterDataChange();
+  }
+
+  // Búsqueda: 1-término (ilike sobre order/booking/bl/vessel) o lote (.in exacto). Sin gate de 7 días.
+  async function cblSearch(){
+    const input = $('cbl-q');
+    const raw = (input ? input.value : '').trim();
+    if(!raw){ cblClearSearch(); return; }
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa){ ssbToast('Sin conexión a la base.', 'error'); return; }
+    const toks = cblParseOrders(raw);
+    if(!toks.length){ cblClearSearch(); return; }
+
+    if(toks.length > 1){
+      // Lote: match EXACTO por order_number / booking_no / bl_number
+      const quoted = toks.map(t => '"' + t.replace(/"/g, '') + '"').join(',');
+      const { data, error } = await supa
+        .from('v_bl_controls_latest')
+        .select(CBL_COLS)
+        .or(`order_number.in.(${quoted}),booking_no.in.(${quoted}),bl_number.in.(${quoted})`);
+      if(error){ console.error('control-bl:search:lote', error); ssbToast('No se pudo buscar: ' + (error.message || ''), 'error'); return; }
+      _cblSearchData = data || [];
+      _cblSearched = toks;
+      _cblIsLote = true;
+    } else {
+      // 1 término: substring (ilike) sobre 4 campos
+      const pat = '*' + toks[0].replace(/[(),*]/g, '') + '*';
+      const { data, error } = await supa
+        .from('v_bl_controls_latest')
+        .select(CBL_COLS)
+        .or(`order_number.ilike.${pat},booking_no.ilike.${pat},bl_number.ilike.${pat},vessel.ilike.${pat}`)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if(error){ console.error('control-bl:search:term', error); ssbToast('No se pudo buscar: ' + (error.message || ''), 'error'); return; }
+      _cblSearchData = data || [];
+      _cblSearched = _cblSearchData.map(r => r.order_number);
+      _cblIsLote = false;
+    }
+    _cblSel = null; // recalcula selección sobre el nuevo resultado
+    cblAfterDataChange();
+  }
+
+  // ── Listeners de búsqueda + filtros (elementos del skeleton del commit 2) ──
+  (function(){
+    const qInput = $('cbl-q');
+    const sBtn = $('cbl-search-btn');
+    if(sBtn) sBtn.addEventListener('click', cblSearch);
+    if(qInput){
+      qInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); cblSearch(); } });
+      qInput.addEventListener('paste', e => {
+        const cd = e.clipboardData || window.clipboardData;
+        const txt = (cd && cd.getData ? cd.getData('text') : '') || '';
+        if(/[\n\r\t,;]/.test(txt)){
+          e.preventDefault();
+          qInput.value = cblParseOrders(txt).join(' ');
+          setTimeout(cblSearch, 0);
+        }
+      });
+    }
+    const fbar = document.querySelector('#panel-control-bl .cbl-filterbar');
+    if(fbar){
+      fbar.addEventListener('click', e => {
+        const chip = e.target.closest('[data-cbl-f]');
+        if(!chip || !fbar.contains(chip)) return;
+        const f = chip.getAttribute('data-cbl-f');
+        if(_cblFilters.has(f)){ _cblFilters.delete(f); chip.classList.remove('cbl-fchip--on'); }
+        else { _cblFilters.add(f); chip.classList.add('cbl-fchip--on'); }
+        cblAfterDataChange();
+      });
+    }
   })();
 })();
 </script>
