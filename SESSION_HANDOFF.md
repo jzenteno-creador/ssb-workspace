@@ -1,50 +1,31 @@
-# Handoff sesión SSB Workspace · 2026-06-30
+# Handoff sesión SSB Workspace · 2026-06-30 (cierre)
 
 ## Foco de la sesión
-Dos agentes IA text-to-SQL + migración Netlify → Vercel.
+Inventario de pendientes + ingesta Schedule Excel→Supabase (FASE 1, fixes B y A).
 
-## Estado: COMMITEADO + PUSHEADO + DEPLOYADO en Vercel ✅
-- `master` = `origin/master` = **`97def83`**
-- Deploy Vercel en `https://ssb-workspace.vercel.app` — funcionando, confirmado por John.
-- Variables de entorno cargadas en Vercel Dashboard.
+## Estado: COMMITEADO local, SIN pushear. Fix A en borrador (sin publicar).
+- `master` local = **`f584b93`**, **3 commits adelante de `origin/master`** (sin push — no se pidió).
+- Commits de hoy: `b86a549` (Fix B DDL) · `f584b93` (handoff de cierre). (+ el `88b1ff8` previo.)
 
 ## Lo hecho
-1. **SSB Copilot** (tab `agente`, azul) — agente text-to-SQL contra MySQL `ssb_internacional` (GCP).
-   - Netlify Function `chat.js` → migrada a `api/chat.js` (formato Vercel).
-   - Tablas: `orders` (44k+), `shipments` (50k+). User read-only `db_reader_jz_1`.
-   - Schema en prompt incluye hint de `purchase_order` como campo de búsqueda del usuario.
+1. **Inventario completo** de pendientes, `docs/` y `validador-aduana/` (ver más abajo).
+2. **Fix B — APLICADO en prod** (Supabase `xkppkzfxgtfsmfooozsm`): swap del UNIQUE de `schedules_master` de 4-col → 5-col (agrega `mes_etd`). Migración `swap_schedules_master_unique_5col` + archivos en `migrations/2026-06-30-schedules-master-5col/`. Verificado: dups 5-col=0, total=2025.
+3. **Fix A — GUARDADO COMO BORRADOR, NO PUBLICADO** (workflow n8n `LI5dLhoYdM1jLXDo`): batch upsert (Map `runOnceForAllItems` + dedup 5-col + guard ISO + descarte + `.trim()` + `activo=in-window`), Upsert `jsonBody` array + `on_conflict` 5-col, Gmail count desde el nodo Map. Código **correcto y verificado**. `update_workflow` MCP guardó en borrador `dec50272` pero **NO publicó** → la versión activa `823b3917` sigue vieja.
 
-2. **Workspace IA** (tab `workspace-ia`, violeta `#8B5CF6`) — agente text-to-SQL contra Supabase.
-   - Function `api/chat-workspace.js`. 19 tablas del workspace.
-   - Conexión via RPC `execute_readonly_query` (SECURITY DEFINER) con service_role key.
-   - Función Postgres creada en Supabase (revoked de anon/authenticated).
-
-3. **Migración Netlify → Vercel**
-   - Functions movidas de `netlify/functions/` a `api/` con formato Vercel (`export default handler(req, res)`).
-   - URLs actualizadas en index.html: `/.netlify/functions/*` → `/api/*`.
-   - `vercel.json` reemplaza `netlify.toml` (headers de seguridad).
-   - `dev-server.js` actualizado para formato Vercel.
-   - URL: `ssb-workspace.vercel.app` (misma que antes con Netlify).
-
-4. **CLAUDE.md actualizado** — deploy Vercel, 12 tabs, sección agentes, env vars.
-
-5. **Fix validación SQL** — aliases de tabla y funciones SQL (CURRENT_DATE, etc.) ya no bloquean la whitelist.
-
-## Pendientes
-- **Firewall MySQL:** SSB Copilot en prod depende de que GCP acepte conexiones desde IPs de Vercel (Norte América). Si no funciona, pedir whitelist a IT o usar proxy n8n.
-- **Acceso a tablas de catálogo en MySQL:** user `db_reader_jz_1` solo ve 3 tablas. Mensaje para el arquitecto preparado (pedir `GRANT SELECT ON ssb_internacional.* TO 'db_reader_jz_1'@'%'`).
-- **Desconectar Netlify:** unlink repo + opcionalmente delete site desde dashboard Netlify.
-- **`netlify.toml` y `netlify/functions/`:** siguen en el repo (legacy). Borrar cuando Netlify esté desconectado.
-- **Backlog multi-tenant** (memoria `project_backlog_multitenant.md`).
+## Pendientes (orden próxima sesión — detalle en HANDOFF_schedule_ingestion.md)
+1. 🔴 **PUBLICAR Fix A** (`publish_workflow` MCP o UI) → cierra la **ventana 42P10 ABIERTA** (constraint DB ya 5-col, workflow activo aún 4-col).
+2. Verificar `activeVersion.nodes` (no `nodes`). 3. John re-sube `SCHEDULES 24-06-2026.xlsx` (corrida real, mail real). 4. Verificar post-carga (in-window activo=414, dups5=0, etd_max=2026-08-31). 5. STOP fin FASE 1.
+- Después: Fix C-parte-2 (deactivate-missing), Fix D (trigger re-subidas), `.limit(200)→2000` front (~L7983), FASE 2 (una sola solapa).
+- Otros: pushear los 3 commits · git remote set-url al nombre nuevo · CLAUDE.md desactualizados (validador ya mergeado) · swap de planillas xlsx en working tree sin commitear.
 
 ## Gotchas
-- WSL2 no forwardea puertos automáticamente a Windows. Para `npm run dev`, hacer `netsh interface portproxy` como admin o usar la IP de WSL directamente.
-- `SUPABASE_DB_PASSWORD` en .env es la service_role JWT (no la password de Postgres). Nombre legacy.
-- Validación SQL: aliases de tabla cortos (≤2 chars) se permiten siempre. SQL keywords en un Set para no bloquear `FROM CURRENT_DATE` etc.
+- **n8n `update_workflow` MCP guarda en BORRADOR, no publica.** Verificar `workflow.activeVersion.nodes` (lo que corre) vía `get_workflow_details`, NO `workflow.nodes` (borrador). `n8n-cli workflows get` devuelve el borrador → engaña. (Causa del falso "Fix A aplicado" de esta sesión.)
+- `update_workflow` con ops dirigidas (`setNodeParameter`) **NO desvincula credenciales** (a diferencia del PUT harness). Las 4 creds del workflow quedaron OK.
+- `setNodeParameter` con JSON Pointer **no desciende en arrays** (`/queryParameters/parameters/0/value` falla); setear el objeto top-level completo (`/queryParameters`).
+- Fix B rollback a 4-col **falla** una vez que una corrida cargue voyage reusado (abril/mayo). La 1ª corrida real cierra esa ventana de rollback.
 
 ## Identifiers
-- Commit: `97def83`
+- Commit: `f584b93` (local) · Workflow n8n: `LI5dLhoYdM1jLXDo` (borrador `dec50272`, activo `823b3917`)
+- Supabase: `xkppkzfxgtfsmfooozsm` · tabla `schedules_master` · constraint `schedules_master_unico` (ahora 5-col)
+- Gmail cred workflow: "Gmail account 3" (`wWZzmUj5MQLrECH0`) · mail destino `expoarpbb@ssbint.com`
 - Prod: https://ssb-workspace.vercel.app
-- Supabase: `xkppkzfxgtfsmfooozsm`
-- MySQL: `104.196.139.93:3306` / `ssb_internacional`
-- Repo: `github.com/jzenteno-creador/tarifa-schedule`
