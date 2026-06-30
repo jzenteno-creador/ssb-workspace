@@ -1,0 +1,14 @@
+# Admin BID — alta/edición + CRUD (2026-06-26)
+
+> Disparador: tocás el tab `admin-bid` (alta/edición de BID / tarifas marítimas).
+> Recordá la regla cross-cutting del autocomplete `pickAc`/`data-v` y de `esc()`
+> en atributos (CLAUDE.md → "Patrones a evitar").
+
+- **CRUD = 100% Supabase** (NO Sheets). Modal/inline → `postEfaAction({action:'addTarifa'|'updateTarifa'|'deleteTarifa'})` → `supa.from('tarifas_maritimas')` (insert/update/soft-delete `activo=false`). `bidPayloadFrom` usa nombres tipo header de Sheet (`'PUERTO DE EMBARQUE'`…) pero es **formato intermedio** — `postEfaAction` los resuelve a FK ids. `SCRIPT_URL` (Apps Script) = legacy, no es el path BID. (Corrige 2 EXPLOREs que afirmaron lo contrario.)
+- **Catálogo auto-create:** `_mmResolveOrCreate('naviera'|'puerto', name)` resuelve vs `navieras`/`puertos` (+ `navieras_alias`/`puertos_alias`) o crea vía `_mmConfirmNewCatalog` (puerto/destino nuevo pide **país NOT NULL**). Carrier/Origen/Destino del alta pasan por acá → tipear un valor nuevo dispara la confirmación.
+- **Selects cerrados** (modal + inline `bidInlineEdit` vía `_BID_CLOSED_FIELDS`): estado=`CONFIRMADA/PENDIENTE/NO DISPONIBLE` (sin "NO COTIZADO"), equipo=`20'STD/40'HC`, quarter=`1stQ..4thQ`. Carrier/Origen/Destino = `<input list=datalist>` (catálogo + valor nuevo). `_ensureSelOpt` evita pisar en silencio un valor legacy fuera de set al editar.
+- **`ssbToast(msg,kind)`** (global, reusa `.vac-toast`) = avisos del alta (éxito/cancelación/error). El `showToast` de Vacaciones es IIFE-scoped (no reusable desde el scope BID). info/neutral usa el contraste del CSS; success/error fondo oscuro + texto blanco.
+- **Dirty-guard:** `closeBidModalGuarded` + snapshot (`_bidModalSerialize`) intercepta backdrop/X/Cancelar/ESC; modal sin cambios cierra directo. El handler ESC (`_bidEscHandler`) cede ante el confirm de catálogo (`#_mm-newcat-ok`).
+- **Dos superficies de filtro EQUIPO — no confundir:** tab Tarifas = `equipo-grp` toggles + `selE` + `applyFilter`; Admin BID = `f-bid-equipo` autocomplete + `getBidFiltered` (substring). Catálogos: `navieras` (5: CMA CGM/HAPAG/LOGIN/MAERSK/MSC), `puertos` (30, con país). Tabla base `tarifas_maritimas` (vista `v_tarifas_maritimas`, log por `registro_id`).
+- **Autocomplete compartido (`openDrop`, 12 inputs t-/bid-/s-/rt-):** la opción se arma con `onmousedown="pickAc('${f}',this.dataset.v)"` — lee el valor de `data-v` (apostrophe-safe). NUNCA volver a interpolar el valor en el handler (rompía con `20'STD`). Mismo principio en `buildEquipoBtns` (createElement + `onclick` en closure). **Pendiente latente:** `buildCarrierBtns`/`togC` aún interpolan en `onclick` (hoy ok porque ningún carrier lleva `'`).
+- **`fDate()`** ya tiene fast-path date-only (`/^\d{4}-\d{2}-\d{2}$/` → constructor LOCAL, espejo de `daysUntil`); `fmtD` (renderAdminBID) y `toISO` ya eran TZ-safe. Para mostrar fechas date-only de Supabase, usar `fDate`.
