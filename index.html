@@ -14342,7 +14342,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(sendBtn) sendBtn.disabled = true;
 
     try{
-      const res = await fetch('/.netlify/functions/chat', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -14494,7 +14494,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(sendBtn) sendBtn.disabled = true;
 
     try{
-      var res = await fetch('/.netlify/functions/chat-workspace', {
+      var res = await fetch('/api/chat-workspace', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: _wiaMessages })
