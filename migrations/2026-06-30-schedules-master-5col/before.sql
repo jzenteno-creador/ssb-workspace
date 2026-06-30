@@ -1,0 +1,22 @@
+-- ============================================================================
+-- before.sql — UNIQUE constraint de public.schedules_master ANTES del swap
+-- Proyecto xkppkzfxgtfsmfooozsm · 2026-06-30 · solo documental
+-- ============================================================================
+-- Constraint actual:
+--   schedules_master_unico  UNIQUE (naviera, buque, puerto_origen, puerto_destino)
+--   (verificado vía pg_get_constraintdef — NO incluye mes_etd)
+--   + PK(id)
+--
+-- Estado de duplicados (re-verificado 2026-06-30, read-only, antes de tocar):
+--   dups por 4-col (naviera,buque,puerto_origen,puerto_destino)            = 0
+--   dups por 5-col (naviera,buque,puerto_origen,puerto_destino,mes_etd)    = 0
+--   total filas = 2025 (793 + 775 + 457 por archivo, sin huérfanos)
+--
+-- ⇒ El DROP+ADD es SEGURO: ningún grupo de 5-col colisiona, el ADD no falla.
+--
+-- POR QUÉ se cambia:
+--   El constraint de 4-col colapsa zarpes con "voyage reusado" (mismo VESSEL code
+--   en meses distintos, misma ruta). Casos históricos: LOG-IN POLARIS 1PC0RN1RCN
+--   (abril + mayo) y MERCOSUL SUAPE 1PC0MN1RCN, BUENOS AIRES→RIO DE JANEIRO.
+--   Agregar mes_etd a la clave los des-colapsa al recargar.
+-- ============================================================================

@@ -1,6 +1,10 @@
 # HANDOFF — Ingesta Schedule Excel → Supabase (FASE 1)
 
-> **Estado:** plan APROBADO, **pendiente de implementar**. NO se tocó DB, ni workflow, ni front en la sesión que generó este handoff.
+> **Estado:** **Fix B APLICADO (2026-06-30)** — el resto (A, C, D, front) pendiente.
+> ⚠️⚠️ **VENTANA FRÁGIL B→A:** el constraint ya es 5-col, pero el nodo `Upsert` del workflow
+> sigue con `on_conflict` de **4-col** → **cualquier corrida del workflow FALLA con error
+> 42P10** ("no unique constraint matching the ON CONFLICT specification") hasta que se aplique A.
+> **CERO corridas del workflow `LI5dLhoYdM1jLXDo` desde ahora hasta que A esté aplicado.**
 > **Generado:** 2026-06-30. Self-contained: con este archivo + los `CLAUDE.md` (global `~/.claude/CLAUDE.md` y de proyecto) alcanza para implementar sin la conversación previa.
 > **Workflow n8n:** `LI5dLhoYdM1jLXDo` — "Schedule Excel to Supabase" (jzenteno.app.n8n.cloud, `active:true`).
 > **Supabase:** proyecto `xkppkzfxgtfsmfooozsm`, tabla `schedules_master`.
@@ -61,13 +65,16 @@ console.log("raw",rec.length,"uniq5",s.size,"inwin",rec.filter(r=>r.e>="2026-06-
 ## 4. PLAN APROBADO — 4 fixes, orden **B → A → C → D**
 
 > **Canal de escritura del workflow (DECISIÓN APROBADA):** este workflow tiene trigger **Google Drive (NO IMAP)** → **el Iron Law del PUT harness de Control BL NO aplica acá**. Se permite **`update_workflow` vía MCP** para `LI5dLhoYdM1jLXDo`.
-> 🔁 **REGLA PERMANENTE de John:** **después de CADA `update_workflow`, relinkear a mano el credential del nodo `Send Email Notification` (Gmail) → "Gmail account jzenteno".** El update lo desvincula. Anotar este paso en cada cambio que toque el workflow.
+> 🔁 **REGLA PERMANENTE de John:** **después de CADA `update_workflow`, relinkear a mano el credential del nodo `Send Email Notification` (Gmail) → "Gmail account 3" (`wWZzmUj5MQLrECH0`).** El update lo desvincula. Anotar este paso en cada cambio que toque el workflow. *(Corregido 2026-06-30: el cred LIVE es "Gmail account 3", no "Gmail account jzenteno"; confirmado por John. Manda a `expoarpbb@ssbint.com`.)*
 
 ### Nodos del workflow (referencia)
 `Watch Schedules Folder` (googleDriveTrigger) → `Download Excel File` (googleDrive) → `Parse Excel Rows` (extractFromFile xlsx, headerRow:true) → `Add File Metadata` (set) → `Map Excel Columns to Schema` (code) → `Upsert into Supabase` (httpRequest) → `Collect All Results` (aggregate) → `Send Email Notification` (gmail → `expoarpbb@ssbint.com`).
 
-### B. Clave de 5 columnas (primero — A y C dependen de ella)
-- **DDL** → crear archivo en `migrations/2026-06-30-schedules-master-5col/01_swap_unique_5col.sql` (convención del repo = subdir con fecha). John lo **revisa antes** de aplicar; aplicar vía `apply_migration` de Supabase MCP **solo con su OK**.
+### B. Clave de 5 columnas (primero — A y C dependen de ella) — ✅ APLICADO 2026-06-30
+- **DDL APLICADA** vía `apply_migration` (migración `swap_schedules_master_unique_5col`, proyecto `xkppkzfxgtfsmfooozsm`). Archivos en `migrations/2026-06-30-schedules-master-5col/` (README + before + applied + rollback).
+  - **Re-verificación pre-apply (read-only):** dups 5-col=0 · dups 4-col=0 · total=2025 · 24 cols · constraint era el 4-col original (migración paralela del merge validador NO tocó la tabla).
+  - **Post-apply confirmado:** constraint = `UNIQUE (naviera, buque, puerto_origen, puerto_destino, mes_etd)` · total=2025 · dups 5-col=0.
+- **PENDIENTE de B (va bundleado con A):** el query param `on_conflict` del nodo `Upsert into Supabase` sigue en 4-col → cambiar a 5-col **en el mismo `update_workflow` que A**. ⚠️ Hasta entonces, cualquier corrida del workflow FALLA (42P10).
   ```sql
   -- Swap unique constraint 4-col → 5-col (agrega mes_etd) para no colapsar zarpes con voyage reusado.
   -- Seguro: dups 5-col verificados = 0 (2026-06-30). El DROP es necesario: el 4-col bloquearía la de-colisión.
