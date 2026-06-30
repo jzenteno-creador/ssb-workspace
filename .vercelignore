@@ -1,0 +1,7 @@
+# Módulo de tooling/harness n8n (control de BL) — NO es parte del front desplegado.
+# Excluido del deploy Vercel para que el harness, fixtures, schemas y scripts
+# no queden accesibles públicamente. El front sigue siendo index.html + assets/ + api/.
+validador-aduana/
+
+# Legacy Netlify (la app está en Vercel)
+netlify/
