@@ -1,5 +1,5 @@
 {
-  "name": "tarifa-schedule",
+  "name": "ssb-workspace",
   "version": "1.0.0",
   "description": "",
   "main": "dev-server.js",
@@ -12,16 +12,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jzenteno-creador/tarifa-schedule.git"
+    "url": "git+https://github.com/jzenteno-creador/ssb-workspace.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/jzenteno-creador/tarifa-schedule/issues"
+    "url": "https://github.com/jzenteno-creador/ssb-workspace/issues"
   },
-  "homepage": "https://github.com/jzenteno-creador/tarifa-schedule#readme",
+  "homepage": "https://github.com/jzenteno-creador/ssb-workspace#readme",
   "dependencies": {
     "dotenv": "^17.4.2",
     "mysql2": "^3.22.5",
