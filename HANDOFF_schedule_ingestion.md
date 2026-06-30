@@ -1,13 +1,44 @@
 # HANDOFF — Ingesta Schedule Excel → Supabase (FASE 1)
 
-> **Estado:** **Fix B APLICADO (2026-06-30)** — el resto (A, C, D, front) pendiente.
-> ⚠️⚠️ **VENTANA FRÁGIL B→A:** el constraint ya es 5-col, pero el nodo `Upsert` del workflow
-> sigue con `on_conflict` de **4-col** → **cualquier corrida del workflow FALLA con error
-> 42P10** ("no unique constraint matching the ON CONFLICT specification") hasta que se aplique A.
-> **CERO corridas del workflow `LI5dLhoYdM1jLXDo` desde ahora hasta que A esté aplicado.**
+> **Estado al cierre 2026-06-30:** **Fix B APLICADO** (constraint DB = 5-col) · **Fix A GUARDADO COMO BORRADOR, NO PUBLICADO**.
+> 🔴 **El código de Fix A es CORRECTO** (borrador `versionId dec50272`), **PERO la versión ACTIVA del workflow es la VIEJA** (`activeVersionId 823b3917`: Map `runOnceForEachItem`, Upsert `on_conflict` 4-col, jsonBody per-item). `update_workflow` guardó pero NO publicó.
+> 🔴 **VENTANA 42P10 ABIERTA** — la versión activa tiene `on_conflict` de 4-col contra el constraint DB que ya es 5-col → cualquier corrida ahora FALLA (42P10) y no carga nada.
+> ➡️ **PRÓXIMO PASO = PUBLICAR Fix A** (no cargar). Ver "## PLAN PRÓXIMA SESIÓN" abajo.
+> 📌 **LECCIÓN:** al verificar un workflow tras `update_workflow`, mirar **`workflow.activeVersion.nodes`** (lo que corre), NO solo `workflow.nodes` (el borrador). Son distintos cuando hay borrador sin publicar. `n8n-cli workflows get` devuelve el borrador → engaña. Usar `get_workflow_details` (MCP) que expone `versionId` vs `activeVersionId` y `activeVersion.nodes`.
 > **Generado:** 2026-06-30. Self-contained: con este archivo + los `CLAUDE.md` (global `~/.claude/CLAUDE.md` y de proyecto) alcanza para implementar sin la conversación previa.
 > **Workflow n8n:** `LI5dLhoYdM1jLXDo` — "Schedule Excel to Supabase" (jzenteno.app.n8n.cloud, `active:true`).
 > **Supabase:** proyecto `xkppkzfxgtfsmfooozsm`, tabla `schedules_master`.
+
+---
+
+## PLAN PRÓXIMA SESIÓN (checklist en orden exacto)
+
+**PASO 1 — Publicar Fix A.** `publish_workflow` (MCP) sobre `LI5dLhoYdM1jLXDo`, o John por UI (botón **Publish**). Hace que el borrador `dec50272` pase a ser la versión activa.
+
+**PASO 2 — Verificar la versión ACTIVA (read-only).** `get_workflow_details` → confirmar que ahora `versionId == activeVersionId` y que **`activeVersion.nodes`** tiene: Map `runOnceForAllItems` (+ guard ISO + dedup + `.trim()`), Upsert `on_conflict` = `naviera,buque,puerto_origen,puerto_destino,mes_etd` + `jsonBody={{ $json.rows }}`. **Esto cierra de verdad la ventana 42P10.** (NO mirar solo `workflow.nodes`.)
+
+**PASO 3 — PRIMERA CORRIDA REAL (la dispara JOHN, no Claude Code).** John re-sube `SCHEDULES 24-06-2026.xlsx`. ⚠️ Esta corrida (a) **cierra de forma permanente la ventana de rollback de Fix B** (al cargar voyage reusado, el rollback a 4-col ya no podrá), (b) **manda mail real** a `expoarpbb@ssbint.com`. **Claude Code NO la dispara.**
+
+**PASO 4 — Verificación post-carga (read-only, Supabase MCP).** NO contra la pantalla (el `.limit` del front todavía corta en 200):
+- `select count(*) ... where etd>='2026-06-01' and activo;` → **414**
+- dups 5-col → **0** (`group by 5 cols having count(*)>1`)
+- `LOG-IN POLARIS 1PC0RN1RCN` aparece en **abril Y mayo** (de-colapso 5-col)
+- `select max(etd) ...` → **2026-08-31**
+
+**PASO 5 — STOP / FIN FASE 1.** Ingesta completa y verificada.
+
+### Después de FASE 1 (NO tocar hasta cerrar pasos 1-5)
+- **Fix C-parte-2 — deactivate-missing:** apagar in-window viejas (10-04 / 12-04) que no estén en el 24-06. Va **DESPUÉS** de la primera corrida exitosa (una variable nueva por corrida, no mezclar con el primer test). C-parte-1 (`activo=in-window` al cargar) ya quedó dentro del Map de A.
+- **Fix D — trigger en re-subidas:** `fileCreated` no dispara con el mismo nombre. **D1** (Apps Script delete-then-create) si hay acceso al `SCRIPT_URL`; fallback **D3** (2º trigger `fileUpdated`).
+- **Fix front — `.limit`:** subir `.limit(200)→2000` en la query Realtime de `./index.html` (~L7983, `loadScheduleRT`). **RE-GREP** la línea al arrancar (`grep -n "\.limit(200)" index.html`). Deploy Vercel en push.
+- **FASE 2 — una sola solapa:** eliminar Schedule BID legacy, dejar Realtime como "Schedule", reubicar botones Subir/Sincronizar (alimentan Tarifas BID + EFA vía `syncSheet`; `btn-sync` es el único disparo manual) y repuntar/jubilar `renderSchedInTarifa`. Solo con la ingesta sólida.
+
+### Estado de entorno para la próxima sesión
+- **Repo renombrado** `tarifa-schedule → ssb-workspace`. **Primer comando al arrancar:** actualizar el remote → `git remote set-url origin <URL nueva>` (verificar antes con `git remote -v`; puede que ya esté).
+- **Estructura:** monolito real = `./index.html` (raíz); validador-aduanal mergeado = `validador-aduana/public/index.html`. Confirmar con `ls` al arrancar.
+- **Credencial Gmail del workflow** = "Gmail account 3" (`wWZzmUj5MQLrECH0`). Las 4 creds del workflow estaban OK al cortar (no se cayeron con `update_workflow` dirigido).
+- **Deploy:** Vercel auto-deploya en `git push origin master`.
+- **PENDIENTE de doc:** los `CLAUDE.md` (global y de proyecto) dicen que validador-aduanal es proyecto separado — ya está **mergeado** como módulo. Actualizarlos.
 
 ---
 
@@ -74,7 +105,7 @@ console.log("raw",rec.length,"uniq5",s.size,"inwin",rec.filter(r=>r.e>="2026-06-
 - **DDL APLICADA** vía `apply_migration` (migración `swap_schedules_master_unique_5col`, proyecto `xkppkzfxgtfsmfooozsm`). Archivos en `migrations/2026-06-30-schedules-master-5col/` (README + before + applied + rollback).
   - **Re-verificación pre-apply (read-only):** dups 5-col=0 · dups 4-col=0 · total=2025 · 24 cols · constraint era el 4-col original (migración paralela del merge validador NO tocó la tabla).
   - **Post-apply confirmado:** constraint = `UNIQUE (naviera, buque, puerto_origen, puerto_destino, mes_etd)` · total=2025 · dups 5-col=0.
-- **PENDIENTE de B (va bundleado con A):** el query param `on_conflict` del nodo `Upsert into Supabase` sigue en 4-col → cambiar a 5-col **en el mismo `update_workflow` que A**. ⚠️ Hasta entonces, cualquier corrida del workflow FALLA (42P10).
+- **⚠️ on_conflict 5-col en BORRADOR, NO PUBLICADO (2026-06-30, bundleado con A):** en el borrador el `on_conflict` del nodo `Upsert into Supabase` ya es `naviera,buque,puerto_origen,puerto_destino,mes_etd`, pero **la versión ACTIVA sigue con 4-col** → **ventana 42P10 ABIERTA hasta publicar Fix A.**
   ```sql
   -- Swap unique constraint 4-col → 5-col (agrega mes_etd) para no colapsar zarpes con voyage reusado.
   -- Seguro: dups 5-col verificados = 0 (2026-06-30). El DROP es necesario: el 4-col bloquearía la de-colisión.
@@ -86,7 +117,12 @@ console.log("raw",rec.length,"uniq5",s.size,"inwin",rec.filter(r=>r.e>="2026-06-
   ```
 - **Nodo `Upsert into Supabase`** → query param `on_conflict` de `naviera,buque,puerto_origen,puerto_destino` a **`naviera,buque,puerto_origen,puerto_destino,mes_etd`**. *(update_workflow → relink Gmail).*
 
-### A. Batch upsert (mata el 524) — PRIORIDAD
+### A. Batch upsert (mata el 524) — ⚠️ GUARDADO EN BORRADOR, **NO PUBLICADO** (2026-06-30)
+> **Guardado vía `update_workflow` MCP** (6 ops `setNodeParameter`, atómico) en el **borrador** `versionId dec50272`. **La versión ACTIVA sigue siendo la vieja** (`823b3917`) → falta `publish_workflow`. Las 4 credenciales del workflow **NO se cayeron** (las ops dirigidas no tocan `credentials` → NO hizo falta relink, ni siquiera Gmail). Código del borrador verificado read-only: Map mode=runOnceForAllItems + `node --check` OK; Upsert jsonBody=`={{ $json.rows }}` + on_conflict 5-col; Gmail count=`{{ $('Map Excel Columns to Schema').first().json.rows.length }}`. **Todo correcto, solo falta PUBLICAR.**
+> **Ajuste obligatorio de John incorporado:** `mes_etd`/`etd` solo si ETD es ISO válido (regex `/^\d{4}-\d{2}-\d{2}$/`); filas sin clave de 5 completa se **descartan** (contador `discardedEtd`/`discardedKey` + `console.log` + `_meta` en el output); `activo=(etd>=1°mes)` (C-parte-1 incluida); `.trim()` en las 4 claves.
+> ⚠️ **Warning pre-existente:** el nodo Gmail (v2.2) no tiene discriminador `parameters.operation` — ya era así antes del cambio (no lo introduje). El workflow venía mandando mail igual. Si alguna corrida no envía, agregar `operation: "send"` al nodo. NO bloquea.
+
+
 - **`Map Excel Columns to Schema`** → pasar a **`runOnceForAllItems`**, devolver **UN item** con el array ya mapeado **y deduplicado por la clave de 5** (keep-last; las 12 colisiones tienen ETD idéntico, da igual cuál sobrevive). Mantener el `parseExcelDate` y el mapeo de columnas actual (ver §"Mapeo actual"). Esqueleto:
   ```js
   // mode: runOnceForAllItems
