@@ -45,21 +45,29 @@ No hay suite de tests. Verificación = smoke test visual en navegador (ver "Veri
 - Bypass auth en headless: `document.body.classList.add('is-authed')` + remover `#auth-gate`/`#splash`.
 - `sleep` en foreground está bloqueado en este entorno → usar `until <check>; do sleep N; done`.
 - `node --check` por cada `<script>` inline (sin `src`) antes de commitear.
+- **TZ obligatorio para bugs de fecha:** `chromium.newContext({ timezoneId:'America/Argentina/Buenos_Aires' })` — sin esto los bugs TZ (ej. `fDate` date-only) no se reproducen en headless.
+- `page.evaluate` ve el `let rates` top-level (main world resuelve el binding léxico global) → se puede leer/computar contra `rates` sin exponerlo en `window`.
+- Scopear selectores de modal: `.efa-mod-x` matchea 7 modales → usar `#bid-modal .efa-mod-x` (o el id del modal puntual).
+- Datos de prueba en Supabase: nombres `ZZ*` identificables + limpiar (tarifa + log por `registro_id` + puerto; el trigger de delete re-loguea → borrar el log después).
 
-## Mapa de la app — 8 tabs
+## Mapa de la app — 10 tabs
+
+`switchTab` **hardcodea el array de tab-ids** → al agregar un tab nuevo hay que sumar el id ahí o el panel nunca se activa.
 
 Cada tab es un `#tab-<x>` (botón) + `#panel-<x>` (contenido), conmutados por `switchTab(x)`. En orden:
 
 | Tab | Datos | Notas de arquitectura (ver secciones abajo) |
 |-----|-------|----------------------------------------------|
 | `tarifas` | Tarifas marítimas — **Supabase** `v_tarifas_maritimas` vía `loadTarifasFromSupabase()` (Apps Script legacy en `loadTarifas()`) | saneo selC/selE duplicado en ambas (deuda: unificar en helper; mientras tanto, tocar las dos) |
-| `admin-bid` | BID (carga/edición) | `renderAdminBID()` — innerHTML sin escape (deuda) |
+| `admin-bid` | BID (carga/edición) | "Admin BID — alta/edición + CRUD" |
 | `efa` | EFA Gantt | "EFA Gantt — arquitectura actual" |
 | `schedule` | Schedule marítimo (BID) | `renderSchedModule()` — XSS pre-existente en `r.OBSERVACIONES` |
 | `schedule-rt` | Supabase `schedules_master` Realtime | "Schedule Realtime — arquitectura" |
 | `detention` | Detention (Supabase) | filtros multi-select estilo `.ac-wrap` |
 | `tt-dow` | Tarifas Terrestres Dow (Supabase) | "Tarifas Terrestres Dow — arquitectura" |
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | "Módulo Vacaciones" + "Auth global" |
+| `agente` | Agente IA | — |
+| `control-bl` | Control BL read-only (Supabase `bl_controls`) | "Control BL" |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
 
@@ -143,7 +151,7 @@ Usar Live Server en VS Code — click derecho en index.html → Open with Live S
 
 ## Workflow recomendado para fixes en index.html
 
-1. Leer la zona afectada antes de tocar (archivo tiene ~5000 líneas)
+1. Leer la zona afectada antes de tocar (archivo tiene ~13.400 líneas)
 2. Aplicar fix
 3. Correr análisis de seguridad sobre el diff antes de commitear
 4. Commit con formato: "fix: <descripción> (BUG-N si aplica)"
@@ -237,7 +245,7 @@ Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 (Supabase Auth), RLS por rol y email. Plan canon en `docs/VACACIONES_PLAN.md`.
 
 ### Modelo de datos (Supabase)
-- `vac_employees(id, email UNIQUE, full_name, role admin|employee, annual_days CHECK in 14|21|28|35, backup_employee_ids uuid[], active, birthday_day, birthday_month, extra_days, ...)`. Constraints: `vac_birthday_paired`, `vac_birthday_valid_calendar_day` (max día por mes, 29/feb permitido).
+- `vac_employees(id, email UNIQUE, full_name, role admin|employee, annual_days CHECK in 10|15|20|25 (hábiles, default 10), backup_employee_ids uuid[], active, birthday_day, birthday_month, extra_days, ...)`. Constraints: `vac_birthday_paired`, `vac_birthday_valid_calendar_day` (max día por mes, 29/feb permitido).
 - `vac_requests(id, employee_id FK, start_date, end_date, days_count, note, status pendiente|aprobada|tentativa|rechazada, rejection_reason, approved_by, approved_at, period_year, ...)`. Trigger `vac_compute_request_fields` setea `days_count` y `period_year` antes de insert/update. RLS de UPDATE/DELETE solo permite al dueño si `status='pendiente'`.
 - `vac_holidays(id, date UNIQUE, name, type nacional|no_laborable|puente)`.
 - View `vac_balance_view` con `security_invoker=on`. Computa `effective_annual_days = annual_days + extra_days` y `days_remaining` usando el efectivo. Solo activos.
@@ -245,9 +253,9 @@ Tab nueva (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 
 ### Reglas de negocio inamovibles
 - Período vacacional: **1° oct → 30 sep**. Renovación automática (la view filtra por `period_year`).
-- Días corridos (no hábiles).
+- **Días hábiles** (no corridos). Migración 2026-05-08 — ver "Migración días hábiles".
 - Cumpleaños (1 día libre por empleado): NO se descuenta automáticamente — gestión manual entre solicitante y admin (vía nota en la solicitud).
-- Período máximo seguido: 14 días corridos (informativo en banner, NO bloqueado en el form).
+- Período máximo seguido: 14 días hábiles (informativo en banner, NO bloqueado en el form).
 - `extra_days` (one-time): persiste por empleado hasta que admin lo limpie. NO se resetea al cambiar de período.
 - Soft delete de empleados (`active=false`) — nunca borrado físico.
 
@@ -322,6 +330,7 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - Sin npm/bundlers: todo via CDN
 - precinto_aduana UNIQUE global (no por orden)
 - Detección dinámica de columnas: nunca por posición fija
+- **Dos proyectos Supabase en el org:** `xkppkzfxgtfsmfooozsm` (esta app + `bl_controls`) y `cctuowthpnstvdgjuomq` ("ssb-export-dashboard": `inbound_events`/`inbound_log`, inbox/triage). No asumir a cuál apunta una credencial n8n — confirmar por Host/empíricamente.
 - **Módulo Vacaciones — completo (5 fases + extensiones)**
 - **Auth global obligatoria** — toda la app vive detrás del gate, gating por `vac_employees`
 - **Vacaciones — ajuste manual auditado (2026-05-07)** — admin carga ajustes inmutables (`vac_balance_adjustments`) sobre el saldo disponible de cualquier empleado, sin tocar `annual_days` ni `extra_days`. Empleado afectado ve los suyos con motivo en Mi calendario; admin ve todos. Cómputo del "disponible real" en frontend vía `computeRealAvailable(balanceRow, adjustments)` (única función pura, 3 consumidores). NO se modifica `vac_balance_view`. RLS hardened: INSERT exige `created_by = vac_my_employee_id()` (anti-spoofing). UPDATE/DELETE bloqueados por ausencia de policy + revoke de grants (Q3 inmutabilidad). **Convención: delta positivo SUMA al saldo, negativo lo descuenta.**
@@ -375,3 +384,34 @@ Branch `feat/vacaciones-final` mergeada en master (`577b8dc`). 9 commits totales
 - **Granularidad de commits**: features nuevas → commits granulares (un commit por feature, permite bisect/revert quirúrgico). Iteración UI sobre features ya hechas → un commit final cuando se ve bien.
 - **BACK-UP repite chip cada día**: prioridad a claridad sobre minimalismo, decisión explícita.
 - **Bday tiene `font-family:var(--font)` (sans normal)**, no mono — es nombre de persona, no código.
+
+## Admin BID — alta/edición + CRUD (2026-06-26)
+
+- **CRUD = 100% Supabase** (NO Sheets). Modal/inline → `postEfaAction({action:'addTarifa'|'updateTarifa'|'deleteTarifa'})` → `supa.from('tarifas_maritimas')` (insert/update/soft-delete `activo=false`). `bidPayloadFrom` usa nombres tipo header de Sheet (`'PUERTO DE EMBARQUE'`…) pero es **formato intermedio** — `postEfaAction` los resuelve a FK ids. `SCRIPT_URL` (Apps Script) = legacy, no es el path BID. (Corrige 2 EXPLOREs que afirmaron lo contrario.)
+- **Catálogo auto-create:** `_mmResolveOrCreate('naviera'|'puerto', name)` resuelve vs `navieras`/`puertos` (+ `navieras_alias`/`puertos_alias`) o crea vía `_mmConfirmNewCatalog` (puerto/destino nuevo pide **país NOT NULL**). Carrier/Origen/Destino del alta pasan por acá → tipear un valor nuevo dispara la confirmación.
+- **Selects cerrados** (modal + inline `bidInlineEdit` vía `_BID_CLOSED_FIELDS`): estado=`CONFIRMADA/PENDIENTE/NO DISPONIBLE` (sin "NO COTIZADO"), equipo=`20'STD/40'HC`, quarter=`1stQ..4thQ`. Carrier/Origen/Destino = `<input list=datalist>` (catálogo + valor nuevo). `_ensureSelOpt` evita pisar en silencio un valor legacy fuera de set al editar.
+- **`ssbToast(msg,kind)`** (global, reusa `.vac-toast`) = avisos del alta (éxito/cancelación/error). El `showToast` de Vacaciones es IIFE-scoped (no reusable desde el scope BID). info/neutral usa el contraste del CSS; success/error fondo oscuro + texto blanco.
+- **Dirty-guard:** `closeBidModalGuarded` + snapshot (`_bidModalSerialize`) intercepta backdrop/X/Cancelar/ESC; modal sin cambios cierra directo. El handler ESC (`_bidEscHandler`) cede ante el confirm de catálogo (`#_mm-newcat-ok`).
+- **Dos superficies de filtro EQUIPO — no confundir:** tab Tarifas = `equipo-grp` toggles + `selE` + `applyFilter`; Admin BID = `f-bid-equipo` autocomplete + `getBidFiltered` (substring). Catálogos: `navieras` (5: CMA CGM/HAPAG/LOGIN/MAERSK/MSC), `puertos` (30, con país). Tabla base `tarifas_maritimas` (vista `v_tarifas_maritimas`, log por `registro_id`).
+- **Autocomplete compartido (`openDrop`, 12 inputs t-/bid-/s-/rt-):** la opción se arma con `onmousedown="pickAc('${f}',this.dataset.v)"` — lee el valor de `data-v` (apostrophe-safe). NUNCA volver a interpolar el valor en el handler (rompía con `20'STD`). Mismo principio en `buildEquipoBtns` (createElement + `onclick` en closure). **Pendiente latente:** `buildCarrierBtns`/`togC` aún interpolan en `onclick` (hoy ok porque ningún carrier lleva `'`).
+- **`fDate()`** ya tiene fast-path date-only (`/^\d{4}-\d{2}-\d{2}$/` → constructor LOCAL, espejo de `daysUntil`); `fmtD` (renderAdminBID) y `toISO` ya eran TZ-safe. Para mostrar fechas date-only de Supabase, usar `fDate`.
+
+## Control BL — completo y en prod (2026-06-29; deployado `5aa8b9d`)
+
+Solapa `control-bl` (10ª) para consultar por Nº de orden el **control de BL** que antes se mandaba
+solo por mail desde el workflow n8n `WVt6gvghL2nFVbt6`. **Backend + frontend read-only completos,
+mergeados a master y deployados a `ssb-workspace.netlify.app`** (verificado md5 prod==local).
+
+### Datos (Supabase xkpp `bl_controls`)
+- Migración `migrations/2026-06-29-bl-controls-mvp/`: +`body_html`,+`subject`,+`factura_extract`(jsonb),+`pe_extract`(jsonb) → 36 cols. View `v_bl_controls_latest` (`distinct on (order_number)` ... `order by order_number, created_at desc`, `security_invoker=on`, grant select anon+authenticated).
+- RLS lockdown `migrations/2026-06-29-bl-controls-rls/`: drop "Allow all"; policy SELECT anon+authenticated; **sin** policy de INSERT/UPDATE/DELETE; `revoke insert/update/delete from anon`. La solapa lee con anon key; n8n escribe con **service_role** (bypassa RLS). Probado: anon SELECT 200, anon INSERT 401.
+- **Persistencia (n8n):** nodo aditivo en `WVt6gvghL2nFVbt6` — rama hermana del Gmail desde `code  - plantilla HTML`.main[0] (ambos nodos `onError:continueRegularOutput` → nunca bloquea el mail): Code `Armar fila Control BL` (runOnceForEachItem, mapea la salida del COMPARADOR a las columnas) → Supabase `Persistir Control BL` (row/create autoMap, cred service_role `aQoShf0TVYyf2lrt`). El template `code  - plantilla HTML` **solo emite** email_to/subject/body_html — los estructurados (compare/*_extract/triage/links) viven en la salida del `COMPARADOR - BL vs Aduana vs Booking` (`return {...doc,...result}`).
+- Escritura al workflow SOLO por harness `validador-aduanal/n8n/control_de_bill_of_lading/sdk/put_*.py` (IRON LAW). versionId LIVE post-implementación: `db8d8c5f-f107-4ec1-afc1-1787ca7ba150`.
+
+### Frontend — completo (6 commits `083527d`→`5aa8b9d`)
+- **Anchors aplicados** (`switchTab` línea ~3560 array += `'control-bl'`; botón tras `tab-agente`; panel `#panel-control-bl` tras `#panel-agente`; hook on-enter `if(name==='control-bl' && window.loadBlControls)…`). IIFE al final del `<script>` expone `window.loadBlControls`. Reusa `window.__ssb.supa` (NO crea cliente). Render 100% `createElement`+`textContent` — XSS-safe, sin innerHTML con datos ni onclick inline (`esc()` no escapa `'`).
+- **CSS isla clara scoped:** `<style id="cbl-styles">`, TODO bajo `#panel-control-bl`, clases `cbl-*`. Tokens del mockup (paper `#F7F6F2`, ok `#3F7A1E`, rev `#C2410C`, accent `#1F5FAE`) como vars **locales del panel** `--cbl-*` (NUNCA en `:root` → no filtran a la app dark). Fuentes reusadas: `var(--font)`/`var(--mono)`. Decisión: isla clara dentro de la app dark.
+- **Query híbrida** a `v_bl_controls_latest`: master = `.gte(created_at, 7 días).order(desc)`; búsqueda SIN gate — 1-término `.or(ilike order/booking/bl/vessel)`, lote `.or(in order/booking/bl)`. `body_html` on-demand `.eq(order_number).maybeSingle()` cacheado en `_cblBodyCache`.
+- **Visores:** Análisis = `<iframe>` con `srcdoc='<base target="_blank">'+body_html` por **propiedad DOM** + `sandbox="allow-popups allow-popups-to-escape-sandbox"`. Docs Drive (BL/Aduana/Booking) = `<iframe src=".../file/d/{id}/preview">` **SIN sandbox**; file-id = `bl_file_id || /\/d\/([^/?#]+)/` sobre `*_drive_link`. Factura/PE = tab **disabled** (faltan `factura_file_id`/`pe_file_id` → tanda futura los agrega como columnas y habilita).
+- **Estado/cuidados:** `_cblActiveDoc` se resetea a `'analisis'` SOLO al cambiar de control, NUNCA en render (sino los doc-tabs quedan pegados). `overall_result` NULL → NEUTRO, nunca OK. Doc-tabs + filtros por event delegation. "Reprocesar BL draft"/"Controlar ahora" → `ssbToast('Próximamente','info')` (webhook = tanda futura).
+- **Smoke headless** (este entorno): Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node` `require()` (CommonJS; el MCP Playwright falla, busca chrome en `/opt/google/chrome`). El query **anon funciona headless** → data layers verificables sin login; el iframe de Drive embebe igual (id falso → "archivo no existe" de Drive, no es bug).

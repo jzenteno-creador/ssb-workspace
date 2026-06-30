@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control BL — control real en vivo · ssb-workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F6F2;--surface:#FFFFFF;--surface-2:#FBFAF7;
+    --ink:#1C1B19;--ink-soft:#6B6863;--ink-faint:#9C988F;
+    --line:#E7E4DD;--line-strong:#D9D5CC;
+    --accent:#1F5FAE;--accent-soft:#EAF0F8;
+    --ok:#3F7A1E;--ok-bg:#EAF3DE;--ok-bd:#CFE3BD;
+    --rev:#C2410C;--rev-bg:#FBEEDB;--rev-bd:#ECC79A;
+    --ui:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--ui);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  ::selection{background:var(--accent);color:#fff}
+
+  .mock-flag{background:repeating-linear-gradient(135deg,#26241f,#26241f 14px,#2e2b25 14px,#2e2b25 28px);color:#EBE7DE;font-size:11.5px;padding:7px 18px;display:flex;gap:10px;align-items:center;justify-content:center;font-weight:500;flex-wrap:wrap}
+  .mock-flag b{color:#fff;font-weight:700}
+  .mock-flag span{color:#B7B2A6}
+  .mock-flag code{font-family:var(--mono);font-size:10.5px;color:#cfcabd}
+
+  .app{max-width:1320px;margin:0 auto;padding:0 22px 60px}
+  .topbar{display:flex;align-items:center;gap:14px;padding:20px 2px 14px}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(150deg,#2c6a16,#3F7A1E);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;box-shadow:var(--shadow)}
+  .brand{font-weight:700;letter-spacing:-.01em;font-size:15px}
+  .brand span{color:var(--ink-faint);font-weight:500}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--ink-soft);font-size:12.5px}
+  .who-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+  .tabbar{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabbar::-webkit-scrollbar{display:none}
+  .tab{padding:11px 15px;font-size:13.5px;font-weight:500;color:var(--ink-soft);border:none;background:none;cursor:pointer;white-space:nowrap;position:relative;border-radius:8px 8px 0 0}
+  .tab--active{color:var(--ink);font-weight:600}
+  .tab--active::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;background:var(--ink);border-radius:2px}
+  .new-dot{display:inline-block;margin-left:7px;width:6px;height:6px;border-radius:50%;background:var(--accent);vertical-align:middle}
+
+  .cbl-head{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:26px 2px 18px}
+  .cbl-titlewrap{flex:1;min-width:240px}
+  .cbl-title{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+  .cbl-sub{color:var(--ink-soft);font-size:13.5px;margin:5px 0 0}
+  .search{display:flex;min-width:320px;flex:1;max-width:480px}
+  .search-field{position:relative;flex:1;display:flex;align-items:center;background:var(--surface);border:1px solid var(--line-strong);border-right:none;border-radius:11px 0 0 11px;padding:0 12px 0 40px}
+  .search-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .search-field svg{position:absolute;left:13px;width:17px;height:17px;color:var(--ink-faint)}
+  .search-input{border:none;outline:none;background:none;width:100%;height:42px;font-family:var(--ui);font-size:14px;color:var(--ink)}
+  .search-btn{border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:var(--ui);font-weight:600;font-size:13.5px;padding:0 20px;cursor:pointer;border-radius:0 11px 11px 0}
+
+  .meta-row{display:flex;align-items:center;gap:14px;padding:0 2px 14px;flex-wrap:wrap;color:var(--ink-soft);font-size:12.5px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .meta-count{font-weight:600;color:var(--ink)}
+  .meta-sep{color:var(--line-strong)}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-bd);padding:3px 9px;border-radius:20px;margin-left:auto}
+  .live .pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .legend{display:flex;gap:14px}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-chip{width:9px;height:9px;border-radius:3px}
+  .legend-chip.ok{background:var(--ok)}
+  .legend-chip.rev{background:var(--rev)}
+
+  .layout{display:grid;grid-template-columns:330px 1fr;gap:20px;align-items:start}
+
+  .master{display:flex;flex-direction:column;gap:8px}
+  .master-note{font-size:12px;color:var(--ink-faint);padding:4px 2px 0;line-height:1.5}
+  .ctrl{position:relative;display:block;width:100%;text-align:left;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 13px 18px;overflow:hidden;transition:border-color .15s,transform .12s,box-shadow .15s;font-family:inherit}
+  .ctrl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line-strong)}
+  .ctrl.is-ok::before{background:var(--ok)}
+  .ctrl.is-rev::before{background:var(--rev)}
+  .ctrl:hover{border-color:var(--line-strong);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .ctrl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .ctrl--sel{border-color:var(--ink);box-shadow:var(--shadow)}
+  .ctrl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  .ctrl-order{font-family:var(--mono);font-size:14.5px;font-weight:500;letter-spacing:-.02em}
+  .ctrl-carrier{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .ctrl-vessel{font-size:12.5px;color:var(--ink);font-weight:500}
+  .ctrl-route{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd)}
+  .badge.rev{background:var(--rev-bg);color:var(--rev);border:1px solid var(--rev-bd)}
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  .detail{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;min-height:560px}
+  .exp-head{position:relative;padding:20px 22px 18px;border-bottom:1px solid var(--line)}
+  .exp-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+  .exp-head.is-ok::before{background:var(--ok)}
+  .exp-head.is-rev::before{background:var(--rev)}
+  .exp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .exp-order{font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+  .exp-line{font-size:13px;color:var(--ink-soft);margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .exp-line b{color:var(--ink);font-weight:600}
+  .exp-line .mono{font-family:var(--mono);font-size:12px}
+  .pip{width:3px;height:3px;border-radius:50%;background:var(--line-strong);display:inline-block}
+  .exp-status{text-align:right;flex-shrink:0}
+  .exp-status .badge{font-size:12px;padding:5px 11px}
+  .exp-tally{font-size:12px;color:var(--ink-soft);margin-top:7px;font-family:var(--mono)}
+  .exp-tally b.ok{color:var(--ok)}
+  .exp-tally b.rev{color:var(--rev)}
+
+  /* document tabs */
+  .doctabs{display:flex;gap:3px;padding:11px 18px 0;background:var(--surface-2);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .doctabs::-webkit-scrollbar{display:none}
+  .doctab{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-soft);background:none;border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;cursor:pointer;white-space:nowrap;position:relative;top:1px}
+  .doctab svg{width:14px;height:14px}
+  .doctab:hover{color:var(--ink)}
+  .doctab--active{color:var(--ink);font-weight:600;background:var(--surface);border-color:var(--line)}
+  .doctab.analisis.doctab--active{color:var(--accent)}
+  .doctab[disabled]{color:var(--ink-faint);cursor:default;opacity:.5}
+
+  .viewer{padding:16px 18px 18px;background:var(--surface-2);min-height:440px}
+  .viewer-hint{font-size:11.5px;color:var(--ink-faint);margin:0 4px 10px;display:flex;align-items:center;gap:7px;line-height:1.5}
+  .viewer-hint svg{width:13px;height:13px;flex-shrink:0}
+  .frame{width:100%;height:72vh;min-height:480px;border:1px solid var(--line);border-radius:10px;background:#fff;display:block}
+  .frame.doc{height:78vh}
+
+  .state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 30px;min-height:440px}
+  .state svg{width:34px;height:34px;color:var(--line-strong);margin-bottom:14px}
+  .state h3{margin:0 0 6px;font-size:15px;font-weight:700}
+  .state p{margin:0;color:var(--ink-soft);max-width:340px;font-size:13px;line-height:1.55}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    .master{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+    .ctrl{min-width:230px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mock-flag">
+  <b>MOCKUP — CONTROL REAL EN VIVO</b>
+  <span>el panel "Análisis" carga el <code>body_html</code> real desde tu base con la anon key · los docs se embeben desde Drive (necesitás estar online + logueado en Google)</span>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo">S</div>
+    <div class="brand">ssb-workspace <span>· exportaciones PBB Polisur</span></div>
+    <div class="topbar-right"><span class="who-dot"></span> jzenteno@ssbint.com</div>
+  </div>
+
+  <nav class="tabbar" aria-label="Secciones">
+    <button class="tab">Tarifas Marítimas</button>
+    <button class="tab">Schedule</button>
+    <button class="tab">Tarifas Terrestres</button>
+    <button class="tab">Detention</button>
+    <button class="tab">Vacaciones</button>
+    <button class="tab">Agente IA</button>
+    <button class="tab tab--active" aria-current="page">Control BL <span class="new-dot"></span></button>
+  </nav>
+
+  <header class="cbl-head">
+    <div class="cbl-titlewrap">
+      <h1 class="cbl-title">Control BL</h1>
+      <p class="cbl-sub">Consultá el control automático de cada Bill of Lading y revisá los documentos fuente sin salir de la web.</p>
+    </div>
+    <div class="search" role="search">
+      <div class="search-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="search-input" id="q" placeholder="Buscá por N° de orden, booking, BL o buque…" autocomplete="off">
+      </div>
+      <button class="search-btn" id="searchBtn">Buscar</button>
+    </div>
+  </header>
+
+  <div class="meta-row">
+    <span class="meta-count" id="metaCount">cargando…</span>
+    <span class="meta-sep">·</span>
+    <span id="metaWindow">últimos 7 días</span>
+    <span class="live"><span class="pulse"></span> en vivo desde Supabase</span>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="master" id="master"></div>
+      <p class="master-note" id="masterNote"></p>
+    </div>
+    <div class="detail" id="detail">
+      <div class="state"><div class="spinner"></div><p>Cargando controles…</p></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL  = "https://xkppkzfxgtfsmfooozsm.supabase.co";
+const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y";
+const supa = window.supabase.createClient(SUPA_URL, SUPA_ANON);
+
+// File ids extra de docs que hoy NO viven en columnas (factura/pe). Para la demo, los de 4010660871.
+// En la app: guardar factura_file_id / pe_file_id como columnas para que esto sea genérico.
+const EXTRA_DOCS = {
+  "4010660871": { factura:"1pGaUqVyJKs8kl_Apf41DIEPicCnS__y4", pe:"1x3Lf1Nx4wF9xWF-iEnroYgxmsJhtQiFm" }
+};
+
+const docIcon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+const repIcon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+
+const master = document.getElementById('master');
+const masterNote = document.getElementById('masterNote');
+const detail = document.getElementById('detail');
+let ALL = [];
+let selected = null;
+let activeDoc = 'analisis';
+const bodyCache = {};
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fileId(url){ if(!url) return null; const m=String(url).match(/\/d\/([^/?#]+)/); return m?m[1]:null; }
+function fmtDate(iso){ try{const d=new Date(iso);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}catch(e){return iso||''} }
+
+function docsFor(row){
+  const ex = EXTRA_DOCS[row.order_number] || {};
+  return [
+    {key:'analisis', label:'Análisis', kind:'report'},
+    {key:'bl',       label:'BL',              id: row.bl_file_id || fileId(row.bl_drive_link)},
+    {key:'aduana',   label:'Planilla Aduana', id: fileId(row.aduana_drive_link)},
+    {key:'booking',  label:'Booking',         id: fileId(row.booking_drive_link)},
+    {key:'factura',  label:'Factura',         id: ex.factura || null},
+    {key:'pe',       label:'Permiso (PE)',    id: ex.pe || null}
+  ];
+}
+
+function renderList(items){
+  master.innerHTML = '';
+  if(!items.length){
+    master.innerHTML = `<div class="ctrl" style="cursor:default"><div class="ctrl-vessel">Sin resultados.</div></div>`;
+    return;
+  }
+  items.forEach(row=>{
+    const isRev = (row.overall_result||'').toUpperCase()==='REVISAR';
+    const sel = (row===selected)?' ctrl--sel':'';
+    const badge = isRev
+      ? `<span class="badge rev"><span class="dot"></span>REVISAR · ${row.revisar_count??0}</span>`
+      : `<span class="badge ok"><span class="dot"></span>OK</span>`;
+    const el = document.createElement('button');
+    el.className = `ctrl ${isRev?'is-rev':'is-ok'}${sel}`;
+    el.innerHTML = `
+      <div class="ctrl-top"><span class="ctrl-order">${esc(row.order_number||'—')}</span>${badge}</div>
+      <div class="ctrl-carrier">${esc(row.carrier||'—')}</div>
+      <div class="ctrl-vessel">${esc(row.vessel||'—')} <span class="ctrl-route">${esc(row.voyage||'')}</span></div>
+      <div class="ctrl-route">${esc(row.pod||'')} · ${fmtDate(row.created_at)}</div>`;
+    el.addEventListener('click', ()=>selectControl(row));
+    master.appendChild(el);
+  });
+}
+
+function renderShell(row){
+  const isRev = (row.overall_result||'').toUpperCase()==='REVISAR';
+  const stClass = isRev?'is-rev':'is-ok';
+  const badge = isRev
+    ? `<span class="badge rev"><span class="dot"></span>REVISAR</span>`
+    : `<span class="badge ok"><span class="dot"></span>OK</span>`;
+  const docs = docsFor(row);
+  const tabsHtml = docs.map(d=>{
+    if(d.kind==='report'){
+      return `<button class="doctab analisis ${activeDoc==='analisis'?'doctab--active':''}" data-doc="analisis">${repIcon}${d.label}</button>`;
+    }
+    const dis = d.id?'':'disabled';
+    const act = activeDoc===d.key?'doctab--active':'';
+    const title = d.id?'':'title="Sin file id guardado — en la app se guardan los 5"';
+    return `<button class="doctab ${act}" data-doc="${d.key}" ${dis} ${title}>${docIcon}${d.label}</button>`;
+  }).join('');
+
+  detail.innerHTML = `
+    <div class="exp-head ${stClass}">
+      <div class="exp-top">
+        <div>
+          <div class="exp-order">${esc(row.order_number)}</div>
+          <div class="exp-line"><b>${esc(row.carrier||'')}</b> <span class="pip"></span> ${esc(row.vessel||'')} <span class="mono">${esc(row.voyage||'')}</span> <span class="pip"></span> ${esc(row.pod||'')} <span class="pip"></span> ${fmtDate(row.created_at)}</div>
+          <div class="exp-line"><span class="mono">BL ${esc(row.bl_number||'—')}</span> <span class="pip"></span> <span class="mono">Booking ${esc(row.booking_no||'—')}</span></div>
+        </div>
+        <div class="exp-status">${badge}
+          <div class="exp-tally"><b class="ok">${row.ok_count??0}</b> coinciden · <b class="rev">${row.revisar_count??0}</b> a revisar</div>
+        </div>
+      </div>
+    </div>
+    <div class="doctabs" id="doctabs">${tabsHtml}</div>
+    <div class="viewer" id="viewer"></div>`;
+
+  document.querySelectorAll('#doctabs .doctab').forEach(b=>{
+    if(b.hasAttribute('disabled')) return;
+    b.addEventListener('click', ()=>{ activeDoc=b.dataset.doc; renderShell(row); });
+  });
+  renderViewer(row);
+}
+
+async function renderViewer(row){
+  const viewer = document.getElementById('viewer');
+  if(activeDoc==='analisis'){
+    viewer.innerHTML = `<div class="state"><div class="spinner"></div><p>Cargando análisis desde la base…</p></div>`;
+    try{
+      let html = bodyCache[row.order_number];
+      if(html===undefined){
+        const {data,error} = await supa.from('bl_controls')
+          .select('body_html').eq('order_number', row.order_number)
+          .order('created_at',{ascending:false}).limit(1).single();
+        if(error) throw error;
+        html = data.body_html || '';
+        bodyCache[row.order_number] = html;
+      }
+      const withBase = '<base target="_blank">' + html;
+      viewer.innerHTML = `
+        <div class="viewer-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Documento de análisis — el <code>body_html</code> tal cual, igual que el mail. Renderizado en iframe sandbox.</div>
+        <iframe class="frame" id="anaframe" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>`;
+      document.getElementById('anaframe').srcdoc = withBase;
+    }catch(e){
+      viewer.innerHTML = `<div class="state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <h3>No se pudo cargar el análisis</h3>
+        <p>${esc(e.message||e)}. Revisá que estés online; así se ve cuando hay conexión a la base.</p></div>`;
+    }
+    return;
+  }
+  // documento de Drive embebido
+  const d = docsFor(row).find(x=>x.key===activeDoc);
+  if(!d || !d.id){
+    viewer.innerHTML = `<div class="state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>Sin file id para este documento</h3><p>En la app se guardan los 5 file ids; acá faltan factura/PE para esta demo.</p></div>`;
+    return;
+  }
+  viewer.innerHTML = `
+    <div class="viewer-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> ${esc(d.label)} embebido desde Google Drive. Si no aparece, abrí el doc estando logueado en Google con acceso al Shared Drive del equipo.</div>
+    <iframe class="frame doc" src="https://drive.google.com/file/d/${encodeURIComponent(d.id)}/preview" allow="autoplay"></iframe>`;
+}
+
+function selectControl(row){
+  selected = row;
+  activeDoc = 'analisis';
+  renderList(currentList());
+  renderShell(row);
+}
+
+function currentList(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  if(!q) return ALL;
+  return ALL.filter(r =>
+    (r.order_number||'').toLowerCase().includes(q) ||
+    (r.booking_no||'').toLowerCase().includes(q) ||
+    (r.bl_number||'').toLowerCase().includes(q) ||
+    (r.vessel||'').toLowerCase().includes(q));
+}
+
+function refresh(){
+  const list = currentList();
+  const q = document.getElementById('q').value.trim();
+  document.getElementById('metaCount').textContent = `${list.length} ${list.length===1?'control':'controles'}`;
+  document.getElementById('metaWindow').textContent = q ? `resultados para “${q}”` : 'últimos 7 días';
+  if(list.length && (!selected || !list.includes(selected))) { selectControl(list[0]); }
+  else { renderList(list); }
+}
+
+async function init(){
+  try{
+    const {data,error} = await supa.from('bl_controls')
+      .select('order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,created_at,bl_number,booking_no,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link')
+      .order('created_at',{ascending:false}).limit(30);
+    if(error) throw error;
+    ALL = data||[];
+    document.getElementById('metaCount').textContent = `${ALL.length} ${ALL.length===1?'control':'controles'}`;
+    masterNote.textContent = ALL.length
+      ? 'Se irá poblando con cada BL que entre. (Hoy hay los que el workflow ya persistió.)'
+      : '';
+    if(ALL.length){ selectControl(ALL[0]); }
+    else {
+      detail.innerHTML = `<div class="state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><h3>Todavía no hay controles en la base</h3><p>Apenas el workflow persista un BL, aparece acá.</p></div>`;
+    }
+  }catch(e){
+    detail.innerHTML = `<div class="state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <h3>No se pudo conectar a la base</h3>
+      <p>${esc(e.message||e)}. El mockup lee bl_controls en vivo con la anon key — necesitás estar online al abrirlo.</p></div>`;
+    document.getElementById('metaCount').textContent = 'sin conexión';
+  }
+}
+
+document.getElementById('searchBtn').addEventListener('click', refresh);
+document.getElementById('q').addEventListener('input', refresh);
+document.getElementById('q').addEventListener('keydown', e=>{ if(e.key==='Enter') refresh(); });
+init();
+</script>
+</body>
+</html>

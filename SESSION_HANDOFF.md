@@ -1,41 +1,44 @@
-# Handoff sesión SSB Workspace · 2026-06-25 (cierre con `break`)
+# Handoff sesión SSB Workspace · 2026-06-29 (cierre con `break`)
 
 ## Foco de la sesión
-Cerrar el plan de 4 olas: mergear a master (en orden, una por una, con OK de John por ola) las Olas 2, 3 y 4 que habían quedado staged en ramas locales desde el 2026-06-19. **Las 4 olas quedaron en producción.**
+Feature **Control BL** — **FRONTEND COMPLETO**. Solapa `control-bl` (10ª) read-only para consultar
+el control automático de BL que antes llegaba solo por mail (workflow n8n `WVt6gvghL2nFVbt6`).
+EXPLORE+PLAN (workflow de 5 agentes + verificación cruzada) → IMPLEMENT en 6 commits gateados →
+merge `--ff-only` a master → push → **deployado a prod**.
 
-## Estado final de master (PUSHEADO + deployado)
-`master = origin/master = 1ecdfa71c4caff06d991f6ab98238992b38bd999`
+## Estado: MERGEADO + PUSHEADO + DEPLOYADO ✅
+- `master` = `origin/master` = **`5aa8b9d`** (era `273b1e3`). Fast-forward, sin divergencia.
+- **Deploy Netlify SÍ se gatilló** (el problema de la sesión pasada NO se repitió). Verificado
+  **md5 prod == local** (`813bdd8c…99024`, 784.095 bytes) → prod sirve exactamente `5aa8b9d`.
+- Bonus: la **Tanda 2 ETD** que estaba atrasada en prod (`5c47a34`+`273b1e3`) también quedó live.
+- **Smoke en producción pendiente: lo hace John** (cargar la solapa en https://ssb-workspace.netlify.app,
+  login, ver `4010660871` con su análisis y los docs de Drive).
 
-| Commit | Qué |
-|---|---|
-| `1ecdfa7` | Ola 4 — saneo selC/selE en `loadTarifasFromSupabase` (path Supabase) |
-| `565e398` | Ola 4 — merge `feat/tarifas-maritimas-db` (Tarifas BID → Supabase + migración) |
-| `92e2e98` | Ola 3 — filtros coordinados (Terrestres / Admin BID / Schedule) |
-| `1150398` | Ola 2 — fixes críticos (guard TT, banner vigencia, XSS) + ocultar-vencidas + fix TZ daysUntil |
-| `d931f95` | docs: session handoff + CLAUDE.md (Fase 0) |
-| `cabefc4` | (pre-sesión) redeploy ANTHROPIC_API_KEY |
+## Lo hecho — 6 commits granulares (`083527d` → `5aa8b9d`)
+1. **`083527d`** Scaffold + anchors: botón `#tab-control-bl`, panel, `'control-bl'` en array de `switchTab`, hook on-enter.
+2. **`f54ff52`** CSS scoped (isla clara): `<style id="cbl-styles">` bajo `#panel-control-bl`, vars `--cbl-*` locales (no `:root`), fuentes reusadas. Skeleton estático.
+3. **`d886c8c`** Data layer: `window.loadBlControls` → `v_bl_controls_latest` `.gte(7 días)`, render lista+detalle, `overall_result` NULL → neutro.
+4. **`4be79eb`** Doc-tabs + visor Análisis: `body_html` on-demand cacheado → iframe `srcdoc` propiedad + sandbox; cambio de tab por event delegation; reset `_cblActiveDoc` solo al cambiar control.
+5. **`25fbfeb`** Visor Drive: BL/Aduana/Booking iframe `/preview` sin sandbox; file-id `bl_file_id || /\/d\/([^/?#]+)/`; Factura/PE disabled.
+6. **`5aa8b9d`** Buscador (1-término ilike + lote `.in`) + paste multilínea + filtros OK/REVISAR/No-controladas + "no está" + summary + placeholders Reprocesar/Controlar (ssbToast).
 
-Olas 2 y 3 entraron como cherry-pick (historia lineal); Ola 4 como merge (rama divergente del base viejo). Todas verificadas con `node --check` + smoke headless (16/16 PASS) antes del merge, y smoke en vivo de John antes de cada push.
+Cada commit verificado headless (Playwright global; el real con anon key + mock determinístico). Commit 6 smoke real con datos sembrados aprobado por John.
 
-## Cómo se resolvió cada ola (por si hay que revisar)
-- **Ola 2:** cherry-pick `203265d 9d1949a 611645c` sobre master. Conflicto en `switchTab()` (Agente IA había agregado `'agente'` al array) → resuelto manteniendo guard TT + `'agente'`. Revertida la línea de Vacaciones (`updateCargarSummary` volvió a `days_remaining ?? annual`, NO va a prod). **Gotcha encontrado:** `cherry-pick -n` se detuvo en el 1er conflicto y commiteé sin `--continue` → quedaron afuera 9d1949a y 611645c; lo detecté por grep, hice `--quit` + re-apliqué + `--amend`. (Ahora documentado en CLAUDE.md.)
-- **Ola 3:** `--ff-only` directo falló (rama del base viejo `065ba39`, divergente de master). Re-aplicada por cherry-pick `c83a65e cbf01e7 95d039d` sobre branch nueva `release/ola3` → ff-only a master. Limpio.
-- **Ola 4:** merge de `feat/tarifas-maritimas-db` sobre `release/ola4`. Conflicto único en `renderAdminBID` (~7008): COLW + ancho tabla, Ola4 vs Ola1 → resuelto combinando `Desde:130/Hasta:130` (Ola4) + `width:100%;min-width:1388px` (Ola1). Luego saneo selC/selE en `loadTarifasFromSupabase` (copia textual del de `loadTarifas`). Migraciones 01-08 YA estaban aplicadas en la DB real.
+## Pendientes
+- **Smoke en prod (John).** Cargar la solapa real logueado en Google.
+- **Docs sin commitear:** `M CLAUDE.md` (con los updates de esta sesión: Control BL → completo) + `M SESSION_HANDOFF.md` (este) + untracked (`migrations/2026-06-29-*`, mockups `docs/control-bl-*.html`, xlsx). Decidir si commitearlos (son docs/migraciones, no afectan prod).
+- **Rama `feat/control-bl`** ya mergeada (mismo commit que master) — se puede borrar.
+- **Tanda futura:** workflow n8n persiste `factura_file_id`/`pe_file_id` como columnas → habilitar tabs Factura/PE (hoy disabled). Webhook real de "Reprocesar BL draft"/"Controlar ahora" (hoy placeholder ssbToast).
+- **Backlog multi-tenant** (memoria `project_backlog_multitenant.md`): tenant_id + RLS por tenant, Supabase Auth real vs anon, config Dow por tenant.
 
-## Pendientes / deudas
-- 🔑 **ROTAR la API key de Anthropic.** Al inicio de la sesión `.env.example` tenía una key REAL (`sk-ant-api03-…`) sin commitear. La descarté (nunca llegó a git) pero quedó expuesta en el chat → rotala en Anthropic + Netlify. La real va en `.env` (gitignoreado) + Netlify Env Vars.
-- **Verificar Ola 4 en prod en vivo:** es el cambio más sensible (Tarifas BID ahora lee de Supabase `v_tarifas_maritimas`). Confirmar datos/nombres canónicos correctos.
-- **Deuda: saneo selC/selE duplicado** en `loadTarifas` y `loadTarifasFromSupabase` → unificar en un helper. Mientras tanto, tocar las dos.
-- **Cleanup de branches locales:** `release/dashboard-fixes`, `release/ola3`, `release/ola4`, `fix/dashboard-critical-bugs`, `fix/coordinated-filters`, `feat/tarifas-maritimas-db`, `integration/smoke`. Borrar las mergeadas cuando confirmes prod OK.
-- `daysUntil` duplicada (2 defs; la 2da gana por hoisting) — dedup en un cleanup.
-- Rename repo GitHub `tarifa-schedule` → `ssb-workspace` (deuda vieja).
-- Bugs Vacaciones viejos: cumpleaños no descuenta saldo; días corridos no descuenta feriados.
-
-## Gotchas de entorno (documentados también en CLAUDE.md)
-- **`git cherry-pick -n A B C` se DETIENE en el 1er conflicto** y no sigue. Verificar con `git rev-list --count <base>..HEAD`.
-- **Netlify branch deploys DESHABILITADOS** → pushear branch NO da preview URL. Smoke de branches = local.
-- **Smoke headless:** `python3 -m http.server 8000` como proceso principal del background (no `&` dentro de un wrapper). Playwright global es CommonJS (`import pw from ...; const {chromium}=pw`). Bypass auth: `body.classList.add('is-authed')` + remover `#auth-gate`/`#splash`. `sleep` foreground bloqueado → `until <check>; do sleep N; done`. `pkill` sale 144 (señal, no error).
+## Gotchas nuevos (ya volcados a CLAUDE.md)
+- **Verificar repo vs lo descrito antes de push/merge/deploy.** John dijo "6 commits smokeados, dale al push" pero había 5 (commit 6 nunca implementado). `git rev-list --count` + `grep -c cblSearch` lo confirmaron → frené y avisé. (memoria `feedback_verify_repo_before_acting.md`).
+- **Smoke headless:** Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node require()` (el MCP Playwright falla: chrome en `/opt/google/chrome`). Query **anon funciona headless** → data layers verificables sin login. Iframe Drive embebe incluso headless (id falso → "archivo no existe" de Drive, no es bug).
+- **Isla clara scoped:** tokens del mockup como vars `--cbl-*` LOCALES del panel (no `:root`), clases `cbl-*` total, todo bajo `#panel-control-bl` → no filtra a la app dark. Verificado: `--cbl-*` ausentes en `:root`, chrome dark `rgb(11,15,23)` intacto.
+- **`_cblActiveDoc` reset SOLO al cambiar de control** (no en cada render) — sino los doc-tabs quedan pegados.
 
 ## Identifiers
-- Supabase: `xkppkzfxgtfsmfooozsm` · Netlify: `ssb-workspace.netlify.app` · GitHub: `jzenteno-creador/tarifa-schedule` (deploy: `git push origin master`).
-- View nueva Tarifas Marítimas: `v_tarifas_maritimas`. Migración: `migrations/2026-06-18-tarifas-maritimas/` (01-08 + rollback, ya aplicadas).
+- Commit prod: `5aa8b9d` · md5 prod/local `813bdd8c2a8e323e3f77b34bd0d99024`.
+- Prod: https://ssb-workspace.netlify.app · deploy `git push origin master`.
+- Supabase `xkppkzfxgtfsmfooozsm` · vista `v_bl_controls_latest` (anon SELECT) · tabla `bl_controls` (1 fila real: `4010660871`).
+- Workflow BL: `WVt6gvghL2nFVbt6` (escribe con service_role `aQoShf0TVYyf2lrt`).

@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control BL — buscador lote · reproceso · ssb-workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F6F2;--surface:#FFFFFF;--surface-2:#FBFAF7;
+    --ink:#1C1B19;--ink-soft:#6B6863;--ink-faint:#9C988F;
+    --line:#E7E4DD;--line-strong:#D9D5CC;
+    --accent:#1F5FAE;--accent-soft:#EAF0F8;
+    --ok:#3F7A1E;--ok-bg:#EAF3DE;--ok-bd:#CFE3BD;
+    --rev:#C2410C;--rev-bg:#FBEEDB;--rev-bd:#ECC79A;
+    --ui:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--ui);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  ::selection{background:var(--accent);color:#fff}
+
+  .mock-flag{background:repeating-linear-gradient(135deg,#26241f,#26241f 14px,#2e2b25 14px,#2e2b25 28px);color:#EBE7DE;font-size:11.5px;padding:7px 18px;display:flex;gap:10px;align-items:center;justify-content:center;font-weight:500;flex-wrap:wrap}
+  .mock-flag b{color:#fff;font-weight:700}
+  .mock-flag span{color:#B7B2A6}
+  .mock-flag code{font-family:var(--mono);font-size:10.5px;color:#cfcabd}
+
+  .app{max-width:1320px;margin:0 auto;padding:0 22px 60px}
+  .topbar{display:flex;align-items:center;gap:14px;padding:20px 2px 14px}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(150deg,#2c6a16,#3F7A1E);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;box-shadow:var(--shadow)}
+  .brand{font-weight:700;letter-spacing:-.01em;font-size:15px}
+  .brand span{color:var(--ink-faint);font-weight:500}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--ink-soft);font-size:12.5px}
+  .who-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+  .tabbar{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabbar::-webkit-scrollbar{display:none}
+  .tab{padding:11px 15px;font-size:13.5px;font-weight:500;color:var(--ink-soft);border:none;background:none;cursor:pointer;white-space:nowrap;position:relative;border-radius:8px 8px 0 0}
+  .tab--active{color:var(--ink);font-weight:600}
+  .tab--active::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;background:var(--ink);border-radius:2px}
+  .new-dot{display:inline-block;margin-left:7px;width:6px;height:6px;border-radius:50%;background:var(--accent);vertical-align:middle}
+
+  .cbl-head{display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:26px 2px 18px}
+  .cbl-titlewrap{flex:1;min-width:240px}
+  .cbl-title{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+  .cbl-sub{color:var(--ink-soft);font-size:13.5px;margin:5px 0 0}
+  .search{display:flex;min-width:320px;flex:1;max-width:480px}
+  .search-field{position:relative;flex:1;display:flex;align-items:center;background:var(--surface);border:1px solid var(--line-strong);border-right:none;border-radius:11px 0 0 11px;padding:0 12px 0 40px}
+  .search-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .search-field svg{position:absolute;left:13px;width:17px;height:17px;color:var(--ink-faint)}
+  .search-input{border:none;outline:none;background:none;width:100%;height:42px;font-family:var(--ui);font-size:14px;color:var(--ink)}
+  .search-btn{border:1px solid var(--accent);background:var(--accent);color:#fff;font-family:var(--ui);font-weight:600;font-size:13.5px;padding:0 20px;cursor:pointer;border-radius:0 11px 11px 0}
+
+  .meta-row{display:flex;align-items:center;gap:14px;padding:0 2px 14px;flex-wrap:wrap;color:var(--ink-soft);font-size:12.5px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .meta-count{font-weight:600;color:var(--ink)}
+  .meta-sep{color:var(--line-strong)}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-bd);padding:3px 9px;border-radius:20px;margin-left:auto}
+  .live .pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .legend{display:flex;gap:14px}
+  .legend-item{display:flex;align-items:center;gap:6px}
+  .legend-chip{width:9px;height:9px;border-radius:3px}
+  .legend-chip.ok{background:var(--ok)}
+  .legend-chip.rev{background:var(--rev)}
+
+  .layout{display:grid;grid-template-columns:330px 1fr;gap:20px;align-items:start}
+
+  .master{display:flex;flex-direction:column;gap:8px}
+  .master-note{font-size:12px;color:var(--ink-faint);padding:4px 2px 0;line-height:1.5}
+  .ctrl{position:relative;display:block;width:100%;text-align:left;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px 13px 18px;overflow:hidden;transition:border-color .15s,transform .12s,box-shadow .15s;font-family:inherit}
+  .ctrl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line-strong)}
+  .ctrl.is-ok::before{background:var(--ok)}
+  .ctrl.is-rev::before{background:var(--rev)}
+  .ctrl:hover{border-color:var(--line-strong);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .ctrl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .ctrl--sel{border-color:var(--ink);box-shadow:var(--shadow)}
+  .ctrl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px}
+  .ctrl-order{font-family:var(--mono);font-size:14.5px;font-weight:500;letter-spacing:-.02em}
+  .ctrl-carrier{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .ctrl-vessel{font-size:12.5px;color:var(--ink);font-weight:500}
+  .ctrl-route{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono)}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+  .badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd)}
+  .badge.rev{background:var(--rev-bg);color:var(--rev);border:1px solid var(--rev-bd)}
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+  .detail{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;min-height:560px}
+  .exp-head{position:relative;padding:20px 22px 18px;border-bottom:1px solid var(--line)}
+  .exp-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+  .exp-head.is-ok::before{background:var(--ok)}
+  .exp-head.is-rev::before{background:var(--rev)}
+  .exp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .exp-order{font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+  .exp-line{font-size:13px;color:var(--ink-soft);margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .exp-line b{color:var(--ink);font-weight:600}
+  .exp-line .mono{font-family:var(--mono);font-size:12px}
+  .pip{width:3px;height:3px;border-radius:50%;background:var(--line-strong);display:inline-block}
+  .exp-status{text-align:right;flex-shrink:0}
+  .exp-status .badge{font-size:12px;padding:5px 11px}
+  .exp-tally{font-size:12px;color:var(--ink-soft);margin-top:7px;font-family:var(--mono)}
+  .exp-tally b.ok{color:var(--ok)}
+  .exp-tally b.rev{color:var(--rev)}
+
+  /* document tabs */
+  .doctabs{display:flex;gap:3px;padding:11px 18px 0;background:var(--surface-2);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .doctabs::-webkit-scrollbar{display:none}
+  .doctab{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-soft);background:none;border:1px solid transparent;border-bottom:none;border-radius:9px 9px 0 0;cursor:pointer;white-space:nowrap;position:relative;top:1px}
+  .doctab svg{width:14px;height:14px}
+  .doctab:hover{color:var(--ink)}
+  .doctab--active{color:var(--ink);font-weight:600;background:var(--surface);border-color:var(--line)}
+  .doctab.analisis.doctab--active{color:var(--accent)}
+  .doctab[disabled]{color:var(--ink-faint);cursor:default;opacity:.5}
+
+  .viewer{padding:16px 18px 18px;background:var(--surface-2);min-height:440px}
+  .viewer-hint{font-size:11.5px;color:var(--ink-faint);margin:0 4px 10px;display:flex;align-items:center;gap:7px;line-height:1.5}
+  .viewer-hint svg{width:13px;height:13px;flex-shrink:0}
+  .frame{width:100%;height:72vh;min-height:480px;border:1px solid var(--line);border-radius:10px;background:#fff;display:block}
+  .frame.doc{height:78vh}
+
+  .state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 30px;min-height:440px}
+  .state svg{width:34px;height:34px;color:var(--line-strong);margin-bottom:14px}
+  .state h3{margin:0 0 6px;font-size:15px;font-weight:700}
+  .state p{margin:0;color:var(--ink-soft);max-width:340px;font-size:13px;line-height:1.55}
+  .spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:14px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    .master{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+    .ctrl{min-width:230px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---- toolbar de busqueda multi-orden + filtros ---- */
+  .toolbar{display:flex;flex-direction:column;gap:11px;margin-bottom:16px}
+  .searchrow{display:flex;gap:0;align-items:stretch}
+  .lotebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .lotebar .lbl{font-size:12px;color:var(--ink-soft);margin-right:2px}
+  .lotechip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;background:var(--surface);border:1px solid var(--line-strong);border-radius:7px;padding:3px 7px 3px 9px;color:var(--ink)}
+  .lotechip.miss{border-style:dashed;color:var(--ink-faint)}
+  .lotechip.rev{border-color:var(--rev-bd);background:var(--rev-bg);color:var(--rev)}
+  .lotechip.ok{border-color:var(--ok-bd);background:var(--ok-bg);color:var(--ok)}
+  .lotechip b{font-weight:700}
+  .loteclear{font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--ui);font-weight:600;padding:2px 4px}
+  .filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .filterbar .flabel{font-size:12px;color:var(--ink-faint);margin-right:2px}
+  .fchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--ui);font-size:12.5px;font-weight:600;border-radius:20px;padding:5px 12px;cursor:pointer;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-soft)}
+  .fchip .dot{width:7px;height:7px;border-radius:50%}
+  .fchip[data-f=ok] .dot{background:var(--ok)}
+  .fchip[data-f=rev] .dot{background:var(--rev)}
+  .fchip[data-f=miss] .dot{background:#b0afa4}
+  .fchip--on[data-f=ok]{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+  .fchip--on[data-f=rev]{background:var(--rev-bg);border-color:var(--rev-bd);color:var(--rev)}
+  .fchip--on[data-f=miss]{background:#f0eee8;border-color:var(--line-strong);color:var(--ink)}
+  .summary{font-size:12.5px;color:var(--ink-soft)}
+  .summary b{color:var(--ink)}
+  .summary .s-ok{color:var(--ok);font-weight:700}
+  .summary .s-rev{color:var(--rev);font-weight:700}
+  .summary .s-miss{color:var(--ink-faint);font-weight:700}
+  /* tarjeta "no controlada" */
+  .ctrl.is-missing::before{background:#cfccc4}
+  .ctrl.is-missing{border-style:dashed;background:var(--surface-2)}
+  .ctrl.is-missing .ctrl-order{color:var(--ink-soft)}
+  .badge.miss{background:#f0eee8;color:#8a897f;border:1px solid var(--line-strong)}
+  .badge.miss .dot{background:#b0afa4}
+  /* boton reprocesar */
+  .reprocess{display:inline-flex;align-items:center;gap:7px;font-family:var(--ui);font-size:12.5px;font-weight:600;color:var(--rev);background:var(--rev-bg);border:1px solid var(--rev-bd);border-radius:9px;padding:7px 13px;cursor:pointer;margin-top:9px}
+  .reprocess svg{width:14px;height:14px}
+  .reprocess.solid{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .issue-row{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--rev-bd);background:var(--rev-bg);border-radius:9px;padding:9px 12px;margin-bottom:7px;font-size:12.5px;color:#7a3b14;line-height:1.5}
+  .issue-row svg{width:15px;height:15px;color:var(--rev);flex-shrink:0;margin-top:1px}
+  .mini{padding:18px}
+  .mini h4{margin:0 0 4px;font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+  .mini .demo-note{font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.5}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#26241f;color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:99;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+
+<div class="mock-flag">
+  <b>MOCKUP — buscador por lote · filtros · reproceso</b>
+  <span>El control <b style="color:#fff">4010660871</b> es real (análisis embebido). Los demás son ejemplos para mostrar la búsqueda múltiple, los estados y el "no está". Probá pegar varias órdenes en el buscador.</span>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo">S</div>
+    <div class="brand">ssb-workspace <span>· exportaciones PBB Polisur</span></div>
+    <div class="topbar-right"><span class="who-dot"></span> jzenteno@ssbint.com</div>
+  </div>
+
+  <nav class="tabbar" aria-label="Secciones">
+    <button class="tab">Tarifas Marítimas</button>
+    <button class="tab">Schedule</button>
+    <button class="tab">Tarifas Terrestres</button>
+    <button class="tab">Detention</button>
+    <button class="tab">Vacaciones</button>
+    <button class="tab">Agente IA</button>
+    <button class="tab tab--active" aria-current="page">Control BL <span class="new-dot"></span></button>
+  </nav>
+
+  <header class="cbl-head">
+    <div class="cbl-titlewrap">
+      <h1 class="cbl-title">Control BL</h1>
+      <p class="cbl-sub">Pegá una o varias órdenes (desde el Excel), filtrá por estado y revisá cada control y sus documentos.</p>
+    </div>
+    <div class="search" role="search">
+      <div class="search-field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="search-input" id="q" placeholder="Pegá órdenes (una o varias) · o booking / BL / buque…" autocomplete="off">
+      </div>
+      <button class="search-btn" id="searchBtn">Buscar</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="lotebar" id="lotebar" style="display:none"></div>
+    <div class="filterbar">
+      <span class="flabel">Filtrar:</span>
+      <button class="fchip" data-f="ok"><span class="dot"></span>OK</button>
+      <button class="fchip" data-f="rev"><span class="dot"></span>REVISAR</button>
+      <button class="fchip" data-f="miss"><span class="dot"></span>No controladas</button>
+      <span style="margin-left:auto" class="summary" id="summary"></span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="master" id="master"></div>
+      <p class="master-note" id="note"></p>
+    </div>
+    <div class="detail" id="detail"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="text/template" id="real-body">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e6e4dc;"><tbody><tr><td align="center" style="padding:18px 14px 40px;">
+  <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;max-width:640px;background:#ffffff;border:1px solid #d9d7cd;border-collapse:separate;"><tbody>
+    
+  <tr><td style="padding:18px 22px 14px;border-bottom:1px solid #e7e5db;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;vertical-align:middle;">
+        <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;">Control de Bill of Lading</div>
+        <div style="font-family:Arial,Helvetica,sans-serif;font-size:22px;color:#23231f;line-height:1.1;font-weight:bold;">Orden 4010660871</div>
+      </td>
+      <td align="right" style="vertical-align:middle;width:130px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tbody><tr><td bgcolor="#3f7a1e" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#ffffff;font-weight:bold;padding:6px 12px;letter-spacing:.04em;white-space:nowrap;">TODO OK &#10003;</td></tr></tbody></table>
+      </td>
+    </tr></tbody></table>
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6f6e65;margin-top:12px;line-height:1.5;">Booking <b style="color:#46453f;">LA0499051</b> &nbsp;&middot;&nbsp; Buque LOG-IN RESILIENTE 496N &nbsp;&middot;&nbsp; Flete COLLECT &nbsp;&middot;&nbsp; <span style="color:#9a998f;">23 campos OK</span></div>
+  </td></tr>
+    
+  <tr><td style="padding:16px 22px 4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td bgcolor="#3f7a1e" width="6" style="width:6px;font-size:0;line-height:0;">&nbsp;</td>
+      <td bgcolor="#EAF3DE" style="border:1px solid #cfe3bd;border-left:0;padding:13px 16px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#27500A;font-weight:bold;">
+        Sin campos para verificar &mdash; todo coincide &#10003;
+      </td>
+    </tr></tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:14px 22px 4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f6f5f0" style="border:1px solid #e7e5db;"><tbody><tr>
+      <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8a897f;"><span style="color:#6f6e65;">Documentos:</span>&nbsp; <a href="https://drive.google.com/file/d/1I-edaJnmx00nOnUlTtWfIUgcp8E4Y3Qp/view?usp=drivesdk" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Abrir BL</a> &nbsp;&middot;&nbsp; <a href="https://drive.google.com/file/d/11NnTpRxyCoFFzaL_MmpX-MX3keGu5wjm/view?usp=drivesdk" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Planilla Aduana</a> &nbsp;&middot;&nbsp; <a href="https://drive.google.com/file/d/1DSDW1csVZ3_uFrx09XltAKCS5owVZkJH/view?usp=drivesdk" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Booking Advice</a> &nbsp;&middot;&nbsp; <a href="https://drive.google.com/file/d/1pGaUqVyJKs8kl_Apf41DIEPicCnS__y4/view?usp=drivesdk" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Factura</a> &nbsp;&middot;&nbsp; <a href="https://drive.google.com/file/d/1x3Lf1Nx4wF9xWF-iEnroYgxmsJhtQiFm/view?usp=drivesdk" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Permiso (PE)</a></td>
+    </tr></tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:20px 22px 6px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#23231f;font-weight:bold;">Sección 1 &middot; Formulario BL <span style="font-weight:normal;color:#a7a69c;font-size:12px;">(campos 2&ndash;17)</span></td>
+      <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;letter-spacing:.03em;">TODO COINCIDE &middot; SIN ACCIÓN &#10003;</td>
+    </tr></tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;"><tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#46453f;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(2)</span> <span style="color:#46453f;font-weight:bold;">Shipper / exporter</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr>
+    <td width="58%" valign="top"  style="padding:6px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>PBBPOLISUR S.R.L.<br/>CALLE BOUCHARD 710, PISO 11<br/>C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL<br/>ARGENTINA, CUIT: 30560254195
+    </td>
+    <td width="42%" valign="top"  style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Factura (exportador)</div>PBBPOLISUR S.R.L.<br/>CALLE BOUCHARD 710, PISO 11<br/>C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL<br/>ARGENTINA
+    </td></tr></tbody></table></td></tr>
+      <tr><td colspan="2" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;font-style:italic;line-height:1.45;">Embarcador = Exportador (BL = Factura)</td></tr>
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;"><tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#46453f;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(3)</span> <span style="color:#46453f;font-weight:bold;">Consignee</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr>
+    <td width="40%" valign="top"  style="padding:6px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.<br/>ROD BR-101 700 KM 112 ANDAR 2 GALPAO 2 88311600<br/>ITAJAI - SC BRAZIL CNPJ 60435351/0003-19<br/>E-MAIL: DOW@PIBERNAT.COM.BR
+    </td>
+    <td width="32%" valign="top"  style="padding:6px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Booking (consignee)</div>DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.<br/>ROD BR-101 700<br/>KM 112 ANDAR 2 GALPAO 2<br/>88311-600 ITAJAI - SC<br/>BRAZIL<br/>CNPJ 60435351000319
+    </td>
+    <td width="28%" valign="top"  style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Factura (Ship To)</div>DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.<br/>CNPJ 60435351000319
+    </td></tr></tbody></table></td></tr>
+      
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;"><tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#46453f;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(4)</span> <span style="color:#46453f;font-weight:bold;">Notify party</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr>
+    <td width="58%" valign="top"  style="padding:6px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>COMISSARIA PIBERNAT LTDA<br/>RUA MANOEL VIEIRA GARCAO 120, CENTRO<br/>88301-425 ITAJAI - SC, BRAZIL<br/>TAX ID:92102433000923, E-MAIL: DOW@PIBERNAT.COM.BR
+    </td>
+    <td width="42%" valign="top"  style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Booking (notify)</div>COMISSARIA PIBERNAT LTDA<br/>RUA MANOEL VIEIRA GARCAO 120<br/>CENTRO<br/>88301-425 ITAJAI - SC<br/>BRAZIL<br/>CNPJ 92102433000923<br/>thais.kleinschmidt@pibernat.com.br
+    </td></tr></tbody></table></td></tr>
+      <tr><td colspan="2" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;font-style:italic;line-height:1.45;">Coincide por CNPJ (empresa correcta); si el email puntual difiere, verificar la casilla</td></tr><tr><td colspan="2" bgcolor="#f6f5f0" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;">Control intra-Booking &middot; notify estructurado e instrucciones del BA coinciden <span style="color:#3f7a1e;font-weight:bold;">&mdash; OK &#10003;</span></td></tr>
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;"><tbody>
+      <tr>
+    <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">5</td>
+    <td  style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Booking no.</span> <span>&mdash; BL <b style="color:#7a796f;">LA0499051</b> = Booking Advice</span></td>
+    <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">6</td>
+    <td  style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Export references</span> <span>&mdash; <b style="color:#7a796f;">4010660871</b> en BL &middot; Aduana &middot; Booking &middot; Factura</span></td>
+    <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">15</td>
+    <td  style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Port of loading</span> <span>&mdash; BL <b style="color:#7a796f;">BUENOS AIRES</b> &middot; Booking <b style="color:#7a796f;">Buenos Aires Port</b> &#8594; coincide</span></td>
+    <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">16</td>
+    <td  style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Port of discharge</span> <span>&mdash; BL <b style="color:#7a796f;">NAVEGANTES</b> &middot; Booking <b style="color:#7a796f;">Navegantes Port</b> &#8594; coincide</span></td>
+    <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">10A</td>
+    <td  style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Originals released at</span> <span>&mdash; BL <b style="color:#7a796f;">DESTINO</b> &middot; el BA no lo indica</span></td>
+    <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a7a69c;white-space:nowrap;font-weight:bold;">info</td>
+  </tr><tr>
+    <td width="42" bgcolor="#f6f5f0" style="font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:6px 0;">&middot;</td>
+    <td  style="border-left:1px solid #e9e7dd;padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9a998f;"><span style="color:#46453f;font-weight:bold;">Destino &middot; Incoterm</span> <span>&mdash; País <b style="color:#7a796f;">BRAZIL</b> (BL &middot; Booking &middot; Factura) &middot; <b style="color:#7a796f;">Incoterm FOB BUENOS AIRES</b> (Factura) &#8594; el place valida el POL (15) &#8594; coincide</span></td>
+    <td width="92" align="right" style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide &#10003;</td>
+  </tr>
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:10px 22px 0;">
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a09f95;line-height:1.7;"><span style="color:#8a897f;font-weight:bold;">Informativos (datos de referencia del BL):</span> (5A) BL no. 496N902814051 &middot; (8) País Argentina &middot; (11) FCL/FCL &middot; (14) Buque LOG-IN RESILIENTE 496N &mdash; Aduana: LOG-IN RESILIENTE 496 <span style="color:#b0afa4;">(Aduana puede traer feeder distinto)</span></div>
+  </td></tr>
+    
+  <tr><td style="padding:8px 22px 0;">
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0afa4;line-height:1.6;border-top:1px dashed #e2e0d6;padding-top:8px;">
+      <span style="font-weight:bold;color:#9a998f;">Campos que van vacíos en el BL:</span>
+      (7) Forwarding agent &middot; (9) Also notify &middot; (9A) Final destination &middot; (10) Loading pier &middot; (12) Place of receipt &middot; (13) Final port of loading &middot; (17) Place of delivery.
+      <span style="color:#b0afa4;">Se esperan vacíos &mdash; si alguno viene con dato, se marca para verificar (posible error de carga).</span>
+    </div>
+    
+  </td></tr>
+    
+  <tr><td style="padding:24px 22px 6px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#23231f;font-weight:bold;">Sección 2 &middot; Mercadería</td>
+      <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;letter-spacing:.03em;">TODO COINCIDE &middot; SIN ACCIÓN &#10003;</td>
+    </tr></tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:6px 22px 0;">
+    
+    
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f6f5f0" style="border:1px solid #e7e5db;border-collapse:collapse;margin-top:8px;"><tbody>
+    <tr><td colspan="2" style="padding:6px 12px;border-bottom:1px solid #e7e5db;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;font-weight:bold;letter-spacing:.05em;text-transform:uppercase;">BL &mdash; Description of packages and goods (tal cual)</td></tr>
+    <tr><td width="120" valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">NOS. OF PKGS</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;line-height:1.5;">4 X 40HC</td></tr>
+    <tr><td width="120" valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">DESCRIPTION</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;line-height:1.5;">4 CONTAINERS OF 40 HC<br/>SAID TO CONTAIN<br/>DESCRIPTION GOODS: HDPE LP 8000 HD Polyethylen<br/>e Resin<br/>QUANTITY: 72 BAGS IN 72 PALLETS<br/>GROSS WEIGHT: 88128<br/>NET WEIGHT: 86400<br/>NCM: 3901<br/>Wooden Material: YES<br/>Wooden Condition: Treated and Certified<br/>26033EC01004666P</td></tr>
+    <tr><td width="120" valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">GROSS WEIGHT</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;line-height:1.5;">88128,000</td></tr>
+    <tr><td width="120" valign="top" style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">MEASUREMENT</td><td style="padding:6px 12px;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;line-height:1.5;">145,672</td></tr>
+  </tbody></table>
+    
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:8px;"><tbody>
+    <tr><td  style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Atributo</td><td width="22%" style="border:1px solid #e2e0d6;background:#eef0e6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5d6b46;font-weight:bold;padding:6px 9px;">BL <span style="font-weight:normal;color:#8aa06a;">(ancla)</span></td><td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Aduana</td><td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Booking</td><td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Factura</td></tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Nombre</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">HDPE LP 8000 HD POLYETHYLENE RESIN</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">UPE HDPE LP 8000 HD BB1200</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag</td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Bolsas</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Pallets</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">0</td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Embalaje</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">Bags</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">Big Bag</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">PA / NCM</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">3901</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39012029900U</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39012029900U</td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Neto (kg)</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td>
+  </tr>
+    <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Bruto (kg)</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td>
+  </tr>
+  </tbody></table>
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0afa4;padding:6px 2px 0;">&ldquo;&mdash;&rdquo; = el documento no informa ese atributo (no es discrepancia).</div>
+  </td></tr>
+    
+  <tr><td style="padding:12px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#46453f;font-weight:bold;">Controles del documento</td>
+      <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;">coinciden &#10003;</td>
+    </tr></tbody></table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:6px;"><tbody>
+      <tr><td  style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Atributo</td><td width="18%" style="border:1px solid #e2e0d6;background:#eef0e6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5d6b46;font-weight:bold;padding:6px 9px;">BL <span style="font-weight:normal;color:#8aa06a;">(ancla)</span></td><td width="14%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Aduana</td><td width="14%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Booking</td><td width="14%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Factura</td><td width="14%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">PE</td><td width="11%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Estado</td></tr>
+      <tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">Peso Neto</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">86.400,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">Peso Bruto</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">88.128,00</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">Bolsas</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">Pallets</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">HS</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">3901</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39012029</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39012029900U</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39012029900U</td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">PE</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">26033EC01004666P</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">26033EC01004666P</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">26033EC01004666P</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">26033EC01004666P</td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">Embalaje</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">Bags</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">Big Bag</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr><tr>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:5px 9px;">FOB (USD)</td>
+    <td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;"><span style="color:#b0afa4;">&mdash;</span></td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">189.216</td><td  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">189.216</td>
+    <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:5px 9px;font-weight:bold;white-space:nowrap;">coincide &#10003;</td>
+  </tr>
+    </tbody></table>
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0afa4;padding:5px 2px 0;">&ldquo;&mdash;&rdquo; = el documento no informa ese control (no es discrepancia).</div>
+  </td></tr>
+    
+  <tr><td style="padding:18px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#46453f;font-weight:bold;">Detalle por contenedor</td>
+      <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;">4/4 coinciden &#10003;</td>
+    </tr></tbody></table>
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;line-height:1.55;margin:5px 0 8px;">Número, precinto, neto, bruto y volumen <b style="color:#7a796f;">iguales en BL = Aduana = Booking</b> en los 4 contenedores. Cada uno: Neto 21.600,00 &middot; Bruto 22.032,00 kg &middot; Vol 36,418 m&sup3; &middot; Madera YES (T&amp;C).</div>
+    
+    
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody>
+      <tr><td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Contenedor (BL = Aduana)</td><td width="13%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Precinto</td><td  style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Contenido (producto &middot; bolsas &middot; pallets)</td><td width="8%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Madera</td><td width="15%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Condición</td><td width="76" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;font-weight:bold;padding:6px 9px;">Estado</td></tr>
+      <tr>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">CAAU6388192</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAH16887</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">HDPE LP 8000 HD Polyethylene Resin &middot; 18 bolsas</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">YES</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:6px 9px;line-height:1.4;">TREATED AND CERTIFIED</td>
+    <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">MEDU7061649</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAH16888</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">HDPE LP 8000 HD Polyethylene Resin &middot; 18 bolsas</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">YES</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:6px 9px;line-height:1.4;">TREATED AND CERTIFIED</td>
+    <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">MSMU7438340</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAH16886</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">HDPE LP 8000 HD Polyethylene Resin &middot; 18 bolsas</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">YES</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:6px 9px;line-height:1.4;">TREATED AND CERTIFIED</td>
+    <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide &#10003;</td>
+  </tr><tr>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">TLLU7603091</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAH16889</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">HDPE LP 8000 HD Polyethylene Resin &middot; 2 bolsas<br/>9 bolsas<br/>4 bolsas<br/>3 bolsas</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">YES</td>
+    <td valign="top"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:6px 9px;line-height:1.4;">TREATED AND CERTIFIED</td>
+    <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide &#10003;</td>
+  </tr>
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:16px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#46453f;font-weight:bold;">Detalle de tarifa (flete BL)</td>
+      <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a7a69c;">COLLECT &middot; sin discrepancias</td>
+    </tr></tbody></table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:6px;"><tbody>
+      <tr><td  style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Freight charges</td><td align="center" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Qty</td><td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Rate</td><td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Prepaid</td><td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Collect</td><td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Valor factura</td><td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">Estado</td></tr>
+      <tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">BUNKER</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 174,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 696,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">EEFA</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 44,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 176,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">GATE</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 25,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 100,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">ISPS</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 10,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 40,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">Ocean Freight</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 100,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 400,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">THC DESTINO</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 1.100,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 4.400,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">THC ORIGEM</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 260,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 1.040,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr><tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">TOLL FEE</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 178,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 712,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr>
+      <tr><td   style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">TOTAL REAIS</td><td align="center"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">REALES</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 0,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 4.400,00</td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right"  style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr>
+      <tr><td  bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">TOTAL USD</td><td align="center" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">DOLARES</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 1.040,00</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 2.124,00</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"><span style="color:#a7a69c;font-style:italic;">FOB s/flete</span></td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr>
+      <tr><td  bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">TARIFA POR CONTENEDOR</td><td align="center" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 531,00</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">&mdash;</td><td align="right" bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td></tr>
+    </tbody></table>
+  </td></tr>
+    
+  <tr><td style="padding:18px 22px 22px;">
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;line-height:1.6;margin-bottom:10px;"><span style="font-weight:bold;color:#8a897f;">Avisos:</span> [Booking] Producto 8000HD: nombre abreviado/variante en Booking ('HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag') &mdash; mismo grado; verificar con el despachante si corresponde.</div>
+    <div style="border-top:1px solid #e7e5db;padding-top:12px;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0afa4;line-height:1.6;">
+      Control automático de Bill of Lading &middot; Orden 4010660871 &middot; corrida del día. El BL es el documento ancla: las columnas Aduana / Booking / Factura se comparan contra él.
+    </div>
+  </td></tr>
+  </tbody></table>
+</td></tr></tbody></table></script>
+<script>
+const CONTROLS = [
+  { order_number:"4010660871", carrier:"LOG-IN", vessel:"LOG-IN RESILIENTE", voyage:"496N", pod:"NAVEGANTES",
+    state:"OK", ok_count:23, revisar_count:0, booking_no:"LA0499051", bl_number:"496N902814051", corrida:"29/06 16:29",
+    full:true, docs:{bl:"1I-edaJnmx00nOnUlTtWfIUgcp8E4Y3Qp",aduana:"11NnTpRxyCoFFzaL_MmpX-MX3keGu5wjm",booking:"1DSDW1csVZ3_uFrx09XltAKCS5owVZkJH",factura:"1pGaUqVyJKs8kl_Apf41DIEPicCnS__y4",pe:"1x3Lf1Nx4wF9xWF-iEnroYgxmsJhtQiFm"} },
+  { order_number:"4010660915", carrier:"LOG-IN", vessel:"LOG-IN PANTANAL", voyage:"512N", pod:"SANTOS",
+    state:"REVISAR", ok_count:20, revisar_count:2, booking_no:"LA0501277", bl_number:"512N902820114", corrida:"29/06 15:02",
+    issues:["Peso bruto — BL 88.128,00 vs Aduana 88.218,00: diferencia de 90 kg, verificar.","Producto — BL 'HDPE LP 8000 HD' vs Factura 'HDPE LP 8000 HD … 1200 KG Big Bag': posible nombre desactualizado en el portal."] },
+  { order_number:"117673953", carrier:"MAERSK", vessel:"MAERSK MONTE ALEGRE", voyage:"531N", pod:"PARANAGUA",
+    state:"OK", ok_count:21, revisar_count:0, booking_no:"257215188", bl_number:"068N902808414", corrida:"29/06 11:48" },
+  { order_number:"4010661002", carrier:"MAERSK", vessel:"MAERSK LOTA", voyage:"548N", pod:"ITAPOA",
+    state:"REVISAR", ok_count:22, revisar_count:1, booking_no:"257301944", bl_number:"548N902831770", corrida:"28/06 17:21",
+    issues:["Notify — CNPJ del BL coincide, pero el e-mail del BL difiere del indicado en el Booking Advice; verificar la casilla."] },
+  { order_number:"118187927", carrier:"LOG-IN", vessel:"LOG-IN RESILIENTE", voyage:"496N", pod:"NAVEGANTES",
+    state:"OK", ok_count:23, revisar_count:0, booking_no:"LA0499052", bl_number:"496N902814052", corrida:"28/06 16:33" },
+  { order_number:"4010660788", carrier:"HAPAG-LLOYD", vessel:"HANNOVER EXPRESS", voyage:"022W", pod:"ITAJAI",
+    state:"OK", ok_count:19, revisar_count:0, booking_no:"HLCUBUE2406", bl_number:"HLCUBUE240600", corrida:"27/06 10:09" }
+];
+const BODY_HTML = document.getElementById("real-body").textContent;
+const DOC_TABS = [
+  {key:"analisis",label:"Análisis",report:true},{key:"bl",label:"BL"},{key:"aduana",label:"Planilla Aduana"},
+  {key:"booking",label:"Booking"},{key:"factura",label:"Factura"},{key:"pe",label:"Permiso (PE)"}
+];
+const docIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+const repIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+const cycleIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L3 8"/></svg>';
+const warnIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>';
+
+let searched = null;          // array de tokens buscados, o null
+let isLote = false;           // true si se pegaron varias ordenes
+let filters = new Set();      // ok / rev / miss
+let selectedKey = null;
+
+const byId = id => document.getElementById(id);
+function findCtrl(o){ return CONTROLS.find(c => c.order_number === o); }
+function resolveToken(tok){ return CONTROLS.find(c => c.order_number===tok || c.booking_no===tok || c.bl_number===tok) || null; }
+function parseOrders(t){
+  const toks = t.split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean);
+  return [...new Set(toks)];
+}
+function toast(msg){ const t=byId("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2600); }
+
+// construye las filas a mostrar (con estado) segun busqueda
+function rows(){
+  let list;
+  if(searched){
+    list = searched.map(o => { const c=resolveToken(o); return c ? c : {order_number:o, state:"MISSING"}; });
+    const seen=new Set(); list=list.filter(r=>{ if(seen.has(r.order_number))return false; seen.add(r.order_number); return true; });
+  } else {
+    list = CONTROLS.slice();
+  }
+  if(filters.size){
+    list = list.filter(r => {
+      const k = r.state==="OK"?"ok":r.state==="REVISAR"?"rev":"miss";
+      return filters.has(k);
+    });
+  }
+  return list;
+}
+
+function renderLote(){
+  const lb = byId("lotebar");
+  if(!searched || !isLote){ lb.style.display="none"; return; }
+  lb.style.display="flex";
+  const chips = searched.map(o=>{
+    const c=resolveToken(o);
+    const cls = c ? (c.state==="REVISAR"?"rev":"ok") : "miss";
+    const tag = c ? (c.state==="REVISAR"?"REVISAR":"OK") : "no está";
+    return `<span class="lotechip ${cls}"><b>${o}</b> · ${tag}</span>`;
+  }).join("");
+  lb.innerHTML = `<span class="lbl">${searched.length} ${searched.length===1?'orden':'órdenes'} pegada${searched.length===1?'':'s'}:</span>${chips}<button class="loteclear" id="clearLote">limpiar</button>`;
+  byId("clearLote").addEventListener("click", ()=>{ searched=null; isLote=false; byId("q").value=""; refresh(); });
+}
+
+function renderSummary(){
+  const all = searched ? searched.map(o=>{const c=resolveToken(o);return c?c:{state:"MISSING"};}) : CONTROLS;
+  const ok = all.filter(r=>r.state==="OK").length;
+  const rev = all.filter(r=>r.state==="REVISAR").length;
+  const miss = all.filter(r=>r.state==="MISSING").length;
+  let s = `<b>${all.length}</b> ${all.length===1?'orden':'órdenes'} · <span class="s-ok">${ok} OK</span> · <span class="s-rev">${rev} a revisar</span>`;
+  if(searched) s += ` · <span class="s-miss">${miss} sin control</span>`;
+  byId("summary").innerHTML = s;
+}
+
+function renderList(){
+  const m = byId("master");
+  const list = rows();
+  m.innerHTML = "";
+  if(!list.length){ m.innerHTML = `<div class="ctrl" style="cursor:default"><div class="ctrl-vessel">Sin resultados con este filtro.</div></div>`; return; }
+  list.forEach(r=>{
+    const el = document.createElement("button");
+    if(r.state==="MISSING"){
+      el.className = "ctrl is-missing" + (selectedKey===r.order_number?" ctrl--sel":"");
+      el.innerHTML = `<div class="ctrl-top"><span class="ctrl-order">${r.order_number}</span><span class="badge miss"><span class="dot"></span>no está</span></div>
+        <div class="ctrl-vessel" style="color:var(--ink-faint)">Sin control registrado</div>`;
+    } else {
+      const rev = r.state==="REVISAR";
+      el.className = `ctrl ${rev?'is-rev':'is-ok'}` + (selectedKey===r.order_number?" ctrl--sel":"");
+      const badge = rev ? `<span class="badge rev"><span class="dot"></span>REVISAR · ${r.revisar_count}</span>` : `<span class="badge ok"><span class="dot"></span>OK</span>`;
+      el.innerHTML = `<div class="ctrl-top"><span class="ctrl-order">${r.order_number}</span>${badge}</div>
+        <div class="ctrl-carrier">${r.carrier}</div>
+        <div class="ctrl-vessel">${r.vessel} <span class="ctrl-route">${r.voyage}</span></div>
+        <div class="ctrl-route">${r.pod} · ${r.corrida}</div>`;
+    }
+    el.addEventListener("click", ()=>{ selectedKey=r.order_number; activeDoc="analisis"; renderList(); renderDetail(r); });
+    m.appendChild(el);
+  });
+}
+
+let activeDoc = "analisis";
+function renderDetail(r){
+  const d = byId("detail");
+  if(r.state==="MISSING"){
+    d.innerHTML = `<div class="mini">
+      <div class="exp-order" style="font-size:22px">${r.order_number}</div>
+      <div style="margin:14px 0">${warnIcon} <b style="margin-left:6px">Esta orden no tiene control registrado.</b></div>
+      <p style="color:var(--ink-soft);font-size:13px;line-height:1.6;max-width:460px">Todavía no se procesó el BL de esta orden, o el archivo no llegó a la carpeta de Drive. Cuando el workflow corra su BL, el control aparece acá.</p>
+      <button class="reprocess solid" onclick="window._fire('controlar','${r.order_number}')">${cycleIcon} Controlar ahora</button>
+      <div class="demo-note">En la app: dispara el webhook del workflow para esta orden (re-lee el BL draft de Drive y arma el control). Acá es demo.</div>
+    </div>`;
+    return;
+  }
+  const tabs = DOC_TABS.map(t=>{
+    const act = activeDoc===t.key?"doctab--active":"";
+    if(t.report) return `<button class="doctab analisis ${act}" data-doc="${t.key}">${repIcon}${t.label}</button>`;
+    const dis = (r.full ? "" : "disabled");
+    return `<button class="doctab ${act}" data-doc="${t.key}" ${dis} ${r.full?"":'title="Sólo disponible para 4010660871 en esta demo"'}>${docIcon}${t.label}</button>`;
+  }).join("");
+  const rev = r.state==="REVISAR";
+  const badge = rev ? `<span class="badge rev"><span class="dot"></span>REVISAR</span>` : `<span class="badge ok"><span class="dot"></span>OK</span>`;
+  d.innerHTML = `
+    <div class="exp-head ${rev?'is-rev':'is-ok'}">
+      <div class="exp-top">
+        <div>
+          <div class="exp-order">${r.order_number}</div>
+          <div class="exp-line"><b>${r.carrier}</b> <span class="pip"></span> ${r.vessel} <span class="mono">${r.voyage}</span> <span class="pip"></span> ${r.pod} <span class="pip"></span> ${r.corrida}</div>
+          <div class="exp-line"><span class="mono">BL ${r.bl_number}</span> <span class="pip"></span> <span class="mono">Booking ${r.booking_no}</span></div>
+        </div>
+        <div class="exp-status">${badge}
+          <div class="exp-tally"><b class="ok">${r.ok_count}</b> coinciden · <b class="rev">${r.revisar_count}</b> a revisar</div>
+          <button class="reprocess" onclick="window._fire('reprocesar','${r.order_number}')">${cycleIcon} Reprocesar BL draft</button>
+        </div>
+      </div>
+    </div>
+    <div class="doctabs" id="doctabs">${tabs}</div>
+    <div class="viewer" id="viewer"></div>`;
+  document.querySelectorAll("#doctabs .doctab").forEach(b=>{
+    if(b.hasAttribute("disabled")) return;
+    b.addEventListener("click", ()=>{ activeDoc=b.dataset.doc; renderDetail(r); });
+  });
+  renderViewer(r);
+}
+
+function renderViewer(r){
+  const v = byId("viewer");
+  if(activeDoc==="analisis"){
+    if(r.full){
+      v.innerHTML = `<div class="viewer-hint">${repIcon} Documento de análisis — el <code>body_html</code> real, igual que el mail. En iframe sandbox.</div>
+        <iframe class="frame" id="anaframe" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>`;
+      byId("anaframe").srcdoc = '<base target="_blank">' + BODY_HTML;
+    } else {
+      const issues = (r.issues||[]).map(t=>`<div class="issue-row">${warnIcon}<span>${t}</span></div>`).join("");
+      v.innerHTML = `<div class="mini" style="padding:4px 4px 8px">
+        <h4>Ejemplo · ${r.state==="REVISAR"?"campos a revisar":"sin discrepancias"}</h4>
+        ${issues || '<p style="color:var(--ink-soft);font-size:13px">Todos los campos coinciden — sin acción.</p>'}
+        <div class="demo-note">El análisis completo (estilo mail) en esta demo está sólo para 4010660871. En la app, cada control trae su <code>body_html</code> propio.</div>
+      </div>`;
+    }
+    return;
+  }
+  const id = r.docs ? r.docs[activeDoc] : null;
+  const label = DOC_TABS.find(t=>t.key===activeDoc).label;
+  if(!id){ v.innerHTML = `<div class="mini"><p style="color:var(--ink-soft)">Documento no disponible en la demo.</p></div>`; return; }
+  v.innerHTML = `<div class="viewer-hint">${docIcon} ${label} embebido desde Drive. <b>En el visor de Claude no carga</b> (bloquea externos); en la app / tu navegador se ve el PDF con tu login de Google.</div>
+    <iframe class="frame doc" src="https://drive.google.com/file/d/${id}/preview" allow="autoplay"></iframe>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:8px;word-break:break-all">drive.google.com/file/d/${id}/preview</div>`;
+}
+
+window._fire = (kind, order)=>{
+  if(kind==="reprocesar") toast(`Reprocesar ${order}: dispararía el webhook del workflow (re-control con el BL draft actual).`);
+  else toast(`Controlar ${order}: dispararía el webhook del workflow para armar el control.`);
+};
+
+function refresh(){
+  renderLote(); renderSummary(); renderList();
+  const list = rows();
+  if(list.length && (!selectedKey || !list.find(r=>r.order_number===selectedKey))){
+    selectedKey = list[0].order_number; activeDoc="analisis"; renderDetail(list[0]); renderList();
+  } else if(!list.length){
+    byId("detail").innerHTML = `<div class="state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><h3>Nada para mostrar</h3><p>Cambiá el filtro o la búsqueda.</p></div>`;
+  }
+  byId("note").textContent = searched ? "" : "En la app esta lista se llena en vivo (últimos 7 días). Acá: 1 control real + ejemplos.";
+}
+
+function doSearch(){
+  const raw = byId("q").value.trim();
+  if(!raw){ searched=null; isLote=false; refresh(); return; }
+  const toks = parseOrders(raw);
+  if(toks.length > 1){
+    isLote = true; searched = toks;            // lote pegado: cada token = orden/booking/BL exacto
+  } else {
+    isLote = false;                             // un término: contiene en orden + booking + BL + buque
+    const q1 = toks[0].toLowerCase();
+    const hits = CONTROLS.filter(c => (c.order_number+'|'+c.booking_no+'|'+c.bl_number+'|'+c.vessel).toLowerCase().includes(q1));
+    searched = hits.length ? hits.map(c=>c.order_number) : [toks[0]];
+  }
+  selectedKey = null;
+  refresh();
+}
+
+byId("searchBtn").addEventListener("click", doSearch);
+byId("q").addEventListener("keydown", e=>{ if(e.key==="Enter") doSearch(); });
+byId("q").addEventListener("paste", e=>{
+  const t=(e.clipboardData||window.clipboardData).getData("text");
+  if(/[\n\r\t,;]/.test(t)){ e.preventDefault(); byId("q").value = parseOrders(t).join(" "); setTimeout(doSearch,0); }
+});
+document.querySelectorAll(".fchip").forEach(c=>{
+  c.addEventListener("click", ()=>{ const f=c.dataset.f; c.classList.toggle("fchip--on"); if(filters.has(f)) filters.delete(f); else filters.add(f); selectedKey=null; refresh(); });
+});
+
+refresh();
+</script>
+</body>
+</html>

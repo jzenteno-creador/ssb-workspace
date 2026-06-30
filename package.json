@@ -1,0 +1,28 @@
+{
+  "name": "tarifa-schedule",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dev-server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "node dev-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jzenteno-creador/tarifa-schedule.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/jzenteno-creador/tarifa-schedule/issues"
+  },
+  "homepage": "https://github.com/jzenteno-creador/tarifa-schedule#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

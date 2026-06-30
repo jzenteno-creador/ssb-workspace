@@ -1,0 +1,55 @@
+-- ============================================================================
+-- before.sql — snapshot de public.bl_controls ANTES de la migración Control BL MVP
+-- Proyecto xkppkzfxgtfsmfooozsm · PG 17.x · 2026-06-29
+-- Solo documental (no ejecutable como cambio). Capturado vía information_schema.
+-- ============================================================================
+--
+-- Estado: 32 columnas · 0 filas · RLS ENABLED.
+-- Policy preexistente (NO se toca en esta migración; lockdown = Fase 3):
+--   "Allow all operations on bl_controls"  cmd=ALL  using(true) with check(true)  → todos los roles.
+-- Grants preexistentes: anon/authenticated/service_role con INSERT,SELECT,UPDATE,DELETE,... (se ajustan en Fase 3).
+-- View v_bl_controls_latest: NO existe.
+-- Targets de esta migración (body_html, subject, factura_extract, pe_extract): NINGUNO existe.
+--
+-- Columnas (ordinal · nombre · tipo · nullable · default):
+--   1  id                   uuid                      NO   gen_random_uuid()
+--   2  created_at           timestamp with time zone  YES  now()
+--   3  order_number         text                      YES  -
+--   4  booking_no           text                      YES  -
+--   5  bl_number            text                      YES  -
+--   6  carrier              text                      YES  -
+--   7  vessel               text                      YES  -
+--   8  voyage               text                      YES  -
+--   9  pol                  text                      YES  -
+--  10  pod                  text                      YES  -
+--  11  operacion_id         uuid                      YES  -    (FK → operaciones(id) ON DELETE SET NULL)
+--  12  overall_result       text                      NO   -    (CHECK in ('OK','REVISAR'))
+--  13  ok_count             integer                   YES  0
+--  14  revisar_count        integer                   YES  0
+--  15  bl_extract           jsonb                     YES  '{}'::jsonb
+--  16  aduana_extract       jsonb                     YES  '{}'::jsonb
+--  17  booking_extract      jsonb                     YES  '{}'::jsonb
+--  18  comparison           jsonb                     YES  '[]'::jsonb
+--  19  equipment_comparison jsonb                     YES  '[]'::jsonb
+--  20  ai_analysis          jsonb                     YES  '{}'::jsonb
+--  21  ai_summary           text                      YES  -
+--  22  input_tokens         integer                   YES  0
+--  23  output_tokens        integer                   YES  0
+--  24  ai_cost_usd          numeric                   YES  0
+--  25  model_used           text                      YES  'claude-haiku-4-5-20251001'::text
+--  26  bl_drive_link        text                      YES  -
+--  27  bl_file_id           text                      YES  -
+--  28  aduana_drive_link    text                      YES  -
+--  29  booking_drive_link   text                      YES  -
+--  30  email_sent           boolean                   YES  false
+--  31  email_sent_at        timestamp with time zone  YES  -
+--  32  email_to             text                      YES  -
+--
+-- Constraints preexistentes:
+--   bl_controls_pkey                  PRIMARY KEY (id)
+--   bl_controls_operacion_id_fkey     FOREIGN KEY (operacion_id) REFERENCES operaciones(id) ON DELETE SET NULL
+--   bl_controls_overall_result_check  CHECK (overall_result = ANY (ARRAY['OK','REVISAR']))
+-- Índices preexistentes:
+--   bl_controls_pkey(id) · idx_bl_controls_order(order_number) · idx_bl_controls_carrier(carrier)
+--   idx_bl_controls_result(overall_result) · idx_bl_controls_created(created_at DESC) · idx_bl_controls_operacion(operacion_id)
+-- ============================================================================

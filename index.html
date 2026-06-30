@@ -2160,6 +2160,72 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .agent-send-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
 .agent-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 /* ═══════════════════════════════ FIN AGENTE IA ═══════════════════════════════ */
+
+/* ═══════════════════════════════ WORKSPACE IA ═══════════════════════════════ */
+#panel-workspace-ia{padding:0;--wia-accent:#8B5CF6;--wia-accent-hover:#7C3AED;--wia-accent-bg:rgba(139,92,246,.12);--wia-accent-bd:rgba(139,92,246,.25)}
+.wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.wia-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
+.wia-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
+.wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
+.wia-new-btn:hover{background:var(--wia-accent-hover)}
+.wia-new-btn .ic{width:16px;height:16px}
+.wia-info-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:var(--fs-xs);color:var(--muted);line-height:var(--lh-loose)}
+.wia-info-card strong{color:var(--text);font-weight:600}
+.wia-info-stats{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.wia-stat{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.wia-stat:last-child{border-bottom:none}
+.wia-stat-label{color:var(--muted);font-size:var(--fs-xs)}
+.wia-stat-value{color:var(--text);font-weight:600;font-family:var(--mono);font-size:var(--fs-xs)}
+.wia-main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.wia-messages{flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:16px}
+.wia-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:10px;padding:2rem}
+.wia-welcome-icon{margin-bottom:8px}
+.wia-welcome-title{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.wia-welcome-sub{color:var(--muted);font-size:var(--fs-base);max-width:520px;line-height:var(--lh-loose)}
+.wia-suggestions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;width:100%;max-width:560px}
+.wia-suggestion{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:var(--fs-sm);color:var(--muted);cursor:pointer;text-align:left;font-family:var(--font);transition:all .15s ease;line-height:var(--lh-base)}
+.wia-suggestion:hover{border-color:var(--wia-accent);color:var(--text);background:var(--surface-hv);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.wia-msg{animation:agent-fade .25s ease;display:flex;gap:12px;padding:4px 0}
+.wia-msg--user{flex-direction:row-reverse}
+.wia-msg--assistant{flex-direction:row}
+.wia-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:var(--fs-xs);font-weight:700}
+.wia-msg--user .wia-avatar{background:var(--wia-accent);color:#fff}
+.wia-msg--assistant .wia-avatar{background:var(--wia-accent-bg);border:1px solid var(--wia-accent-bd);color:var(--wia-accent)}
+.wia-bubble{border-radius:16px;padding:12px 18px;font-size:var(--fs-base);line-height:var(--lh-loose);word-break:break-word;max-width:80%}
+.wia-msg--user .wia-bubble{background:var(--wia-accent);color:#fff;border-top-right-radius:4px}
+.wia-msg--assistant .wia-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-top-left-radius:4px}
+.wia-msg--assistant .wia-bubble strong{color:var(--wia-accent);font-weight:700}
+.wia-msg--assistant .wia-bubble em{color:var(--teal);font-style:italic}
+.wia-msg--assistant .wia-bubble ul,.wia-msg--assistant .wia-bubble ol{margin:6px 0 6px 18px;padding:0}
+.wia-msg--assistant .wia-bubble li{margin:3px 0}
+.wia-msg--assistant .wia-bubble p{margin:0 0 8px}
+.wia-msg--assistant .wia-bubble p:last-child{margin-bottom:0}
+.wia-msg--assistant .wia-bubble code{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:var(--fs-sm)}
+.wia-msg--assistant .wia-bubble h1,.wia-msg--assistant .wia-bubble h2,.wia-msg--assistant .wia-bubble h3{margin:14px 0 6px;color:var(--text);line-height:var(--lh-tight)}
+.wia-msg--assistant .wia-bubble h1{font-size:var(--fs-xl);font-weight:700;border-bottom:1px solid var(--border);padding-bottom:6px}
+.wia-msg--assistant .wia-bubble h2{font-size:var(--fs-lg);font-weight:700}
+.wia-msg--assistant .wia-bubble h3{font-size:var(--fs-base);font-weight:600;color:var(--wia-accent)}
+.wia-msg--assistant .wia-bubble h1:first-child,.wia-msg--assistant .wia-bubble h2:first-child,.wia-msg--assistant .wia-bubble h3:first-child{margin-top:0}
+.wia-msg--assistant .wia-bubble hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+.wia-msg--assistant .wia-bubble table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin:8px 0}
+.wia-msg--assistant .wia-bubble th{background:var(--wia-accent);color:#fff;padding:6px 10px;text-align:left;font-weight:600;font-size:var(--fs-xs);letter-spacing:.03em}
+.wia-msg--assistant .wia-bubble td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.wia-msg--assistant .wia-bubble tr:nth-child(even) td{background:var(--faint)}
+.wia-msg--assistant .wia-bubble blockquote{border-left:3px solid var(--wia-accent);padding:4px 12px;margin:8px 0;color:var(--muted);font-style:italic}
+.wia-thinking{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 18px;font-size:var(--fs-sm);color:var(--muted);margin-left:44px}
+.wia-dots{display:flex;gap:4px}
+.wia-dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:agent-bounce .6s infinite alternate}
+.wia-dots span:nth-child(2){animation-delay:.15s}
+.wia-dots span:nth-child(3){animation-delay:.3s}
+.wia-thinking-text{transition:opacity .2s}
+.wia-input-bar{display:flex;align-items:flex-end;gap:10px;padding:14px 32px 20px;border-top:1px solid var(--border);background:var(--faint)}
+.wia-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-family:var(--font);font-size:var(--fs-base);color:var(--text);resize:none;max-height:140px;line-height:var(--lh-base);transition:border-color .15s}
+.wia-input:focus{outline:none;border-color:var(--wia-accent);box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.wia-input::placeholder{color:var(--muted)}
+.wia-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--wia-accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.wia-send-btn:hover{background:var(--wia-accent-hover);transform:translateY(-1px)}
+.wia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* ═══════════════════════════════ FIN WORKSPACE IA ═══════════════════════════════ */
 </style>
 <style id="cbl-styles">
 /* ═══════════ Control BL — estilos scoped (isla clara dentro de la app dark) ═══════════ */
@@ -2496,7 +2562,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
   <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
   <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
-  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Agente IA</button>
+  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>SSB Copilot</button>
+  <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Workspace IA</button>
   <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Control BL</button>
 </div>
 
@@ -3537,30 +3604,29 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       <button type="button" class="agent-new-btn" onclick="agentReset()">
         <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Nueva conversacion
       </button>
-      <div class="agent-sidebar-title">Datos cargados</div>
+      <div class="agent-sidebar-title">Base de datos</div>
       <div class="agent-info-card">
-        <strong>Contexto del agente</strong>
+        <strong>SSB Internacional</strong>
         <div class="agent-info-stats" id="agent-stats">
-          <div class="agent-stat"><span class="agent-stat-label">Tarifas BID</span><span class="agent-stat-value" id="agent-stat-rates">0</span></div>
-          <div class="agent-stat"><span class="agent-stat-label">Schedule</span><span class="agent-stat-value" id="agent-stat-sched">0</span></div>
-          <div class="agent-stat"><span class="agent-stat-label">EFA</span><span class="agent-stat-value" id="agent-stat-efa">0</span></div>
+          <div class="agent-stat"><span class="agent-stat-label">Ordenes</span><span class="agent-stat-value">44.900+</span></div>
+          <div class="agent-stat"><span class="agent-stat-label">Embarques</span><span class="agent-stat-value">50.700+</span></div>
         </div>
       </div>
       <div class="agent-info-card">
-        El agente analiza los datos sincronizados en el workspace. Mientras mas datos haya cargados, mejores las respuestas.
+        Conectado a la base de datos interna de SSB. Consulta ordenes de compra y embarques en tiempo real.
       </div>
     </div>
     <div class="agent-main">
       <div class="agent-messages" id="agent-messages">
         <div class="agent-welcome" id="agent-welcome">
           <div class="agent-welcome-icon"><svg class="ic" style="width:52px;height:52px;color:var(--blue)" aria-hidden="true"><use href="#i-bot"/></svg></div>
-          <div class="agent-welcome-title">Agente SSB</div>
-          <p class="agent-welcome-sub">Preguntame sobre tarifas BID, schedule de buques, EFA o detention. Analizo los datos cargados en el workspace en tiempo real.</p>
+          <div class="agent-welcome-title">SSB Copilot</div>
+          <p class="agent-welcome-sub">Preguntame sobre ordenes, embarques, buques o despachos. Consulto la base de datos interna de SSB en tiempo real.</p>
           <div class="agent-suggestions" id="agent-suggestions">
-            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Cual es la tarifa mas barata a Brasil?</button>
-            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Que buques salen este mes?</button>
-            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Compara tarifas de Hapag vs Maersk</button>
-            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Resume las tarifas vigentes por carrier</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Que embarques salen esta semana?</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Buscame la orden 4010726934</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Cuantas ordenes abiertas hay por carrier?</button>
+            <button type="button" class="agent-suggestion" onclick="agentSendSuggestion(this)">Ultimos 10 embarques con BL asignado</button>
           </div>
         </div>
       </div>
@@ -3574,6 +3640,52 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   </div>
 </div>
 <!-- ═══════════ FIN TAB: AGENTE IA ═══════════ -->
+
+<!-- ═══════════ TAB: WORKSPACE IA ═══════════ -->
+<div class="tab-panel" id="panel-workspace-ia">
+  <div class="wia-layout">
+    <div class="wia-sidebar">
+      <button type="button" class="wia-new-btn" onclick="wiaReset()">
+        <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Nueva conversacion
+      </button>
+      <div class="wia-sidebar-title">Base de datos</div>
+      <div class="wia-info-card">
+        <strong>SSB Workspace</strong>
+        <div class="wia-info-stats">
+          <div class="wia-stat"><span class="wia-stat-label">Tarifas maritimas</span><span class="wia-stat-value">102</span></div>
+          <div class="wia-stat"><span class="wia-stat-label">Schedule buques</span><span class="wia-stat-value">1.936</span></div>
+          <div class="wia-stat"><span class="wia-stat-label">Detention</span><span class="wia-stat-value">1.441</span></div>
+          <div class="wia-stat"><span class="wia-stat-label">Tarifas terrestres</span><span class="wia-stat-value">61</span></div>
+        </div>
+      </div>
+      <div class="wia-info-card">
+        Conectado a Supabase. Consulta tarifas, schedules, detention, vacaciones y mas en tiempo real.
+      </div>
+    </div>
+    <div class="wia-main">
+      <div class="wia-messages" id="wia-messages">
+        <div class="wia-welcome" id="wia-welcome">
+          <div class="wia-welcome-icon"><svg class="ic" style="width:52px;height:52px;color:var(--wia-accent)" aria-hidden="true"><use href="#i-bot"/></svg></div>
+          <div class="wia-welcome-title">Workspace IA</div>
+          <p class="wia-welcome-sub">Preguntame sobre tarifas BID, schedule de buques, detention, tarifas terrestres o vacaciones. Consulto la base de datos del workspace en tiempo real.</p>
+          <div class="wia-suggestions">
+            <button type="button" class="wia-suggestion" onclick="wiaSendSuggestion(this)">Tarifas vigentes de Hapag a Brasil</button>
+            <button type="button" class="wia-suggestion" onclick="wiaSendSuggestion(this)">Proximos buques con ETD en julio</button>
+            <button type="button" class="wia-suggestion" onclick="wiaSendSuggestion(this)">Cuantos dias de vacaciones tiene cada empleado</button>
+            <button type="button" class="wia-suggestion" onclick="wiaSendSuggestion(this)">Ultimos controles de BL con resultado REVISAR</button>
+          </div>
+        </div>
+      </div>
+      <div class="wia-input-bar">
+        <textarea id="wia-input" class="wia-input" placeholder="Escribi tu consulta..." rows="1" onkeydown="wiaKeydown(event)"></textarea>
+        <button type="button" class="wia-send-btn" id="wia-send-btn" onclick="wiaSend()" title="Enviar">
+          <svg class="ic" aria-hidden="true" style="width:20px;height:20px"><use href="#i-upload"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: WORKSPACE IA ═══════════ -->
 
 <!-- ═══════════ TAB: CONTROL BL ═══════════ -->
 <div class="tab-panel" id="panel-control-bl">
@@ -3745,7 +3857,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','control-bl'].forEach(t => {
+  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -14156,36 +14268,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return '<p>' + esc(text).replace(/\n/g,'<br>') + '</p>';
   }
 
-  function buildContext(){
-    const parts = [];
-    if(typeof rates !== 'undefined' && rates.length){
-      const header = 'Origen|Destino|Carrier|Equipo|Tarifa|Contrato|Desde|Hasta|Estado|Quarter';
-      const rows = rates.map(r =>
-        `${r.origen||'-'}|${r.destino||'-'}|${r.carrier||'-'}|${r.equipo||'-'}|${r.tarifa!=null?r.tarifa:'-'}|${r.contrato||'-'}|${r.desde||'-'}|${r.hasta||'-'}|${r.estado||'-'}|${r.quarter||'-'}`
-      );
-      parts.push(`[${rates.length} tarifas BID]\n${header}\n${rows.join('\n')}`);
-    }
-    if(typeof schedule !== 'undefined' && schedule.length){
-      const sHeader = 'Buque|Naviera|Servicio|Origen|Destino|ETD|ETA|CutOffDoc|CutOffFisico|Observaciones';
-      const sRows = schedule.slice(0, 200).map(r =>
-        `${r.BUQUE||r.buque||'-'}|${r.NAVIERA||r.naviera||'-'}|${r.SERVICIO||r.servicio||'-'}|${r.ORIGEN||r.origen||'-'}|${r.DESTINO||r.destino||'-'}|${r.ETD||r.etd||'-'}|${r.ETA||r.eta||'-'}|${r.CUT_OFF_DOC||r['CUT OFF DOC']||'-'}|${r.CUT_OFF_FISICO||r['CUT OFF FISICO']||'-'}|${r.OBSERVACIONES||r.observaciones||'-'}`
-      );
-      parts.push(`[${schedule.length} buques en schedule]\n${sHeader}\n${sRows.join('\n')}`);
-    }
-    if(typeof efaSheet !== 'undefined' && efaSheet.length){
-      parts.push(`[${efaSheet.length} registros EFA cargados]`);
-    }
-    return parts.join('\n\n') || '(sin datos cargados — pedi al usuario que sincronice)';
-  }
+  // El contexto ahora lo maneja el backend (MySQL), no el frontend
+  function buildContext(){ return ''; }
 
-  function updateStats(){
-    const r = document.getElementById('agent-stat-rates');
-    const s = document.getElementById('agent-stat-sched');
-    const e = document.getElementById('agent-stat-efa');
-    if(r) r.textContent = (typeof rates !== 'undefined' ? rates.length : 0);
-    if(s) s.textContent = (typeof schedule !== 'undefined' ? schedule.length : 0);
-    if(e) e.textContent = (typeof efaSheet !== 'undefined' ? efaSheet.length : 0);
-  }
+  function updateStats(){ /* stats estáticas en el HTML */ }
 
   function scrollBottom(){
     const el = document.getElementById('agent-messages');
@@ -14317,6 +14403,152 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 })();
 </script>
 <!-- ═══════════ FIN AGENTE IA ═══════════ -->
+
+<!-- ═══════════ WORKSPACE IA ═══════════ -->
+<script>
+(function(){
+  const WIA_PHRASES = [
+    'Consultando workspace...','Revisando tarifas...','Cruzando datos...',
+    'Buscando en schedules...','Procesando consulta...','Armando respuesta...'
+  ];
+  let _wiaMessages = [];
+  let _wiaLoading = false;
+
+  function mdToHtml(text){
+    if(typeof marked !== 'undefined' && marked.parse){
+      return marked.parse(text, { breaks: true });
+    }
+    return '<p>' + esc(text).replace(/\n/g,'<br>') + '</p>';
+  }
+
+  function renderMessages(){
+    var container = document.getElementById('wia-messages');
+    var welcome = document.getElementById('wia-welcome');
+    if(!container) return;
+    container.innerHTML = '';
+    if(_wiaMessages.length === 0){
+      if(welcome){ welcome.style.display = ''; container.appendChild(welcome); }
+      return;
+    }
+    if(welcome) welcome.style.display = 'none';
+    _wiaMessages.forEach(function(m){
+      var row = document.createElement('div');
+      row.className = 'wia-msg wia-msg--' + m.role;
+      var avatar = document.createElement('div');
+      avatar.className = 'wia-avatar';
+      avatar.textContent = m.role === 'user' ? 'Vos' : 'IA';
+      var bubble = document.createElement('div');
+      bubble.className = 'wia-bubble';
+      if(m.role === 'assistant'){
+        bubble.innerHTML = mdToHtml(m.content);
+      } else {
+        bubble.textContent = m.content;
+      }
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      container.appendChild(row);
+    });
+    if(_wiaLoading){
+      var thinking = document.createElement('div');
+      thinking.className = 'wia-thinking';
+      thinking.id = 'wia-thinking';
+      thinking.innerHTML = '<div class="wia-dots"><span></span><span></span><span></span></div><span class="wia-thinking-text">' + WIA_PHRASES[0] + '</span>';
+      container.appendChild(thinking);
+    }
+    container.scrollTop = container.scrollHeight;
+  }
+
+  var _wiaPhraseIdx = 0, _wiaPhraseTimer = null;
+  function startThinking(){
+    _wiaPhraseIdx = 0;
+    _wiaPhraseTimer = setInterval(function(){
+      _wiaPhraseIdx = (_wiaPhraseIdx + 1) % WIA_PHRASES.length;
+      var el = document.querySelector('#wia-thinking .wia-thinking-text');
+      if(el) el.textContent = WIA_PHRASES[_wiaPhraseIdx];
+    }, 2000);
+  }
+  function stopThinking(){
+    clearInterval(_wiaPhraseTimer);
+    _wiaPhraseTimer = null;
+  }
+
+  function autoResize(el){
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  window.wiaSend = async function(){
+    var input = document.getElementById('wia-input');
+    var text = (input.value || '').trim();
+    if(!text || _wiaLoading) return;
+
+    input.value = '';
+    autoResize(input);
+
+    _wiaMessages.push({ role: 'user', content: text });
+    _wiaLoading = true;
+    renderMessages();
+    startThinking();
+
+    var sendBtn = document.getElementById('wia-send-btn');
+    if(sendBtn) sendBtn.disabled = true;
+
+    try{
+      var res = await fetch('/.netlify/functions/chat-workspace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: _wiaMessages })
+      });
+
+      if(!res.ok){
+        var errData = await res.json().catch(function(){ return { error: 'HTTP ' + res.status }; });
+        throw new Error(errData.error || 'HTTP ' + res.status);
+      }
+
+      var data = await res.json();
+      _wiaMessages.push({ role: 'assistant', content: data.response });
+    }catch(e){
+      _wiaMessages.push({ role: 'assistant', content: 'Error: ' + e.message });
+    }finally{
+      _wiaLoading = false;
+      stopThinking();
+      if(sendBtn) sendBtn.disabled = false;
+      renderMessages();
+    }
+  };
+
+  window.wiaSendSuggestion = function(btn){
+    var input = document.getElementById('wia-input');
+    input.value = btn.textContent;
+    window.wiaSend();
+  };
+
+  window.wiaKeydown = function(e){
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      window.wiaSend();
+    }
+  };
+
+  window.wiaReset = function(){
+    _wiaMessages = [];
+    _wiaLoading = false;
+    stopThinking();
+    var sendBtn = document.getElementById('wia-send-btn');
+    if(sendBtn) sendBtn.disabled = false;
+    var welcome = document.getElementById('wia-welcome');
+    if(welcome) welcome.style.display = '';
+    var container = document.getElementById('wia-messages');
+    if(container){ container.innerHTML = ''; container.appendChild(welcome); }
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var input = document.getElementById('wia-input');
+    if(input) input.addEventListener('input', function(){ autoResize(this); });
+  });
+})();
+</script>
+<!-- ═══════════ FIN WORKSPACE IA ═══════════ -->
 
 <!-- ═══════════ TAB: CONTROL BL — lógica ═══════════ -->
 <script>

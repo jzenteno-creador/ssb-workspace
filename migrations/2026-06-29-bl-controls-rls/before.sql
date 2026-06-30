@@ -1,0 +1,10 @@
+-- ============================================================================
+-- before.sql — RLS de public.bl_controls ANTES del lockdown (Fase 3)
+-- Proyecto xkppkzfxgtfsmfooozsm · 2026-06-29 · solo documental
+-- ============================================================================
+-- RLS: ENABLED.
+-- Policy única (permisiva):
+--   "Allow all operations on bl_controls"  FOR ALL  USING (true)  WITH CHECK (true)  (todos los roles)
+-- Grants (tabla): anon, authenticated, service_role → INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER
+--   ⇒ con la anon key pública (en index.html) cualquiera podía LEER y ESCRIBIR bl_controls.
+-- ============================================================================
