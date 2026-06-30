@@ -72,12 +72,11 @@ Tab (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 2. **`computeRealAvailable(balanceRow, adjustments)`** = única función pura que computa "disponible real". 3 consumidores (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview). NO se modifica `vac_balance_view`; el merge con ajustes es client-side.
 3. **Gotcha CSS:** los overrides de color en el calendario necesitan specificity `#panel-vacaciones .vac-cal-day.vac-<status>` (1 ID + 2 class = 0,1,2,0). Si no, los pisa el selector de la celda base `#panel-vacaciones .vac-cal-day{background:var(--surface)}` (0,1,1,0) y el highlight no aparece. (La regla global `.vac-<status>` de specificity 0,0,1,0 NO alcanza dentro del calendario.)
 
-## Candidatos a invariante — PRESERVADOS, pendientes de confirmación de John
-> Los encontré enterrados en la narrativa commit-level. No los borré ("ante la
-> duda, no borres"). Confirmar si suben a CLAUDE.md como guardrail, quedan acá o
-> se descartan.
-- **`loadAdminData` filtra `vac_balance_view` por `current_period_year`** — NO `period_year`. La columna real de la view es `current_period_year`; verificar siempre con `information_schema` antes de filtrar una view. (Gotcha reusable de naming de columnas.)
-- **`renderTeamSummary` guard `isAdmin`** — returns early si `!window.__vacAuth?.isAdmin` (defensa en profundidad; la protección de subtab es la primera línea).
+## Gotchas y defensa en profundidad
+> No son guardrails (un guardrail es caro Y silencioso; estos fallan ruidoso o
+> tienen la RLS como backstop) — por eso viven acá y no en CLAUDE.md root.
+- **Verificá nombres de columna contra `information_schema` antes de filtrar una view.** Caso: `loadAdminData` filtra `vac_balance_view` por `current_period_year` (NO `period_year` — esa columna no existe en la view). Si filtrás por la columna equivocada el query revienta o da vacío en el acto.
+- **`renderTeamSummary` guard `isAdmin`** — returns early si `!window.__vacAuth?.isAdmin` (defensa en profundidad; la protección de subtab es la primera línea, la RLS el backstop real).
 - **Sanitizar errores al usuario** — el modal de ajuste admin hace `console.error('vac:adjustment:save', error)` + alert genérico; NO volcar `error.message` crudo (filtra internals Postgres/RLS: códigos 23505, nombres de constraints).
 
 ## Arquitectura — Mi calendario (`renderMonthGrid`)
