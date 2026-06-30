@@ -15,8 +15,8 @@ import json, sys, urllib.request, urllib.error, copy, uuid
 
 BASE = "https://jzenteno.app.n8n.cloud/api/v1"
 WID  = "WVt6gvghL2nFVbt6"
-SDK  = "/home/jzenteno/projects/validador-aduanal/n8n/control_de_bill_of_lading/sdk/"
-ENV  = "/home/jzenteno/projects/validador-aduanal/.env"
+import os as _os; SDK = _os.path.dirname(_os.path.abspath(__file__)) + "/"
+ENV = _os.path.abspath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "..", ".env"))
 
 EXPECT_VER_PRE    = "189a9eda-7c82-499b-b409-b59b51e5549c"
 EXPECT_NODES_PRE  = 49

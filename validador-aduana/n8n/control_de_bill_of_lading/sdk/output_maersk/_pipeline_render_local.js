@@ -2,7 +2,7 @@
 'use strict';
 const fs = require('fs');
 const RM = '/tmp/render_maersk';
-const SDK = '/home/jzenteno/projects/validador-aduanal/n8n/control_de_bill_of_lading/sdk';
+const SDK = require('path').resolve(__dirname, '..');
 const order = process.argv[2];
 const meta = JSON.parse(fs.readFileSync(`${RM}/meta_${order}.json`, 'utf8')); // links e ids por orden
 
