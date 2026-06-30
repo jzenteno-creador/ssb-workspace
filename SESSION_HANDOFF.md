@@ -1,44 +1,50 @@
-# Handoff sesión SSB Workspace · 2026-06-29 (cierre con `break`)
+# Handoff sesión SSB Workspace · 2026-06-30
 
 ## Foco de la sesión
-Feature **Control BL** — **FRONTEND COMPLETO**. Solapa `control-bl` (10ª) read-only para consultar
-el control automático de BL que antes llegaba solo por mail (workflow n8n `WVt6gvghL2nFVbt6`).
-EXPLORE+PLAN (workflow de 5 agentes + verificación cruzada) → IMPLEMENT en 6 commits gateados →
-merge `--ff-only` a master → push → **deployado a prod**.
+Dos agentes IA text-to-SQL + migración Netlify → Vercel.
 
-## Estado: MERGEADO + PUSHEADO + DEPLOYADO ✅
-- `master` = `origin/master` = **`5aa8b9d`** (era `273b1e3`). Fast-forward, sin divergencia.
-- **Deploy Netlify SÍ se gatilló** (el problema de la sesión pasada NO se repitió). Verificado
-  **md5 prod == local** (`813bdd8c…99024`, 784.095 bytes) → prod sirve exactamente `5aa8b9d`.
-- Bonus: la **Tanda 2 ETD** que estaba atrasada en prod (`5c47a34`+`273b1e3`) también quedó live.
-- **Smoke en producción pendiente: lo hace John** (cargar la solapa en https://ssb-workspace.netlify.app,
-  login, ver `4010660871` con su análisis y los docs de Drive).
+## Estado: COMMITEADO + PUSHEADO + DEPLOYADO en Vercel ✅
+- `master` = `origin/master` = **`97def83`**
+- Deploy Vercel en `https://ssb-workspace.vercel.app` — funcionando, confirmado por John.
+- Variables de entorno cargadas en Vercel Dashboard.
 
-## Lo hecho — 6 commits granulares (`083527d` → `5aa8b9d`)
-1. **`083527d`** Scaffold + anchors: botón `#tab-control-bl`, panel, `'control-bl'` en array de `switchTab`, hook on-enter.
-2. **`f54ff52`** CSS scoped (isla clara): `<style id="cbl-styles">` bajo `#panel-control-bl`, vars `--cbl-*` locales (no `:root`), fuentes reusadas. Skeleton estático.
-3. **`d886c8c`** Data layer: `window.loadBlControls` → `v_bl_controls_latest` `.gte(7 días)`, render lista+detalle, `overall_result` NULL → neutro.
-4. **`4be79eb`** Doc-tabs + visor Análisis: `body_html` on-demand cacheado → iframe `srcdoc` propiedad + sandbox; cambio de tab por event delegation; reset `_cblActiveDoc` solo al cambiar control.
-5. **`25fbfeb`** Visor Drive: BL/Aduana/Booking iframe `/preview` sin sandbox; file-id `bl_file_id || /\/d\/([^/?#]+)/`; Factura/PE disabled.
-6. **`5aa8b9d`** Buscador (1-término ilike + lote `.in`) + paste multilínea + filtros OK/REVISAR/No-controladas + "no está" + summary + placeholders Reprocesar/Controlar (ssbToast).
+## Lo hecho
+1. **SSB Copilot** (tab `agente`, azul) — agente text-to-SQL contra MySQL `ssb_internacional` (GCP).
+   - Netlify Function `chat.js` → migrada a `api/chat.js` (formato Vercel).
+   - Tablas: `orders` (44k+), `shipments` (50k+). User read-only `db_reader_jz_1`.
+   - Schema en prompt incluye hint de `purchase_order` como campo de búsqueda del usuario.
 
-Cada commit verificado headless (Playwright global; el real con anon key + mock determinístico). Commit 6 smoke real con datos sembrados aprobado por John.
+2. **Workspace IA** (tab `workspace-ia`, violeta `#8B5CF6`) — agente text-to-SQL contra Supabase.
+   - Function `api/chat-workspace.js`. 19 tablas del workspace.
+   - Conexión via RPC `execute_readonly_query` (SECURITY DEFINER) con service_role key.
+   - Función Postgres creada en Supabase (revoked de anon/authenticated).
+
+3. **Migración Netlify → Vercel**
+   - Functions movidas de `netlify/functions/` a `api/` con formato Vercel (`export default handler(req, res)`).
+   - URLs actualizadas en index.html: `/.netlify/functions/*` → `/api/*`.
+   - `vercel.json` reemplaza `netlify.toml` (headers de seguridad).
+   - `dev-server.js` actualizado para formato Vercel.
+   - URL: `ssb-workspace.vercel.app` (misma que antes con Netlify).
+
+4. **CLAUDE.md actualizado** — deploy Vercel, 12 tabs, sección agentes, env vars.
+
+5. **Fix validación SQL** — aliases de tabla y funciones SQL (CURRENT_DATE, etc.) ya no bloquean la whitelist.
 
 ## Pendientes
-- **Smoke en prod (John).** Cargar la solapa real logueado en Google.
-- **Docs sin commitear:** `M CLAUDE.md` (con los updates de esta sesión: Control BL → completo) + `M SESSION_HANDOFF.md` (este) + untracked (`migrations/2026-06-29-*`, mockups `docs/control-bl-*.html`, xlsx). Decidir si commitearlos (son docs/migraciones, no afectan prod).
-- **Rama `feat/control-bl`** ya mergeada (mismo commit que master) — se puede borrar.
-- **Tanda futura:** workflow n8n persiste `factura_file_id`/`pe_file_id` como columnas → habilitar tabs Factura/PE (hoy disabled). Webhook real de "Reprocesar BL draft"/"Controlar ahora" (hoy placeholder ssbToast).
-- **Backlog multi-tenant** (memoria `project_backlog_multitenant.md`): tenant_id + RLS por tenant, Supabase Auth real vs anon, config Dow por tenant.
+- **Firewall MySQL:** SSB Copilot en prod depende de que GCP acepte conexiones desde IPs de Vercel (Norte América). Si no funciona, pedir whitelist a IT o usar proxy n8n.
+- **Acceso a tablas de catálogo en MySQL:** user `db_reader_jz_1` solo ve 3 tablas. Mensaje para el arquitecto preparado (pedir `GRANT SELECT ON ssb_internacional.* TO 'db_reader_jz_1'@'%'`).
+- **Desconectar Netlify:** unlink repo + opcionalmente delete site desde dashboard Netlify.
+- **`netlify.toml` y `netlify/functions/`:** siguen en el repo (legacy). Borrar cuando Netlify esté desconectado.
+- **Backlog multi-tenant** (memoria `project_backlog_multitenant.md`).
 
-## Gotchas nuevos (ya volcados a CLAUDE.md)
-- **Verificar repo vs lo descrito antes de push/merge/deploy.** John dijo "6 commits smokeados, dale al push" pero había 5 (commit 6 nunca implementado). `git rev-list --count` + `grep -c cblSearch` lo confirmaron → frené y avisé. (memoria `feedback_verify_repo_before_acting.md`).
-- **Smoke headless:** Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node require()` (el MCP Playwright falla: chrome en `/opt/google/chrome`). Query **anon funciona headless** → data layers verificables sin login. Iframe Drive embebe incluso headless (id falso → "archivo no existe" de Drive, no es bug).
-- **Isla clara scoped:** tokens del mockup como vars `--cbl-*` LOCALES del panel (no `:root`), clases `cbl-*` total, todo bajo `#panel-control-bl` → no filtra a la app dark. Verificado: `--cbl-*` ausentes en `:root`, chrome dark `rgb(11,15,23)` intacto.
-- **`_cblActiveDoc` reset SOLO al cambiar de control** (no en cada render) — sino los doc-tabs quedan pegados.
+## Gotchas
+- WSL2 no forwardea puertos automáticamente a Windows. Para `npm run dev`, hacer `netsh interface portproxy` como admin o usar la IP de WSL directamente.
+- `SUPABASE_DB_PASSWORD` en .env es la service_role JWT (no la password de Postgres). Nombre legacy.
+- Validación SQL: aliases de tabla cortos (≤2 chars) se permiten siempre. SQL keywords en un Set para no bloquear `FROM CURRENT_DATE` etc.
 
 ## Identifiers
-- Commit prod: `5aa8b9d` · md5 prod/local `813bdd8c2a8e323e3f77b34bd0d99024`.
-- Prod: https://ssb-workspace.netlify.app · deploy `git push origin master`.
-- Supabase `xkppkzfxgtfsmfooozsm` · vista `v_bl_controls_latest` (anon SELECT) · tabla `bl_controls` (1 fila real: `4010660871`).
-- Workflow BL: `WVt6gvghL2nFVbt6` (escribe con service_role `aQoShf0TVYyf2lrt`).
+- Commit: `97def83`
+- Prod: https://ssb-workspace.vercel.app
+- Supabase: `xkppkzfxgtfsmfooozsm`
+- MySQL: `104.196.139.93:3306` / `ssb_internacional`
+- Repo: `github.com/jzenteno-creador/tarifa-schedule`

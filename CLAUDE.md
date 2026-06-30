@@ -8,14 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Vista web de tarifas de flete y schedule marítimo para SSB International (también
 "ssb-workspace"). Se comparte con el equipo y con PBB Polisur como herramienta de
-consulta. Está en producción en `https://ssb-workspace.netlify.app` — cambios
+consulta. Está en producción en `https://ssb-workspace.vercel.app` — cambios
 afectan al equipo.
 
 ## Stack
 
 - HTML/CSS/JS vanilla — toda la app vive en `index.html` (~13.400 líneas: CSS en `<style>`, lógica en `<script>` al final, sin módulos externos)
 - Persistencia: Supabase (proyecto `xkppkzfxgtfsmfooozsm`). Datos de tarifas marítimas/EFA históricamente desde Google Sheets/Excel
-- Deploy: Netlify — auto-deploy en `git push origin master` (rama es `master`, no `main`). `netlify.toml` solo setea headers de seguridad, no hay build step. **Branch deploys DESHABILITADOS** — pushear una branch NO genera preview URL; smoke de branches = local (`http.server`)
+- Deploy: Vercel — auto-deploy en `git push origin master` (rama es `master`, no `main`). `vercel.json` setea headers de seguridad, no hay build step. URL: `https://ssb-workspace.vercel.app`
 - Sin frameworks, sin bundlers. CDN-only (Supabase JS, fuentes). `npm` existe SOLO en `scripts/` (utilidades de seed/n8n), nunca en la app
 
 ## Comandos
@@ -27,7 +27,10 @@ Por ser una SPA estática de archivo único, no hay build/lint/test de la app. L
 # (no hay dev server por CLI; abrir el archivo directo rompe los fetch a Supabase por CORS/file://)
 
 # Deploy a producción
-git push origin master            # Netlify auto-despliega master
+git push origin master            # Vercel auto-despliega master
+
+# Dev server local (agentes IA)
+npm run dev                       # http://localhost:8888 — requiere .env con credenciales
 
 # Seeds y utilidades (requieren cd scripts/ + npm install una vez)
 cd scripts && npm run seed-tt     # seed de Tarifas Terrestres Dow (idempotente; --force re-corre)
@@ -50,7 +53,7 @@ No hay suite de tests. Verificación = smoke test visual en navegador (ver "Veri
 - Scopear selectores de modal: `.efa-mod-x` matchea 7 modales → usar `#bid-modal .efa-mod-x` (o el id del modal puntual).
 - Datos de prueba en Supabase: nombres `ZZ*` identificables + limpiar (tarifa + log por `registro_id` + puerto; el trigger de delete re-loguea → borrar el log después).
 
-## Mapa de la app — 10 tabs
+## Mapa de la app — 12 tabs
 
 `switchTab` **hardcodea el array de tab-ids** → al agregar un tab nuevo hay que sumar el id ahí o el panel nunca se activa.
 
@@ -66,7 +69,8 @@ Cada tab es un `#tab-<x>` (botón) + `#panel-<x>` (contenido), conmutados por `s
 | `detention` | Detention (Supabase) | filtros multi-select estilo `.ac-wrap` |
 | `tt-dow` | Tarifas Terrestres Dow (Supabase) | "Tarifas Terrestres Dow — arquitectura" |
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | "Módulo Vacaciones" + "Auth global" |
-| `agente` | Agente IA | — |
+| `agente` | SSB Copilot — text-to-SQL contra MySQL (orders/shipments) | "SSB Copilot + Workspace IA" |
+| `workspace-ia` | Workspace IA — text-to-SQL contra Supabase (todas las tablas) | "SSB Copilot + Workspace IA" |
 | `control-bl` | Control BL read-only (Supabase `bl_controls`) | "Control BL" |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
@@ -311,7 +315,7 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - `window.ssbLogout()` — signOut + reload de la página.
 - `window.vacApplySsbSession(session)` — lo llama el global tras validar; el módulo Vacaciones carga el employee enriquecido y arma `__vacAuth`.
 
-### Headers de seguridad (netlify.toml)
+### Headers de seguridad (vercel.json)
 - `X-Frame-Options: DENY`
 - `Content-Security-Policy: frame-ancestors 'none'` (anti-clickjacking del gate)
 - `X-Content-Type-Options: nosniff`
@@ -322,7 +326,7 @@ reusa esta misma instancia. Tarifas Terrestres mantiene su cliente anon
 - Email enumeration parcial en signup ("tu mail no está habilitado") — riesgo bajo aceptado.
 - No hay CSP completa todavía (solo frame-ancestors). Whitelist completa requeriría: `*.supabase.co`, `fonts.googleapis.com`, `fonts.gstatic.com`, `script.google.com`, `cdn.jsdelivr.net`.
 - Boot splash auto-oculto cuando no hay sesión (para no forzar 2 pantallas).
-- Subdominio: `https://ssb-workspace.netlify.app` (cambiado de `tarifa-schedule.netlify.app`).
+- Subdominio: `https://ssb-workspace.vercel.app` (migrado de Netlify 2026-06-30).
 
 ## Decisiones de diseño inamovibles
 
@@ -400,7 +404,7 @@ Branch `feat/vacaciones-final` mergeada en master (`577b8dc`). 9 commits totales
 
 Solapa `control-bl` (10ª) para consultar por Nº de orden el **control de BL** que antes se mandaba
 solo por mail desde el workflow n8n `WVt6gvghL2nFVbt6`. **Backend + frontend read-only completos,
-mergeados a master y deployados a `ssb-workspace.netlify.app`** (verificado md5 prod==local).
+mergeados a master y deployados a `ssb-workspace.vercel.app`** (migrado de Netlify 2026-06-30).
 
 ### Datos (Supabase xkpp `bl_controls`)
 - Migración `migrations/2026-06-29-bl-controls-mvp/`: +`body_html`,+`subject`,+`factura_extract`(jsonb),+`pe_extract`(jsonb) → 36 cols. View `v_bl_controls_latest` (`distinct on (order_number)` ... `order by order_number, created_at desc`, `security_invoker=on`, grant select anon+authenticated).
@@ -415,3 +419,40 @@ mergeados a master y deployados a `ssb-workspace.netlify.app`** (verificado md5 
 - **Visores:** Análisis = `<iframe>` con `srcdoc='<base target="_blank">'+body_html` por **propiedad DOM** + `sandbox="allow-popups allow-popups-to-escape-sandbox"`. Docs Drive (BL/Aduana/Booking) = `<iframe src=".../file/d/{id}/preview">` **SIN sandbox**; file-id = `bl_file_id || /\/d\/([^/?#]+)/` sobre `*_drive_link`. Factura/PE = tab **disabled** (faltan `factura_file_id`/`pe_file_id` → tanda futura los agrega como columnas y habilita).
 - **Estado/cuidados:** `_cblActiveDoc` se resetea a `'analisis'` SOLO al cambiar de control, NUNCA en render (sino los doc-tabs quedan pegados). `overall_result` NULL → NEUTRO, nunca OK. Doc-tabs + filtros por event delegation. "Reprocesar BL draft"/"Controlar ahora" → `ssbToast('Próximamente','info')` (webhook = tanda futura).
 - **Smoke headless** (este entorno): Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node` `require()` (CommonJS; el MCP Playwright falla, busca chrome en `/opt/google/chrome`). El query **anon funciona headless** → data layers verificables sin login; el iframe de Drive embebe igual (id falso → "archivo no existe" de Drive, no es bug).
+
+## SSB Copilot + Workspace IA — agentes text-to-SQL (2026-06-30)
+
+Dos tabs de chat con IA (misma UX, distinto color y DB). Arquitectura idéntica:
+browser → Vercel Serverless Function (`api/chat.js` o `api/chat-workspace.js`) →
+Claude Haiku genera SQL → validación (whitelist tablas + solo SELECT + LIMIT 200) →
+ejecuta contra DB → Claude Haiku responde con los resultados.
+
+### SSB Copilot (azul, tab `agente`)
+- DB: MySQL `ssb_internacional` en GCP `104.196.139.93:3306`, user read-only `db_reader_jz_1`
+- Tablas: `orders` (44k+), `shipments` (50k+). `log_jsons` excluída.
+- `purchase_order` es el número que usa el usuario (no `number` que es interno/secuencial).
+- Conexión vía `mysql2/promise` pool. Firewall GCP debe permitir IPs de Vercel.
+- Prefijo CSS/JS: `agent-`
+
+### Workspace IA (violeta `#8B5CF6`, tab `workspace-ia`)
+- DB: Supabase `xkppkzfxgtfsmfooozsm` (Postgres), 19 tablas.
+- Conexión vía RPC `execute_readonly_query` (función Postgres SECURITY DEFINER) con service_role key.
+- La service_role key está en env var `SUPABASE_DB_PASSWORD` (nombre legacy, es la service_role JWT).
+- Prefijo CSS/JS: `wia-`
+
+### Validación SQL (ambos)
+- Whitelist de tablas + regex FORBIDDEN (INSERT/UPDATE/DELETE/DROP...).
+- SQL_KEYWORDS set para ignorar aliases y funciones SQL en la validación de tablas.
+- LIMIT 200 forzado si el SQL no trae LIMIT.
+- Si la validación falla, Claude responde sin datos (fallback conversacional).
+
+### Dev server local
+- `npm run dev` → `node dev-server.js` → `http://localhost:8888`
+- Requiere `.env` con todas las credenciales (gitignored).
+- WSL2: server bindea a `0.0.0.0`. Si Windows no llega, port-forward con `netsh interface portproxy` como admin.
+- Dependencias: `mysql2`, `pg`, `dotenv` en root `package.json`.
+
+### Variables de entorno (Vercel Dashboard → Settings → Environment Variables)
+- `ANTHROPIC_API_KEY` — API key Anthropic (ambos agentes)
+- `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` — SSB Copilot
+- `SUPABASE_URL`, `SUPABASE_DB_PASSWORD` (service_role key) — Workspace IA
