@@ -1,0 +1,133 @@
+NON-NEGOTIABLE WAYBILL 
+MAEU
+SCAC
+B/L No.
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause
+and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from
+the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical
+amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be
+sued under this contract, the Shipper on entering into this contract does so on his own behalf and as
+agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper
+shall be entitled to change the Consignee at any time before delivery of the goods provided he gives
+the Carrier reasonable notice in writing.
+Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of
+identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill.
+The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's
+negligence.
+Vessel
+MAERSK MONTE AZUL
+Voyage No.
+544N
+Port of Loading
+Buenos Aires
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Callao
+ACI Number 
+ACI Approval Date
+COPY
+Received for Shipment Date ( Local Time )
+Declared Value Charges (see clause 7.3 of the Maersk Bill of
+Lading) for Declared Value of US$
+This transport document has one or more numbered pages
+Booking No.
+259940860
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+PARTICULARS FURNISHED BY SHIPPER
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 3731.00 Per Container USD 11193.00
+Terminal Handling Service - Destination 105.00 Per Container USD 315.00
+USD USD 11193.00 315.00
+Carrier's Receipt. Total number of containers or
+packages received by Carrier.
+3 containers
+Received by the Carrier from the Shipper, as far as ascertained by reasonable means of checking, in
+apparent good order and condition unless otherwise stated herein, the total number or quantity of
+containers or other packages or units indicated in the box opposite entitled "Carrier's Receipt"
+Place of Issue of Waybill
+Buenos Aires
+Date Issue of Waybill
+259940860
+Export references
+47168038 / 118009744
+Svc Contract
+299593739
+Notify Party (see clause 22)
+Same as Consignee
+3 containers said to contain 54 PALLET
+03 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 3240 BAGS IN 54 PALLETS
+GROSS WEIGHT: 82620 kg
+NET WEIGHT: 81000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 25003EC03002267X
+CAIU8059394 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85398
+TGBU5395830 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85396
+CAAU9115289 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85399
+82620.000 KGS 136.5660 CBM
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU E-Mail:rgarcia@tdm.com.pe Tax ID:20123531389
+Signed for the Carrier Maersk A/S
+MAERSK LINE ARGENTINA SA
+As Agent(s)
+
+B/L: 259940860 
+Page : 
+2
+Freight & Charges Rate Unit Currency Prepaid Collect
+All the local charges occurring at Peru are part of the contract of carriage and,
+consequently, to be paid by the merchants duly identified in the BL.
+These local charges are published on the website
+https://www.maersk.com/local-information/latin-america/peru together with a detailed
+description. Merchants
+acknowledge and accept these local charges when contracting our services, other charges
+might be applicable
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by
+any such entity or person identified, on the U.S. Treasury Departments Office of Foreign
+Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any
+other similar list maintained by the European Union, or as promulgated by the United
+Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this
+shipment and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+AGENT AT DESTINATION:
+MAERSK PERU S.A. - ALCONSA
+AV. NESTOR GAMBETTA S/N
+KM 14.5 CARRETERA VENTANILLA
+CALLAO 100 CALLAO PERU
+PHONE: 51 1 6140050
+FAX: 51 1 5776153
+Applicable free time 15 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+CY/CY

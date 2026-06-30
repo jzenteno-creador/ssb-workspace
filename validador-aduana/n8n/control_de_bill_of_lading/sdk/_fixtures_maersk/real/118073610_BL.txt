@@ -1,0 +1,512 @@
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+801.00 Per Container USD 4005.00
+Terminal Handling Service - Destination 
+820.00 Per Container BRL 4100.00
+Total BRL BRL 4100.00
+Total USD USD 4005.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+NORTENE PLASTICOS LTDA
+RUA ALFREDO EICKE 341
+BOX H2 SALA K3
+BARRA DO RIO
+88305-301 ITAJAI - SC BRAZIL
+E-Mail:EZI.ALFASSE@NORTENE.COM.BR CNPJ: 46188199000558
+262507210
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+262507210
+Export references
+47273758 / 118073610
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+DAK COMERCIO IMPORTACAO E EXPORTACAO LTDA
+RUA CESAR AUGUSTO DALCOQUIO, 5001, SALA 12D
+SALSEIROS, 88311-500, ITAJAI, SC, BRAZIL
+CNPJ: 13109450000169
+CNPJ-Brazil - 13109450000169
+Voyage No.
+550N
+Vessel (see clause 1 + 19)
+MAERSK FREEPORT
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Itapoa
+Port of Loading
+Buenos Aires
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+5 containers said to contain 90 PALLET
+05 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 5400 BAGS IN 90 PALLETS
+GROSS WEIGHT: 137700 kg
+NET WEIGHT: 135000kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 25003EC03002896Z
+TCNU2615000 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43872
+MRKU3643895 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85872
+TCLU9312409 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43870
+UETU6952535 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH86136
+SUDU6968586 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43695
+137700.000 KGS 227.6100 CBM
+VERY IMPORTANT: Container demurrage and detention tariffs and conditions applicable for
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+5 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+the port of discharge, including the free time, can be obtained with local agents and are
+available at the carriers website, at:
+https://www.sealandmaersk.com/local-information/brazil/export. Same demurrage and
+detention conditions are registered in the Documents Registry Notary Office in the city of
+Santos, under number 732.744 and are regarded a legal part of this Bill of Lading,
+remaining valid until new conditions/tariffs to be registered in the respective Document
+Registry Notary Office, which will prevail.
+Demurrage and Detention deals are based on the Price Calculation Date of your shipments.
+Note that these demurrage and detention conditions shall not apply if the
+booking/shipment was placed under Maersk Spot (instant booking system) conditions
+which are available at the carriers website at
+https://terms.sealandmaersk.com/americas/terms-spot-booking and which shall supersede
+any separately agreed terms. In case of doubts, please check with the Shipper or local
+agents the modality of booking/shipment that was hired.
+Notwithstanding any provision to the contrary, the Merchant agrees the Goods are
+considered formal delivery after the effective discharge at a port in Brazil, to any port
+authority/terminal at such port and all liability of the Carrier whatsoever in connection with
+the goods (including without limitation for misdelivery) shall cease at that time. The Carrier
+shall not be responsible for delivery of cargo without presentation of the Original Bill of
+Lading as per Brazilian Customs Regulations.
+Shipper assumes before the shipowner the contractual and legal duty to export/ship their
+cargo to a Consignee who has real interest and conditions in acquiring/receiving the
+imported cargo, promoting its effective removal at the destination, with the fulfillment of all
+obligations inherent to this act. If the cargo is abandoned at its destination or if it is not
+removed by the Consignee for any reason, the Shipper will be jointly and severally liable,
+together with the Consignee, for all amounts, cost, expense, damage or loss that carrier
+may suffer as a result of this situation.
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+
+Page : 
+3
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+AGENT AT DESTINATION:
+Maersk Brazil Ltd
+Dagoberto Nogueira, st 100 - 14th floor
+Ed. Torre Azul Centro
+Zip: 88301-060 Itajai - SC Brazil
+Phone: 55 11 3527 2426
+Fax: +55 47 3045 8301Email: Sales: (brzsalins@maersk.com)
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+801.00 Per Container USD 4005.00
+Terminal Handling Service - Destination 
+820.00 Per Container BRL 4100.00
+Total BRL BRL 4100.00
+Total USD USD 4005.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+NORTENE PLASTICOS LTDA
+RUA ALFREDO EICKE 341
+BOX H2 SALA K3
+BARRA DO RIO
+88305-301 ITAJAI - SC BRAZIL
+E-Mail:EZI.ALFASSE@NORTENE.COM.BR CNPJ: 46188199000558
+262507210
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+262507210
+Export references
+47273758 / 118073610
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+DAK COMERCIO IMPORTACAO E EXPORTACAO LTDA
+RUA CESAR AUGUSTO DALCOQUIO, 5001, SALA 12D
+SALSEIROS, 88311-500, ITAJAI, SC, BRAZIL
+CNPJ: 13109450000169
+CNPJ-Brazil - 13109450000169
+Voyage No.
+550N
+Vessel (see clause 1 + 19)
+MAERSK FREEPORT
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Itapoa
+Port of Loading
+Buenos Aires
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+5 containers said to contain 90 PALLET
+05 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 5400 BAGS IN 90 PALLETS
+GROSS WEIGHT: 137700 kg
+NET WEIGHT: 135000kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 25003EC03002896Z
+TCNU2615000 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43872
+MRKU3643895 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85872
+TCLU9312409 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43870
+UETU6952535 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH86136
+SUDU6968586 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43695
+137700.000 KGS 227.6100 CBM
+VERY IMPORTANT: Container demurrage and detention tariffs and conditions applicable for
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+5 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+the port of discharge, including the free time, can be obtained with local agents and are
+available at the carriers website, at:
+https://www.sealandmaersk.com/local-information/brazil/export. Same demurrage and
+detention conditions are registered in the Documents Registry Notary Office in the city of
+Santos, under number 732.744 and are regarded a legal part of this Bill of Lading,
+remaining valid until new conditions/tariffs to be registered in the respective Document
+Registry Notary Office, which will prevail.
+Demurrage and Detention deals are based on the Price Calculation Date of your shipments.
+Note that these demurrage and detention conditions shall not apply if the
+booking/shipment was placed under Maersk Spot (instant booking system) conditions
+which are available at the carriers website at
+https://terms.sealandmaersk.com/americas/terms-spot-booking and which shall supersede
+any separately agreed terms. In case of doubts, please check with the Shipper or local
+agents the modality of booking/shipment that was hired.
+Notwithstanding any provision to the contrary, the Merchant agrees the Goods are
+considered formal delivery after the effective discharge at a port in Brazil, to any port
+authority/terminal at such port and all liability of the Carrier whatsoever in connection with
+the goods (including without limitation for misdelivery) shall cease at that time. The Carrier
+shall not be responsible for delivery of cargo without presentation of the Original Bill of
+Lading as per Brazilian Customs Regulations.
+Shipper assumes before the shipowner the contractual and legal duty to export/ship their
+cargo to a Consignee who has real interest and conditions in acquiring/receiving the
+imported cargo, promoting its effective removal at the destination, with the fulfillment of all
+obligations inherent to this act. If the cargo is abandoned at its destination or if it is not
+removed by the Consignee for any reason, the Shipper will be jointly and severally liable,
+together with the Consignee, for all amounts, cost, expense, damage or loss that carrier
+may suffer as a result of this situation.
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+
+Page : 
+3
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+AGENT AT DESTINATION:
+Maersk Brazil Ltd
+Dagoberto Nogueira, st 100 - 14th floor
+Ed. Torre Azul Centro
+Zip: 88301-060 Itajai - SC Brazil
+Phone: 55 11 3527 2426
+Fax: +55 47 3045 8301Email: Sales: (brzsalins@maersk.com)
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+801.00 Per Container USD 4005.00
+Terminal Handling Service - Destination 
+820.00 Per Container BRL 4100.00
+Total BRL BRL 4100.00
+Total USD USD 4005.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+NORTENE PLASTICOS LTDA
+RUA ALFREDO EICKE 341
+BOX H2 SALA K3
+BARRA DO RIO
+88305-301 ITAJAI - SC BRAZIL
+E-Mail:EZI.ALFASSE@NORTENE.COM.BR CNPJ: 46188199000558
+262507210
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+262507210
+Export references
+47273758 / 118073610
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+DAK COMERCIO IMPORTACAO E EXPORTACAO LTDA
+RUA CESAR AUGUSTO DALCOQUIO, 5001, SALA 12D
+SALSEIROS, 88311-500, ITAJAI, SC, BRAZIL
+CNPJ: 13109450000169
+CNPJ-Brazil - 13109450000169
+Voyage No.
+550N
+Vessel (see clause 1 + 19)
+MAERSK FREEPORT
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Itapoa
+Port of Loading
+Buenos Aires
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+5 containers said to contain 90 PALLET
+05 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 5400 BAGS IN 90 PALLETS
+GROSS WEIGHT: 137700 kg
+NET WEIGHT: 135000kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 25003EC03002896Z
+TCNU2615000 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43872
+MRKU3643895 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH85872
+TCLU9312409 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43870
+UETU6952535 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAH86136
+SUDU6968586 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : BAA43695
+137700.000 KGS 227.6100 CBM
+VERY IMPORTANT: Container demurrage and detention tariffs and conditions applicable for
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+5 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+the port of discharge, including the free time, can be obtained with local agents and are
+available at the carriers website, at:
+https://www.sealandmaersk.com/local-information/brazil/export. Same demurrage and
+detention conditions are registered in the Documents Registry Notary Office in the city of
+Santos, under number 732.744 and are regarded a legal part of this Bill of Lading,
+remaining valid until new conditions/tariffs to be registered in the respective Document
+Registry Notary Office, which will prevail.
+Demurrage and Detention deals are based on the Price Calculation Date of your shipments.
+Note that these demurrage and detention conditions shall not apply if the
+booking/shipment was placed under Maersk Spot (instant booking system) conditions
+which are available at the carriers website at
+https://terms.sealandmaersk.com/americas/terms-spot-booking and which shall supersede
+any separately agreed terms. In case of doubts, please check with the Shipper or local
+agents the modality of booking/shipment that was hired.
+Notwithstanding any provision to the contrary, the Merchant agrees the Goods are
+considered formal delivery after the effective discharge at a port in Brazil, to any port
+authority/terminal at such port and all liability of the Carrier whatsoever in connection with
+the goods (including without limitation for misdelivery) shall cease at that time. The Carrier
+shall not be responsible for delivery of cargo without presentation of the Original Bill of
+Lading as per Brazilian Customs Regulations.
+Shipper assumes before the shipowner the contractual and legal duty to export/ship their
+cargo to a Consignee who has real interest and conditions in acquiring/receiving the
+imported cargo, promoting its effective removal at the destination, with the fulfillment of all
+obligations inherent to this act. If the cargo is abandoned at its destination or if it is not
+removed by the Consignee for any reason, the Shipper will be jointly and severally liable,
+together with the Consignee, for all amounts, cost, expense, damage or loss that carrier
+may suffer as a result of this situation.
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+
+Page : 
+3
+B/L: 262507210
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+AGENT AT DESTINATION:
+Maersk Brazil Ltd
+Dagoberto Nogueira, st 100 - 14th floor
+Ed. Torre Azul Centro
+Zip: 88301-060 Itajai - SC Brazil
+Phone: 55 11 3527 2426
+Fax: +55 47 3045 8301Email: Sales: (brzsalins@maersk.com)
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+CY/CY

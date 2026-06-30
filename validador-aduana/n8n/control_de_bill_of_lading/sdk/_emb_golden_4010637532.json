@@ -1,0 +1,428 @@
+{
+ "mimeType": "application/pdf",
+ "webViewLink": "https://drive.google.com/file/d/1cOves7QEDHyZ2OdX57L7pQh3kd2H-der/view?usp=drivesdk",
+ "id": "1WoKmP5JWx72Uq0qRwFVU5k97GjeI1obk",
+ "name": "4010637532_BL.pdf",
+ "numpages": 1,
+ "numrender": 1,
+ "info": {
+  "PDFFormatVersion": "1.7",
+  "Language": null,
+  "EncryptFilterName": null,
+  "IsLinearized": false,
+  "IsAcroFormPresent": false,
+  "IsXFAPresent": false,
+  "IsCollectionPresent": false,
+  "IsSignaturesPresent": false,
+  "CreationDate": "D:20260618110550",
+  "ModDate": "D:20260616103013-03'00'",
+  "Producer": "PDFium",
+  "Author": "Franco Benitez",
+  "Title": "TREN 14-06-2026.xlsx",
+  "Creator": "PDFium"
+ },
+ "metadata": {
+  "xmp:createdate": "2026-06-14T09:22:17-04:00",
+  "xmp:modifydate": "2026-06-14T09:22:17-04:00",
+  "xmp:metadatadate": "2026-06-17T10:46:52-03:00",
+  "pdf:producer": "iTextSharp 5.1.3 (c) 1T3XT BVBA",
+  "xmpmm:documentid": "uuid:fa71c571-fd8f-4356-9462-f88b9ff8e765",
+  "xmpmm:instanceid": "uuid:c43f5302-35ca-434c-9bdd-c6bd1fb88511",
+  "dc:format": "application/pdf",
+  "xmp:creatortool": "UnknownApplication",
+  "dc:title": "Untitled"
+ },
+ "text": "(2) SHIPPER/EXPORTER (COMPLETE NAME AND ADRESS)\nPBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195\n(5) BOOKING NO.\nLA0498376\n(5A) BILL OF LADING NO.\n284N901413904\n(6) EXPORT REFERENCES\n4010637532/48290273\n(3) CONSIGNEE (COMPLETE NAME AND ADRESS)\nDOW BRASIL IND E COM\nDE PRODUTOS QUIMICOS LTDA\nAV JOAQUIM LOURENCO DE LIMA 120 GALPAO 04\n37644-032 EXTREMA - MG / BRAZIL / TAX ID: 60435351010039\n(7) FORWARDING AGENT/FMC NO.\n(8) POINT AND COUNTRY\nArgentina\n(4) NOTIFY PARTY (COMPLETE NAME AND ADRESS)\nCOMISSARIA PIBERNAT LTDA\nRUA MANOEL VIEIRA GARCAO 120, CENTRO\n88301-425 ITAJAI - SC, BRAZIL\nTax ID:92102433000923, E-Mail: dow@pibernat.com.br\n(9) ALSO NOTIFY ROUNTING & INSTRUCTIONS\nDRAFT COPY\n(12) PLACE OF RECEIPT (13) FINAL PORT OF LOADING (9A) FINAL DESTINATION (OF DE THE GOODS NOT THE SHIP)\n(14) VESSEL VOYAGE\nLOG-IN JATOBA/284N\n(15) PORT OF LOADING\nBUENOS AIRES\n(10) LOADING PIER/TERMINAL (10A) ORIGINALS TO BE RELEASED AT\nDESTINO\n(16) PORT OF DISCHARGE\nSANTOS\n(17) PLACE OF DELIVERY (11) TYPE OF MOVE (IF MIXED USE BLOCK 20 AS APPROPIATE)\nFCL/FCL\nPARTICULARS FURNISHED BY SHIPPER\nMKS & NOS. CONT. NOS. NOS. OF PKGS DESCRIPTION OF PACKAGES AND GOODS GROSS WEIGHT MEASUREMENT\n2 X 40HC 2 CONTAINERS OF 40 HC\nSAID TO CONTAIN\nDESCRIPTION GOODS: DGDA-9290 NT\nQUANTITY: 36 BAGS IN 36 PALLETS\nGROSS WEIGHT: 44280\nNET WEIGHT: 43200\nNCM: 3901\nWooden Material: YES\nWooden Condition: Treated and Certified\n26003EC01004225D\n44280,000 72,836\n(23) DECLARED VALUE $ IF SHIPPER ENTERS A VALUE CARRIES \"PACKAGE\" LIMITATIONS OF LIABILITY DOES NOT APPLY AND THE AD VALOREM\nRATE WILL BE CHARGED\nContainer Seal Type Tare G.W N.W Measurement Wooden Material Wooden Conditions\nMSNU7785488 BAD37255 40HC 3940 22140,000 21600,000 36,418 Yes Treated and\ncertified\nMSNU8959780 BAD37254 40HC 3940 22140,000 21600,000 36,418 Yes Treated and\ncertified\nFREIGHT CHARGES RATED AS PER RATE PREPAID COLLECT\nAGENCY RATES 2,00 EACH US$ 87,00 US$ 174,00\nBUNKER 2,00 EACH US$ 20,00 US$ 40,00\nEEFA 2,00 EACH US$ 44,00 US$ 88,00\nGATE 2,00 EACH US$ 25,00 US$ 50,00\nISPS 2,00 EACH US$ 10,00 US$ 20,00\nOcean Freight 2,00 EACH US$ 20,00 US$ 40,00\nTHC DESTINO 2,00 EACH R$ 1800,00 R$ 3600,00\nTHC ORIGEM 2,00 EACH US$ 260,00 US$ 520,00\nTOLL FEE 2,00 EACH US$ 178,00 US$ 356,00\nR$ 0,00 R$ 3600,00\nUS$ 1288,00 US$ 0,00\n1 of 1 SHIPPED ON BOARD DATE:",
+ "version": "5.3.31",
+ "factura_extract": {
+  "invoice_no": "0110-00058408",
+  "internal_doc_number": "4010637532",
+  "order_number": "4010637532",
+  "incoterm": "CFR",
+  "incoterm_place": "Santos Port",
+  "country": "Brasil",
+  "shipping_permit": "26003EC01004225D",
+  "sold_to": {
+   "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+   "tax": "60435351010039"
+  },
+  "ship_to": {
+   "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+   "tax": "60435351010039"
+  },
+  "items": [
+   {
+    "material": null,
+    "grade": "9290",
+    "description": "DGDA-9290 NT 1200 KG Bag",
+    "bags": 18,
+    "net_kg": 21600,
+    "gross_kg": 22140,
+    "product_code": "39012029900U",
+    "bags_per_pallet": null,
+    "pallets": null,
+    "embalaje": "1200 KG Bag",
+    "amount": null
+   },
+   {
+    "material": null,
+    "grade": "9290",
+    "description": "DGDA-9290 NT 1200 KG Bag",
+    "bags": 18,
+    "net_kg": 21600,
+    "gross_kg": 22140,
+    "product_code": "39012029900U",
+    "bags_per_pallet": null,
+    "pallets": null,
+    "embalaje": "1200 KG Bag",
+    "amount": null
+   }
+  ],
+  "totals": {
+   "net": 43200,
+   "gross": 44280,
+   "invoice_amount": 106696
+  },
+  "freight_usd": 1288,
+  "exporter": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA",
+  "source_link": "https://drive.google.com/file/d/1bNUhTB0cBP5pwT9QAl_5Kr0DBNNojE_2/view?usp=drivesdk",
+  "insurance_usd": null,
+  "freight_total": 1288,
+  "fob_usd": 105408
+ },
+ "order_number": "4010637532",
+ "factura_meta": {
+  "found": true,
+  "count": 1,
+  "duplicate": false,
+  "refacturacion": false,
+  "order_filename": "4010637532",
+  "order_internal": "4010637532"
+ },
+ "joinKey": "4010637532",
+ "booking_extract": {
+  "order_number": "4010637532",
+  "booking_no": "LA0498376",
+  "terms_of_delivery": "CFR Santos Port",
+  "incoterm": "CFR",
+  "incoterm_place": "Santos Port",
+  "pol": "Buenos Aires Port",
+  "pod": "Santos Port",
+  "destino_pais": "BRAZIL",
+  "hs": {
+   "export": "39012029900U",
+   "import": "39012029"
+  },
+  "producto": {
+   "cadena": "DGDA-9290 NT 1200 KG Bag",
+   "familia": "POLYETHYLENE",
+   "grado": "DGDA-9290",
+   "embalaje": "Bag"
+  },
+  "totales": {
+   "piece_count": 36,
+   "net_kg": 43200,
+   "gross_kg": 44280,
+   "piece_count_unit": "BAG"
+  },
+  "consignee": {
+   "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+   "tax_id": "60435351010039",
+   "address_lines": [
+    "AV JOAQUIM LOURENCO DE LIMA 120",
+    "GALPAO 04",
+    "37644-032 EXTREMA - MG",
+    "BRAZIL"
+   ],
+   "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+  },
+  "notify": {
+   "name": "COMISSARIA PIBERNAT LTDA",
+   "tax_id": "92102433000923",
+   "email": "thais.kleinschmidt@pibernat.com.br",
+   "address_lines": [
+    "RUA MANOEL VIEIRA GARCAO 120",
+    "CENTRO",
+    "88301-425 ITAJAI - SC",
+    "BRAZIL"
+   ],
+   "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+  },
+  "equipos": [
+   {
+    "container": "MSNU7785488",
+    "seal": "0342618 JUANA",
+    "net_kg": 21600,
+    "gross_kg": 22140,
+    "volume_cd3": 36417.6,
+    "contenido": [
+     {
+      "producto": "DGDA-9290 NT",
+      "bolsas": 18,
+      "pallets": null
+     }
+    ]
+   },
+   {
+    "container": "MSNU8959780",
+    "seal": "0342617 JUANA",
+    "net_kg": 21600,
+    "gross_kg": 22140,
+    "volume_cd3": 36417.6,
+    "contenido": [
+     {
+      "producto": "DGDA-9290 NT",
+      "bolsas": 18,
+      "pallets": null
+     }
+    ]
+   }
+  ],
+  "dates": {
+   "document_date": "06/14/2026",
+   "cutoff_origin": "20260620",
+   "etd_pol": "20260622",
+   "eta_destination": "20260629"
+  },
+  "links": {
+   "webViewLink": "https://drive.google.com/file/d/1u2K7LKQF7AFfrdVuO7IqYVyBj3tSLnXy/view?usp=drivesdk",
+   "fileId": "1u2K7LKQF7AFfrdVuO7IqYVyBj3tSLnXy",
+   "name": "48290273_4010637532_ZCB3_BA.pdf"
+  },
+  "ncm_export": "39012029900U",
+  "originals_release": {
+   "value": "",
+   "conflict": false,
+   "matches": 0
+  },
+  "wooden_package": "Treated / Certified",
+  "notify_meta": {
+   "notify_structured": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "cnpj": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br"
+   },
+   "notify_instruction": [],
+   "notify_emails_window": [],
+   "notify_cnpjs_kept": [],
+   "notify_cnpjs_excluded": [],
+   "has_text_instructions": false,
+   "notify_multiple": false,
+   "notify_differ": false,
+   "sold_to": {
+    "tax": "60435351010039",
+    "raw_present": true
+   },
+   "ship_to": {
+    "tax": "60435351010039",
+    "raw_present": true
+   }
+  }
+ },
+ "aduana_extract": {
+  "operacion": "4010637532",
+  "buque": "LOG IN JATOBA",
+  "destino": "BRAZIL",
+  "ddt": "26003EC01004225D",
+  "totals": {
+   "bultos": 36,
+   "neto": 43200,
+   "bruto": 44280
+  },
+  "contenedores": [
+   {
+    "container": "MSNU7785488",
+    "precinto": "BAD37255",
+    "producto": "9290NT",
+    "neto": 21600,
+    "bruto": 22140,
+    "bultos": 18
+   },
+   {
+    "container": "MSNU8959780",
+    "precinto": "BAD37254",
+    "producto": "9290NT",
+    "neto": 21600,
+    "bruto": 22140,
+    "bultos": 18
+   }
+  ],
+  "orden": "4010637532",
+  "orden_multi": false,
+  "orden_candidatos": [
+   "4010637532"
+  ],
+  "pe": "26003EC01004225D",
+  "source_link": "https://drive.google.com/file/d/1WoKmP5JWx72Uq0qRwFVU5k97GjeI1obk/view?usp=drivesdk",
+  "grado": "9290NT"
+ },
+ "fileId": "1cOves7QEDHyZ2OdX57L7pQh3kd2H-der",
+ "createdTime": "2026-06-18T14:05:57.699Z",
+ "orden_from_name": "4010637532",
+ "tipo": "BL_draft",
+ "estado": "pendiente",
+ "order_match": true,
+ "booking_no": "LA0498376",
+ "carrier_code": "LOG-IN",
+ "carrier_name": "Log-In",
+ "carrier_evidence": "booking_prefix:LA0498376",
+ "login_extract": {
+  "order_number": "4010637532",
+  "booking_no": "LA0498376",
+  "bl_no": "284N901413904",
+  "source_link": "https://drive.google.com/file/d/1cOves7QEDHyZ2OdX57L7pQh3kd2H-der/view?usp=drivesdk",
+  "export_references": [
+   "4010637532",
+   "48290273"
+  ],
+  "carrier": "LOG-IN",
+  "vessel": "LOG-IN JATOBA",
+  "voyage": "284N",
+  "pol": "BUENOS AIRES",
+  "pod": "SANTOS",
+  "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+  "consignee": "DOW BRASIL IND E COM\nDE PRODUTOS QUIMICOS LTDA\nAV JOAQUIM LOURENCO DE LIMA 120 GALPAO 04\n37644-032 EXTREMA - MG / BRAZIL / TAX ID: 60435351010039",
+  "notify": "COMISSARIA PIBERNAT LTDA\nRUA MANOEL VIEIRA GARCAO 120, CENTRO\n88301-425 ITAJAI - SC, BRAZIL\nTAX ID:92102433000923, E-MAIL: DOW@PIBERNAT.COM.BR",
+  "originals_to_be_released_at": "DESTINO",
+  "type_of_move": "FCL/FCL",
+  "destino_pais": "BRAZIL",
+  "consignee_tax": "60435351010039",
+  "desc": {
+   "DESC BL - CANTIDAD DE CONTENEDORES": 2,
+   "DESC BL - GOODS (DESCRIPCIÓN CRUDA)": "DGDA-9290 NT",
+   "DESC BL - PRODUCTO": "DGDA-9290 NT",
+   "DESC BL - GRADE / CALIDAD": "DGDA-9290 NT",
+   "DESC BL - TIPO DE EMBALAJE": "",
+   "DESC BL - CANTIDAD DE BOLSAS": 36,
+   "DESC BL - CANTIDAD DE PALLETS": 36,
+   "DESC BL - NCM": "3901",
+   "DESC BL - PESO BRUTO TOTAL (KG)": 44280,
+   "DESC BL - PESO NETO TOTAL (KG)": 43200,
+   "DESC BL - PE (PERMISO DE EMBARQUE)": "26003EC01004225D"
+  },
+  "goods_block_raw": "2 X 40HC 2 CONTAINERS OF 40 HC\nSAID TO CONTAIN\nDESCRIPTION GOODS: DGDA-9290 NT\nQUANTITY: 36 BAGS IN 36 PALLETS\nGROSS WEIGHT: 44280\nNET WEIGHT: 43200\nNCM: 3901\nWooden Material: YES\nWooden Condition: Treated and Certified\n26003EC01004225D\n44280,000 72,836",
+  "equipos": [
+   {
+    "container": "MSNU7785488",
+    "seal": "BAD37255",
+    "nw": 21600,
+    "gw": 22140,
+    "measurement": "36,418",
+    "wooden_material": "YES",
+    "wooden_conditions": "TREATED AND CERTIFIED"
+   },
+   {
+    "container": "MSNU8959780",
+    "seal": "BAD37254",
+    "nw": 21600,
+    "gw": 22140,
+    "measurement": "36,418",
+    "wooden_material": "YES",
+    "wooden_conditions": "TREATED AND CERTIFIED"
+   }
+  ],
+  "products": [
+   {
+    "goods": "DGDA-9290 NT",
+    "grade": "9290",
+    "bags": 36,
+    "pallets": 36,
+    "net_kg": 43200,
+    "gross_kg": 44280
+   }
+  ],
+  "freight": {
+   "concepts": [
+    {
+     "concept": "AGENCY RATES",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 174,
+     "rate_currency": "USD",
+     "rate": 87
+    },
+    {
+     "concept": "BUNKER",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 40,
+     "rate_currency": "USD",
+     "rate": 20
+    },
+    {
+     "concept": "EEFA",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 88,
+     "rate_currency": "USD",
+     "rate": 44
+    },
+    {
+     "concept": "GATE",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 50,
+     "rate_currency": "USD",
+     "rate": 25
+    },
+    {
+     "concept": "ISPS",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 20,
+     "rate_currency": "USD",
+     "rate": 10
+    },
+    {
+     "concept": "Ocean Freight",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 40,
+     "rate_currency": "USD",
+     "rate": 20
+    },
+    {
+     "concept": "THC DESTINO",
+     "kind": "COLLECT",
+     "currency": "BRL",
+     "amount": 3600,
+     "rate_currency": "BRL",
+     "rate": 1800
+    },
+    {
+     "concept": "THC ORIGEM",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 520,
+     "rate_currency": "USD",
+     "rate": 260
+    },
+    {
+     "concept": "TOLL FEE",
+     "kind": "PREPAID",
+     "currency": "USD",
+     "amount": 356,
+     "rate_currency": "USD",
+     "rate": 178
+    }
+   ],
+   "totals": {
+    "USD": {
+     "prepaid": 1288,
+     "collect": 0
+    },
+    "BRL": {
+     "prepaid": 0,
+     "collect": 3600
+    }
+   },
+   "ocean_freight_kind": "PREPAID",
+   "per_container": {
+    "USD_prepaid": 644,
+    "USD_collect": 0,
+    "USD": 644
+   },
+   "containers_for_calc": 2
+  }
+ }
+}

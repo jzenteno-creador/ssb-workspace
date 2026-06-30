@@ -1,0 +1,666 @@
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+4084.00 Per Container USD 16336.00
+Terminal Handling Service - Destination 
+125.00 Per Container USD 500.00
+Detention Fee - Export 
+105.00 Per Container USD 420.00
+Total USD USD 16756.00 500.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+Same as Consignee
+266470310
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+266470310
+Export references
+47742281 / 118351040
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+PRODUCTOS QUIMICOS ANDINOS S.A.S.
+PAR IND MANIZALES TERRA 8 LOTE
+6 EN MANIZALES DEPTODE CALDAS
+176007 MANIZALES
+COLOMBIA Tax ID:8000421752 E-Mail:comercioexterior@pqa.com.co
+Voyage No.
+612N
+Vessel (see clause 1 + 19)
+AS SABINE
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Cartagena
+Port of Loading
+Bahia Blanca
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+4 containers said to contain 72 PALLET
+04 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 4320 BAGS IN 72 PALLETS
+GROSS WEIGHT: 110160 kg
+NET WEIGHT: 108000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 26003EC03000403W
+MRKU5733724 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85656
+MRSU4150221 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85654
+CAAU7936752 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85650
+CAAU9821449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85647
+110160.000 KGS 182.0880 CBM
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+4 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 266470310
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+AGENT AT DESTINATION:
+MAERSK COLOMBIA S.A.
+CRA 3 NO 6A - 100 OFICINA 1102
+TORRE EMPRESARIAL PROTECCION
+CITY: CARTAGENA
+COUNTRY/TERRITORY: COLOMBIA
+PHONE: CUSTOMER SERVICE 57 5 6595000
+FAX: 57 5 6652674
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+4084.00 Per Container USD 16336.00
+Terminal Handling Service - Destination 
+125.00 Per Container USD 500.00
+Detention Fee - Export 
+105.00 Per Container USD 420.00
+Total USD USD 16756.00 500.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+Same as Consignee
+266470310
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+266470310
+Export references
+47742281 / 118351040
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+PRODUCTOS QUIMICOS ANDINOS S.A.S.
+PAR IND MANIZALES TERRA 8 LOTE
+6 EN MANIZALES DEPTODE CALDAS
+176007 MANIZALES
+COLOMBIA Tax ID:8000421752 E-Mail:comercioexterior@pqa.com.co
+Voyage No.
+612N
+Vessel (see clause 1 + 19)
+AS SABINE
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Cartagena
+Port of Loading
+Bahia Blanca
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+4 containers said to contain 72 PALLET
+04 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 4320 BAGS IN 72 PALLETS
+GROSS WEIGHT: 110160 kg
+NET WEIGHT: 108000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 26003EC03000403W
+MRKU5733724 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85656
+MRSU4150221 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85654
+CAAU7936752 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85650
+CAAU9821449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85647
+110160.000 KGS 182.0880 CBM
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+4 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 266470310
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+AGENT AT DESTINATION:
+MAERSK COLOMBIA S.A.
+CRA 3 NO 6A - 100 OFICINA 1102
+TORRE EMPRESARIAL PROTECCION
+CITY: CARTAGENA
+COUNTRY/TERRITORY: COLOMBIA
+PHONE: CUSTOMER SERVICE 57 5 6595000
+FAX: 57 5 6652674
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+COPY
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+4084.00 Per Container USD 16336.00
+Terminal Handling Service - Destination 
+125.00 Per Container USD 500.00
+Detention Fee - Export 
+105.00 Per Container USD 420.00
+Total USD USD 16756.00 500.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+Same as Consignee
+266470310
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+266470310
+Export references
+47742281 / 118351040
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+PRODUCTOS QUIMICOS ANDINOS S.A.S.
+PAR IND MANIZALES TERRA 8 LOTE
+6 EN MANIZALES DEPTODE CALDAS
+176007 MANIZALES
+COLOMBIA Tax ID:8000421752 E-Mail:comercioexterior@pqa.com.co
+Voyage No.
+612N
+Vessel (see clause 1 + 19)
+AS SABINE
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Cartagena
+Port of Loading
+Bahia Blanca
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+4 containers said to contain 72 PALLET
+04 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 4320 BAGS IN 72 PALLETS
+GROSS WEIGHT: 110160 kg
+NET WEIGHT: 108000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 26003EC03000403W
+MRKU5733724 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85656
+MRSU4150221 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85654
+CAAU7936752 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85650
+CAAU9821449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85647
+110160.000 KGS 182.0880 CBM
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+4 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 266470310
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+AGENT AT DESTINATION:
+MAERSK COLOMBIA S.A.
+CRA 3 NO 6A - 100 OFICINA 1102
+TORRE EMPRESARIAL PROTECCION
+CITY: CARTAGENA
+COUNTRY/TERRITORY: COLOMBIA
+PHONE: CUSTOMER SERVICE 57 5 6595000
+FAX: 57 5 6652674
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+CERTIFIED
+TRUE COPY
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+4084.00 Per Container USD 16336.00
+Terminal Handling Service - Destination 
+125.00 Per Container USD 500.00
+Detention Fee - Export 
+105.00 Per Container USD 420.00
+Total USD USD 16756.00 500.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+Same as Consignee
+266470310
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+266470310
+Export references
+47742281 / 118351040
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+PRODUCTOS QUIMICOS ANDINOS S.A.S.
+PAR IND MANIZALES TERRA 8 LOTE
+6 EN MANIZALES DEPTODE CALDAS
+176007 MANIZALES
+COLOMBIA Tax ID:8000421752 E-Mail:comercioexterior@pqa.com.co
+Voyage No.
+612N
+Vessel (see clause 1 + 19)
+AS SABINE
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Cartagena
+Port of Loading
+Bahia Blanca
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+4 containers said to contain 72 PALLET
+04 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 4320 BAGS IN 72 PALLETS
+GROSS WEIGHT: 110160 kg
+NET WEIGHT: 108000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 26003EC03000403W
+MRKU5733724 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85656
+MRSU4150221 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85654
+CAAU7936752 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85650
+CAAU9821449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85647
+110160.000 KGS 182.0880 CBM
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+4 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 266470310
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+AGENT AT DESTINATION:
+MAERSK COLOMBIA S.A.
+CRA 3 NO 6A - 100 OFICINA 1102
+TORRE EMPRESARIAL PROTECCION
+CITY: CARTAGENA
+COUNTRY/TERRITORY: COLOMBIA
+PHONE: CUSTOMER SERVICE 57 5 6595000
+FAX: 57 5 6652674
+CY/CY
+
+MAEU
+SCAC
+B/L No.
+FREIGHTED
+COPY
+THREE/3
+Shipped on Board Date ( Local Time )
+This transport document has one or more numbered pages
+Freight & Charges Rate Unit Currency Prepaid Collect
+Basic Ocean Freight 
+4084.00 Per Container USD 16336.00
+Terminal Handling Service - Destination 
+125.00 Per Container USD 500.00
+Detention Fee - Export 
+105.00 Per Container USD 420.00
+Total USD USD 16756.00 500.00
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, the total number
+or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place
+of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above), such carriage being always subject to the terms,
+rights, defences, provisions, conditions, exceptions, limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE
+HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE TARIFF) and the Merchant's attention
+is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). Where the bill of
+lading is non-negotiable the Carrier may give delivery of the Goods to the named consignee upon reasonable proof of identity and without requiring
+surrender of an original bill of lading. Where the bill of lading is negotiable, the Merchant is obliged to surrender one original, duly endorsed, in exchange
+for the Goods. The Carrier accepts a duty of reasonable care to check that any such document which the Merchant surrenders as a bill of lading is
+genuine and original. If the Carrier complies with this duty, it will be entitled to deliver the Goods against what it reasonably believes to be a genuine
+and original bill of lading, such delivery discharging the Carrier’s delivery obligations. In accepting this bill of lading, any local customs or privileges to
+the contrary notwithstanding, the Merchant agrees to be bound by all Terms and Conditions stated herein whether written, printed, stamped or
+incorporated on the face or reverse side hereof, as fully as if they were all signed by the Merchant.
+IN WITNESS WHEREOF the number of original Bills of Lading stated on this side have been signed and wherever one original Bill of Lading has been
+surrendered any others shall be void.
+BILL OF LADING FOR OCEAN TRANSPORT
+OR MULTIMODAL TRANSPORT
+Notify Party (see clause 22)
+Same as Consignee
+266470310
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+PBBPOLISUR S.R.L
+CALLE BOUCHARD 710, PISO 11 C1106ABL
+CIUDAD DE BUENOS AIRES CAPITAL FEDERAL
+ARGENTINA CUIT: 30560254195
+Booking No.
+266470310
+Export references
+47742281 / 118351040
+Svc Contract
+299593739
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer".
+As principal, where “care of”, “c/o”, or other variants used.)
+PRODUCTOS QUIMICOS ANDINOS S.A.S.
+PAR IND MANIZALES TERRA 8 LOTE
+6 EN MANIZALES DEPTODE CALDAS
+176007 MANIZALES
+COLOMBIA Tax ID:8000421752 E-Mail:comercioexterior@pqa.com.co
+Voyage No.
+612N
+Vessel (see clause 1 + 19)
+AS SABINE
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+Port of Discharge
+Cartagena
+Port of Loading
+Bahia Blanca
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+PARTICULARS FURNISHED BY SHIPPER 
+Weight Measurement
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+4 containers said to contain 72 PALLET
+04 CONTAINERS OF 40 HC
+SAID TO CONTAIN DESCRIPTION
+GOODS: Polyethylene NG 6895 Medium Density
+QUANTITY: 4320 BAGS IN 72 PALLETS
+GROSS WEIGHT: 110160 kg
+NET WEIGHT: 108000 kg
+NCM: 3901
+Wooden Material: YES
+Wooden Condition: Treated and Certified
+PE 26003EC03000403W
+MRKU5733724 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85656
+MRSU4150221 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85654
+CAAU7936752 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85650
+CAAU9821449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+Customs Seal : JK85647
+110160.000 KGS 182.0880 CBM
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+FREIGHT PREPAID
+Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+Place of Issue of B/L
+Buenos Aires
+Carrier's Receipt (see clause 1 and 14). Total number
+of containers or packages received by Carrier.
+4 containers
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+Declared Value (see clause 7.3)
+Signed for the Carrier Maersk A/S
+As Agent(s)
+MAERSK LINE ARGENTINA SA
+
+Page : 
+2
+B/L: 266470310
+Freight & Charges Rate Unit Currency Prepaid Collect
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+times with European Union, United States and United Nations sanctions and/or export
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve,
+whether directly or indirectly, any entity or person identified, or owned or controlled by any
+such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset
+Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other
+similar list maintained by the European Union, or as promulgated by the United Nations
+Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment
+and/or Goods are in violation of the Carriers policy on Russia
+[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update],
+Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be
+returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall
+indemnify and hold harmless the Carrier, its servants and agents, for any breach of this
+clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in
+transit or withhold release of the shipment and/or Goods pending any investigation into
+compliance with this clause by the Merchant(s).
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge /
+place of delivery)
+AGENT AT DESTINATION:
+MAERSK COLOMBIA S.A.
+CRA 3 NO 6A - 100 OFICINA 1102
+TORRE EMPRESARIAL PROTECCION
+CITY: CARTAGENA
+COUNTRY/TERRITORY: COLOMBIA
+PHONE: CUSTOMER SERVICE 57 5 6595000
+FAX: 57 5 6652674
+CY/CY

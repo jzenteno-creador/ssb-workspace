@@ -1,0 +1,833 @@
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading Buenos Aires Port of Discharge
+
+Veracruz
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+
+16320.000 KGS 26.9760 CBM 1 Container Said to Contain 16 PALLET
+
+640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene Resin
+
+SAP/NEA: 4010368250 SHP: 47911040 PE: 26033EC01002970L
+
+NCM: 3901 WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+TCNU3543060 40 DRY 9'6 16 PALLET 16320.000 KGS 26.9760 CBM Customs Seal : BAH16632 The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 Container Said to Contain 16 PALLET
+
+640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene SAP/NEA: 4010368250 SHP: 47911040 PE: 26033EC01002970L
+
+NCM: 3901
+
+Resin
+
+COPY
+
+WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+TCNU3543060 40 DRY 9'6 16 PALLET 16320.000 KGS 26.9760 CBM Customs Seal : BAH16632 The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 Container Said to Contain 16 PALLET
+
+640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene SAP/NEA: 4010368250 SHP: 47911040 PE: 26033EC01002970L
+
+NCM: 3901
+
+Resin
+
+COPY
+
+WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+TCNU3543060 40 DRY 9'6 16 PALLET 16320.000 KGS 26.9760 CBM Customs Seal : BAH16632 The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 Container Said to Contain 16 PALLET
+
+640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene SAP/NEA: 4010368250 SHP: 47911040 PE: 26033EC01002970L
+
+NCM: 3901
+
+Resin
+
+COPY
+
+WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+TCNU3543060 40 DRY 9'6 16 PALLET 16320.000 KGS 26.9760 CBM Customs Seal : BAH16632 The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.) PBBPOLISUR S.R.L. CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 640 PALLETS DOWLEX SAP/NEA: SHP: Container BAGS 47911040
+
+GM WITH 4010368250 IN Said AX01 16
+
+CERTIFIED 16000 to Polyethylene Contain KG OF
+
+16 PALLET
+
+Resin
+
+PE: NCM: WOODEN WOODEN TCNU3543060 Customs 26033EC01002970L
+
+3901
+
+Seal MATERIAL: CONDITION TRUE : YES : TREATED AND CERTIFIED
+
+40 DRY 9'6 16 PALLET 16320.000 KGS BAH16632
+
+26.9760 COPY
+
+CBM
+
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+Booking No. 267705109
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 640 PALLETS DOWLEX SAP/NEA: SHP: Container BAGS 47911040
+
+GM WITH 4010368250 IN FREIGHTED Said AX01 16
+
+16000 to Polyethylene Contain KG OF
+
+16 PALLET
+
+Resin
+
+PE: 26033EC01002970L
+
+NCM: 3901 WOODEN MATERIAL: WOODEN CONDITION TCNU3543060 Customs Seal : 40 BAH16632 DRY YES
+
+: 9'6 TREATED 16 PALLET AND COPY
+
+CERTIFIED
+
+16320.000 KGS 26.9760 CBM
+
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2
+
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Veracruz
+
+16320.000 KGS 26.9760 CBM 1 640 PALLETS DOWLEX SAP/NEA: SHP: Container BAGS 47911040
+
+GM WITH 4010368250 IN FREIGHTED Said AX01 16
+
+16000 to Polyethylene Contain KG OF
+
+16 PALLET
+
+Resin
+
+PE: 26033EC01002970L
+
+NCM: 3901 WOODEN MATERIAL: WOODEN CONDITION TCNU3543060 Customs Seal : 40 BAH16632 DRY YES
+
+: 9'6 TREATED 16 PALLET AND COPY
+
+CERTIFIED
+
+16320.000 KGS 26.9760 CBM
+
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2
+
+control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Dear Customer, please note that any changes to payment terms or prepaid payer made after vessel departure and invoice issuance may incur a payer amendment fee.
+
+NON-NEGOTIABLE WAYBILL SCAC
+
+MAEU
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above Below particulars freight as details declared will by Shipper, not be but part without of responsibility Original Bill of or of representation Lading unless by Carrier. requested by customer Freight & Charges Rate Unit Currency Prepaid Collect
+
+Charges Name Prepaid/Collect Invoice Party Customer Code Collection Business Unit Basic Ocean Freight Prepaid PBB POLISUR SRL 300S4000902 Maersk Argentina (B Aires) Terminal Handling Service - DestinationCollect DOW QUIMICA MEXICANA SA DE 32380002537 CV Maersk Mexico (Mex City)
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.comNotify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading Buenos Aires
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Veracruz
+
+1 640 PALLETS DOWLEX SAP/NEA: SHP: Container BAGS 47911040
+
+GM WITH 4010368250 IN Said AX01 16
+
+16000 to Polyethylene Contain KG OF
+
+16 VERIFY
+
+PALLET
+
+Resin
+
+PE: 26033EC01002970L
+
+NCM: 3901 WOODEN MATERIAL: WOODEN CONDITION TCNU3543060 Customs Seal : 40 BAH16632 DRY YES
+
+: 9'6 TREATED 16 PALLET AND COPY
+
+CERTIFIED
+
+16320.000 KGS 26.9760 CBM
+
+Shipped on Board Date ( Local Time ) 2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+For amendment journey use link - https://www.maersk.com/shipping-instruction/launch
+
+16320.000 KGS 26.9760 CBM
+
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all times with European Union, United States and United Nations sanctions and/or export
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Date Issue of Waybill 2026-05-04
+
+Page B/L: 267705109 : 2 control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s). SHIPPER'S LOAD, STOW, WEIGHT AND COUNT FREIGHT PREPAID Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery) AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Charges Name Prepaid/Collect Invoice Party Customer Code Collection Business Unit
+
+SCAC
+
+B/L No.
+
+This contract is subject to the terms, conditions and exceptions, including the law & jurisdiction clause and limitation of liability & declared value clauses, of the current Maersk Bill of Lading (available from the Carrier, its agents and at terms.maersk.com/carriage), which are applicable with logical amendments (mutatis mutandis). To the extent necessary to enable the Consignee to sue and to be sued under this contract, the Shipper on entering into this contract does so on his own behalf and as agent for and on behalf of the Consignee and warrants that he has the authority to do so. The shipper shall be entitled to change the Consignee at any time before delivery of the goods provided he gives the Carrier reasonable notice in writing. Delivery will be made to the Consignee or his authorised agent on production of reasonable proof of identity (and, in the case of an agent, reasonable proof of authority) without production of this waybill. The Carrier shall be under no liability whatsoever for misdelivery unless caused by the Carrier's negligence.
+
+Vessel MAERSK FORTALEZA
+
+267705109
+
+Shipper (As principal, where “care of”, “c/o”, or other variants used.)
+
+Booking No. PBBPOLISUR S.R.L.
+
+267705109 CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Export references 4010368250 / 47911040
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Place of Receipt. Applicable only when document used as Multimodal Waybill
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No. Weight Measurement Above particulars as declared by Shipper, but without responsibility of or representation by Carrier.
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Carrier's Receipt. Total number of containers or packages received by Carrier.
+
+1 container
+
+Svc Contract 299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where “care of”, “c/o”, or other variants used.) DOW QUIMICA MEXICANA S.A DE C.V ADDRESS: AV PASEO DE LA REFORMA 243, PISO 8 COL. CUAUHTEMOC CP 06500 MEXICO CITY TAX ID: DQM 590909 RK0 E-Mail:pg.impo.land@palosgarza.com
+
+Notify Party (see clause 22) PG SERVICIOS ADUANALES SA DE CVXICOTENCATL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA 91900 VERACRUZ MEXICO Tax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com
+
+Voyage No. 618N
+
+Port of Loading Buenos Aires Port of Discharge
+
+Veracruz
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1)
+
+16320.000 KGS 26.9760 CBM 1 Container Said to Contain 16 PALLET
+
+640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene Resin
+
+SAP/NEA: 4010368250 SHP: 47911040 PE: 26033EC01002970L
+
+NCM: 3901 WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+TCNU3543060 40 DRY 9'6 16 PALLET 16320.000 KGS 26.9760 CBM Customs Seal : BAH16632
+
+The Merchant(s) warrant and represent that this shipment and/or Goods will comply at all
+
+Place of Issue of Waybill
+
+Shipped, as far as ascertained by reasonable means of checking, in apparent good order and condition Buenos Aires
+
+unless otherwise stated herein the total number or quantity of Containers or other packages or units indicated in the box opposite entitled “Carrier’s Receipt” Shipped on Board Date ( Local Time )
+
+Date Issue of Waybill 2026-05-04
+
+2026-05-04
+
+Declared Value Charges (see clause 7.3 of the Maersk Bill of Lading) for Declared Value of US$
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA This transport document has one or more numbered pages
+
+As Agent(s)
+
+Copy of electronic bill of lading for information purposes only. This is not a document of title. The delivery of cargo will not be made against this document.
+
+NON-NEGOTIABLE WAYBILL MAEU
+
+Page B/L: 267705109 : 2 times with European Union, United States and United Nations sanctions and/or export control laws (Sanctions Laws), and that this shipment and/or Goods do not involve, whether directly or indirectly, any entity or person identified, or owned or controlled by any such entity or person identified, on the U.S. Treasury Departments Office of Foreign Asset Control (OFAC) list of Specially Designated Nationals and Blocked Persons, or any other similar list maintained by the European Union, or as promulgated by the United Nations Security Council (Designated Person). If, in the Carriers reasonable opinion, this shipment and/or Goods are in violation of the Carriers policy on Russia \[https://www.maersk.com/news/articles/2022/02/24/russia-ukraine-situation-update\], Sanctions Laws or involves any Designated Person, the shipment and/or Goods will be returned to the origin at Carriers sole and unfettered discretion, and the Merchant(s) shall indemnify and hold harmless the Carrier, its servants and agents, for any breach of this clause. The Merchant(s) agree that the Carrier may stop the shipment and/or Goods in transit or withhold release of the shipment and/or Goods pending any investigation into compliance with this clause by the Merchant(s).
+
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+
+FREIGHT PREPAID
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Page B/L: 267705109 : 3 Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery)
+
+AGENT AT DESTINATION: MAERSK MEXICO, S.A. DE C.V. (HEADOFFICE) AV. DE LAS PALMAS 275, 4 PISO LOMAS DE CHAPULTEPEC 11000 MEXICO CITY MEXICO PHONE: 52 55 5010 3500 FAX: 52 55 5202 2602 CY/CY Consignee Ref: 4010368250 / 47911040
+
+First Notify Ref: 4010368250 / 47911040
+
+Freight & Charges Rate Unit Currency Prepaid Collect

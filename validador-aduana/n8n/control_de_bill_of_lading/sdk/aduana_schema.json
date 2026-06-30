@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "aduana_extract": {
+      "type": "object",
+      "properties": {
+        "operacion": { "type": ["string", "null"] },
+        "buque": { "type": ["string", "null"] },
+        "destino": { "type": ["string", "null"] },
+        "ddt": { "type": ["string", "null"] },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "bultos": { "type": ["number", "null"] },
+            "neto": { "type": ["number", "null"] },
+            "bruto": { "type": ["number", "null"] }
+          },
+          "required": ["bultos", "neto", "bruto"]
+        },
+        "contenedores": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "container": { "type": ["string", "null"] },
+              "precinto": { "type": ["string", "null"] },
+              "producto": { "type": ["string", "null"] },
+              "neto": { "type": ["number", "null"] },
+              "bruto": { "type": ["number", "null"] }
+            },
+            "required": ["container", "precinto", "producto", "neto", "bruto"]
+          }
+        }
+      },
+      "required": ["operacion", "buque", "destino", "ddt", "totals", "contenedores"]
+    }
+  },
+  "required": ["aduana_extract"]
+}

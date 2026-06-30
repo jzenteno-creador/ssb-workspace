@@ -1,0 +1,110 @@
+{
+  "type": "object",
+  "properties": {
+    "maersk_extract": {
+      "type": "object",
+      "properties": {
+        "order_number":  { "type": ["string", "null"] },
+        "booking_no":    { "type": ["string", "null"] },
+        "bl_no":         { "type": ["string", "null"] },
+        "export_references": { "type": "array", "items": { "type": "string" } },
+        "vessel":  { "type": ["string", "null"] },
+        "voyage":  { "type": ["string", "null"] },
+        "pol":     { "type": ["string", "null"] },
+        "pod":     { "type": ["string", "null"] },
+        "shipper":   { "type": ["string", "null"] },
+        "consignee": { "type": ["string", "null"] },
+        "notify":    { "type": ["string", "null"] },
+        "type_of_move": { "type": ["string", "null"] },
+        "description": {
+          "type": "object",
+          "properties": {
+            "goods_raw": { "type": ["string", "null"] },
+            "producto":  { "type": ["string", "null"] },
+            "grade":     { "type": ["string", "null"] },
+            "embalaje":  { "type": ["string", "null"] },
+            "ncm":       { "type": ["string", "null"] },
+            "pe_code":   { "type": ["string", "null"] },
+            "wooden_material":  { "type": ["string", "null"] },
+            "wooden_condition": { "type": ["string", "null"] },
+            "cantidad_contenedores": { "type": ["number", "null"] },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "goods":   { "type": ["string", "null"] },
+                  "bags":    { "type": ["number", "null"] },
+                  "pallets": { "type": ["number", "null"] },
+                  "gross_kg":{ "type": ["number", "null"] },
+                  "net_kg":  { "type": ["number", "null"] }
+                },
+                "required": ["bags", "pallets", "gross_kg", "net_kg"]
+              }
+            },
+            "bags_total":    { "type": ["number", "null"] },
+            "pallets_total": { "type": ["number", "null"] },
+            "gross_total_kg":{ "type": ["number", "null"] },
+            "net_total_kg":  { "type": ["number", "null"] }
+          },
+          "required": ["goods_raw", "cantidad_contenedores", "items", "wooden_material", "wooden_condition"]
+        },
+        "equipos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "container": { "type": ["string", "null"] },
+              "seal":      { "type": ["string", "null"] },
+              "pallets":   { "type": ["number", "null"] },
+              "gross_kg":  { "type": ["number", "null"] },
+              "cbm":       { "type": ["number", "null"] }
+            },
+            "required": ["container", "seal", "gross_kg", "cbm"]
+          }
+        },
+        "freight_lines": {
+          "type": "object",
+          "properties": {
+            "freight_marker": { "type": ["string", "null"] },
+            "concepts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "concept":       { "type": ["string", "null"] },
+                  "rate":          { "type": ["number", "null"] },
+                  "rate_currency": { "type": ["string", "null"] },
+                  "amount":        { "type": ["number", "null"] },
+                  "currency":      { "type": ["string", "null"] },
+                  "line_number":   { "type": ["number", "null"] },
+                  "column":        { "type": ["string", "null"] },
+                  "section":       { "type": "string" }
+                },
+                "required": ["concept", "amount", "currency", "section"]
+              }
+            },
+            "totals_lines": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "currency":        { "type": ["string", "null"] },
+                  "prepaid_amount":  { "type": ["number", "null"] },
+                  "collect_amount":  { "type": ["number", "null"] },
+                  "line_number":     { "type": ["number", "null"] },
+                  "column":          { "type": ["string", "null"] },
+                  "section":         { "type": "string" }
+                },
+                "required": ["currency", "prepaid_amount", "collect_amount", "section"]
+              }
+            }
+          },
+          "required": ["concepts", "totals_lines", "freight_marker"]
+        }
+      },
+      "required": ["order_number", "booking_no", "export_references", "consignee", "notify", "description", "equipos", "freight_lines"]
+    }
+  },
+  "required": ["maersk_extract"]
+}

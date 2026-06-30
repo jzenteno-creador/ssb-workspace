@@ -1,0 +1,28 @@
+{
+  "name": "validador-aduanal",
+  "version": "2.0.0",
+  "description": "Sistema web de validación de planillas aduanales (DDT) con integración Supabase",
+  "main": "validador_aduanal_v2.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 3000",
+    "test": "echo \"No tests configured yet\""
+  },
+  "keywords": [
+    "aduana",
+    "validador",
+    "excel",
+    "supabase",
+    "planillas",
+    "ddt",
+    "contenedores"
+  ],
+  "author": "Validador Aduanal",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/validador-aduanal.git"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

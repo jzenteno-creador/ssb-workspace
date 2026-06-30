@@ -1,0 +1,134 @@
+{
+ "order": "117801109",
+ "status": "SCHEMA_OK",
+ "stop_reason": "end_turn",
+ "usage": {
+  "input_tokens": 10500,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "cache_creation": {
+   "ephemeral_5m_input_tokens": 0,
+   "ephemeral_1h_input_tokens": 0
+  },
+  "output_tokens": 832,
+  "service_tier": "standard",
+  "inference_geo": "global"
+ },
+ "parsed": {
+  "maersk_extract": {
+   "order_number": "117801109",
+   "booking_no": "262780340",
+   "bl_no": "262780340",
+   "export_references": [
+    "117801109",
+    "47385358"
+   ],
+   "vessel": "MAERSK LONDRINA",
+   "voyage": "552N",
+   "pol": "Buenos Aires",
+   "pod": "Paranagua",
+   "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+   "consignee": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA\nROD BR 158 KM 537 10265 DAL ROSS\n85509-262 PATO BRANCO - PR BRAZIL\nTax ID: 75635144000113 Email: roberto.dagios@inplasul.ind.br",
+   "notify": "SAME AS CONSIGNEE",
+   "type_of_move": "CY/CY",
+   "description": {
+    "goods_raw": "1080 BAGS IN 18 PALLETS DOWLEX TG 2085B Polyethylene Resin / 2160 BAGS IN 36 PALLETS DOWLEX NG2045B Polyethylene Resin",
+    "producto": "Polyethylene Resin",
+    "grade": "NG2045B",
+    "embalaje": "BAGS",
+    "ncm": "3901",
+    "pe_code": "25003EC01007506H",
+    "wooden_material": "YES",
+    "wooden_condition": "TREATED AND CERTIFIED",
+    "cantidad_contenedores": 3,
+    "items": [
+     {
+      "goods": "DOWLEX TG 2085B Polyethylene Resin",
+      "bags": 1080,
+      "pallets": 18,
+      "gross_kg": 27540,
+      "net_kg": 27000
+     },
+     {
+      "goods": "DOWLEX NG2045B Polyethylene Resin",
+      "bags": 2160,
+      "pallets": 36,
+      "gross_kg": 55080,
+      "net_kg": 54000
+     }
+    ],
+    "bags_total": 3240,
+    "pallets_total": 54,
+    "gross_total_kg": 82620,
+    "net_total_kg": 81000
+   },
+   "equipos": [
+    {
+     "container": "MRSU7680210",
+     "seal": "BAA45195",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "MSKU1821840",
+     "seal": "BAA45194",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "TCLU5195449",
+     "seal": "BAA45879",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    }
+   ],
+   "freight_lines": {
+    "freight_marker": "PREPAID",
+    "concepts": [
+     {
+      "concept": "Basic Ocean Freight",
+      "rate": 801.0,
+      "rate_currency": "USD",
+      "amount": 2403.0,
+      "currency": "USD",
+      "line_number": 1,
+      "column": "Prepaid",
+      "section": "freight"
+     },
+     {
+      "concept": "Terminal Handling Service - Destination",
+      "rate": 1270.0,
+      "rate_currency": "BRL",
+      "amount": 3810.0,
+      "currency": "BRL",
+      "line_number": 2,
+      "column": "Collect",
+      "section": "freight"
+     }
+    ],
+    "totals_lines": [
+     {
+      "currency": "BRL",
+      "prepaid_amount": 0,
+      "collect_amount": 3810.0,
+      "line_number": 1,
+      "column": "Collect",
+      "section": "totals"
+     },
+     {
+      "currency": "USD",
+      "prepaid_amount": 2403.0,
+      "collect_amount": 0,
+      "line_number": 2,
+      "column": "Prepaid",
+      "section": "totals"
+     }
+    ]
+   }
+  }
+ },
+ "raw_head": "{\"maersk_extract\":{\"order_number\":\"117801109\",\"booking_no\":\"262780340\",\"bl_no\":\"262780340\",\"export_references\":[\"117801109\",\"47385358\"],\"vessel\":\"MAERSK LONDRINA\",\"voyage\":\"552N\",\"pol\":\"Buenos Aires\",\"pod\":\"Paranagua\",\"shipper\":\"PBBPOLISUR S.R.L.\\nCALLE BOUCHARD 710, PISO 11\\nC1106ABL CIUDAD DE BUEN"
+}

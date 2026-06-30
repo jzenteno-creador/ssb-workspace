@@ -1,0 +1,120 @@
+{
+ "order": "118309724",
+ "status": "SCHEMA_OK",
+ "stop_reason": "end_turn",
+ "usage": {
+  "input_tokens": 5363,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "cache_creation": {
+   "ephemeral_5m_input_tokens": 0,
+   "ephemeral_1h_input_tokens": 0
+  },
+  "output_tokens": 707,
+  "service_tier": "standard",
+  "inference_geo": "global"
+ },
+ "parsed": {
+  "maersk_extract": {
+   "order_number": "118309724",
+   "booking_no": "270774309",
+   "bl_no": "270774309",
+   "export_references": [
+    "118309724",
+    "47958876"
+   ],
+   "vessel": "MAERSK LABREA",
+   "voyage": "623N",
+   "pol": "Buenos Aires",
+   "pod": "Paranagua",
+   "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+   "consignee": "EVERTIS BRASIL PLASTICOS SA\nAV VINTE E CINCO DE JANEIRO, 1986\nQUATRO BARRAS - CEP: 83420-000\nPARANA BRASIL CNPJ: 03.208.517/0001-69 EMAIL: fabio.moraes@evertis.com",
+   "notify": "SAME AS CONSIGNEE",
+   "type_of_move": "CY/CY",
+   "description": {
+    "goods_raw": "58 BAGS IN 58 PALLETS WITH 34800 KG OF BYNEL 3860 Adhesive Resin",
+    "producto": "Adhesive Resin",
+    "grade": "3860",
+    "embalaje": "BAGS",
+    "ncm": "3901",
+    "pe_code": "26033EC01003851K",
+    "wooden_material": "YES",
+    "wooden_condition": "TREATED AND CERTIFIED",
+    "cantidad_contenedores": 2,
+    "items": [
+     {
+      "goods": "BYNEL 3860 Adhesive Resin",
+      "bags": 58,
+      "pallets": 58,
+      "gross_kg": null,
+      "net_kg": 34800
+     }
+    ],
+    "bags_total": 58,
+    "pallets_total": 58,
+    "gross_total_kg": 37131.6,
+    "net_total_kg": 34800
+   },
+   "equipos": [
+    {
+     "container": "CAAU8319502",
+     "seal": "BAH15529",
+     "pallets": 32,
+     "gross_kg": 20486.4,
+     "cbm": 32.371
+    },
+    {
+     "container": "SEGU4242510",
+     "seal": "BAH15528",
+     "pallets": 26,
+     "gross_kg": 16645.2,
+     "cbm": 26.302
+    }
+   ],
+   "freight_lines": {
+    "freight_marker": "PREPAID",
+    "concepts": [
+     {
+      "concept": "Basic Ocean Freight",
+      "rate": 740,
+      "rate_currency": "USD",
+      "amount": 1480,
+      "currency": "USD",
+      "line_number": 1,
+      "column": "Prepaid",
+      "section": "freight"
+     },
+     {
+      "concept": "Terminal Handling Service - Destination",
+      "rate": 1270,
+      "rate_currency": "BRL",
+      "amount": 2540,
+      "currency": "BRL",
+      "line_number": 2,
+      "column": "Collect",
+      "section": "freight"
+     }
+    ],
+    "totals_lines": [
+     {
+      "currency": "BRL",
+      "prepaid_amount": 0,
+      "collect_amount": 2540,
+      "line_number": 1,
+      "column": "Collect",
+      "section": "totals"
+     },
+     {
+      "currency": "USD",
+      "prepaid_amount": 1480,
+      "collect_amount": 0,
+      "line_number": 2,
+      "column": "Prepaid",
+      "section": "totals"
+     }
+    ]
+   }
+  }
+ },
+ "raw_head": "{\"maersk_extract\":{\"order_number\":\"118309724\",\"booking_no\":\"270774309\",\"bl_no\":\"270774309\",\"export_references\":[\"118309724\",\"47958876\"],\"vessel\":\"MAERSK LABREA\",\"voyage\":\"623N\",\"pol\":\"Buenos Aires\",\"pod\":\"Paranagua\",\"shipper\":\"PBBPOLISUR S.R.L.\\nCALLE BOUCHARD 710, PISO 11\\nC1106ABL CIUDAD DE BUENOS"
+}

@@ -1,0 +1,14 @@
+{
+  "assignments": {
+    "assignments": [
+      {
+        "id": "84bc77cc-9484-4756-af6d-88926b62c79b",
+        "name": "=joinKey",
+        "value": "={{ \n  (() => {\n    const src =\n      $json.login_extract?.export_references?.[0] ??\n      $json.login_extract?.order_number ??\n      $json.order_number ??\n      \"\";\n\n    // Devuelve solo dígitos; elimina \\n, espacios, guiones, etc.\n    return String(src).replace(/\\D+/g, \"\");\n  })()\n}}",
+        "type": "string"
+      }
+    ]
+  },
+  "includeOtherFields": true,
+  "options": {}
+}

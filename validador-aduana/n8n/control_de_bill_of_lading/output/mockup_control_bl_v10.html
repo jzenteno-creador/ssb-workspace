@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control de BL · v10 (triage + info completa)</title>
+</head>
+<!--
+  NOTA DE IMPLEMENTACIÓN
+  Este mockup está construido con TABLAS ANIDADAS + ESTILOS INLINE, sin flex,
+  sin grid, sin border-radius, sin box-shadow, sin position. Las barras de color
+  son celdas <td bgcolor>. Todo es portable a Gmail/Outlook (motor Word).
+  La franja gris y la nota superior son sólo el "lienzo" de revisión y NO forman
+  parte del email — el email empieza en el bloque blanco de 640px.
+-->
+
+<body style="margin:0;padding:0;background:#e6e4dc;">
+
+<!-- ============ LIENZO DE REVISIÓN (no es parte del email) ============ -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e6e4dc;">
+<tbody><tr><td align="center" style="padding:26px 14px 8px;">
+  <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;max-width:640px;">
+    <tbody><tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#86857c;letter-spacing:.06em;text-transform:uppercase;padding:0 4px 10px;">Mockup rediseño · email-safe (tablas + inline) — el correo empieza abajo ⤵</td></tr>
+  </tbody></table>
+</td></tr>
+</tbody></table>
+
+<!-- ============================ EMAIL ============================ -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#e6e4dc;">
+<tbody><tr><td align="center" style="padding:0 14px 40px;">
+
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;max-width:640px;background:#ffffff;border:1px solid #d9d7cd;border-collapse:separate;">
+
+  <!-- ---------- ENCABEZADO ---------- -->
+  <tbody><tr>
+    <td style="padding:18px 22px 14px;border-bottom:1px solid #e7e5db;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;vertical-align:middle;">
+            <div style="font-size:11px;color:#8a897f;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;">Control de Bill of Lading</div>
+            <div style="font-size:22px;line-height:1.1;color:#23231f;font-weight:bold;">Orden 118782214</div>
+          </td>
+          <td align="right" style="vertical-align:middle;width:120px;">
+            <!-- contador-foco: REVISAR domina, OK recesivo -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right">
+              <tbody><tr>
+                <td bgcolor="#C2410C" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:#ffffff;padding:6px 12px;letter-spacing:.04em;">1 REVISAR</td>
+              </tr>
+            </tbody></table>
+          </td>
+        </tr>
+      </tbody></table>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6f6e65;margin-top:12px;line-height:1.5;">
+        Booking <b style="color:#46453f;">LA0495273</b> &nbsp;·&nbsp; Buque LOG-IN RESILIENTE 495N &nbsp;·&nbsp; Flete PREPAID &nbsp;·&nbsp; <span style="color:#9a998f;">22 campos OK</span>
+      </div>
+    </td>
+  </tr>
+
+  <!-- ---------- TRIAGE: lo único que hay que mirar ---------- -->
+  <tr>
+    <td style="padding:16px 22px 4px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody><tr>
+          <!-- barra lateral sólida (no border-radius) -->
+          <td bgcolor="#C2410C" width="6" style="width:6px;font-size:0;line-height:0;">&nbsp;</td>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;border-left:0;padding:13px 16px;font-family:Arial,Helvetica,sans-serif;">
+            <div style="font-size:11px;font-weight:bold;color:#9A3A0A;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;">⚑ Para verificar — 1 campo</div>
+            <!-- item -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tbody><tr>
+                <td width="78" style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#9A3A0A;padding:2px 0;">SECCIÓN 2<br>Producto</td>
+                <td style="vertical-align:top;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#5b2a05;line-height:1.45;padding:1px 0 1px 10px;">
+                  <b style="color:#7a3300;">Nombre del producto difiere en la Planilla de Aduana.</b><br>
+                  BL <b>ELITE AT 6502B</b> &nbsp;≠&nbsp; Aduana <b>ELITE AT 6502</b> &nbsp;→&nbsp; verificar con el despachante.
+                </td>
+              </tr>
+            </tbody></table>
+          </td>
+        </tr>
+      </tbody></table>
+      <!-- micro-leyenda -->
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;padding:9px 2px 0;">
+        <span style="color:#9A3A0A;font-weight:bold;">REVISAR</span> = requiere acción &nbsp;·&nbsp; coincide / info = sin acción
+      </div>
+    </td>
+  </tr>
+
+  <!-- ---------- DOCUMENTOS ---------- -->
+  <tr>
+    <td style="padding:14px 22px 4px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f6f5f0" style="border:1px solid #e7e5db;">
+        <tbody><tr>
+          <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#8a897f;">
+            <span style="color:#6f6e65;">Documentos:</span>&nbsp;
+            <a href="#" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Abrir BL</a> &nbsp;·&nbsp;
+            <a href="#" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Planilla Aduana</a> &nbsp;·&nbsp;
+            <a href="#" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Booking Advice</a> &nbsp;·&nbsp;
+            <a href="#" style="color:#1f5fae;text-decoration:none;font-weight:bold;">Factura</a>
+          </td>
+        </tr>
+      </tbody></table>
+    </td>
+  </tr>
+
+  <!-- ===================== SECCIÓN 1 ===================== -->
+  <tr>
+    <td style="padding:20px 22px 6px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#23231f;">Sección 1 · Formulario BL <span style="font-weight:normal;color:#a7a69c;font-size:12px;">(campos 2–17)</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;letter-spacing:.03em;">TODO COINCIDE · SIN ACCIÓN ✓</td>
+        </tr>
+      </tbody></table>
+    </td>
+  </tr>
+
+  <!-- (2)(3)(4) IDENTIDADES — informacion COMPLETA, recesiva -->
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;">
+      <tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(2)</span> <span style="color:#46453f;font-weight:bold;">Shipper / exporter</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr><td width="58%" valign="top" style="padding:8px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>PBBPOLISUR S.R.L.<br>CALLE BOUCHARD 710, PISO 11<br>C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL<br>ARGENTINA · CUIT 30560254195</td><td width="42%" valign="top" style="padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Factura (exportador)</div>PBBPOLISUR S.R.L.<br>CALLE BOUCHARD 710, PISO 11<br>C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL<br>ARGENTINA</td></tr></tbody></table></td></tr>
+      <tr><td colspan="2" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;font-style:italic;line-height:1.45;">Embarcador = Exportador (BL = Factura)</td></tr>
+      </tbody>
+    </table>
+  </td></tr>
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;">
+      <tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(3)</span> <span style="color:#46453f;font-weight:bold;">Consignee</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr><td width="40%" valign="top" style="padding:8px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>FULL PACK EMBALAGENS LTDA<br>R FIORELLO BADALOTTI, 227D<br>CEP 89813-820, CHAPECO<br>QUEDAS DO PALMITAL - SANTA CATARINA - BRAZIL<br>CNPJ: 11.158.271/0001-96<br>JEFERSON@FULLPACK.IND.BR</td><td width="32%" valign="top" style="padding:8px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Booking (consignee)</div>FULLPACK EMBALAGENS LTDA<br>R FIORELLO BADALOTTI 227D<br>INDUSTRIAL FLAVIO BALDISSERA<br>89813-820 CHAPECO - SC<br>BRAZIL<br>CNPJ 11158271000196</td><td width="28%" valign="top" style="padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Factura (Ship To)</div>FULLPACK EMBALAGENS LTDA<br>CNPJ 11158271000196</td></tr></tbody></table></td></tr>
+      
+      </tbody>
+    </table>
+  </td></tr>
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;margin-bottom:8px;">
+      <tbody>
+      <tr><td bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;padding:7px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="font-family:'Courier New',monospace;font-weight:bold;color:#8a897f;">(4)</span> <span style="color:#46453f;font-weight:bold;">Notify party</span></td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr></tbody></table>
+      </td></tr>
+      <tr><td style="padding:0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tbody><tr><td width="58%" valign="top" style="padding:8px 12px;border-right:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">BL</div>FULL PACK EMBALAGENS LTDA<br>R FIORELLO BADALOTTI, 227D<br>CEP 89813-820, CHAPECO<br>QUEDAS DO PALMITAL - SANTA CATARINA - BRAZIL<br>CNPJ: 11.158.271/0001-96<br>JEFERSON@FULLPACK.IND.BR</td><td width="42%" valign="top" style="padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;line-height:1.5;"><div style="font-size:10px;color:#a7a69c;font-weight:bold;margin-bottom:3px;">Booking (notify)</div>FULLPACK EMBALAGENS LTDA<br>R FIORELLO BADALOTTI 227D<br>INDUSTRIAL FLAVIO BALDISSERA<br>89813-820 CHAPECO - SC<br>BRAZIL<br>CNPJ 11158271000196<br>JEFERSON@FULLPACK.IND.BR</td></tr></tbody></table></td></tr>
+      <tr><td colspan="2" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;font-style:italic;line-height:1.45;">Coincide por CNPJ (empresa correcta); si el email puntual difiere, verificar la casilla.</td></tr><tr><td colspan="2" bgcolor="#f6f5f0" style="padding:6px 12px;border-top:1px solid #eeede6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;">Control intra-Booking · notify estructurado e instrucciones del BA coinciden <span style="color:#3f7a1e;font-weight:bold;">— OK ✓</span></td></tr>
+      </tbody>
+    </table>
+  </td></tr>
+  <!-- (5)(6)(15)(16)+Destino — una línea cada uno -->
+  <tr><td style="padding:4px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e9e7dd;border-collapse:collapse;">
+      <tbody>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">5</td>
+          <td style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Booking no.</span> <span style="color:#9a998f;">— BL <b style="color:#7a796f;">LA0495273</b> = Booking Advice</span></td>
+          <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">6</td>
+          <td style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Export references</span> <span style="color:#9a998f;">— 118782214 en BL · Aduana · Booking · Factura</span></td>
+          <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">15</td>
+          <td style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Port of loading</span> <span style="color:#9a998f;">— BUENOS AIRES (BL = Booking)</span></td>
+          <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">16</td>
+          <td style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Port of discharge</span> <span style="color:#9a998f;">— NAVEGANTES (BL = Booking)</span></td>
+          <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="border-bottom:1px solid #e9e7dd;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">10A</td>
+          <td style="border-bottom:1px solid #e9e7dd;border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Originals released at</span> <span style="color:#9a998f;">— BL <b style="color:#7a796f;">DESTINO</b> · Booking (instrucciones) <b style="color:#7a796f;">DESTINO</b> → coincide</span></td>
+          <td width="92" align="right" style="border-bottom:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td width="42" bgcolor="#f6f5f0" style="font-family:'Courier New',monospace;font-size:11px;font-weight:bold;color:#8a897f;text-align:center;padding:9px 0;">·</td>
+          <td style="border-left:1px solid #e9e7dd;padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><span style="color:#46453f;font-weight:bold;">Destino · Incoterm</span> <span style="color:#9a998f;">— País <b style="color:#7a796f;">BRAZIL</b> (BL · Aduana · Booking · Factura) · Incoterm <b style="color:#7a796f;">CPT NAVEGANTES</b> (Factura) → el place valida el POD (16) → coincide</span></td>
+          <td width="92" align="right" style="padding:8px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;white-space:nowrap;font-weight:bold;">coincide ✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </td></tr>
+  <!-- Informativos: una línea, gris plano, sin badge -->
+  <tr>
+    <td style="padding:10px 22px 0;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a09f95;line-height:1.7;">
+        <span style="color:#8a897f;font-weight:bold;">Informativos (datos de referencia del BL):</span>
+        (5A) BL no. 495N902813597 · (8) País Argentina · (11) FCL/FCL · (14) Buque LOG-IN RESILIENTE 495N <span style="color:#b0afa4;">(Aduana puede traer feeder distinto)</span>
+      </div>
+    </td>
+  </tr>
+
+  <!-- Vacíos estructurales -->
+  <tr>
+    <td style="padding:8px 22px 0;">
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0afa4;line-height:1.6;border-top:1px dashed #e2e0d6;padding-top:8px;">
+        <span style="font-weight:bold;color:#9a998f;">Campos que van vacíos en el BL:</span>
+        (7) Forwarding agent · (9) Also notify · (9A) Final destination · (10) Loading pier · (12) Place of receipt · (13) Final port of loading · (17) Place of delivery.
+        <span style="color:#b0afa4;">Se esperan vacíos — si alguno viene con dato, se marca para verificar (posible error de carga).</span>
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;"><tbody><tr>
+        <td bgcolor="#C2410C" width="6" style="width:6px;font-size:0;line-height:0;">&nbsp;</td>
+        <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;border-left:0;padding:7px 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b2a05;line-height:1.45;"><b style="color:#7a3300;">Ejemplo de aviso:</b> (9A) Final destination vino con un dato cuando debería ir vacío — verificar (posible error de carga). Sube al triage de arriba.</td>
+      </tr></tbody></table>
+    </td>
+  </tr>
+
+  <!-- ===================== SECCIÓN 2 ===================== -->
+  <tr>
+    <td style="padding:24px 22px 6px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#23231f;">Sección 2 · Mercadería</td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9A3A0A;font-weight:bold;letter-spacing:.03em;">⚑ 1 A VERIFICAR</td>
+        </tr>
+      </tbody></table>
+    </td>
+  </tr>
+
+  <!-- Producto: el REVISAR arriba, luego la grilla con la fila marcada -->
+  <tr>
+    <td style="padding:6px 22px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tbody><tr>
+          <td colspan="5" style="padding:0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tbody><tr>
+                <td bgcolor="#C2410C" width="6" style="width:6px;font-size:0;line-height:0;">&nbsp;</td>
+                <td bgcolor="#FBEEDB" style="padding:10px 14px;border:1px solid #ECC79A;border-left:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#5b2a05;line-height:1.45;">
+                  <b style="color:#7a3300;">ELITE AT 6502B Enhanced Polyethylene Resin</b> — el nombre difiere en Aduana (<b>“ELITE AT 6502”</b>). Verificar con el despachante.
+                </td>
+                <td bgcolor="#FBEEDB" align="right" width="76" style="border:1px solid #ECC79A;border-left:0;padding:10px 12px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tbody><tr><td bgcolor="#C2410C" style="font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#fff;padding:3px 9px;letter-spacing:.04em;">REVISAR</td></tr></tbody></table>
+                </td>
+              </tr>
+            </tbody></table>
+          </td>
+        </tr>
+      </tbody></table>
+
+      <!-- DESCRIPTION OF PACKAGES AND GOODS (tal cual del BL) -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f6f5f0" style="border:1px solid #e7e5db;border-collapse:collapse;margin-top:8px;">
+        <tbody>
+        <tr><td colspan="2" style="padding:6px 12px;border-bottom:1px solid #e7e5db;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#9a998f;letter-spacing:.05em;text-transform:uppercase;">BL — Description of packages and goods (tal cual)</td></tr>
+        <tr><td width="120" valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebE3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">NOS. OF PKGS</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;">4 X 40HC</td></tr>
+        <tr><td valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">DESCRIPTION</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;line-height:1.5;">4 CONTAINERS OF 40 HC SAID TO CONTAIN<br>DESCRIPTION GOODS: ELITE AT 6502B Enhanced Polyethylene Resin<br>QUANTITY: 4320 BAGS IN 72 PALLETS · GROSS WEIGHT: 110160 · NET WEIGHT: 108000<br>NCM: 3901 · Wooden Material: YES · Wooden Condition: Treated and Certified<br>26003EC03001276X</td></tr>
+        <tr><td valign="top" style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">GROSS WEIGHT</td><td style="padding:6px 12px;border-bottom:1px solid #ecebe3;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;">110160,000</td></tr>
+        <tr><td valign="top" style="padding:6px 12px;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;">MEASUREMENT</td><td style="padding:6px 12px;font-family:'Courier New',monospace;font-size:11px;color:#5b5a52;">182,088</td></tr>
+        </tbody>
+      </table>
+
+      <!-- grilla de atributos -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:8px;">
+        <tbody><tr>
+          <td style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Atributo</td>
+          <td width="22%" style="border:1px solid #e2e0d6;background:#eef0e6;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#5d6b46;padding:6px 9px;">BL <span style="font-weight:normal;color:#8aa06a;">(ancla)</span></td>
+          <td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Aduana</td>
+          <td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Booking</td>
+          <td width="19%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Factura</td>
+        </tr>
+        <!-- fila REVISAR: nombre -->
+        <tr>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a3300;padding:6px 9px;">Nombre&nbsp;⚑</td>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b2a05;padding:6px 9px;">ELITE AT <b>6502B</b></td>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b2a05;padding:6px 9px;">ELITE AT <b>6502</b></td>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a857a;padding:6px 9px;">6502B</td>
+          <td bgcolor="#FBEEDB" style="border:1px solid #ECC79A;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a857a;padding:6px 9px;">6502B</td>
+        </tr>
+        <!-- filas OK: gris recesivo -->
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Bolsas</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">4.320</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0afa4;padding:6px 9px;">—</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">4.320</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">4.320</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Pallets</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">72</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">72</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Embalaje</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">Bags</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0afa4;padding:6px 9px;">—</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">Bags</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">25 KG Bags</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">PA / NCM</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">3901</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0afa4;padding:6px 9px;">—</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39014000000K</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">39014000000K</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Neto (kg)</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">108.000,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">108.000,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">108.000,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">108.000,00</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a796f;padding:6px 9px;">Bruto (kg)</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#46453f;padding:6px 9px;">110.160,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">110.160,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">110.160,00</td>
+          <td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;padding:6px 9px;">110.160,00</td>
+        </tr>
+      </tbody></table>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0afa4;padding:6px 2px 0;">“—” = la Planilla de Aduana no informa ese atributo (no es discrepancia).</div>
+    </td>
+  </tr>
+
+  <!-- Contenedores: resumen + lista compacta con CONTENIDO por contenedor -->
+  <tr>
+    <td style="padding:18px 22px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody><tr>
+          <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:#46453f;">Detalle por contenedor</td>
+          <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;font-weight:bold;">4/4 coinciden ✓</td>
+        </tr></tbody>
+      </table>
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#9a998f;line-height:1.55;margin:5px 0 8px;">
+        Número, precinto, neto, bruto y volumen <b style="color:#7a796f;">iguales en BL = Aduana = Booking</b> en los 4 contenedores. Cada uno: Neto 27.000,00 · Bruto 27.540,00 kg · Vol 45,522 m³ · Madera YES (T&amp;C).
+      </div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tbody><tr>
+          <td width="26%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Contenedor (BL = Aduana)</td>
+          <td width="18%" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Precinto</td>
+          <td style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Contenido (producto · bolsas · pallets)</td>
+          <td width="80" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#7a796f;padding:6px 9px;">Estado</td>
+        </tr>
+        <tr>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">FFAU3921953</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAD37827</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">ELITE AT 6502B · 1.080 bolsas · 18 pallets</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">MSDU5911313</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BAD37826</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">ELITE AT 6502B · 1.080 bolsas · 18 pallets</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">TCLU8166892</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">JK89157</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">ELITE AT 6502B · 1.080 bolsas · 18 pallets</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide ✓</td>
+        </tr>
+        <tr>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">TCLU8337320</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">JK89154</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">ELITE AT 6502B · 1.080 bolsas · 18 pallets</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide ✓</td>
+        </tr>
+      </tbody></table>
+      <!-- ejemplo: contenedor con 2 productos -->
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a7a69c;padding:8px 2px 4px;">Cómo se ve un contenedor con <b style="color:#7a796f;">2 productos</b> (ejemplo):</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tbody>
+        <tr>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#46453f;padding:6px 9px;">XXXU1234567</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:'Courier New',monospace;font-size:11px;color:#9a998f;padding:6px 9px;">BA00001</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#5b5a52;padding:6px 9px;line-height:1.5;">ELITE AT 6502B · 540 bolsas · 9 pallets<br>DOWLEX NG 2045B · 540 bolsas · 9 pallets</td>
+          <td valign="top" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#3f7a1e;padding:6px 9px;font-weight:bold;">coincide ✓</td>
+        </tr>
+      </tbody></table>
+    </td>
+  </tr>
+
+  <!-- Flete: tabla completa, recesiva -->
+  <tr><td style="padding:16px 22px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tbody><tr>
+        <td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:#46453f;">Detalle de tarifa (flete BL)</td>
+        <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a7a69c;">PREPAID · sin discrepancias</td>
+      </tr></tbody>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:6px;">
+      <tbody>
+      <tr>
+        <td style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Freight charges</td>
+        <td align="center" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Qty</td>
+        <td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Rate</td>
+        <td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Prepaid</td>
+        <td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Collect</td>
+        <td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Valor factura</td>
+        <td align="right" style="border:1px solid #e2e0d6;background:#f6f5f0;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#7a796f;padding:5px 8px;">Estado</td>
+      </tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">BUNKER</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 174,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 696,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">EEFA</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 44,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 176,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">GATE</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 25,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 100,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">ISPS</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 10,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 40,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">Ocean Freight</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 100,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 400,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">THC DESTINO</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 1.100,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 4.400,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">THC ORIGEM</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 260,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 1.040,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">TOLL FEE</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 178,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 712,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:normal;padding:5px 8px;">TOTAL REAIS</td><td align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">REALES</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 0,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">R$ 4.400,00</td><td align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td style="border:1px solid #e2e0d6;padding:5px 8px;">&nbsp;</td></tr>
+<tr><td bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">TOTAL USD</td><td bgcolor="#f6f5f0" align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">DOLARES</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 3.164,00</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 0,00</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 3.164,00</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#3f7a1e;font-weight:bold;padding:5px 8px;">OK ✓</td></tr>
+<tr><td bgcolor="#f6f5f0" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#7a796f;font-weight:bold;padding:5px 8px;">TARIFA POR CONTENEDOR</td><td bgcolor="#f6f5f0" align="center" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">4</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 791,00</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">—</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;"></td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9a998f;padding:5px 8px;">US$ 791,00</td><td bgcolor="#f6f5f0" align="right" style="border:1px solid #e2e0d6;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#3f7a1e;font-weight:bold;padding:5px 8px;">OK ✓</td></tr>
+      </tbody>
+    </table>
+  </td></tr>
+  <!-- pie -->
+  <tr>
+    <td style="padding:18px 22px 22px;">
+      <div style="border-top:1px solid #e7e5db;padding-top:12px;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#b0afa4;line-height:1.6;">
+        Control automático de Bill of Lading · Orden 118782214 · corrida del día. El BL es el documento ancla: las columnas Aduana / Booking / Factura se comparan contra él.
+      </div>
+    </td>
+  </tr>
+
+</tbody></table>
+</td></tr>
+</tbody></table>
+
+
+
+</body></html>

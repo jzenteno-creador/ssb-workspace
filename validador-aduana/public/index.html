@@ -1,0 +1,3453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validador Aduanal - Planillas de Aduana</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+            min-height: 100vh;
+            padding: 0;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #f8f9fa;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 14px 24px;
+            border-bottom: 3px solid #3182ce;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 20px; font-weight: 700; }
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 14px;
+        }
+        .trabajador-input {
+            padding: 7px 12px;
+            border: 1px solid #4a5568;
+            border-radius: 4px;
+            background: #1a202c;
+            color: white;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        /* ─── MAIN LAYOUT ─── */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            border-right: 2px solid #2d3748;
+            padding: 14px;
+            overflow-y: auto;
+            background: #2d3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-upload { background: #3182ce; color: white; }
+        .btn-upload:hover { background: #2b6cb0; }
+        .btn-add { background: #38a169; color: white; }
+        .btn-add:hover { background: #2f855a; }
+        .btn-delete { background: #e53e3e; color: white; flex: 0.4; }
+        .btn-delete:hover { background: #c53030; }
+
+        .search-box { margin-bottom: 12px; }
+        .search-box input {
+            width: 100%;
+            padding: 9px 10px;
+            border: 1px solid #4a5568;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #1a202c;
+            color: white;
+        }
+        .search-box input::placeholder { color: #718096; }
+
+        .orders-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .order-item {
+            padding: 10px 12px;
+            margin: 4px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4a5568;
+            border-left: 4px solid #718096;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-size: 13px;
+        }
+        .order-item:hover { background: #5a6b81; }
+        .order-item.active {
+            background: #3182ce;
+            border-left-color: #63b3ed;
+            font-weight: 600;
+        }
+        .status-badge {
+            font-size: 10px;
+            padding: 3px 7px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-badge.validado { background: #38a169; color: white; }
+        .status-badge.pending { background: #d69e2e; color: white; }
+        .status-badge.rechazado { background: #e53e3e; color: white; }
+
+        /* ─── PANEL ─── */
+        .panel {
+            flex: 1;
+            padding: 18px 24px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        .panel-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #718096;
+            font-size: 18px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* ─── INFO FIELDS ─── */
+        .info-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .info-field {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            font-size: 13px;
+        }
+        .info-label { font-weight: 700; color: #1a202c; white-space: nowrap; }
+        .info-input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            color: #1a202c;
+            width: 140px;
+        }
+        .info-input:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.15);
+        }
+        .info-input.error { border-color: #e53e3e; background: #fff5f5; }
+        .info-input.changed { border-color: #d69e2e; background: #fffff0; }
+
+        /* ─── SECTION TITLES ─── */
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 14px 0 10px 0;
+            color: #1a202c;
+            border-bottom: 2px solid #3182ce;
+            padding-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ─── TABLE ─── */
+        .table-container {
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 10px;
+            background: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th {
+            background: #2d3748;
+            padding: 8px 6px;
+            text-align: center;
+            font-weight: 700;
+            color: white;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 4px 3px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: center;
+        }
+        table input {
+            width: 100%;
+            padding: 5px 4px;
+            border: 1px solid #e2e8f0;
+            border-radius: 3px;
+            font-size: 12px;
+            background: white;
+            color: #1a202c;
+            text-align: center;
+        }
+        table input:focus {
+            outline: none;
+            border-color: #3182ce;
+            background: #ebf8ff;
+        }
+        table input.error { border-color: #e53e3e; background: #fff5f5; }
+        table input.changed { border-color: #d69e2e; background: #fffff0; }
+
+        .totals-row {
+            background: #edf2f7;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .totals-row td {
+            padding: 8px 6px;
+            border-top: 2px solid #cbd5e0;
+            color: #1a202c;
+        }
+
+        .btn-row-delete {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .btn-row-delete:hover { background: #fff5f5; }
+
+        .btn-icon-add {
+            background: #38a169;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-icon-add:hover { background: #2f855a; }
+
+        /* ─── SUMMARY ─── */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 10px 12px;
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            margin-bottom: 14px;
+        }
+        .summary-cell { text-align: center; }
+        .summary-label { font-weight: 700; color: #4a5568; font-size: 11px; text-transform: uppercase; }
+        .summary-value { color: #2d3748; font-weight: 700; font-size: 16px; margin-top: 2px; }
+
+        /* ─── ACTION BUTTONS ─── */
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-save { background: #3182ce; color: white; }
+        .btn-save:hover { background: #2b6cb0; }
+        .btn-save:disabled { background: #a0aec0; cursor: not-allowed; }
+        .btn-validate { background: #38a169; color: white; }
+        .btn-validate:hover { background: #2f855a; }
+        .btn-reject { background: #e53e3e; color: white; }
+        .btn-reject:hover { background: #c53030; }
+
+        /* ─── MODALS ─── */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 420px;
+            width: 90%;
+        }
+        .modal-content h2 {
+            margin-bottom: 16px;
+            color: #1a202c;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .modal-content label {
+            font-weight: 700;
+            font-size: 13px;
+            display: block;
+            margin-bottom: 6px;
+            color: #4a5568;
+        }
+        .modal-content input,
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            background: white;
+            color: #1a202c;
+        }
+        .modal-content textarea { min-height: 80px; resize: vertical; }
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .modal-confirm { background: #38a169; color: white; }
+        .modal-confirm:hover { background: #2f855a; }
+        .modal-confirm.reject { background: #e53e3e; }
+        .modal-confirm.reject:hover { background: #c53030; }
+        .modal-cancel { background: #edf2f7; color: #4a5568; }
+        .modal-cancel:hover { background: #e2e8f0; }
+
+        /* ─── ALERTS ─── */
+        .alert-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 22px;
+            border-radius: 6px;
+            z-index: 2000;
+            max-width: 350px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        }
+        .alert-toast.success { background: #f0fff4; color: #22543d; border-left: 4px solid #38a169; }
+        .alert-toast.error { background: #fff5f5; color: #742a2a; border-left: 4px solid #e53e3e; }
+        .alert-toast.warning { background: #fffff0; color: #744210; border-left: 4px solid #d69e2e; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .file-input-wrapper { position: relative; overflow: hidden; }
+        .file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
+
+        /* ─── LOADING ─── */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        .loading-spinner {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .order-info-line {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 2px;
+        }
+
+        /* ─── TABS ─── */
+        .tabs {
+            display: flex;
+            background: #1a202c;
+            border-bottom: 1px solid #4a5568;
+            padding: 0 24px;
+        }
+        .tab {
+            padding: 10px 24px;
+            border: none;
+            background: none;
+            color: #a0aec0;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #e2e8f0; }
+        .tab.active {
+            color: white;
+            border-bottom-color: #3182ce;
+            font-weight: 700;
+        }
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* ─── CONSULTAS TAB ─── */
+        .consultas-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .consultas-sidebar {
+            width: 300px;
+            min-width: 300px;
+            border-right: 2px solid #2d3748;
+            padding: 14px;
+            overflow-y: auto;
+            background: #2d3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .consultas-sidebar label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .consultas-sidebar input,
+        .consultas-sidebar textarea,
+        .consultas-sidebar select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #4a5568;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #1a202c;
+            color: white;
+        }
+        .consultas-sidebar textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .consultas-sidebar input::placeholder,
+        .consultas-sidebar textarea::placeholder { color: #718096; }
+        .btn-buscar {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #3182ce;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-buscar:hover { background: #2b6cb0; }
+        .consultas-results {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+        }
+        .consultas-results .order-item {
+            font-size: 13px;
+        }
+        .consultas-results .not-found {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 5px;
+            background: #553c2a;
+            border-left: 4px solid #d69e2e;
+            color: #fbd38d;
+            font-size: 12px;
+        }
+        .consultas-empty {
+            color: #718096;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+        }
+        .consultas-panel {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        .doc-view {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            color: #1a202c;
+            line-height: 1.6;
+        }
+        .doc-view .doc-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .doc-view .doc-field { margin-bottom: 4px; }
+        .doc-view .doc-field strong { color: #2d3748; }
+        .doc-view .doc-status {
+            margin: 14px 0;
+            padding: 10px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .doc-status.validado { background: #f0fff4; border: 1px solid #38a169; color: #22543d; }
+        .doc-status.rechazado { background: #fff5f5; border: 1px solid #e53e3e; color: #742a2a; }
+        .doc-status.pendiente { background: #fffff0; border: 1px solid #d69e2e; color: #744210; }
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .doc-table th {
+            background: #edf2f7;
+            color: #2d3748;
+            padding: 8px 6px;
+            text-align: center;
+            font-weight: 700;
+            border: 1px solid #cbd5e0;
+            font-size: 11px;
+        }
+        .doc-table td {
+            padding: 6px;
+            border: 1px solid #cbd5e0;
+            text-align: center;
+        }
+        .doc-table .totals-row td {
+            font-weight: 700;
+            background: #edf2f7;
+            border-top: 2px solid #a0aec0;
+        }
+        .doc-summary {
+            margin: 10px 0;
+            padding: 10px 14px;
+            background: #edf2f7;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .embarque-section {
+            margin-top: 18px;
+        }
+        .embarque-section label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .embarque-textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            background: white;
+            color: #1a202c;
+        }
+        .btn-copiar {
+            margin-top: 8px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 5px;
+            background: #2d3748;
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copiar:hover { background: #4a5568; }
+
+        /* ─── EXCEL-STYLE TABLE ─── */
+        .excel-table-container {
+            margin: 14px 0;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            overflow: auto;
+            max-height: 500px;
+            background: white;
+        }
+        .excel-table {
+            border-collapse: collapse;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+        }
+        .excel-table th {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 4px 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 10px;
+            border: 1px solid #cbd5e0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .excel-table td {
+            padding: 3px 6px;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+            color: #4a5568;
+            font-size: 11px;
+            text-align: left;
+        }
+        .excel-table .row-num {
+            background: #e2e8f0;
+            color: #718096;
+            text-align: center;
+            font-weight: 700;
+            font-size: 10px;
+            min-width: 30px;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .excel-table .header-highlight {
+            background: #c6f6d5 !important;
+        }
+        .excel-table td.kw-bold {
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        /* ─── CONTROL TAB ─── */
+        .control-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            background: white;
+        }
+        .control-table th {
+            background: #2d3748;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 11px;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .control-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        .control-table tr:hover { background: #f7fafc; }
+        .control-table .cont-list {
+            max-width: 300px;
+            word-break: break-all;
+            color: #718096;
+            font-size: 11px;
+        }
+        .control-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .btn-export {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #38a169;
+            color: white;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-export:hover { background: #2f855a; }
+
+        /* ─── UPLOAD RESULT MODAL ─── */
+        .modal-content.wide {
+            max-width: 620px;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .result-table th {
+            background: #2d3748;
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 12px;
+        }
+        .result-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 12px;
+        }
+        .result-table .result-ok { background: #f0fff4; }
+        .result-table .result-ok td:first-child { color: #22543d; font-weight: 600; }
+        .result-table .result-error { background: #fff5f5; }
+        .result-table .result-error td:first-child { color: #742a2a; font-weight: 600; }
+        .result-table .result-skipped { background: #f7fafc; color: #718096; }
+        .result-table .result-warning { background: #fffff0; }
+        .result-table .result-warning td:first-child { color: #744210; font-weight: 600; }
+        .result-summary .count-warning { color: #d69e2e; }
+        .result-summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .result-summary .count-ok { color: #38a169; }
+        .result-summary .count-error { color: #e53e3e; }
+        .result-summary .count-skipped { color: #718096; }
+        .result-body {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Validador Aduanal v3.0</h1>
+            <div class="header-right">
+                <label for="trabajador">Trabajador:</label>
+                <select id="trabajador" class="trabajador-input">
+                    <option value="">Seleccionar...</option>
+                    <option value="Jonathan Zenteno">Jonathan Zenteno</option>
+                    <option value="Naara Ovejero">Naara Ovejero</option>
+                    <option value="Jorge Rojas">Jorge Rojas</option>
+                    <option value="Franco Benitez">Franco Benitez</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('validar')">VALIDAR</button>
+            <button class="tab" onclick="switchTab('consultas')">CONSULTAS</button>
+            <button class="tab" onclick="switchTab('control')">CONTROL</button>
+        </div>
+
+        <div id="tab-validar" class="tab-content active">
+            <div class="sidebar">
+                <div class="button-group">
+                    <label class="btn btn-upload file-input-wrapper">
+                        Cargar Excel
+                        <input type="file" id="excelFile" accept=".xlsx,.xls" multiple />
+                    </label>
+                    <button class="btn btn-add" id="btnAddOrder">+ Orden</button>
+                    <button class="btn btn-delete" id="btnDeleteOrder" title="Borrar orden seleccionada">Borrar</button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar PO, DDT, buque...">
+                </div>
+
+                <div id="errorBanner"></div>
+                <ul class="orders-list" id="ordersList"></ul>
+            </div>
+
+            <div class="panel" id="panel">
+                <div class="panel-empty">
+                    <span style="font-size: 32px;">&#128203;</span>
+                    Selecciona una orden o carga un Excel
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-consultas" class="tab-content">
+            <div class="consultas-layout">
+                <div class="consultas-sidebar">
+                    <div>
+                        <label>Buscar PO, DDT o buque</label>
+                        <input type="text" id="consultaSearch" placeholder="Buscar PO, DDT o buque...">
+                    </div>
+                    <div>
+                        <label>Pegar POs desde Excel (una por l&iacute;nea)</label>
+                        <textarea id="consultaMultiple" placeholder="4200012345&#10;4200012346&#10;4200012347"></textarea>
+                    </div>
+                    <div>
+                        <label>Filtro por estado</label>
+                        <select id="consultaEstado">
+                            <option value="">Todos</option>
+                            <option value="PENDIENTE">Pendientes</option>
+                            <option value="VALIDADO">Validadas</option>
+                            <option value="RECHAZADO">Rechazadas</option>
+                        </select>
+                    </div>
+                    <button class="btn-buscar" onclick="buscarConsultas()">&#128269; Buscar</button>
+                    <ul class="consultas-results" id="consultaResults">
+                        <li class="consultas-empty">Busc&aacute; una orden para consultar</li>
+                    </ul>
+                </div>
+                <div class="consultas-panel" id="consultaPanel">
+                    <div class="panel-empty">
+                        <span style="font-size: 32px;">&#128270;</span>
+                        Busc&aacute; y seleccion&aacute; una orden para ver su documento
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div id="tab-control" class="tab-content">
+            <div style="flex:1;padding:24px;overflow-y:auto;background:#f8f9fa;">
+                <div id="controlContent" style="display:flex;align-items:center;justify-content:center;height:100%;">
+                    <button class="btn-buscar" style="width:auto;padding:14px 28px;font-size:15px;" onclick="loadControlData()">Cargar registros de la base de datos</button>
+                </div>
+            </div>
+        </div>
+
+    <!-- Modal Validar -->
+    <div class="modal" id="validationModal">
+        <div class="modal-content">
+            <h2 id="validateTitle">¿Validar orden?</h2>
+            <p style="margin-bottom:16px;font-size:14px;color:#4a5568;">Validado por: <strong id="validatorDisplay"></strong></p>
+            <div class="modal-buttons">
+                <button class="modal-confirm" id="btnConfirmValidate">Confirmar</button>
+                <button class="modal-cancel" id="btnCancelValidate">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rechazar -->
+    <div class="modal" id="rejectModal">
+        <div class="modal-content">
+            <h2>Rechazar Orden</h2>
+            <label>Motivo del rechazo:</label>
+            <textarea id="rejectReason" placeholder="Especifica el motivo..."></textarea>
+            <div class="modal-buttons">
+                <button class="modal-confirm reject" id="btnConfirmReject">Rechazar</button>
+                <button class="modal-cancel" id="btnCancelReject">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Orden -->
+    <div class="modal" id="newOrderModal">
+        <div class="modal-content">
+            <h2>Nueva Orden Manual</h2>
+            <label>PO (9-10 digitos):</label>
+            <input type="text" id="newPO" placeholder="Ej: 123456789">
+            <label>DDT (16 caracteres):</label>
+            <input type="text" id="newDDT" placeholder="Ej: 12345AB12345678C">
+            <label>Buque:</label>
+            <input type="text" id="newBuque" placeholder="Nombre del buque">
+            <label>Destino:</label>
+            <input type="text" id="newDestino" placeholder="Destino">
+            <label>Terminal:</label>
+            <input type="text" id="newTerminal" placeholder="Terminal">
+            <div class="modal-buttons">
+                <button class="modal-confirm" id="btnConfirmNewOrder">Crear</button>
+                <button class="modal-cancel" id="btnCancelNewOrder">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Resultado de Carga -->
+    <div class="modal" id="uploadResultModal">
+        <div class="modal-content wide">
+            <h2>Resultado de carga Excel</h2>
+            <div class="result-summary" id="resultSummary"></div>
+            <div class="result-body" id="resultBody"></div>
+            <div class="modal-buttons">
+                <button class="modal-cancel" id="btnCloseResult" style="flex:none;padding:10px 30px;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── CONFIG ───
+        const SUPABASE_URL = 'https://xkppkzfxgtfsmfooozsm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrcHBremZ4Z3Rmc21mb29venNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5ODU1MzMsImV4cCI6MjA5MDU2MTUzM30.s4EjwlstlKS7lOL_iXwo2U-uBxxjAuVa6y8SyNsDt8Y';
+        const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let orders = {};
+        let currentOrderId = null;
+        let hasUnsavedChanges = false;
+        let cachedClaudeApiKey = null;
+        let recentlyValidated = []; // últimas 3 validadas en esta sesión
+        let uploadErrors = []; // errores persistentes de la última carga
+
+        async function getClaudeApiKey() {
+            if (cachedClaudeApiKey) return cachedClaudeApiKey;
+            try {
+                const { data, error } = await supabase
+                    .from('configuracion')
+                    .select('valor')
+                    .eq('clave', 'claude_api_key')
+                    .single();
+                if (!error && data && data.valor && data.valor !== 'PEGA_TU_KEY_AQUI') {
+                    cachedClaudeApiKey = data.valor;
+                    return cachedClaudeApiKey;
+                }
+            } catch (e) {
+                console.warn('[AI] No se pudo leer API key de configuracion:', e);
+            }
+            return '';
+        }
+
+        // ─── INIT ───
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadOrdersFromSupabase();
+            setupEventListeners();
+            // Pre-cache API key
+            getClaudeApiKey();
+        });
+
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchInput').addEventListener('input', filterOrders);
+
+            // Add order
+            document.getElementById('btnAddOrder').addEventListener('click', () => {
+                document.getElementById('newOrderModal').classList.add('show');
+                document.getElementById('newPO').focus();
+            });
+
+            // New order modal
+            document.getElementById('btnConfirmNewOrder').addEventListener('click', createManualOrder);
+            document.getElementById('btnCancelNewOrder').addEventListener('click', () => {
+                document.getElementById('newOrderModal').classList.remove('show');
+            });
+
+            // Validate modal
+            document.getElementById('btnConfirmValidate').addEventListener('click', confirmValidation);
+            document.getElementById('btnCancelValidate').addEventListener('click', () => {
+                document.getElementById('validationModal').classList.remove('show');
+            });
+
+            // Reject modal
+            document.getElementById('btnConfirmReject').addEventListener('click', confirmRejection);
+            document.getElementById('btnCancelReject').addEventListener('click', () => {
+                document.getElementById('rejectModal').classList.remove('show');
+            });
+
+            // Close modals on backdrop click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('show');
+                });
+            });
+
+            // Upload result modal
+            document.getElementById('btnCloseResult').addEventListener('click', () => {
+                document.getElementById('uploadResultModal').classList.remove('show');
+            });
+
+            // Delete order
+            document.getElementById('btnDeleteOrder').addEventListener('click', deleteCurrentOrder);
+
+            // Excel file upload
+            document.getElementById('excelFile').addEventListener('change', handleExcelUpload);
+        }
+
+        // ─── SUPABASE CRUD ───
+        async function loadOrdersFromSupabase() {
+            try {
+                // Query 1: solo operaciones PENDIENTES para el sidebar
+                const { data: ops, error: opsError } = await supabase
+                    .from('operaciones')
+                    .select('*')
+                    .eq('estado', 'PENDIENTE')
+                    .order('po', { ascending: false });
+
+                if (opsError) throw opsError;
+
+                // Also load recently validated orders (if any) so they remain viewable
+                let recentOps = [];
+                if (recentlyValidated.length > 0) {
+                    const { data: rOps } = await supabase
+                        .from('operaciones')
+                        .select('*')
+                        .in('po', recentlyValidated);
+                    recentOps = rOps || [];
+                }
+
+                // Also load the current order if it's not pending (e.g. viewing a validated order)
+                let currentOps = [];
+                if (currentOrderId && !ops.some(o => o.po === currentOrderId) && !recentOps.some(o => o.po === currentOrderId)) {
+                    const { data: cOps } = await supabase
+                        .from('operaciones')
+                        .select('*')
+                        .eq('po', currentOrderId);
+                    currentOps = cOps || [];
+                }
+
+                const allOps = [...ops, ...recentOps, ...currentOps];
+                const opIds = allOps.map(o => o.id);
+
+                // Query 2: contenedores solo de las operaciones cargadas
+                let conts = [];
+                if (opIds.length > 0) {
+                    const { data: contsData, error: contsError } = await supabase
+                        .from('contenedores')
+                        .select('*')
+                        .in('operacion_id', opIds);
+                    if (contsError) throw contsError;
+                    conts = contsData || [];
+                }
+
+                // Agrupar contenedores por operacion_id
+                const contsByOp = {};
+                for (const c of conts) {
+                    if (!contsByOp[c.operacion_id]) contsByOp[c.operacion_id] = [];
+                    contsByOp[c.operacion_id].push(c);
+                }
+
+                // Armar el objeto orders (sin duplicados)
+                orders = {};
+                for (const op of allOps) {
+                    if (!orders[op.po]) {
+                        orders[op.po] = { ...op, contenedores: contsByOp[op.id] || [] };
+                    }
+                }
+
+                renderOrdersList();
+                if (currentOrderId && orders[currentOrderId]) {
+                    renderOrderPanel(orders[currentOrderId]);
+                }
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                showAlert('Error cargando datos de Supabase', 'error');
+            }
+        }
+
+        // NOTA: En Supabase, la tabla 'contenedores' debe tener un UNIQUE constraint
+        // sobre (operacion_id, precinto_aduana) en vez de solo (precinto_aduana).
+        // Esto permite consolidaciones (mismo precinto en órdenes diferentes).
+        // Para cambiar esto, ir a Supabase → SQL Editor y ejecutar:
+        // ALTER TABLE contenedores DROP CONSTRAINT IF EXISTS contenedores_precinto_aduana_key;
+        // ALTER TABLE contenedores ADD CONSTRAINT contenedores_operacion_precinto_unique UNIQUE (operacion_id, precinto_aduana);
+
+        async function saveOrderToSupabase(orderData) {
+            // Validar precintos duplicados en DISTINTOS contenedores de la misma orden
+            // (mismo precinto en mismo contenedor con distintos productos es válido = multi-producto)
+            if (orderData.contenedores && orderData.contenedores.length > 0) {
+                const seen = {}; // precinto → numero de contenedor
+                const realDuplicates = [];
+                for (const c of orderData.contenedores) {
+                    if (!c.precinto_aduana) continue;
+                    if (seen[c.precinto_aduana] && seen[c.precinto_aduana] !== c.numero) {
+                        realDuplicates.push(c.precinto_aduana);
+                    }
+                    seen[c.precinto_aduana] = c.numero;
+                }
+                if (realDuplicates.length > 0) {
+                    throw new Error(`Precinto ${[...new Set(realDuplicates)].join(', ')} está duplicado en contenedores distintos de esta orden`);
+                }
+            }
+            const upsertData = {
+                    po: orderData.po,
+                    ddt: orderData.ddt,
+                    buque: orderData.buque,
+                    destino: orderData.destino,
+                    terminal: orderData.terminal,
+                    canal: orderData.canal || '',
+                    tipo_origen: orderData.tipo_origen || 'buenos_aires',
+                    estado: orderData.estado || 'PENDIENTE',
+                    cantidad_contenedores: orderData.cantidad_contenedores,
+                    total_bultos: orderData.total_bultos,
+                    total_peso_neto: orderData.total_peso_neto,
+                    total_peso_bruto: orderData.total_peso_bruto
+                };
+            if (orderData.datos_originales) {
+                upsertData.datos_originales = orderData.datos_originales;
+            }
+            const { data: opData, error: opError } = await supabase
+                .from('operaciones')
+                .upsert(upsertData, { onConflict: 'po' })
+                .select()
+                .single();
+
+            if (opError) throw opError;
+
+            // Delete existing containers and re-insert
+            await supabase.from('contenedores').delete().eq('operacion_id', opData.id);
+
+            if (orderData.contenedores && orderData.contenedores.length > 0) {
+                const contenedoresData = orderData.contenedores.map(c => ({
+                    operacion_id: opData.id,
+                    po: orderData.po,
+                    tipo: c.tipo,
+                    numero: c.numero,
+                    precinto_aduana: c.precinto_aduana,
+                    precinto_linea: c.precinto_linea || null,
+                    bultos: c.bultos,
+                    peso_neto: c.peso_neto,
+                    peso_bruto: c.peso_bruto,
+                    producto: c.producto || ''
+                }));
+
+                const { error: contError } = await supabase.from('contenedores').insert(contenedoresData);
+                if (contError) throw contError;
+            }
+
+            return opData;
+        }
+
+        async function deleteOrderFromSupabase(po) {
+            const order = orders[po];
+            if (!order || !order.id) return;
+
+            // 1. Borrar contenedores primero (evita fallo por FK sin cascade)
+            await supabase.from('contenedores').delete().eq('operacion_id', order.id);
+
+            // 2. Después borrar la operación
+            const { error } = await supabase.from('operaciones').delete().eq('id', order.id);
+            if (error) throw error;
+        }
+
+        async function deleteCurrentOrder() {
+            if (!currentOrderId) {
+                showAlert('Selecciona una orden primero', 'warning');
+                return;
+            }
+            const order = orders[currentOrderId];
+            if (!order) return;
+
+            if (!confirm(`¿Borrar la orden ${currentOrderId}? Esta acción no se puede deshacer.`)) return;
+
+            try {
+                showLoading('Borrando...');
+                await deleteOrderFromSupabase(currentOrderId);
+                delete orders[currentOrderId];
+                currentOrderId = null;
+                hasUnsavedChanges = false;
+                renderOrdersList();
+                document.getElementById('panel').innerHTML = '<div class="panel-empty"><span style="font-size:32px;">&#128203;</span>Selecciona una orden o carga un Excel</div>';
+                hideLoading();
+                showAlert('Orden borrada', 'success');
+            } catch (err) {
+                hideLoading();
+                showAlert('Error al borrar: ' + err.message, 'error');
+            }
+        }
+
+        // ─── EXCEL PARSING ───
+        async function handleExcelUpload(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            showLoading('Procesando Excel...');
+            const results = []; // { sheet, status: 'ok'|'error'|'skipped', reason?, po?, containers? }
+            const pendingOverrides = []; // orders that already exist as PENDIENTE/RECHAZADO
+
+            try {
+                for (const file of files) {
+                    const data = new Uint8Array(await file.arrayBuffer());
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const isRemision = file.name.toUpperCase().includes('REMISION');
+                    const tipoOrigen = isRemision ? 'bahia_blanca' : 'buenos_aires';
+
+                    console.log(`[LOADER] Archivo: ${file.name}, hojas: ${workbook.SheetNames.length}`);
+
+                    for (let sheetIdx = 0; sheetIdx < workbook.SheetNames.length; sheetIdx++) {
+                        const sheetName = workbook.SheetNames[sheetIdx];
+
+                        // Check hidden sheets correctly via Workbook metadata
+                        const sheetMeta = workbook.Workbook
+                            && workbook.Workbook.Sheets
+                            && workbook.Workbook.Sheets[sheetIdx];
+                        if (sheetMeta && sheetMeta.Hidden && sheetMeta.Hidden !== 0) {
+                            results.push({ sheet: sheetName, status: 'skipped', reason: 'Hoja oculta' });
+                            continue;
+                        }
+
+                        const sheet = workbook.Sheets[sheetName];
+
+                        try {
+                            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+                            // Step 0: Detect format
+                            const formato = detectExcelFormat(rows);
+                            console.log(`[LOADER] Hoja: ${sheetName}, formato: ${formato}`);
+
+                            // Skip summary sheets
+                            if (formato === 'intersys') {
+                                results.push({ sheet: sheetName, status: 'skipped', reason: 'Hoja de resumen InterSys' });
+                                continue;
+                            }
+                            if (formato === 'expo_planilla') {
+                                results.push({ sheet: sheetName, status: 'skipped', reason: 'Hoja de resumen EXPO' });
+                                continue;
+                            }
+
+                            // Step 1: Parse by format
+                            let orderDataList = []; // array of orders (lista_maestra returns multiple)
+
+                            if (formato === 'planilla_aduana') {
+                                const result = await parseFormatoPlanillaAduana(rows, tipoOrigen, sheetName);
+                                orderDataList = [result];
+                            } else if (formato === 'lista_maestra') {
+                                const result = parseFormatoListaMaestra(rows, tipoOrigen);
+                                orderDataList = Array.isArray(result) ? result : [result];
+                            } else {
+                                // 'tren' or 'unknown' — use existing parser
+                                let orderData = await parseExcelSheet(rows, tipoOrigen, sheetName);
+
+                                // Step 2: If parser failed, try learned patterns
+                                if (orderData && orderData.error) {
+                                    const parserError = orderData.error;
+                                    console.log(`[LOADER] Parser failed: ${parserError}. Trying learned patterns...`);
+
+                                    const learnedPattern = await findLearnedPattern(rows);
+                                    if (learnedPattern) {
+                                        console.log('[LOADER] Found learned pattern, applying...');
+                                        orderData = buildOrderFromAIResult(learnedPattern, rows, tipoOrigen);
+                                        if (orderData) {
+                                            orderData.warnings = orderData.warnings || [];
+                                            orderData.warnings.unshift('Resuelto con patron aprendido');
+                                        }
+                                    }
+
+                                    // Step 3: If patterns didn't work, call Claude AI
+                                    if (!orderData || orderData.error) {
+                                        if (await getClaudeApiKey()) {
+                                            console.log('[LOADER] Calling Claude AI...');
+                                            showLoading(`Analizando con IA: ${sheetName}...`);
+                                            const aiResult = await callClaudeForParsing(rows, tipoOrigen);
+                                            if (aiResult) {
+                                                orderData = buildOrderFromAIResult(aiResult, rows, tipoOrigen);
+                                                if (orderData) {
+                                                    await saveLearnedPattern(rows, aiResult);
+                                                }
+                                            }
+                                            showLoading('Procesando Excel...');
+                                        }
+                                    }
+
+                                    if (!orderData) {
+                                        const aiNote = (await getClaudeApiKey()) ? ' (IA tampoco pudo)' : ' (sin API key para IA)';
+                                        results.push({ sheet: sheetName, status: 'error', reason: parserError + aiNote });
+                                        continue;
+                                    }
+                                }
+
+                                orderDataList = [orderData];
+                            }
+
+                            // Step 4: Save results (with protection for existing orders)
+                            for (const orderData of orderDataList) {
+                                if (orderData && !orderData.error) {
+                                    // Attach filename to datos_originales
+                                    if (orderData.datos_originales) {
+                                        const rawRows = Array.isArray(orderData.datos_originales) ? orderData.datos_originales : (orderData.datos_originales.rows || []);
+                                        orderData.datos_originales = { filename: file.name, rows: rawRows };
+                                    }
+
+                                    // Check if order already exists
+                                    const { data: existing } = await supabase
+                                        .from('operaciones')
+                                        .select('po, estado, validado_por')
+                                        .eq('po', orderData.po)
+                                        .single();
+
+                                    if (existing) {
+                                        if (existing.estado === 'VALIDADO') {
+                                            results.push({
+                                                sheet: sheetName,
+                                                status: 'skipped',
+                                                reason: `Orden ${existing.po} ya VALIDADA por ${existing.validado_por || '?'} — se omitió`
+                                            });
+                                            continue;
+                                        }
+                                        if (existing.estado === 'PENDIENTE') {
+                                            // Store for potential manual update — don't save automatically
+                                            pendingOverrides.push({ orderData, sheetName });
+                                            results.push({
+                                                sheet: sheetName,
+                                                status: 'skipped',
+                                                reason: `Orden ${existing.po} ya existe como PENDIENTE — se omitió (recargá si querés actualizar)`
+                                            });
+                                            continue;
+                                        }
+                                        if (existing.estado === 'RECHAZADO') {
+                                            pendingOverrides.push({ orderData, sheetName });
+                                            results.push({
+                                                sheet: sheetName,
+                                                status: 'skipped',
+                                                reason: `Orden ${existing.po} estaba RECHAZADA — se omitió (borrala y recargá si querés resubir)`
+                                            });
+                                            continue;
+                                        }
+                                    }
+
+                                    // Order doesn't exist — save normally
+                                    await saveOrderToSupabase(orderData);
+                                    const hasWarnings = orderData.warnings && orderData.warnings.length > 0;
+                                    results.push({
+                                        sheet: sheetName,
+                                        status: hasWarnings ? 'warning' : 'ok',
+                                        po: orderData.po,
+                                        containers: orderData.contenedores.length,
+                                        warnings: orderData.warnings || []
+                                    });
+                                } else {
+                                    results.push({ sheet: sheetName, status: 'error', reason: (orderData && orderData.error) || 'Sin datos reconocibles' });
+                                }
+                            }
+                        } catch (sheetError) {
+                            console.error(`[LOADER] Error en hoja ${sheetName}:`, sheetError);
+                            let reason = sheetError.message || String(sheetError);
+                            if (reason.includes('unique constraint') && reason.includes('precinto')) {
+                                reason = 'Precinto duplicado — posible consolidación. Verificar constraint en Supabase.';
+                            }
+                            results.push({ sheet: sheetName, status: 'error', reason: 'Error guardando: ' + reason });
+                        }
+                    }
+                }
+
+                await loadOrdersFromSupabase();
+                hideLoading();
+                showUploadResults(results);
+
+            } catch (error) {
+                hideLoading();
+                console.error('[LOADER] Error general:', error);
+                showAlert('Error al procesar Excel: ' + error.message, 'error');
+            }
+
+            // Reset file input so the same file can be re-uploaded
+            e.target.value = '';
+        }
+
+        function showUploadResults(results) {
+            const countOk = results.filter(r => r.status === 'ok' || r.status === 'warning').length;
+            const countError = results.filter(r => r.status === 'error').length;
+            const countSkipped = results.filter(r => r.status === 'skipped').length;
+            const countWarning = results.filter(r => r.status === 'warning').length;
+
+            document.getElementById('resultSummary').innerHTML = `
+                <span class="count-ok">${countOk} cargada(s)</span>
+                ${countWarning > 0 ? `<span class="count-warning">${countWarning} con alertas</span>` : ''}
+                <span class="count-error">${countError} con error</span>
+                <span class="count-skipped">${countSkipped} ignorada(s)</span>
+            `;
+
+            let tableHtml = `
+                <table class="result-table">
+                    <thead><tr><th>Hoja</th><th>Estado</th><th>Detalle</th></tr></thead>
+                    <tbody>
+            `;
+
+            const sorted = [...results].sort((a, b) => {
+                const order = { ok: 0, warning: 1, error: 2, skipped: 3 };
+                return (order[a.status] || 0) - (order[b.status] || 0);
+            });
+
+            for (const r of sorted) {
+                const rowClass = (r.status === 'ok') ? 'result-ok'
+                    : (r.status === 'warning') ? 'result-warning'
+                    : (r.status === 'error') ? 'result-error' : 'result-skipped';
+                const statusLabel = (r.status === 'ok') ? 'OK'
+                    : (r.status === 'warning') ? 'Alerta'
+                    : (r.status === 'error') ? 'Error' : 'Ignorada';
+                let detail = '';
+                if (r.status === 'ok') {
+                    detail = `PO: ${esc(r.po)} (${r.containers} cont.)`;
+                } else if (r.status === 'warning') {
+                    detail = `PO: ${esc(r.po)} (${r.containers} cont.) — ${r.warnings.map(w => esc(w)).join('; ')}`;
+                } else {
+                    detail = esc(r.reason || '');
+                }
+                tableHtml += `<tr class="${rowClass}"><td>${esc(r.sheet)}</td><td>${statusLabel}</td><td>${detail}</td></tr>`;
+            }
+
+            tableHtml += '</tbody></table>';
+            document.getElementById('resultBody').innerHTML = tableHtml;
+            document.getElementById('uploadResultModal').classList.add('show');
+
+            // Persist errors in banner
+            uploadErrors = results.filter(r => r.status === 'error');
+            renderErrorBanner();
+        }
+
+        function renderErrorBanner() {
+            const banner = document.getElementById('errorBanner');
+            if (!banner) return;
+            if (uploadErrors.length === 0) {
+                banner.style.display = 'none';
+                banner.innerHTML = '';
+                return;
+            }
+            banner.style.display = 'block';
+            banner.innerHTML = `
+                <div style="background:#fff5f5;border:1px solid #e53e3e;border-radius:5px;padding:8px 10px;margin-bottom:10px;font-size:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="color:#e53e3e;">${uploadErrors.length} hoja(s) con error:</strong>
+                        <button onclick="clearErrors()" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:14px;">✕</button>
+                    </div>
+                    ${uploadErrors.map(e => `<div style="color:#742a2a;margin-top:4px;">"${esc(e.sheet)}" — ${esc(e.reason)}</div>`).join('')}
+                </div>
+            `;
+        }
+
+        function clearErrors() {
+            uploadErrors = [];
+            renderErrorBanner();
+        }
+
+        // Helper: extract value after keyword+colon in same cell
+        // e.g. extractAfterSeparator("BUQUE:AS SABINE", "BUQUE") → "AS SABINE"
+        function extractAfterSeparator(cellText, keyword) {
+            const idx = cellText.toUpperCase().indexOf(keyword.toUpperCase());
+            if (idx === -1) return '';
+            const after = cellText.substring(idx + keyword.length);
+            return after.replace(/^[\s:.\-]+/, '').trim();
+        }
+
+        // ─── FORMAT DETECTION ───
+        function detectExcelFormat(rows) {
+            if (!rows || rows.length < 2) return 'unknown';
+
+            const allText = rows.slice(0, 10).flat().map(c => String(c || '').toUpperCase()).join('|');
+            const row1 = rows[0] || [];
+            const row1Text = row1.map(c => String(c || '').toUpperCase().trim());
+
+            // FORMATO 1 - "Planilla de Aduana": tiene BOLSAS/BOLSONES o SHIPMENT
+            if (allText.includes('BOLSA') || allText.includes('SHIPMENT') || allText.includes('TRACTOR')) {
+                return 'planilla_aduana';
+            }
+
+            // FORMATO 3 - "Lista maestra": primera fila es header con Tipo, Contenedor, Orden y NO tiene DDT arriba
+            if (row1Text.some(c => c.includes('TIPO') || c === 'TIPO')
+                && row1Text.some(c => c.includes('CONTENEDOR'))
+                && row1Text.some(c => c.includes('ORDEN'))
+                && !allText.includes('DDT')) {
+                return 'lista_maestra';
+            }
+
+            // FORMATO 4 - "InterSys"
+            if (allText.includes('REF. SECUNDARIA') || allText.includes('DESTINACIÓN') || allText.includes('DESTINACION')) {
+                return 'intersys';
+            }
+
+            // FORMATO 4 - "EXPO PLANILLA": tiene "Vagon"
+            if (row1Text.some(c => c.includes('VAGON'))) {
+                return 'expo_planilla';
+            }
+
+            // FORMATO 2 - "TREN": tiene DDT y/o OPERACIÓN
+            if (allText.includes('DDT') || allText.includes('OPERACI')) {
+                return 'tren';
+            }
+
+            return 'unknown';
+        }
+
+        // ─── FORMATO 1: PLANILLA DE ADUANA ───
+        async function parseFormatoPlanillaAduana(rows, tipoOrigen, sheetName) {
+            if (!rows || rows.length < 3) return { error: 'Muy pocas filas' };
+
+            let ddt = '', buque = '', destino = '', terminal = '', canal = '';
+            let headerRowIdx = -1;
+            const warnings = [];
+
+            // Extract header info (primeras 8 filas)
+            for (let i = 0; i < Math.min(8, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                for (let j = 0; j < row.length; j++) {
+                    const cell = String(row[j] || '').trim();
+                    const cellUpper = cell.toUpperCase();
+                    const nextCell = String(row[j + 1] || '').trim();
+
+                    if (cellUpper.includes('DDT') && !ddt) {
+                        const raw = (extractAfterSeparator(cell, 'DDT') || nextCell).replace(/\s/g, '').toUpperCase();
+                        if (raw.length >= 14) ddt = raw;
+                    }
+                    if (cellUpper.includes('BUQUE') && !buque) {
+                        const val = extractAfterSeparator(cell, 'BUQUE') || nextCell;
+                        if (val && val.length > 2) buque = val;
+                    }
+                    if (cellUpper.includes('DESTINO') && !destino) {
+                        const val = extractAfterSeparator(cell, 'DESTINO') || nextCell;
+                        if (val && val.length > 1) destino = val;
+                    }
+                    if (cellUpper.includes('TERMINAL') && !terminal) {
+                        const val = extractAfterSeparator(cell, 'TERMINAL') || nextCell;
+                        if (val) terminal = val.replace(/\d+/g, '').replace(/[()]/g, '').trim();
+                    }
+                    if (cellUpper.includes('CANAL') && !canal) {
+                        const val = extractAfterSeparator(cell, 'CANAL') || nextCell;
+                        if (val && !val.includes(':')) canal = val;
+                    }
+                }
+            }
+
+            // Find header row
+            for (let i = 0; i < Math.min(15, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const rowStr = row.map(r => String(r || '').toUpperCase()).join('|');
+                if ((rowStr.includes('CONTENEDOR') || rowStr.includes('CONTAINER'))
+                    && (rowStr.includes('PRECINTO') || rowStr.includes('SEAL') || rowStr.includes('ADUANA'))) {
+                    headerRowIdx = i;
+                    break;
+                }
+            }
+
+            if (headerRowIdx === -1) return { error: 'No se encontró header de contenedores (Formato Planilla Aduana)' };
+
+            // Map columns dynamically
+            const headerRow = rows[headerRowIdx];
+            let colMap = { tipo: -1, numero: -1, precAduana: -1, precLinea: -1, producto: -1, bultos: -1, bolsas: -1, pesoNeto: -1, pesoBruto: -1, orden: -1 };
+
+            // First pass: find specific named columns (ADUANA vs NAVIERA)
+            for (let j = 0; j < headerRow.length; j++) {
+                const h = String(headerRow[j] || '').toUpperCase().trim();
+                if (h.includes('TIPO') && colMap.tipo === -1) colMap.tipo = j;
+                else if ((h.includes('CONTENEDOR') || h.includes('CONTAINER')) && colMap.numero === -1) colMap.numero = j;
+                else if (h.includes('ADUANA') && (h.includes('PRECINTO') || h.includes('SEAL')) && colMap.precAduana === -1) colMap.precAduana = j;
+                else if ((h.includes('NAVIERA') || h.includes('LINEA')) && (h.includes('PRECINTO') || h.includes('SEAL')) && colMap.precLinea === -1) colMap.precLinea = j;
+                else if (h.includes('PRODUCTO') || h.includes('MERCADER')) colMap.producto = j;
+                else if (h.includes('BOLSA') || h.includes('BOLSON')) colMap.bolsas = j;
+                else if ((h.includes('BULTO') || h === 'BAGS') && colMap.bultos === -1) colMap.bultos = j;
+                else if (h.includes('NETO') || h === 'NET') colMap.pesoNeto = j;
+                else if (h.includes('BRUTO') || h === 'GROSS') colMap.pesoBruto = j;
+                else if (h.includes('ORDEN') || h === 'PO') colMap.orden = j;
+            }
+            // Second pass: if precAduana not found by name, use first generic PRECINTO
+            if (colMap.precAduana === -1) {
+                for (let j = 0; j < headerRow.length; j++) {
+                    const h = String(headerRow[j] || '').toUpperCase().trim();
+                    if ((h.includes('PRECINTO') || h.includes('SEAL')) && j !== colMap.precLinea) {
+                        colMap.precAduana = j;
+                        break;
+                    }
+                }
+            }
+
+            console.log('[PARSER-F1] Column map:', JSON.stringify(colMap));
+
+            // Parse data rows
+            const contenedores = [];
+            let currentPO = '';
+            let lastValid = null; // { tipo, numero, precinto_aduana }
+
+            for (let i = headerRowIdx + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length < 2) continue;
+
+                // Get PO from ORDEN column if available
+                const rowPO = colMap.orden >= 0 ? String(row[colMap.orden] || '').trim() : '';
+                if (rowPO && /^\d{9,10}$/.test(rowPO)) currentPO = rowPO;
+
+                let numero = colMap.numero >= 0 ? String(row[colMap.numero] || '').trim().replace(/[-\s]/g, '') : '';
+                const precAduana = colMap.precAduana >= 0 ? String(row[colMap.precAduana] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                const tipo = standardizeContainerType(colMap.tipo >= 0 ? String(row[colMap.tipo] || '') : '');
+                const precLinea = colMap.precLinea >= 0 ? String(row[colMap.precLinea] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                const producto = colMap.producto >= 0 ? String(row[colMap.producto] || '').trim() : '';
+                const bultos = colMap.bultos >= 0 ? (parseFloat(row[colMap.bultos]) || 0) : 0;
+                const pesoNeto = colMap.pesoNeto >= 0 ? (parseFloat(row[colMap.pesoNeto]) || 0) : 0;
+                const pesoBruto = colMap.pesoBruto >= 0 ? (parseFloat(row[colMap.pesoBruto]) || 0) : 0;
+
+                // CASO 1: Fila tiene número de contenedor válido → contenedor nuevo
+                if (numero.length === 11) {
+                    lastValid = {
+                        tipo: tipo || (lastValid ? lastValid.tipo : ''),
+                        numero: numero,
+                        precinto_aduana: (precAduana && precAduana.length >= 5) ? precAduana : (lastValid ? lastValid.precinto_aduana : '')
+                    };
+
+                    if (pesoNeto === 0 && pesoBruto === 0 && bultos === 0) continue;
+
+                    contenedores.push({
+                        tipo: lastValid.tipo,
+                        numero: lastValid.numero,
+                        precinto_aduana: lastValid.precinto_aduana,
+                        precinto_linea: precLinea || null,
+                        producto,
+                        bultos: Math.round(bultos),
+                        peso_neto: Math.round(pesoNeto),
+                        peso_bruto: Math.round(pesoBruto)
+                    });
+                    continue;
+                }
+
+                // CASO 2: Sin contenedor pero CON producto y datos numéricos → otro producto del mismo contenedor
+                if (lastValid && producto && producto.length > 0 && (bultos > 0 || pesoNeto > 0)) {
+                    console.log(`[PARSER-F1] CASO 2 HIT: fila ${i+1}, producto="${producto}", bultos=${bultos}, neto=${pesoNeto}, contenedor=${lastValid.numero}`);
+                    contenedores.push({
+                        tipo: lastValid.tipo,
+                        numero: lastValid.numero,
+                        precinto_aduana: lastValid.precinto_aduana,
+                        precinto_linea: null,
+                        producto,
+                        bultos: Math.round(bultos),
+                        peso_neto: Math.round(pesoNeto),
+                        peso_bruto: Math.round(pesoBruto)
+                    });
+                    warnings.push(`Múltiples productos en contenedor ${lastValid.numero}`);
+                    continue;
+                }
+
+                // CASO 3: Sin contenedor, sin producto → fila de totales, ignorar
+                if (numero.length !== 11) {
+                    console.log(`[PARSER-F1] CASO 3 (skip): fila ${i+1}, numero="${numero}"(${numero.length}), producto="${producto}"(${producto.length}), bultos=${bultos}, neto=${pesoNeto}, lastValid=${lastValid ? lastValid.numero : 'null'}`);
+                }
+            }
+
+            // --- FALLBACK IA: verificar si el parser perdió datos ---
+            let excelTotalBultos = 0;
+            for (let i = headerRowIdx + 1; i < Math.min(headerRowIdx + 50, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const rowProducto = colMap.producto >= 0 ? String(row[colMap.producto] || '').trim() : '';
+                const rowBultos = colMap.bultos >= 0 ? (parseFloat(row[colMap.bultos]) || 0) : 0;
+                const rowNumero = colMap.numero >= 0 ? String(row[colMap.numero] || '').trim().replace(/[-\s]/g, '') : '';
+                if (rowBultos > 0 && rowNumero.length !== 11 && !rowProducto) {
+                    excelTotalBultos = Math.round(rowBultos);
+                    break;
+                }
+            }
+            const parsedTotalBultos = contenedores.reduce((s, c) => s + c.bultos, 0);
+            if (excelTotalBultos > 0 && parsedTotalBultos > 0 && excelTotalBultos !== parsedTotalBultos) {
+                console.warn(`[PARSER-F1] Totales no coinciden: parseado=${parsedTotalBultos}, Excel=${excelTotalBultos}. Intentando con IA...`);
+                const apiKey = await getClaudeApiKey();
+                if (apiKey) {
+                    try {
+                        const aiResult = await callClaudeForParsing(rows, tipoOrigen);
+                        if (aiResult) {
+                            const aiOrder = buildOrderFromAIResult(aiResult, rows, tipoOrigen);
+                            if (aiOrder && aiOrder.contenedores && aiOrder.contenedores.length > contenedores.length) {
+                                console.log(`[PARSER-F1] IA encontró ${aiOrder.contenedores.length} items vs parser ${contenedores.length}. Usando IA.`);
+                                contenedores.length = 0;
+                                contenedores.push(...aiOrder.contenedores);
+                                warnings.push('Datos completados con asistencia de IA (multi-producto detectado)');
+                            }
+                        }
+                    } catch (aiErr) {
+                        console.error('[PARSER-F1] IA fallback error:', aiErr);
+                        warnings.push('No se pudo verificar multi-producto con IA: ' + aiErr.message);
+                    }
+                } else {
+                    warnings.push('Totales no coinciden (parseado: ' + parsedTotalBultos + ', Excel: ' + excelTotalBultos + '). Sin API key para verificar con IA.');
+                }
+            }
+
+            if (contenedores.length === 0) return { error: 'No se encontraron contenedores válidos (Formato Planilla Aduana)' };
+
+            // Fallback: PO desde nombre de hoja
+            if ((!currentPO || currentPO.length < 9) && sheetName) {
+                const sheetPOMatch = sheetName.match(/(\d{9,10})/);
+                if (sheetPOMatch) {
+                    currentPO = sheetPOMatch[1];
+                    warnings.push('PO tomado del nombre de la hoja "' + sheetName + '" (OPERACIÓN vacía en el Excel)');
+                }
+            }
+
+            if (!currentPO) return { error: 'PO no encontrado en columna ORDEN (Formato Planilla Aduana)' };
+
+            if (!ddt) {
+                ddt = 'REVISAR-' + currentPO;
+                warnings.push('DDT no encontrado — revisar manualmente');
+            }
+
+            const productos = [...new Set(contenedores.map(c => c.producto).filter(p => p))];
+            if (productos.length > 1) warnings.push('Múltiples productos: ' + productos.join(', '));
+
+            const lastDataRow = headerRowIdx + contenedores.length + 10;
+            const datos_originales = rows.slice(0, Math.min(lastDataRow, rows.length));
+
+            return {
+                po: currentPO.trim(),
+                ddt: ddt.trim(),
+                buque: buque.trim(),
+                destino: destino.trim(),
+                terminal: terminal.trim(),
+                canal: canal.trim(),
+                tipo_origen: tipoOrigen,
+                estado: 'PENDIENTE',
+                cantidad_contenedores: contenedores.length,
+                total_bultos: contenedores.reduce((s, c) => s + c.bultos, 0),
+                total_peso_neto: contenedores.reduce((s, c) => s + c.peso_neto, 0),
+                total_peso_bruto: contenedores.reduce((s, c) => s + c.peso_bruto, 0),
+                contenedores,
+                datos_originales,
+                warnings
+            };
+        }
+
+        // ─── FORMATO 3: LISTA MAESTRA ───
+        function parseFormatoListaMaestra(rows, tipoOrigen) {
+            if (!rows || rows.length < 2) return [];
+
+            const headerRow = rows[0];
+            let colMap = { tipo: -1, numero: -1, precinto: -1, orden: -1, peso: -1, buque: -1, destino: -1, terminal: -1 };
+
+            for (let j = 0; j < headerRow.length; j++) {
+                const h = String(headerRow[j] || '').toUpperCase().trim();
+                if (h.includes('TIPO') && colMap.tipo === -1) colMap.tipo = j;
+                else if (h.includes('CONTENEDOR') && colMap.numero === -1) colMap.numero = j;
+                else if (h.includes('PRECINTO') && colMap.precinto === -1) colMap.precinto = j;
+                else if (h.includes('ORDEN') && colMap.orden === -1) colMap.orden = j;
+                else if (h.includes('PESO') && colMap.peso === -1) colMap.peso = j;
+                else if (h.includes('BUQUE') && colMap.buque === -1) colMap.buque = j;
+                else if (h.includes('DESTINO') && colMap.destino === -1) colMap.destino = j;
+                else if (h.includes('TERMINAL') && colMap.terminal === -1) colMap.terminal = j;
+            }
+
+            console.log('[PARSER-F3] Column map:', JSON.stringify(colMap));
+
+            if (colMap.orden === -1 || colMap.numero === -1) {
+                return [{ error: 'Lista maestra sin columnas Orden/Contenedor' }];
+            }
+
+            // Group rows by PO
+            const groups = {};
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const po = String(row[colMap.orden] || '').trim();
+                if (!po || !/^\d{7,10}$/.test(po)) continue;
+                if (!groups[po]) groups[po] = [];
+                groups[po].push(row);
+            }
+
+            const ordersArr = [];
+            for (const [po, groupRows] of Object.entries(groups)) {
+                const contenedores = [];
+                let buque = '', destino = '', terminal = '';
+
+                for (const row of groupRows) {
+                    const numero = String(row[colMap.numero] || '').trim().replace(/[-\s]/g, '');
+                    if (numero.length !== 11) continue;
+
+                    const tipo = standardizeContainerType(colMap.tipo >= 0 ? String(row[colMap.tipo] || '') : '');
+                    let precinto = colMap.precinto >= 0 ? String(row[colMap.precinto] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                    const pesoRaw = colMap.peso >= 0 ? parseFloat(row[colMap.peso]) : 0;
+                    const peso = isNaN(pesoRaw) ? 0 : Math.round(pesoRaw);
+
+                    if (!buque && colMap.buque >= 0) buque = String(row[colMap.buque] || '').trim();
+                    if (!destino && colMap.destino >= 0) destino = String(row[colMap.destino] || '').trim();
+                    if (!terminal && colMap.terminal >= 0) terminal = String(row[colMap.terminal] || '').trim();
+
+                    contenedores.push({
+                        tipo,
+                        numero,
+                        precinto_aduana: precinto,
+                        precinto_linea: null,
+                        producto: '',
+                        bultos: 0,
+                        peso_neto: peso,
+                        peso_bruto: peso
+                    });
+                }
+
+                if (contenedores.length === 0) continue;
+
+                ordersArr.push({
+                    po,
+                    ddt: 'REVISAR-' + po,
+                    buque,
+                    destino,
+                    terminal: terminal.replace(/\d+/g, '').replace(/[()]/g, '').trim(),
+                    canal: '',
+                    tipo_origen: tipoOrigen,
+                    estado: 'PENDIENTE',
+                    cantidad_contenedores: contenedores.length,
+                    total_bultos: 0,
+                    total_peso_neto: contenedores.reduce((s, c) => s + c.peso_neto, 0),
+                    total_peso_bruto: contenedores.reduce((s, c) => s + c.peso_bruto, 0),
+                    contenedores,
+                    datos_originales: rows.slice(0, Math.min(rows.length, 30)),
+                    warnings: ['Datos incompletos — cargado desde lista maestra', 'DDT no disponible — revisar manualmente']
+                });
+            }
+
+            return ordersArr;
+        }
+
+        // ─── FORMATO 2: TREN (parser existente mejorado) ───
+        async function parseExcelSheet(rows, tipoOrigen, sheetName) {
+            if (!rows || rows.length < 3) return { error: 'Muy pocas filas (' + (rows ? rows.length : 0) + ')' };
+
+            let ddt = '', po = '', buque = '', destino = '', terminal = '', canal = '';
+            let headerRowIdx = -1;
+            const warnings = [];
+
+            // ─── EXTRACT HEADER INFO (first 25 rows) ───
+            for (let i = 0; i < Math.min(25, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+
+                for (let j = 0; j < row.length; j++) {
+                    const cell = String(row[j] || '').trim();
+                    const cellUpper = cell.toUpperCase();
+                    const nextCell = String(row[j + 1] || '').trim();
+
+                    // DDT — strip ALL spaces before matching
+                    if (cellUpper.includes('DDT') && !ddt) {
+                        const cellNoSpaces = cell.replace(/\s/g, '');
+                        const nextNoSpaces = nextCell.replace(/\s/g, '');
+                        const match = cellNoSpaces.match(/(\d{5}[A-Z]{2}\d{8}[A-Z])/i);
+                        if (match) {
+                            ddt = match[1].toUpperCase();
+                        } else if (nextNoSpaces.match(/^\d{5}[A-Z]{2}\d{8}[A-Z]$/i)) {
+                            ddt = nextNoSpaces.toUpperCase();
+                        } else {
+                            // Fallback: take whatever is after "DDT" and clean it
+                            let rawDdt = extractAfterSeparator(cell, 'DDT') || nextCell;
+                            rawDdt = rawDdt.replace(/\s/g, '').toUpperCase();
+                            if (rawDdt.length >= 14) ddt = rawDdt;
+                        }
+                    }
+
+                    // PO / Operacion / Orden
+                    if ((cellUpper.includes('OPERACI') || cellUpper.includes('ORDEN') || cellUpper === 'PO') && !po) {
+                        const match = cell.match(/(\d{9,10})/);
+                        if (match) {
+                            po = match[1];
+                        } else if (/^\d{9,10}$/.test(nextCell)) {
+                            po = nextCell;
+                        }
+                    }
+
+                    // Buque — same cell (e.g. "BUQUE:AS SABINE") then next cell
+                    if (cellUpper.includes('BUQUE') && !buque) {
+                        const sameCell = extractAfterSeparator(cell, 'BUQUE');
+                        if (sameCell && sameCell.length > 2) {
+                            buque = sameCell;
+                        } else if (nextCell && nextCell.length > 2) {
+                            buque = nextCell;
+                        }
+                    }
+
+                    // Destino — same cell then next cell
+                    if (cellUpper.includes('DESTINO') && !destino) {
+                        const sameCell = extractAfterSeparator(cell, 'DESTINO');
+                        if (sameCell && sameCell.length > 1) {
+                            destino = sameCell;
+                        } else if (nextCell && nextCell.length > 1) {
+                            destino = nextCell;
+                        }
+                    }
+
+                    // Terminal — same cell then next cell (also accept "ADUANA" as synonym)
+                    if ((cellUpper.includes('TERMINAL') || cellUpper.includes('ADUANA')) && !terminal && !cellUpper.includes('PRECINTO')) {
+                        const kw = cellUpper.includes('TERMINAL') ? 'TERMINAL' : 'ADUANA';
+                        const sameCell = extractAfterSeparator(cell, kw);
+                        const val = (sameCell && sameCell.length > 0) ? sameCell : nextCell;
+                        if (val && val.length > 0) {
+                            terminal = val.replace(/\d+/g, '').replace(/[()]/g, '').trim();
+                        }
+                    }
+
+                    // Canal — same cell then next cell
+                    if (cellUpper.includes('CANAL') && !canal) {
+                        const sameCell = extractAfterSeparator(cell, 'CANAL');
+                        if (sameCell && sameCell.length > 0 && !sameCell.includes(':')) {
+                            canal = sameCell;
+                        } else if (nextCell && nextCell.length > 0 && !nextCell.includes(':')) {
+                            canal = nextCell;
+                        }
+                    }
+                }
+            }
+
+            // ─── VALIDATE — be lenient with DDT, don't reject ───
+            // Fallback: PO desde nombre de hoja
+            if ((!po || po.length < 9) && sheetName) {
+                const sheetPOMatch = sheetName.match(/(\d{9,10})/);
+                if (sheetPOMatch) {
+                    po = sheetPOMatch[1];
+                    warnings.push('PO tomado del nombre de la hoja "' + sheetName + '" (OPERACIÓN vacía en el Excel)');
+                }
+            }
+            if (!po || po.length < 9) return { error: 'PO no encontrado o inválido' + (po ? ` ("${po}")` : '') };
+
+            if (!ddt) {
+                ddt = 'REVISAR-' + po;
+                warnings.push('DDT no encontrado — revisar manualmente');
+            } else if (ddt.length !== 16) {
+                warnings.push('DDT posiblemente inválido (' + ddt.length + ' chars): ' + ddt);
+            }
+
+            // ─── FIND HEADER ROW (dynamic column detection) ───
+            for (let i = 0; i < Math.min(30, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const rowStr = row.map(r => String(r || '').toUpperCase()).join('|');
+                if (rowStr.includes('CONTENEDOR') && (rowStr.includes('PRECINTO') || rowStr.includes('SEAL'))) {
+                    headerRowIdx = i;
+                    break;
+                }
+            }
+
+            if (headerRowIdx === -1) return { error: 'No se encontró header de contenedores (CONTENEDOR + PRECINTO)' };
+
+            // ─── MAP COLUMNS FROM HEADER ───
+            const headerRow = rows[headerRowIdx];
+            let colMap = { tipo: -1, numero: -1, precAduana: -1, precLinea: -1, producto: -1, bultos: -1, pesoNeto: -1, pesoBruto: -1 };
+
+            for (let j = 0; j < headerRow.length; j++) {
+                const h = String(headerRow[j] || '').toUpperCase().trim();
+
+                if (h.includes('TIPO') && colMap.tipo === -1) colMap.tipo = j;
+                else if ((h.includes('CONTENEDOR') || h.includes('NUMERO') || h.includes('CONTAINER')) && colMap.numero === -1) colMap.numero = j;
+                else if (h.includes('PRECINTO') || h.includes('SEAL')) {
+                    if (colMap.precAduana === -1) colMap.precAduana = j;
+                    else if (colMap.precLinea === -1) colMap.precLinea = j;
+                }
+                else if (h.includes('PRODUCTO') || h.includes('MERCADER')) colMap.producto = j;
+                else if (h.includes('BULTO') || h.includes('BOLSA') || h === 'BAGS') colMap.bultos = j;
+                else if (h.includes('NETO') || h === 'NET') colMap.pesoNeto = j;
+                else if (h.includes('BRUTO') || h === 'GROSS') colMap.pesoBruto = j;
+            }
+
+            console.log(`[PARSER] Column map for PO ${po}:`, JSON.stringify(colMap));
+
+            // Fallback: if key columns not found, try positional
+            if (colMap.numero === -1 || colMap.precAduana === -1) {
+                console.warn('[PARSER] Could not detect columns from header, using positional fallback');
+                colMap = { tipo: 0, numero: 1, precAduana: 2, precLinea: -1, producto: 3, bultos: 4, pesoNeto: 5, pesoBruto: 6 };
+            }
+
+            // ─── PARSE CONTAINER ROWS ───
+            const contenedores = [];
+            let lastValid = null; // { tipo, numero, precinto_aduana }
+
+            for (let i = headerRowIdx + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length < 3) continue;
+
+                let numero = colMap.numero >= 0 ? String(row[colMap.numero] || '').trim() : '';
+                numero = numero.replace(/[-\s]/g, '');
+
+                let precAduana = colMap.precAduana >= 0 ? String(row[colMap.precAduana] || '').trim() : '';
+                precAduana = precAduana.replace(/[_\s]/g, '').toUpperCase();
+
+                const tipo = standardizeContainerType(colMap.tipo >= 0 ? String(row[colMap.tipo] || '') : '');
+                const precLinea = colMap.precLinea >= 0 ? String(row[colMap.precLinea] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                const producto = colMap.producto >= 0 ? String(row[colMap.producto] || '').trim() : '';
+
+                const bultos = colMap.bultos >= 0 ? (parseFloat(row[colMap.bultos]) || 0) : 0;
+                const pesoNeto = colMap.pesoNeto >= 0 ? (parseFloat(row[colMap.pesoNeto]) || 0) : 0;
+                const pesoBruto = colMap.pesoBruto >= 0 ? (parseFloat(row[colMap.pesoBruto]) || 0) : 0;
+
+                // CASO 1: Fila con contenedor válido
+                if (numero.length === 11) {
+                    if (!precAduana || precAduana.startsWith('=') || precAduana.length < 6) {
+                        // Container without precinto — track it but skip if no data
+                        lastValid = { tipo, numero, precinto_aduana: '' };
+                        continue;
+                    }
+
+                    lastValid = { tipo, numero, precinto_aduana: precAduana };
+
+                    if (pesoNeto === 0 && pesoBruto === 0 && bultos === 0) continue;
+
+                    const bultosSospechoso = Math.round(bultos) > 250;
+                    if (bultosSospechoso) {
+                        warnings.push(`Contenedor ${numero}: bultos=${Math.round(bultos)} parece incorrecto (>250)`);
+                    }
+
+                    contenedores.push({
+                        tipo,
+                        numero,
+                        precinto_aduana: precAduana,
+                        precinto_linea: precLinea || null,
+                        producto,
+                        bultos: Math.round(bultos),
+                        peso_neto: Math.round(pesoNeto),
+                        peso_bruto: Math.round(pesoBruto),
+                        bultos_sospechoso: bultosSospechoso
+                    });
+                    continue;
+                }
+
+                // CASO 2: Sin contenedor, CON producto y datos → otro producto del mismo contenedor
+                if (lastValid && producto && producto.length > 0 && (bultos > 0 || pesoNeto > 0)) {
+                    console.log(`[PARSER-F2] CASO 2 HIT: fila ${i+1}, producto="${producto}", bultos=${bultos}, contenedor=${lastValid.numero}`);
+                    contenedores.push({
+                        tipo: lastValid.tipo,
+                        numero: lastValid.numero,
+                        precinto_aduana: lastValid.precinto_aduana,
+                        precinto_linea: null,
+                        producto,
+                        bultos: Math.round(bultos),
+                        peso_neto: Math.round(pesoNeto),
+                        peso_bruto: Math.round(pesoBruto)
+                    });
+                    warnings.push(`Múltiples productos en contenedor ${lastValid.numero}`);
+                    continue;
+                }
+
+                // CASO 3: Sin contenedor, sin producto → fila de totales, ignorar
+                if (numero.length !== 11) {
+                    console.log(`[PARSER-F2] CASO 3 (skip): fila ${i+1}, numero="${numero}"(${numero.length}), producto="${producto}"(${producto.length}), bultos=${bultos}, neto=${pesoNeto}, lastValid=${lastValid ? lastValid.numero : 'null'}`);
+                }
+            }
+
+            // --- FALLBACK IA: verificar si el parser perdió datos ---
+            let excelTotalBultos = 0;
+            for (let i = headerRowIdx + 1; i < Math.min(headerRowIdx + 50, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const rowProducto = colMap.producto >= 0 ? String(row[colMap.producto] || '').trim() : '';
+                const rowBultos = colMap.bultos >= 0 ? (parseFloat(row[colMap.bultos]) || 0) : 0;
+                const rowNumero = colMap.numero >= 0 ? String(row[colMap.numero] || '').trim().replace(/[-\s]/g, '') : '';
+                if (rowBultos > 0 && rowNumero.length !== 11 && !rowProducto) {
+                    excelTotalBultos = Math.round(rowBultos);
+                    break;
+                }
+            }
+            const parsedTotalBultos = contenedores.reduce((s, c) => s + c.bultos, 0);
+            if (excelTotalBultos > 0 && parsedTotalBultos > 0 && excelTotalBultos !== parsedTotalBultos) {
+                console.warn(`[PARSER-F2] Totales no coinciden: parseado=${parsedTotalBultos}, Excel=${excelTotalBultos}. Intentando con IA...`);
+                const apiKey = await getClaudeApiKey();
+                if (apiKey) {
+                    try {
+                        const aiResult = await callClaudeForParsing(rows, tipoOrigen);
+                        if (aiResult) {
+                            const aiOrder = buildOrderFromAIResult(aiResult, rows, tipoOrigen);
+                            if (aiOrder && aiOrder.contenedores && aiOrder.contenedores.length > contenedores.length) {
+                                console.log(`[PARSER] IA encontró ${aiOrder.contenedores.length} items vs parser ${contenedores.length}. Usando IA.`);
+                                contenedores.length = 0;
+                                contenedores.push(...aiOrder.contenedores);
+                                warnings.push('Datos completados con asistencia de IA (multi-producto detectado)');
+                            }
+                        }
+                    } catch (aiErr) {
+                        console.error('[PARSER] IA fallback error:', aiErr);
+                        warnings.push('No se pudo verificar multi-producto con IA: ' + aiErr.message);
+                    }
+                } else {
+                    warnings.push('Totales no coinciden (parseado: ' + parsedTotalBultos + ', Excel: ' + excelTotalBultos + '). Sin API key para verificar con IA.');
+                }
+            }
+
+            if (contenedores.length === 0) return { error: 'No se encontraron contenedores válidos (PO: ' + po + ')' };
+
+            // Check multiple products
+            const productos = [...new Set(contenedores.map(c => c.producto).filter(p => p))];
+            if (productos.length > 1) {
+                warnings.push('Múltiples productos: ' + productos.join(', '));
+            }
+
+            // Save raw rows for original data view (up to last container row + 2)
+            const lastDataRow = headerRowIdx + contenedores.length + 10;
+            const datos_originales = rows.slice(0, Math.min(lastDataRow, rows.length));
+
+            return {
+                po: po.trim(),
+                ddt: ddt.trim(),
+                buque: buque.trim(),
+                destino: destino.trim(),
+                terminal: terminal.trim(),
+                canal: canal.trim(),
+                tipo_origen: tipoOrigen,
+                estado: 'PENDIENTE',
+                cantidad_contenedores: contenedores.length,
+                total_bultos: contenedores.reduce((s, c) => s + c.bultos, 0),
+                total_peso_neto: contenedores.reduce((s, c) => s + c.peso_neto, 0),
+                total_peso_bruto: contenedores.reduce((s, c) => s + c.peso_bruto, 0),
+                contenedores,
+                datos_originales,
+                warnings
+            };
+        }
+
+        // ─── ORDERS LIST ───
+        function renderOrdersList(filter = '') {
+            const list = document.getElementById('ordersList');
+            list.innerHTML = '';
+            const filterLower = filter.toLowerCase();
+
+            const allOrders = Object.values(orders);
+            const matchesFilter = (o) => {
+                if (!filterLower) return true;
+                return o.po.includes(filterLower)
+                    || (o.ddt || '').toLowerCase().includes(filterLower)
+                    || (o.buque || '').toLowerCase().includes(filterLower)
+                    || (o.destino || '').toLowerCase().includes(filterLower);
+            };
+
+            // Pendientes
+            const pending = allOrders
+                .filter(o => o.estado === 'PENDIENTE' && matchesFilter(o))
+                .sort((a, b) => parseInt(b.po) - parseInt(a.po));
+
+            const pendingLabel = document.createElement('li');
+            pendingLabel.style.cssText = 'color:#a0aec0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:8px 4px 4px;';
+            pendingLabel.textContent = `PENDIENTES (${pending.length})`;
+            list.appendChild(pendingLabel);
+
+            if (pending.length === 0) {
+                const empty = document.createElement('li');
+                empty.style.cssText = 'color:#68d391;text-align:center;padding:14px;font-size:13px;';
+                empty.textContent = 'No hay órdenes pendientes';
+                list.appendChild(empty);
+            } else {
+                pending.forEach(order => list.appendChild(createOrderItem(order)));
+            }
+
+            // Recientes (validadas esta sesión)
+            const recentOrders = recentlyValidated
+                .map(po => orders[po])
+                .filter(o => o && matchesFilter(o));
+
+            if (recentOrders.length > 0) {
+                const recentLabel = document.createElement('li');
+                recentLabel.style.cssText = 'color:#a0aec0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:12px 4px 4px;border-top:1px solid #4a5568;margin-top:8px;';
+                recentLabel.textContent = 'RECIENTES (esta sesión)';
+                list.appendChild(recentLabel);
+                recentOrders.forEach(order => list.appendChild(createOrderItem(order)));
+            }
+        }
+
+        function createOrderItem(order) {
+            const li = document.createElement('li');
+            li.className = 'order-item';
+            if (currentOrderId === order.po) li.classList.add('active');
+            const statusClass = order.estado === 'VALIDADO' ? 'validado'
+                : order.estado === 'RECHAZADO' ? 'rechazado' : 'pending';
+            li.innerHTML = `
+                <div style="flex:1;cursor:pointer;" onclick="selectOrder('${order.po}')">
+                    <div>${order.po}</div>
+                    <div class="order-info-line">${order.buque || ''} - ${order.cantidad_contenedores || 0} cont.</div>
+                </div>
+                <span class="status-badge ${statusClass}">${order.estado}</span>
+            `;
+            return li;
+        }
+
+        function filterOrders() {
+            const query = document.getElementById('searchInput').value.trim();
+            renderOrdersList(query);
+        }
+
+        function selectOrder(poId) {
+            if (hasUnsavedChanges && currentOrderId !== poId) {
+                if (!confirm('Hay cambios sin guardar. ¿Deseas continuar?')) return;
+            }
+            currentOrderId = poId;
+            hasUnsavedChanges = false;
+            renderOrderPanel(orders[poId]);
+            renderOrdersList(document.getElementById('searchInput').value.trim());
+        }
+
+        // ─── ORDER PANEL ───
+        function renderOrderPanel(order) {
+            const panel = document.getElementById('panel');
+            const isEditable = order.estado !== 'VALIDADO';
+
+            const contRows = order.contenedores.map((cont, idx) => {
+                const bultosBad = (cont.bultos_sospechoso || cont.bultos > 250) ? ' class="error"' : '';
+                return `
+                <tr data-idx="${idx}">
+                    <td><input type="text" data-field="tipo" value="${esc(cont.tipo)}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="text" data-field="numero" value="${esc(cont.numero)}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="text" data-field="precinto_aduana" value="${esc(cont.precinto_aduana)}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="text" data-field="precinto_linea" value="${esc(cont.precinto_linea || '')}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="number" data-field="bultos" value="${cont.bultos}"${bultosBad} ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="number" data-field="peso_neto" value="${cont.peso_neto}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="number" data-field="peso_bruto" value="${cont.peso_bruto}" ${isEditable ? '' : 'readonly'}></td>
+                    <td><input type="text" data-field="producto" value="${esc(cont.producto || '')}" ${isEditable ? '' : 'readonly'}></td>
+                    <td>${isEditable ? `<button class="btn-row-delete" onclick="removeContainer(${idx})">&#10005;</button>` : ''}</td>
+                </tr>`;
+            }).join('');
+
+            const totalBultos = order.contenedores.reduce((s, c) => s + (c.bultos || 0), 0);
+            const totalNeto = order.contenedores.reduce((s, c) => s + (c.peso_neto || 0), 0);
+            const totalBruto = order.contenedores.reduce((s, c) => s + (c.peso_bruto || 0), 0);
+
+            // Detect DDT issues and multiple products
+            const ddtBad = !order.ddt || order.ddt.startsWith('REVISAR-') || order.ddt.length !== 16;
+            const productos = [...new Set(order.contenedores.map(c => c.producto).filter(p => p))];
+            const multiProducto = productos.length > 1;
+
+            panel.innerHTML = `
+                <div class="info-row">
+                    <div class="info-field">
+                        <span class="info-label">DDT:</span>
+                        <input type="text" class="info-input ${ddtBad ? 'error' : ''}" id="field_ddt" value="${esc(order.ddt)}" style="width:170px" ${isEditable ? '' : 'readonly'}>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">PO:</span>
+                        <input type="text" class="info-input" id="field_po" value="${esc(order.po)}" style="width:120px" readonly>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">Buque:</span>
+                        <input type="text" class="info-input" id="field_buque" value="${esc(order.buque)}" ${isEditable ? '' : 'readonly'}>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">Destino:</span>
+                        <input type="text" class="info-input" id="field_destino" value="${esc(order.destino)}" ${isEditable ? '' : 'readonly'}>
+                    </div>
+                    <div class="info-field">
+                        <span class="info-label">Terminal:</span>
+                        <input type="text" class="info-input" id="field_terminal" value="${esc(order.terminal)}" ${isEditable ? '' : 'readonly'}>
+                    </div>
+                </div>
+
+                ${order.estado === 'RECHAZADO' && order.motivo_rechazo ? `
+                    <div style="background:#fff5f5;border:1px solid #e53e3e;border-radius:5px;padding:10px;margin-bottom:10px;font-size:13px;">
+                        <strong style="color:#e53e3e;">Motivo de rechazo:</strong> ${esc(order.motivo_rechazo)}
+                    </div>
+                ` : ''}
+
+                ${order.estado === 'VALIDADO' ? `
+                    <div style="background:#f0fff4;border:1px solid #38a169;border-radius:5px;padding:10px;margin-bottom:10px;font-size:13px;">
+                        <strong style="color:#38a169;">Validado por:</strong> ${esc(order.validado_por || '')}
+                        ${order.fecha_validacion ? ` - ${new Date(order.fecha_validacion).toLocaleString('es-AR')}` : ''}
+                    </div>
+                ` : ''}
+
+                ${multiProducto ? `
+                    <div style="background:#fffff0;border:1px solid #d69e2e;border-radius:5px;padding:10px;margin-bottom:10px;font-size:13px;">
+                        <strong style="color:#d69e2e;">Alerta:</strong> Esta orden tiene más de un producto: ${productos.map(p => esc(p)).join(', ')}
+                    </div>
+                ` : ''}
+
+                ${ddtBad ? `
+                    <div style="background:#fff5f5;border:1px solid #e53e3e;border-radius:5px;padding:10px;margin-bottom:10px;font-size:13px;">
+                        <strong style="color:#e53e3e;">DDT requiere revisión:</strong> ${esc(order.ddt)}
+                    </div>
+                ` : ''}
+
+                <div class="section-title">
+                    CONTENEDORES (${order.contenedores.length})
+                    ${isEditable ? '<button class="btn-icon-add" onclick="addContainer()">+</button>' : ''}
+                </div>
+
+                <div class="table-container">
+                    <table id="containerTable">
+                        <thead>
+                            <tr>
+                                <th style="width:7%">Tipo</th>
+                                <th style="width:13%">Contenedor</th>
+                                <th style="width:11%">P. Aduana</th>
+                                <th style="width:11%">P. Linea</th>
+                                <th style="width:8%">Bultos</th>
+                                <th style="width:12%">P. Neto</th>
+                                <th style="width:12%">P. Bruto</th>
+                                <th style="width:14%">Producto</th>
+                                <th style="width:4%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="containerBody">
+                            ${contRows}
+                        </tbody>
+                        <tfoot>
+                            <tr class="totals-row">
+                                <td colspan="4" style="text-align:right;padding-right:12px;font-weight:700;">TOTALES</td>
+                                <td id="totalBultos">${totalBultos}</td>
+                                <td id="totalNeto">${totalNeto}</td>
+                                <td id="totalBruto">${totalBruto}</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="summary-row">
+                    <div class="summary-cell">
+                        <div class="summary-label">Contenedores</div>
+                        <div class="summary-value">${order.contenedores.length}</div>
+                    </div>
+                    <div class="summary-cell">
+                        <div class="summary-label">Total Bultos</div>
+                        <div class="summary-value" id="summaryBultos">${totalBultos}</div>
+                    </div>
+                    <div class="summary-cell">
+                        <div class="summary-label">Peso Neto</div>
+                        <div class="summary-value" id="summaryNeto">${totalNeto.toLocaleString('es-AR')}</div>
+                    </div>
+                    <div class="summary-cell">
+                        <div class="summary-label">Peso Bruto</div>
+                        <div class="summary-value" id="summaryBruto">${totalBruto.toLocaleString('es-AR')}</div>
+                    </div>
+                </div>
+
+                ${order.datos_originales ? `
+                <div class="section-title">DATOS ORIGINALES DEL EXCEL${order.datos_originales.filename ? ' — ' + esc(order.datos_originales.filename) : ''}</div>
+                ${renderExcelTable(order.datos_originales)}
+                ` : ''}
+
+                <div class="actions">
+                    ${isEditable ? `
+                        <button class="btn-action btn-save" id="btnSave" onclick="saveCurrentOrder()" disabled>Guardar cambios</button>
+                        <button class="btn-action btn-validate" onclick="openValidateModal()">VALIDAR</button>
+                        <button class="btn-action btn-reject" onclick="openRejectModal()">RECHAZAR</button>
+                    ` : `
+                        <button class="btn-action btn-save" onclick="verEnConsultas('${esc(order.po)}')">Ver en Consultas</button>
+                        <button class="btn-action btn-reject" onclick="reopenOrder()">Reabrir</button>
+                    `}
+                </div>
+            `;
+
+            // Attach change listeners to all inputs
+            if (isEditable) {
+                panel.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', () => {
+                        hasUnsavedChanges = true;
+                        input.classList.add('changed');
+                        const saveBtn = document.getElementById('btnSave');
+                        if (saveBtn) saveBtn.disabled = false;
+                        recalcTotals();
+                    });
+                });
+            }
+        }
+
+        function renderExcelTable(datosInput) {
+            // Support both old format (array) and new format ({filename, rows})
+            const datos = Array.isArray(datosInput) ? datosInput : (datosInput && datosInput.rows ? datosInput.rows : []);
+            if (!datos || datos.length === 0) return '';
+            const maxRows = Math.min(datos.length, 30);
+            // Find max columns (up to 15)
+            let maxCols = 0;
+            for (let i = 0; i < maxRows; i++) {
+                const row = datos[i];
+                if (Array.isArray(row)) maxCols = Math.max(maxCols, row.length);
+            }
+            maxCols = Math.min(maxCols, 15);
+
+            const keywords = ['DDT', 'OPERACI', 'ORDEN', 'BUQUE', 'DESTINO', 'TERMINAL', 'CANAL', 'CONTENEDOR', 'PRECINTO', 'BULTO', 'NETO', 'BRUTO', 'PRODUCTO', 'TIPO'];
+
+            // Detect header row (containers)
+            let headerIdx = -1;
+            for (let i = 0; i < maxRows; i++) {
+                const row = datos[i];
+                if (!Array.isArray(row)) continue;
+                const rowStr = row.map(c => String(c || '').toUpperCase()).join('|');
+                if (rowStr.includes('CONTENEDOR') && (rowStr.includes('PRECINTO') || rowStr.includes('SEAL'))) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+
+            // Column letters
+            let colHeaders = '<th></th>';
+            for (let j = 0; j < maxCols; j++) {
+                colHeaders += `<th>${String.fromCharCode(65 + j)}</th>`;
+            }
+
+            let rowsHtml = '';
+            for (let i = 0; i < maxRows; i++) {
+                const row = Array.isArray(datos[i]) ? datos[i] : [];
+                const isHeader = (i === headerIdx);
+                rowsHtml += '<tr>';
+                rowsHtml += `<td class="row-num ${isHeader ? 'header-highlight' : ''}">${i + 1}</td>`;
+                for (let j = 0; j < maxCols; j++) {
+                    const val = String(row[j] || '');
+                    const upper = val.toUpperCase();
+                    const hasKw = keywords.some(kw => upper.includes(kw));
+                    const cls = (isHeader ? ' header-highlight' : '') + (hasKw ? ' kw-bold' : '');
+                    rowsHtml += `<td class="${cls.trim()}">${esc(val)}</td>`;
+                }
+                rowsHtml += '</tr>';
+            }
+
+            return `<div class="excel-table-container">
+                <table class="excel-table">
+                    <thead><tr>${colHeaders}</tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            </div>`;
+        }
+
+        function recalcTotals() {
+            const rows = document.querySelectorAll('#containerBody tr');
+            let tBultos = 0, tNeto = 0, tBruto = 0;
+            rows.forEach(row => {
+                tBultos += parseFloat(row.querySelector('[data-field="bultos"]')?.value) || 0;
+                tNeto += parseFloat(row.querySelector('[data-field="peso_neto"]')?.value) || 0;
+                tBruto += parseFloat(row.querySelector('[data-field="peso_bruto"]')?.value) || 0;
+            });
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            set('totalBultos', Math.round(tBultos));
+            set('totalNeto', Math.round(tNeto));
+            set('totalBruto', Math.round(tBruto));
+            set('summaryBultos', Math.round(tBultos));
+            set('summaryNeto', Math.round(tNeto).toLocaleString('es-AR'));
+            set('summaryBruto', Math.round(tBruto).toLocaleString('es-AR'));
+        }
+
+        // ─── CONTAINER MANAGEMENT ───
+        function addContainer() {
+            if (!currentOrderId || !orders[currentOrderId]) return;
+            orders[currentOrderId].contenedores.push({
+                tipo: '20HC',
+                numero: '',
+                precinto_aduana: '',
+                precinto_linea: '',
+                producto: '',
+                bultos: 0,
+                peso_neto: 0,
+                peso_bruto: 0
+            });
+            hasUnsavedChanges = true;
+            renderOrderPanel(orders[currentOrderId]);
+            const saveBtn = document.getElementById('btnSave');
+            if (saveBtn) saveBtn.disabled = false;
+        }
+
+        function removeContainer(idx) {
+            if (!currentOrderId || !orders[currentOrderId]) return;
+            if (!confirm('¿Eliminar este contenedor?')) return;
+            orders[currentOrderId].contenedores.splice(idx, 1);
+            hasUnsavedChanges = true;
+            renderOrderPanel(orders[currentOrderId]);
+            const saveBtn = document.getElementById('btnSave');
+            if (saveBtn) saveBtn.disabled = false;
+        }
+
+        // ─── SAVE ───
+        async function saveCurrentOrder() {
+            if (!currentOrderId) return;
+            const order = orders[currentOrderId];
+
+            // Collect field values
+            order.ddt = document.getElementById('field_ddt')?.value.trim() || order.ddt;
+            order.buque = document.getElementById('field_buque')?.value.trim() || order.buque;
+            order.destino = document.getElementById('field_destino')?.value.trim() || order.destino;
+            order.terminal = document.getElementById('field_terminal')?.value.trim() || order.terminal;
+
+            // Collect container values from table
+            const rows = document.querySelectorAll('#containerBody tr');
+            const updatedContainers = [];
+            rows.forEach(row => {
+                const idx = parseInt(row.dataset.idx);
+                if (isNaN(idx)) return;
+                updatedContainers.push({
+                    tipo: row.querySelector('[data-field="tipo"]')?.value.trim() || '',
+                    numero: row.querySelector('[data-field="numero"]')?.value.trim().replace(/[-\s]/g, '') || '',
+                    precinto_aduana: row.querySelector('[data-field="precinto_aduana"]')?.value.trim() || '',
+                    precinto_linea: row.querySelector('[data-field="precinto_linea"]')?.value.trim() || null,
+                    producto: row.querySelector('[data-field="producto"]')?.value.trim() || '',
+                    bultos: Math.round(parseFloat(row.querySelector('[data-field="bultos"]')?.value) || 0),
+                    peso_neto: Math.round(parseFloat(row.querySelector('[data-field="peso_neto"]')?.value) || 0),
+                    peso_bruto: Math.round(parseFloat(row.querySelector('[data-field="peso_bruto"]')?.value) || 0)
+                });
+            });
+
+            order.contenedores = updatedContainers;
+            order.cantidad_contenedores = updatedContainers.length;
+            order.total_bultos = updatedContainers.reduce((s, c) => s + c.bultos, 0);
+            order.total_peso_neto = updatedContainers.reduce((s, c) => s + c.peso_neto, 0);
+            order.total_peso_bruto = updatedContainers.reduce((s, c) => s + c.peso_bruto, 0);
+
+            try {
+                showLoading('Guardando...');
+                await saveOrderToSupabase(order);
+                await loadOrdersFromSupabase();
+                hasUnsavedChanges = false;
+                hideLoading();
+                showAlert('Orden guardada', 'success');
+            } catch (err) {
+                hideLoading();
+                console.error('Error guardando:', err);
+                showAlert('Error al guardar: ' + err.message, 'error');
+            }
+        }
+
+        // ─── VALIDATE / REJECT ───
+        function openValidateModal() {
+            const trabajador = document.getElementById('trabajador').value.trim();
+            if (!trabajador) {
+                showAlert('Seleccioná un trabajador en el header antes de validar', 'warning');
+                return;
+            }
+            document.getElementById('validateTitle').textContent = `¿Validar orden ${currentOrderId}?`;
+            document.getElementById('validatorDisplay').textContent = trabajador;
+            document.getElementById('validationModal').classList.add('show');
+        }
+
+        function openRejectModal() {
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectModal').classList.add('show');
+            document.getElementById('rejectReason').focus();
+        }
+
+        async function confirmValidation() {
+            const name = document.getElementById('trabajador').value.trim();
+            if (!name) {
+                showAlert('Seleccioná un trabajador en el header antes de validar', 'warning');
+                return;
+            }
+            if (!currentOrderId) return;
+
+            try {
+                showLoading('Validando...');
+                // Save any pending changes first
+                await saveCurrentOrder();
+
+                const { error } = await supabase
+                    .from('operaciones')
+                    .update({
+                        estado: 'VALIDADO',
+                        validado_por: name,
+                        fecha_validacion: new Date().toISOString()
+                    })
+                    .eq('po', currentOrderId);
+
+                if (error) throw error;
+
+                document.getElementById('validationModal').classList.remove('show');
+                // Track recently validated
+                recentlyValidated = recentlyValidated.filter(p => p !== currentOrderId);
+                recentlyValidated.unshift(currentOrderId);
+                if (recentlyValidated.length > 3) recentlyValidated.pop();
+                await loadOrdersFromSupabase();
+                hasUnsavedChanges = false;
+                hideLoading();
+                showAlert('Orden validada', 'success');
+            } catch (err) {
+                hideLoading();
+                showAlert('Error al validar: ' + err.message, 'error');
+            }
+        }
+
+        async function confirmRejection() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                showAlert('Ingresa el motivo del rechazo', 'warning');
+                return;
+            }
+            if (!currentOrderId) return;
+
+            try {
+                showLoading('Rechazando...');
+                const { error } = await supabase
+                    .from('operaciones')
+                    .update({
+                        estado: 'RECHAZADO',
+                        motivo_rechazo: reason
+                    })
+                    .eq('po', currentOrderId);
+
+                if (error) throw error;
+
+                document.getElementById('rejectModal').classList.remove('show');
+                await loadOrdersFromSupabase();
+                hasUnsavedChanges = false;
+                hideLoading();
+                showAlert('Orden rechazada', 'success');
+            } catch (err) {
+                hideLoading();
+                showAlert('Error al rechazar: ' + err.message, 'error');
+            }
+        }
+
+        async function reopenOrder() {
+            if (!currentOrderId) return;
+            if (!confirm('¿Reabrir esta orden? Volverá al estado PENDIENTE.')) return;
+
+            try {
+                showLoading('Reabriendo...');
+                const { error } = await supabase
+                    .from('operaciones')
+                    .update({
+                        estado: 'PENDIENTE',
+                        validado_por: null,
+                        fecha_validacion: null,
+                        motivo_rechazo: null
+                    })
+                    .eq('po', currentOrderId);
+
+                if (error) throw error;
+                await loadOrdersFromSupabase();
+                hideLoading();
+                showAlert('Orden reabierta', 'success');
+            } catch (err) {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            }
+        }
+
+        // ─── NEW MANUAL ORDER ───
+        async function createManualOrder() {
+            const po = document.getElementById('newPO').value.trim();
+            const ddt = document.getElementById('newDDT').value.trim().toUpperCase();
+            const buque = document.getElementById('newBuque').value.trim();
+            const destino = document.getElementById('newDestino').value.trim();
+            const terminal = document.getElementById('newTerminal').value.trim();
+
+            if (!po || po.length < 9) { showAlert('PO debe tener al menos 9 digitos', 'warning'); return; }
+            if (!ddt || ddt.length !== 16) { showAlert('DDT debe tener 16 caracteres', 'warning'); return; }
+            if (!buque) { showAlert('Ingresa el buque', 'warning'); return; }
+
+            try {
+                showLoading('Creando orden...');
+                await saveOrderToSupabase({
+                    po, ddt, buque, destino, terminal,
+                    canal: '',
+                    tipo_origen: 'buenos_aires',
+                    estado: 'PENDIENTE',
+                    cantidad_contenedores: 0,
+                    total_bultos: 0,
+                    total_peso_neto: 0,
+                    total_peso_bruto: 0,
+                    contenedores: []
+                });
+
+                document.getElementById('newOrderModal').classList.remove('show');
+                // Clear fields
+                ['newPO', 'newDDT', 'newBuque', 'newDestino', 'newTerminal'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+
+                await loadOrdersFromSupabase();
+                currentOrderId = po;
+                renderOrderPanel(orders[po]);
+                renderOrdersList();
+                hideLoading();
+                showAlert('Orden creada', 'success');
+            } catch (err) {
+                hideLoading();
+                showAlert('Error al crear orden: ' + err.message, 'error');
+            }
+        }
+
+        // ─── AI-ASSISTED PARSING ───
+
+        // Call Claude API to extract order data from raw Excel rows
+        async function callClaudeForParsing(rows, tipoOrigen) {
+            const apiKey = await getClaudeApiKey();
+            if (!apiKey) return null;
+
+            // Build a text representation of the first 35 rows
+            const textRows = rows.slice(0, 35).map((row, i) =>
+                `Fila ${i + 1}: ${(Array.isArray(row) ? row : []).map((c, j) => `[${String.fromCharCode(65 + j)}]${String(c || '')}`).join(' | ')}`
+            ).join('\n');
+
+            const prompt = `Eres un extractor de datos de planillas de aduana argentinas (Excel).
+Analiza estas filas y extrae la información en formato JSON estricto.
+
+FILAS DEL EXCEL:
+${textRows}
+
+Extrae este JSON (sin texto extra, solo el JSON):
+{
+  "ddt": "string 16 chars, formato: 5digitos+2letras+8digitos+1letra, sin espacios",
+  "po": "string 9-10 digitos, es la orden/operacion",
+  "buque": "nombre del buque",
+  "destino": "pais destino",
+  "terminal": "nombre terminal sin numeros ni parentesis",
+  "canal": "verde/rojo/naranja o vacio",
+  "header_row": numero_de_fila_donde_estan_los_headers_de_contenedores,
+  "column_map": {
+    "tipo": indice_columna_o_null,
+    "numero": indice_columna,
+    "precinto_aduana": indice_columna,
+    "precinto_linea": indice_columna_o_null,
+    "producto": indice_columna_o_null,
+    "bultos": indice_columna_o_null,
+    "peso_neto": indice_columna_o_null,
+    "peso_bruto": indice_columna_o_null
+  },
+  "pattern_signature": "descripcion_breve_del_formato_detectado"
+}
+
+Los indices de columna empiezan en 0 (A=0, B=1, C=2...). Si un campo no existe, usa null.`;
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: CLAUDE_MODEL,
+                        max_tokens: 1024,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error('[AI] API error:', response.status, errText);
+                    return null;
+                }
+
+                const result = await response.json();
+                const text = result.content?.[0]?.text || '';
+
+                // Extract JSON from response
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    console.error('[AI] No JSON found in response:', text);
+                    return null;
+                }
+
+                const parsed = JSON.parse(jsonMatch[0]);
+                console.log('[AI] Claude extracted:', parsed);
+                return parsed;
+
+            } catch (err) {
+                console.error('[AI] Error calling Claude:', err);
+                return null;
+            }
+        }
+
+        // Use AI extraction result to build order data from rows
+        function buildOrderFromAIResult(aiResult, rows, tipoOrigen) {
+            if (!aiResult || !aiResult.po) return null;
+
+            const warnings = ['Datos extraidos con asistencia de IA'];
+            const headerRowIdx = aiResult.header_row ? (aiResult.header_row - 1) : -1; // convert 1-based to 0-based
+            const colMap = aiResult.column_map || {};
+
+            const contenedores = [];
+            let lastValid = null;
+            if (headerRowIdx >= 0) {
+                for (let i = headerRowIdx + 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 2) continue;
+
+                    const numero = colMap.numero != null ? String(row[colMap.numero] || '').trim().replace(/[-\s]/g, '') : '';
+                    let precAduana = colMap.precinto_aduana != null ? String(row[colMap.precinto_aduana] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                    const tipo = standardizeContainerType(colMap.tipo != null ? String(row[colMap.tipo] || '') : '');
+                    const precLinea = colMap.precinto_linea != null ? String(row[colMap.precinto_linea] || '').trim().replace(/[_\s]/g, '').toUpperCase() : '';
+                    const producto = colMap.producto != null ? String(row[colMap.producto] || '').trim() : '';
+                    const bultos = colMap.bultos != null ? (parseFloat(row[colMap.bultos]) || 0) : 0;
+                    const pesoNeto = colMap.peso_neto != null ? (parseFloat(row[colMap.peso_neto]) || 0) : 0;
+                    const pesoBruto = colMap.peso_bruto != null ? (parseFloat(row[colMap.peso_bruto]) || 0) : 0;
+
+                    // CASO 1: Contenedor válido
+                    if (numero.length === 11) {
+                        if (!precAduana || precAduana.length < 5) {
+                            lastValid = { tipo, numero, precinto_aduana: '' };
+                            continue;
+                        }
+                        lastValid = { tipo, numero, precinto_aduana: precAduana };
+
+                        if (pesoNeto === 0 && pesoBruto === 0 && bultos === 0) continue;
+
+                        const bultosSospechoso = Math.round(bultos) > 250;
+                        if (bultosSospechoso) warnings.push(`Contenedor ${numero}: bultos=${Math.round(bultos)} sospechoso`);
+
+                        contenedores.push({
+                            tipo, numero,
+                            precinto_aduana: precAduana,
+                            precinto_linea: precLinea || null,
+                            producto,
+                            bultos: Math.round(bultos),
+                            peso_neto: Math.round(pesoNeto),
+                            peso_bruto: Math.round(pesoBruto),
+                            bultos_sospechoso: bultosSospechoso
+                        });
+                        continue;
+                    }
+
+                    // CASO 2: Sin contenedor, con producto → otro producto del mismo contenedor
+                    if (lastValid && producto && producto.length > 0 && (bultos > 0 || pesoNeto > 0)) {
+                        contenedores.push({
+                            tipo: lastValid.tipo,
+                            numero: lastValid.numero,
+                            precinto_aduana: lastValid.precinto_aduana,
+                            precinto_linea: null,
+                            producto,
+                            bultos: Math.round(bultos),
+                            peso_neto: Math.round(pesoNeto),
+                            peso_bruto: Math.round(pesoBruto)
+                        });
+                        warnings.push(`Múltiples productos en contenedor ${lastValid.numero}`);
+                        continue;
+                    }
+
+                    // CASO 3: fila de totales, ignorar
+                }
+            }
+
+            if (contenedores.length === 0) return null;
+
+            const productos = [...new Set(contenedores.map(c => c.producto).filter(p => p))];
+            if (productos.length > 1) warnings.push('Multiples productos: ' + productos.join(', '));
+
+            const lastDataRow = (headerRowIdx >= 0 ? headerRowIdx : 0) + contenedores.length + 10;
+            let ddt = (aiResult.ddt || '').replace(/\s/g, '').toUpperCase();
+            if (!ddt || ddt.length < 14) {
+                ddt = 'REVISAR-' + aiResult.po;
+                warnings.push('DDT requiere revision manual');
+            }
+
+            return {
+                po: String(aiResult.po).trim(),
+                ddt,
+                buque: (aiResult.buque || '').trim(),
+                destino: (aiResult.destino || '').trim(),
+                terminal: (aiResult.terminal || '').trim(),
+                canal: (aiResult.canal || '').trim(),
+                tipo_origen: tipoOrigen,
+                estado: 'PENDIENTE',
+                cantidad_contenedores: contenedores.length,
+                total_bultos: contenedores.reduce((s, c) => s + c.bultos, 0),
+                total_peso_neto: contenedores.reduce((s, c) => s + c.peso_neto, 0),
+                total_peso_bruto: contenedores.reduce((s, c) => s + c.peso_bruto, 0),
+                contenedores,
+                datos_originales: rows.slice(0, Math.min(lastDataRow, rows.length)),
+                warnings
+            };
+        }
+
+        // ─── LEARNED PATTERNS ───
+
+        async function findLearnedPattern(rows) {
+            // Generate a signature from the header area structure
+            const sig = generatePatternSignature(rows);
+            if (!sig) return null;
+
+            try {
+                const { data, error } = await supabase
+                    .from('patrones_aprendidos')
+                    .select('*')
+                    .eq('patron_tipo', 'excel_format')
+                    .eq('patron_clave', sig)
+                    .single();
+
+                if (error || !data) return null;
+
+                // Update usage count
+                await supabase.from('patrones_aprendidos')
+                    .update({ usos: data.usos + 1, fecha_ultimo_uso: new Date().toISOString() })
+                    .eq('id', data.id);
+
+                console.log(`[PATTERN] Found learned pattern: ${sig} (${data.usos} uses)`);
+                return data.patron_valor;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        async function saveLearnedPattern(rows, aiResult) {
+            const sig = generatePatternSignature(rows);
+            if (!sig || !aiResult) return;
+
+            try {
+                await supabase.from('patrones_aprendidos')
+                    .upsert({
+                        patron_tipo: 'excel_format',
+                        patron_clave: sig,
+                        patron_valor: {
+                            header_row: aiResult.header_row,
+                            column_map: aiResult.column_map,
+                            pattern_description: aiResult.pattern_signature || sig
+                        },
+                        usos: 1,
+                        fecha_creacion: new Date().toISOString(),
+                        fecha_ultimo_uso: new Date().toISOString()
+                    }, { onConflict: 'patron_tipo,patron_clave' });
+
+                console.log(`[PATTERN] Saved new pattern: ${sig}`);
+            } catch (err) {
+                console.error('[PATTERN] Error saving:', err);
+            }
+        }
+
+        // Generate a signature based on the structure of the Excel (which cells contain keywords, not values)
+        function generatePatternSignature(rows) {
+            if (!rows || rows.length < 3) return null;
+            const parts = [];
+            for (let i = 0; i < Math.min(10, rows.length); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                for (let j = 0; j < Math.min(8, row.length); j++) {
+                    const cell = String(row[j] || '').toUpperCase().trim();
+                    // Only capture structural keywords, not values
+                    for (const kw of ['DDT', 'ORDEN', 'OPERACI', 'BUQUE', 'DESTINO', 'TERMINAL', 'CANAL', 'CONTENEDOR', 'PRECINTO', 'BULTO', 'NETO', 'BRUTO', 'PRODUCTO']) {
+                        if (cell.includes(kw)) {
+                            parts.push(`${i}:${j}:${kw}`);
+                        }
+                    }
+                }
+            }
+            return parts.length > 0 ? parts.sort().join('|') : null;
+        }
+
+        // ─── CONSULTAS ───
+        async function buscarConsultas() {
+            const search = document.getElementById('consultaSearch').value.trim();
+            const multiText = document.getElementById('consultaMultiple').value.trim();
+            const estadoFilter = document.getElementById('consultaEstado').value;
+            const resultsList = document.getElementById('consultaResults');
+
+            // Parse multiple POs
+            const multiPOs = multiText ? multiText.split(/\n/).map(l => l.trim()).filter(l => l) : [];
+
+            // If no search criteria, show warning
+            if (!search && multiPOs.length === 0 && !estadoFilter) {
+                resultsList.innerHTML = '<li class="consultas-empty">Ingres&aacute; un criterio de b&uacute;squeda</li>';
+                return;
+            }
+
+            try {
+                let results = [];
+
+                if (multiPOs.length > 0) {
+                    // Multiple PO search
+                    const { data, error } = await supabase
+                        .from('operaciones')
+                        .select('*')
+                        .in('po', multiPOs);
+                    if (error) throw error;
+
+                    // Also fetch containers for these
+                    const ids = (data || []).map(d => d.id);
+                    let contsMap = {};
+                    if (ids.length > 0) {
+                        const { data: conts } = await supabase
+                            .from('contenedores')
+                            .select('*')
+                            .in('operacion_id', ids);
+                        for (const c of (conts || [])) {
+                            if (!contsMap[c.operacion_id]) contsMap[c.operacion_id] = [];
+                            contsMap[c.operacion_id].push(c);
+                        }
+                    }
+
+                    const foundPOs = new Set((data || []).map(d => d.po));
+                    results = (data || []).map(op => ({ ...op, contenedores: contsMap[op.id] || [] }));
+
+                    // Show not found POs
+                    const notFound = multiPOs.filter(p => !foundPOs.has(p));
+                    renderConsultaResults(results, notFound, estadoFilter);
+                    return;
+
+                } else if (search) {
+                    // Single search: search by PO, DDT, or buque
+                    let query = supabase.from('operaciones').select('*');
+                    // Try to match PO exactly, or DDT/buque with ilike
+                    const { data, error } = await supabase
+                        .from('operaciones')
+                        .select('*')
+                        .or(`po.ilike.%${search}%,ddt.ilike.%${search}%,buque.ilike.%${search}%`);
+                    if (error) throw error;
+
+                    const ids = (data || []).map(d => d.id);
+                    let contsMap = {};
+                    if (ids.length > 0) {
+                        const { data: conts } = await supabase
+                            .from('contenedores')
+                            .select('*')
+                            .in('operacion_id', ids);
+                        for (const c of (conts || [])) {
+                            if (!contsMap[c.operacion_id]) contsMap[c.operacion_id] = [];
+                            contsMap[c.operacion_id].push(c);
+                        }
+                    }
+
+                    results = (data || []).map(op => ({ ...op, contenedores: contsMap[op.id] || [] }));
+
+                } else {
+                    // Estado filter only
+                    const { data, error } = await supabase
+                        .from('operaciones')
+                        .select('*')
+                        .eq('estado', estadoFilter);
+                    if (error) throw error;
+
+                    const ids = (data || []).map(d => d.id);
+                    let contsMap = {};
+                    if (ids.length > 0) {
+                        const { data: conts } = await supabase
+                            .from('contenedores')
+                            .select('*')
+                            .in('operacion_id', ids);
+                        for (const c of (conts || [])) {
+                            if (!contsMap[c.operacion_id]) contsMap[c.operacion_id] = [];
+                            contsMap[c.operacion_id].push(c);
+                        }
+                    }
+
+                    results = (data || []).map(op => ({ ...op, contenedores: contsMap[op.id] || [] }));
+                }
+
+                renderConsultaResults(results, [], estadoFilter);
+
+            } catch (err) {
+                console.error('Error en consulta:', err);
+                showAlert('Error al buscar: ' + err.message, 'error');
+            }
+        }
+
+        function renderConsultaResults(results, notFound, estadoFilter) {
+            const list = document.getElementById('consultaResults');
+
+            // Apply estado filter if set
+            if (estadoFilter) {
+                results = results.filter(r => r.estado === estadoFilter);
+            }
+
+            if (results.length === 0 && notFound.length === 0) {
+                list.innerHTML = '<li class="consultas-empty">No se encontraron resultados</li>';
+                return;
+            }
+
+            let html = '';
+            for (const order of results) {
+                const statusClass = order.estado === 'VALIDADO' ? 'validado'
+                    : order.estado === 'RECHAZADO' ? 'rechazado' : 'pending';
+                html += `
+                    <li class="order-item" onclick="showConsultaDoc('${esc(order.po)}', this)" style="cursor:pointer;">
+                        <div style="flex:1;">
+                            <div>${esc(order.po)}</div>
+                            <div class="order-info-line">${esc(order.buque || '')} - ${order.cantidad_contenedores || 0} cont.</div>
+                        </div>
+                        <span class="status-badge ${statusClass}">${esc(order.estado)}</span>
+                    </li>`;
+            }
+
+            for (const po of notFound) {
+                html += `<li class="not-found">&#9888;&#65039; PO ${esc(po)} &mdash; No encontrada</li>`;
+            }
+
+            list.innerHTML = html;
+
+            // Store results for document view
+            window._consultaResults = {};
+            for (const r of results) window._consultaResults[r.po] = r;
+        }
+
+        function showConsultaDoc(po, clickedEl) {
+            const order = window._consultaResults && window._consultaResults[po];
+            if (!order) return;
+
+            // Highlight active item
+            document.querySelectorAll('#consultaResults .order-item').forEach(li => li.classList.remove('active'));
+            if (clickedEl) clickedEl.classList.add('active');
+
+            const panel = document.getElementById('consultaPanel');
+            const conts = order.contenedores || [];
+            const totalBultos = conts.reduce((s, c) => s + (c.bultos || 0), 0);
+            const totalNeto = conts.reduce((s, c) => s + (c.peso_neto || 0), 0);
+            const totalBruto = conts.reduce((s, c) => s + (c.peso_bruto || 0), 0);
+
+            const statusClass = order.estado === 'VALIDADO' ? 'validado'
+                : order.estado === 'RECHAZADO' ? 'rechazado' : 'pendiente';
+
+            let statusText = order.estado;
+            if (order.estado === 'VALIDADO' && order.validado_por) {
+                statusText += ` &mdash; Validado por: ${esc(order.validado_por)}`;
+                if (order.fecha_validacion) statusText += ` &mdash; ${new Date(order.fecha_validacion).toLocaleString('es-AR')}`;
+            }
+            if (order.estado === 'RECHAZADO' && order.motivo_rechazo) {
+                statusText += ` &mdash; Motivo: ${esc(order.motivo_rechazo)}`;
+            }
+
+            let contRows = conts.map(c => `
+                <tr>
+                    <td>${esc(c.tipo)}</td>
+                    <td>${esc(c.numero)}</td>
+                    <td>${esc(c.precinto_aduana)}</td>
+                    <td>${esc(c.producto || '')}</td>
+                    <td>${c.bultos}</td>
+                    <td>${(c.peso_neto || 0).toLocaleString('es-AR')}</td>
+                    <td>${(c.peso_bruto || 0).toLocaleString('es-AR')}</td>
+                </tr>
+            `).join('');
+
+            // Generate embarque text
+            const embarqueText = generateEmbarqueText(order);
+
+            panel.innerHTML = `
+                <div class="doc-view">
+                    <div class="doc-header">
+                        <div><strong>DDT:</strong> ${esc(order.ddt)}</div>
+                        <div>${order.fecha_validacion ? new Date(order.fecha_validacion).toLocaleDateString('es-AR') : ''}</div>
+                    </div>
+                    <div class="doc-field"><strong>OPERACI&Oacute;N:</strong> ${esc(order.po)}</div>
+                    <div class="doc-field"><strong>BUQUE:</strong> ${esc(order.buque)}</div>
+                    <div class="doc-field"><strong>DESTINO:</strong> ${esc(order.destino)}</div>
+                    <div class="doc-field"><strong>TERMINAL:</strong> ${esc(order.terminal)}</div>
+
+                    <div class="doc-status ${statusClass}">${statusText}</div>
+
+                    <div style="font-weight:700;margin:14px 0 8px 0;font-size:13px;">CONTENEDORES:</div>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Contenedor</th>
+                                <th>Precinto</th>
+                                <th>Producto</th>
+                                <th>Bultos</th>
+                                <th>Neto</th>
+                                <th>Bruto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${contRows}
+                            <tr class="totals-row">
+                                <td colspan="3"></td>
+                                <td style="text-align:right;font-weight:700;">TOTALES</td>
+                                <td>${totalBultos}</td>
+                                <td>${totalNeto.toLocaleString('es-AR')}</td>
+                                <td>${totalBruto.toLocaleString('es-AR')}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="doc-summary">
+                        RESUMEN: ${conts.length} contenedores | ${totalBultos} bultos | ${totalNeto.toLocaleString('es-AR')} kg neto | ${totalBruto.toLocaleString('es-AR')} kg bruto
+                    </div>
+
+                    <div class="embarque-section">
+                        <label>Declaraci&oacute;n de Embarque</label>
+                        <textarea class="embarque-textarea" id="embarqueText">${esc(embarqueText)}</textarea>
+                        <button class="btn-copiar" onclick="copiarEmbarque()">&#128203; Copiar texto</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateBags(pesoNeto, bultos) {
+            if (!bultos || bultos === 0 || !pesoNeto) return null;
+            const kgPorBulto = pesoNeto / bultos;
+            if (kgPorBulto >= 1400 && kgPorBulto <= 1600) {
+                return String(Math.round(pesoNeto / 25));
+            } else if (kgPorBulto >= 900 && kgPorBulto <= 1300) {
+                return String(bultos);
+            }
+            return null;
+        }
+
+        function generateEmbarqueText(order) {
+            const conts = order.contenedores || [];
+            const cantContenedores = conts.length;
+
+            // Tipos únicos estandarizados con espacio
+            const tiposRaw = [...new Set(conts.map(c => standardizeContainerType(c.tipo)).filter(t => t))];
+            const tiposFormatted = tiposRaw.map(t => t.replace(/(\d{2})([A-Z]{2})/, '$1 $2')).join(', ');
+
+            // Agrupar por producto
+            const productoGroups = {};
+            for (const c of conts) {
+                const prod = (c.producto || 'SIN PRODUCTO').trim();
+                if (!productoGroups[prod]) {
+                    productoGroups[prod] = { bultos: 0, pesoNeto: 0, pesoBruto: 0 };
+                }
+                productoGroups[prod].bultos += c.bultos || 0;
+                productoGroups[prod].pesoNeto += c.peso_neto || 0;
+                productoGroups[prod].pesoBruto += c.peso_bruto || 0;
+            }
+
+            const productos = Object.keys(productoGroups);
+            const totalBultos = conts.reduce((s, c) => s + (c.bultos || 0), 0);
+            const totalNeto = conts.reduce((s, c) => s + (c.peso_neto || 0), 0);
+            const totalBruto = conts.reduce((s, c) => s + (c.peso_bruto || 0), 0);
+
+            let text = `${cantContenedores} CONTAINERS OF ${tiposFormatted}\n`;
+
+            if (productos.length === 1) {
+                const bags = calculateBags(totalNeto, totalBultos);
+                text += `SAID TO CONTAIN\n`;
+                text += `DESCRIPTION GOODS:              ${productos[0]}\n`;
+                text += `QUANTITY: ${bags !== null ? bags + ' BAGS IN ' : ''}${totalBultos} PALLETS\n`;
+            } else {
+                text += `SAID TO CONTAIN DESCRIPTION\n`;
+                for (const prod of productos) {
+                    const g = productoGroups[prod];
+                    const bags = calculateBags(g.pesoNeto, g.bultos);
+                    text += `GOODS:              ${prod}\n`;
+                    text += `QUANTITY: ${bags !== null ? bags + ' BAGS IN ' : ''}${g.bultos} PALLETS\n`;
+                }
+            }
+
+            text += `GROSS WEIGHT: ${totalBruto}\n`;
+            text += `NET WEIGHT: ${totalNeto}\n`;
+            text += `NCM: 3901\n`;
+            text += `Wooden Material: YES\n`;
+            text += `Wooden Condition: Treated and Certified\n`;
+
+            const permit = (order.ddt && !order.ddt.startsWith('REVISAR-')) ? order.ddt : '(pendiente)';
+            text += `Export Permit: ${permit}`;
+
+            return text;
+        }
+
+        function copiarEmbarque() {
+            const textarea = document.getElementById('embarqueText');
+            if (!textarea) return;
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                showAlert('Texto copiado al portapapeles', 'success');
+            }).catch(() => {
+                textarea.select();
+                document.execCommand('copy');
+                showAlert('Texto copiado', 'success');
+            });
+        }
+
+        // Open a specific order in Consultas tab
+        function verEnConsultas(po) {
+            switchTab('consultas');
+            document.getElementById('consultaSearch').value = po;
+            document.getElementById('consultaMultiple').value = '';
+            document.getElementById('consultaEstado').value = '';
+            buscarConsultas();
+        }
+
+        // ─── CONTROL TAB ───
+        let allControlOrders = [];
+
+        async function loadControlData() {
+            showLoading('Cargando registros...');
+            try {
+                const { data: ops, error: opsErr } = await supabase
+                    .from('operaciones')
+                    .select('*')
+                    .order('po', { ascending: false });
+
+                if (opsErr) throw opsErr;
+
+                const { data: conts, error: contsErr } = await supabase
+                    .from('contenedores')
+                    .select('operacion_id, numero');
+
+                if (contsErr) throw contsErr;
+
+                const contsByOp = {};
+                for (const c of (conts || [])) {
+                    if (!contsByOp[c.operacion_id]) contsByOp[c.operacion_id] = [];
+                    contsByOp[c.operacion_id].push(c.numero);
+                }
+
+                allControlOrders = (ops || []).map(op => ({
+                    ...op,
+                    contenedores_nums: contsByOp[op.id] || []
+                }));
+
+                hideLoading();
+                renderControlTable();
+            } catch (err) {
+                hideLoading();
+                showAlert('Error cargando control: ' + err.message, 'error');
+            }
+        }
+
+        function renderControlTable() {
+            const container = document.getElementById('controlContent');
+            const countPending = allControlOrders.filter(o => o.estado === 'PENDIENTE').length;
+            const countValidated = allControlOrders.filter(o => o.estado === 'VALIDADO').length;
+            const countRejected = allControlOrders.filter(o => o.estado === 'RECHAZADO').length;
+
+            let rowsHtml = '';
+            for (const o of allControlOrders) {
+                const statusClass = o.estado === 'VALIDADO' ? 'validado'
+                    : o.estado === 'RECHAZADO' ? 'rechazado' : 'pending';
+                rowsHtml += `<tr>
+                    <td>${esc(o.po)}</td>
+                    <td>${esc(o.ddt)}</td>
+                    <td>${esc(o.buque)}</td>
+                    <td><span class="status-badge ${statusClass}">${esc(o.estado)}</span></td>
+                    <td>${esc(o.validado_por || '—')}</td>
+                    <td style="text-align:center;">${o.cantidad_contenedores || 0}</td>
+                    <td class="cont-list">${(o.contenedores_nums || []).map(n => esc(n)).join(', ')}</td>
+                </tr>`;
+            }
+
+            container.style = '';
+            container.innerHTML = `
+                <div style="overflow:auto;max-height:calc(100vh - 200px);">
+                    <table class="control-table">
+                        <thead>
+                            <tr>
+                                <th>PO</th>
+                                <th>Permiso (DDT)</th>
+                                <th>Buque</th>
+                                <th>Estado</th>
+                                <th>Valid&oacute;</th>
+                                <th>Cont.</th>
+                                <th>Contenedores</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
+                <div class="control-summary">
+                    <span>Total: ${allControlOrders.length} &oacute;rdenes | ${countPending} pendientes | ${countValidated} validadas | ${countRejected} rechazadas</span>
+                    <button class="btn-export" onclick="exportControlToExcel()">Exportar a Excel</button>
+                </div>
+            `;
+        }
+
+        function exportControlToExcel() {
+            const data = [
+                ['PO', 'Permiso (DDT)', 'Buque', 'Estado', 'Validó', 'Cant. Contenedores', 'Contenedores']
+            ];
+            for (const o of allControlOrders) {
+                data.push([
+                    o.po,
+                    o.ddt,
+                    o.buque,
+                    o.estado,
+                    o.validado_por || '—',
+                    o.cantidad_contenedores || 0,
+                    (o.contenedores_nums || []).join(', ')
+                ]);
+            }
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Control');
+            XLSX.writeFile(wb, `control_validador_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // ─── TABS ───
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // ─── UTILITIES ───
+        function standardizeContainerType(tipo) {
+            if (!tipo) return '';
+            tipo = tipo.trim().toUpperCase().replace(/\s+/g, '');
+            // Si empieza con 2 letras seguidas de 2 dígitos, invertir (HC40 → 40HC)
+            const match = tipo.match(/^([A-Z]{2})(\d{2})$/);
+            if (match) return match[2] + match[1];
+            return tipo;
+        }
+
+        function esc(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert-toast ${type}`;
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.3s';
+                setTimeout(() => alert.remove(), 300);
+            }, 4000);
+        }
+
+        function showLoading(msg) {
+            let overlay = document.getElementById('loadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.className = 'loading-overlay';
+                overlay.innerHTML = `<div class="loading-spinner">${esc(msg || 'Cargando...')}</div>`;
+                document.body.appendChild(overlay);
+            } else {
+                overlay.querySelector('.loading-spinner').textContent = msg || 'Cargando...';
+                overlay.style.display = 'flex';
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.remove();
+        }
+    </script>
+</body>
+</html>

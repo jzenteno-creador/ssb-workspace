@@ -1,0 +1,120 @@
+{
+  "order_number": "4010531167",
+  "shipment_number": "0048147321",
+  "booking_no": "LA0492133",
+  "transport_mode": "FCL (Full Container)",
+  "containers_qty": 4,
+  "pol": "Buenos Aires Port",
+  "pod": "Santos Port",
+  "destino_pais": "BRAZIL",
+  "vessel": "",
+  "voyage": "",
+  "dates": {
+    "document_date": "05/21/2026",
+    "shipment_date": "05/21/2026",
+    "cutoff_origin": "20260523",
+    "etd_pol": "20260526",
+    "delivery_to_dest_port": "06/02/2026",
+    "eta_destination": "20260602",
+    "final_dest_delivery_date": "06/15/2026"
+  },
+  "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+      "AV JOAQUIM LOURENCO DE LIMA 120",
+      "GALPAO 04",
+      "37644-032 EXTREMA - MG",
+      "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+  },
+  "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "address_lines": [
+      "RUA MANOEL VIEIRA GARCAO 120",
+      "CENTRO",
+      "88301-425 ITAJAI - SC",
+      "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "tax_id": "92102433000923",
+    "phone": "55 47 3248-8115"
+  },
+  "producto": {
+    "cadena": "Polyethylene 35060L High Density 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "35060L",
+    "embalaje": "Big Bag"
+  },
+  "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560,
+    "volume_cd3": 145670.4
+  },
+  "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+  },
+  "ncm_export": "39012029900U",
+  "equipos": [
+    {
+      "container": "MSMU7089402",
+      "seal": "346079",
+      "type": "40' Container",
+      "bultos": 18,
+      "net_kg": 21600,
+      "gross_kg": 22140,
+      "volume_cd3": 36417.6
+    },
+    {
+      "container": "MSMU8918236",
+      "seal": "346080",
+      "type": "40' Container",
+      "bultos": 18,
+      "net_kg": 21600,
+      "gross_kg": 22140,
+      "volume_cd3": 36417.6
+    },
+    {
+      "container": "TRHU8623238",
+      "seal": "346011",
+      "type": "40' Container",
+      "bultos": 18,
+      "net_kg": 21600,
+      "gross_kg": 22140,
+      "volume_cd3": 36417.6
+    },
+    {
+      "container": "MSNU8540108",
+      "seal": "346078",
+      "type": "40' Container",
+      "bultos": 18,
+      "net_kg": 21600,
+      "gross_kg": 22140,
+      "volume_cd3": 36417.6
+    }
+  ],
+  "terms_of_delivery": "CFR Santos Port",
+  "incoterm": "CFR",
+  "incoterm_place": "Santos Port",
+  "document_recipients": [
+    {
+      "section": "Document Recip Orig",
+      "name": "BDP SOUTH AMERICA LTDA",
+      "email": "br.sao.dowimp@bdpint.com"
+    },
+    {
+      "section": "Document Recip Copy2",
+      "name": "BDP SOUTH AMERICA LTDA",
+      "email": "br.sao.dowimp@bdpint.com"
+    }
+  ],
+  "links": {
+    "fileId": "1p1A2pOZQGavTJ16B-35fHOjmuBbdUjy9",
+    "name": "48147321_4010531167_ZCB3_BA.pdf",
+    "webViewLink": "https://drive.google.com/file/d/1p1A2pOZQGavTJ16B-35fHOjmuBbdUjy9/view?usp=drivesdk"
+  }
+}

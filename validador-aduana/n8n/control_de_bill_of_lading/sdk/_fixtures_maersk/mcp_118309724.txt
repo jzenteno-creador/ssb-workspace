@@ -1,0 +1,119 @@
+Dear Customer, please note that any changes to payment terms or prepaid payer made after vessel departure and invoice issuance may incur a payer amendment fee.
+
+BILL OF LADING FOR OCEAN TRANSPORT
+
+SCAC MAEU OR MULTIMODAL TRANSPORT
+
+B/L No.
+
+Notify Party (see clause 22) Same as Consignee
+
+VERIFY COPY
+
+THREE/3
+
+Received for Shipment Date 2026-05-28
+
+This transport document has one or more numbered pages
+
+For amendment journey use link - https://www.maersk.com/shipping-instruction/launch
+
+270774309
+
+Shipper (As principal, where "care of", "c/o", or other variants used.) PBBPOLISUR S.R.L. CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+Booking No. 270774309
+
+Export references
+
+Svc Contract 118309724 / 47958876
+
+300242725
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where "care of", "c/o", or other variants used.) EVERTIS BRASIL PLASTICOS SA AV VINTE E CINCO DE JANEIRO, 1986 QUATRO BARRAS - CEP: 83420-000 PARANA BRASIL CNPJ: 03.208.517/0001-69 EMAIL: fabio.moraes@evertis.com CNPJ-Brazil - 03.208.517/0001-69
+
+Vessel (see clause 1 + 19)
+
+Voyage No.
+
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1) MAERSK LABREA
+
+623N
+
+Port of Loading
+
+Port of Discharge Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Paranagua
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+
+Weight Measurement 2 containers said to contain 58 PALLET
+
+58 BAGS IN 58 PALLETS WITH 34800 KG OF BYNEL 3860 Adhesive Resin
+
+SAP/NEA: 118309724 SHP: 47958876 PE: 26033EC01003851K
+
+NCM: 3901 WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+CAAU8319502 40 DRY 9'6 32 PALLET 20486.400 KGS 32.3710 CBM Customs Seal : BAH15529 SEGU4242510 40 DRY 9'6 26 PALLET 16645.200 KGS 26.3020 CBM Customs Seal : BAH15528
+
+37131.600 KGS 58.6730 CBM
+
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+
+VERY IMPORTANT: Container demurrage and detention tariffs and conditions applicable for the port of discharge, including the free time, can be obtained with local agents and are available at the carriers website, at: https://www.sealandmaersk.com/local-information/brazil/export. Same demurrage and Below Above particulars freight as details declared will by Shipper, not be but part without of responsibility Original Bill of or of representation Lading unless by Carrier requested (see clause 14)
+
+by customer
+
+Freight & Charges Rate Unit Currency Prepaid Collect Basic Ocean Freight 740.00 Per Container USD 1480.00 Terminal Handling Service - Destination 1270.00 Per Container BRL 2540.00
+
+Total Charges BRL Name Prepaid/Collect Invoice Party Customer Code BRL Collection Business Unit 2540.00 Basic Ocean Freight Prepaid PBB POLISUR SRL 300S4000902 Maersk Argentina (B Aires) Terminal Handling Service - DestinationCollect EVERTIS BRASIL PLASTICOS SA305C3743DWQ Maersk Brazil (Santos) Detention Fee - Export Prepaid PBB POLISUR SRL 300S4000902 Maersk Argentina (B Aires)
+
+Carrier's Receipt (see clause 1 and 14). Total number
+
+Place of Issue of B/L
+
+RECEIVED by the Carrier from the Shipper, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise of containers or packages received by Carrier.
+
+2 containers
+
+Buenos Aires
+
+stated herein, the total number or quantity of Containers or other packages or units indicated in the box entitled "Carrier's Receipt" for carriage from the Port of Loading (or the Place of Receipt, if mentioned above) to the Port of Discharge (or the Place of Delivery, if mentioned above),such carriage being always subject to the terms, rights, defences, provisions, conditions, exceptions,limitations, and liberties hereof (INCLUDING ALL THOSE TERMS AND CONDITIONS ON THE REVERSE HEREOF NUMBERED 1-26 AND THOSE TERMS AND CONDITIONS CONTAINED IN THE CARRIER'S APPLICABLE Number & Sequence of Original B(s)/L Date of Issue of B/L
+
+TARIFF) and the Merchant's attention is drawn in particular to the Carrier's liberties in respect of on deck stowage (see clause 18) and the carrying vessel (see clause 19). [RECORTE legal — texto de clausulas omitido en fixture] Declared Value (see clause 7.3)
+
+Signed for the Carrier Maersk A/S
+
+As Agent(s)
+
+B/L: 270774309 Page : 2
+
+detention conditions are registered in the Documents Registry Notary Office in the city of Santos, under number 732.744 [RECORTE legal — texto de clausulas omitido en fixture]
+
+FREIGHT PREPAID
+
+AGENT AT DESTINATION:
+
+MAERSK BRASIL LTDA. PA RUI BARBOSA, N26/27 11010-130 SANTOS BRAZIL PHONE: 55 13 3211-7800 FAX: 55 13 3211-7801
+
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery)
+
+CY/CY
+
+Consignee Ref: 118309724 / 47958876
+
+First Notify Ref: 118309724 / 47958876
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Total USD USD 1480.00
+
+Charges Name Prepaid/Collect Invoice Party Customer Code Collection Business Unit
+
+B/L: 270774309 Page : 3

@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""PUT REST edit-in-place: FIX joinKey Aduana (orden vs permiso por estructura).
+Toca SOLO 3 nodos: 'Inyectar pe + source_link' (code), 'COMPARADOR - BL vs Aduana vs Booking' (code),
+'Set Aduana: Join Key' (set). Iron Law: 33 nodos / active / drift SOLO en los 3 targets / 3 creds. Auto-rollback."""
+import json, sys, urllib.request, urllib.error, copy
+
+BASE = "https://jzenteno.app.n8n.cloud/api/v1"
+WID  = "WVt6gvghL2nFVbt6"
+SDK  = "/home/jzenteno/projects/validador-aduanal/n8n/control_de_bill_of_lading/sdk/"
+ENV  = "/home/jzenteno/projects/validador-aduanal/.env"
+
+N_INYECTAR  = "Inyectar pe + source_link"
+N_COMPARA   = "COMPARADOR - BL vs Aduana vs Booking"
+N_SETADUANA = "Set Aduana: Join Key"
+TARGETS = {N_INYECTAR, N_COMPARA, N_SETADUANA}
+
+JOINKEY_EXPR = (
+    "={{ ($json.aduana_extract?.orden || $json.aduana_extract?.operacion || $json.order_number "
+    "|| $json.orden_from_name || '').toString().replace(/\\D/g,'').replace(/^0+/,'') }}"
+)
+
+def api_key():
+    for line in open(ENV, encoding="utf-8"):
+        if line.startswith("N8N_API_KEY-claudecode"):
+            return line.split("=", 1)[1].strip().strip('"').strip("'")
+    sys.exit("NO N8N KEY")
+
+KEY = api_key()
+
+def req(method, path, body=None):
+    data = json.dumps(body).encode() if body is not None else None
+    r = urllib.request.Request(BASE + path, data=data, method=method,
+        headers={"X-N8N-API-KEY": KEY, "content-type": "application/json", "accept": "application/json"})
+    try:
+        with urllib.request.urlopen(r) as resp:
+            return resp.status, json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read().decode() or "{}")
+
+def strip_body(wf):
+    return {"name": wf["name"], "nodes": wf["nodes"], "connections": wf["connections"],
+            "settings": {"executionOrder": "v1"}}
+
+# ---------- 1. GET pre (guard) ----------
+st, pre = req("GET", f"/workflows/{WID}")
+if st != 200: sys.exit(f"GET pre fallo {st}: {pre}")
+json.dump(pre, open(SDK+"workflow_pre_fix_joinkey_aduana.json", "w"), ensure_ascii=False, indent=1)
+ver_pre, n_pre = pre.get("versionId"), len(pre["nodes"])
+print(f"[1] GET pre: {n_pre} nodos, versionId={ver_pre}, active={pre.get('active')}")
+if n_pre != 33: sys.exit(f"ABORT: esperaba 33 nodos pre-PUT, hay {n_pre}")
+pre_names = {n["name"] for n in pre["nodes"]}
+missing = TARGETS - pre_names
+if missing: sys.exit(f"ABORT: targets ausentes en el workflow: {missing}")
+
+# ---------- 2. build (edit-in-place) ----------
+CODE_INYECTAR = open(SDK+"code_inyectar_pe_source_link.js", encoding="utf-8").read()
+CODE_COMPARA  = open(SDK+"_comparador.js", encoding="utf-8").read()
+
+nodes = copy.deepcopy(pre["nodes"])
+changed = {}
+for n in nodes:
+    if n["name"] == N_INYECTAR:
+        n["parameters"]["jsCode"] = CODE_INYECTAR; changed[N_INYECTAR] = "jsCode"
+    elif n["name"] == N_COMPARA:
+        n["parameters"]["jsCode"] = CODE_COMPARA;  changed[N_COMPARA] = "jsCode"
+    elif n["name"] == N_SETADUANA:
+        n["parameters"]["assignments"]["assignments"][0]["value"] = JOINKEY_EXPR
+        changed[N_SETADUANA] = "joinKey"
+if set(changed) != TARGETS: sys.exit(f"ABORT: no se editaron los 3 targets: {changed}")
+
+# sanity: el nodo COMPARADOR debe contener buildComparison (no la plantilla)
+comp_node = next(n for n in nodes if n["name"] == N_COMPARA)
+if "buildComparison" not in comp_node["parameters"]["jsCode"]:
+    sys.exit("ABORT: nodo COMPARADOR no contiene buildComparison — target equivocado")
+
+body = {"name": pre["name"], "nodes": nodes, "connections": pre["connections"],
+        "settings": {"executionOrder": "v1"}}
+json.dump(body, open(SDK+"workflow_put_fix_joinkey_aduana.json", "w"), ensure_ascii=False, indent=1)
+print(f"[2] body: {len(nodes)} nodos, editados={list(changed)}")
+
+# ---------- 3. PUT ----------
+st, putres = req("PUT", f"/workflows/{WID}", body)
+print(f"[3] PUT status={st}")
+if st not in (200, 201):
+    sys.exit(f"ABORT: PUT fallo {st}: {json.dumps(putres)[:500]} — nada nuevo modificado.")
+
+# ---------- 4. GET post + Iron Law ----------
+st, post = req("GET", f"/workflows/{WID}")
+if st != 200: sys.exit(f"GET post fallo {st}")
+json.dump(post, open(SDK+"workflow_post_fix_joinkey_aduana.json", "w"), ensure_ascii=False, indent=1)
+ver_post, n_post = post.get("versionId"), len(post["nodes"])
+print(f"[4] GET post: {n_post} nodos, versionId={ver_post}, active={post.get('active')}")
+
+pre_by_id  = {n["id"]: n for n in pre["nodes"]}
+post_by_id = {n["id"]: n for n in post["nodes"]}
+FIELDS = ["name", "type", "typeVersion", "position", "parameters", "credentials", "onError"]
+
+unexpected_drift, target_ok = [], []
+for i, a in pre_by_id.items():
+    b = post_by_id.get(i)
+    if b is None:
+        unexpected_drift.append(f"{a['name']}: AUSENTE"); continue
+    diffs = [f for f in FIELDS if a.get(f) != b.get(f)]
+    if not diffs: continue
+    if a["name"] in TARGETS:
+        target_ok.append(a["name"])
+    else:
+        unexpected_drift.append(f"{a['name']}: {diffs}")
+
+# creds preservadas (count global por id)
+def cred_ids(wf):
+    ids = []
+    for n in wf["nodes"]:
+        for c in (n.get("credentials") or {}).values():
+            if isinstance(c, dict) and c.get("id"): ids.append(c["id"])
+    return sorted(ids)
+creds_pre, creds_post = cred_ids(pre), cred_ids(post)
+
+fails = []
+if n_post != 33: fails.append(f"node_count={n_post}")
+if post.get("active") is not True: fails.append(f"active={post.get('active')}")
+if unexpected_drift: fails.append(f"DRIFT inesperado: {unexpected_drift}")
+if set(target_ok) != TARGETS: fails.append(f"targets sin cambio aplicado: {TARGETS - set(target_ok)}")
+if creds_pre != creds_post: fails.append(f"creds cambiaron: pre={creds_pre} post={creds_post}")
+
+print("\n===== IRON LAW =====")
+print(f"  node_count==33      : {'PASS' if n_post==33 else 'FAIL ('+str(n_post)+')'}")
+print(f"  active==true        : {'PASS' if post.get('active') is True else 'FAIL'}")
+print(f"  drift SOLO 3 targets: {'PASS' if not unexpected_drift else 'FAIL'}  (targets c/cambio: {sorted(set(target_ok))})")
+print(f"  creds preservadas   : {'PASS' if creds_pre==creds_post else 'FAIL'}  ({len(creds_post)} creds: {creds_post})")
+print(f"\nversionId pre  = {ver_pre}\nversionId post = {ver_post}")
+
+if fails:
+    print("\n!!! IRON LAW FAIL → ROLLBACK INMEDIATO !!!")
+    for f in fails: print("   -", f)
+    st_rb, _ = req("PUT", f"/workflows/{WID}", strip_body(pre))
+    st_v, post_rb = req("GET", f"/workflows/{WID}")
+    print(f"[ROLLBACK] PUT status={st_rb} → {len(post_rb['nodes'])} nodos, versionId={post_rb.get('versionId')}, active={post_rb.get('active')}")
+    print("VEREDICTO: ROLLBACK")
+    sys.exit(10)
+
+print("\nVEREDICTO PUT: OK (Iron Law PASS, drift solo en los 3 targets)")

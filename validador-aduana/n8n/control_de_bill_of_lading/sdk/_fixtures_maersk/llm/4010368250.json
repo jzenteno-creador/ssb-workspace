@@ -1,0 +1,75 @@
+{
+ "order": "4010368250",
+ "status": "SCHEMA_OK",
+ "stop_reason": "end_turn",
+ "usage": {
+  "input_tokens": 18474,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "cache_creation": {
+   "ephemeral_5m_input_tokens": 0,
+   "ephemeral_1h_input_tokens": 0
+  },
+  "output_tokens": 604,
+  "service_tier": "standard",
+  "inference_geo": "global"
+ },
+ "parsed": {
+  "maersk_extract": {
+   "order_number": "4010368250",
+   "booking_no": "267705109",
+   "bl_no": "267705109",
+   "export_references": [
+    "4010368250",
+    "47911040"
+   ],
+   "vessel": "MAERSK FORTALEZA",
+   "voyage": "618N",
+   "pol": "Buenos Aires",
+   "pod": "Veracruz",
+   "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+   "consignee": "DOW QUIMICA MEXICANA S.A DE C.V\nADDRESS: AV PASEO DE LA REFORMA 243, PISO 8\nCOL. CUAUHTEMOC CP 06500 MEXICO CITY\nTAX ID: DQM 590909 RK0\nE-Mail:pg.impo.land@palosgarza.com",
+   "notify": "PG SERVICIOS ADUANALES SA DE CV\nXICOTENCAL 711 ENTRE MANUEL DOBLADO Y EMILIANO ZAPATA\n91900 VERACRUZ MEXICO\nTax ID:PSL960904CW5 E-Mail:pg.impo.land@palosgarza.com",
+   "type_of_move": "CY/CY",
+   "description": {
+    "goods_raw": "640 BAGS IN 16 PALLETS WITH 16000 KG OF DOWLEX GM AX01 Polyethylene Resin",
+    "producto": "Polyethylene Resin",
+    "grade": "GM AX01",
+    "embalaje": "BAGS",
+    "ncm": "3901",
+    "pe_code": "26033EC01002970L",
+    "wooden_material": "YES",
+    "wooden_condition": "TREATED AND CERTIFIED",
+    "cantidad_contenedores": 1,
+    "items": [
+     {
+      "goods": "DOWLEX GM AX01 Polyethylene Resin",
+      "bags": 640,
+      "pallets": 16,
+      "gross_kg": null,
+      "net_kg": 16000
+     }
+    ],
+    "bags_total": 640,
+    "pallets_total": 16,
+    "gross_total_kg": null,
+    "net_total_kg": 16000
+   },
+   "equipos": [
+    {
+     "container": "TCNU3543060",
+     "seal": "BAH16632",
+     "pallets": 16,
+     "gross_kg": 16320.0,
+     "cbm": 26.976
+    }
+   ],
+   "freight_lines": {
+    "freight_marker": "PREPAID",
+    "concepts": [],
+    "totals_lines": []
+   }
+  }
+ },
+ "raw_head": "{\"maersk_extract\":{\"order_number\":\"4010368250\",\"booking_no\":\"267705109\",\"bl_no\":\"267705109\",\"export_references\":[\"4010368250\",\"47911040\"],\"vessel\":\"MAERSK FORTALEZA\",\"voyage\":\"618N\",\"pol\":\"Buenos Aires\",\"pod\":\"Veracruz\",\"shipper\":\"PBBPOLISUR S.R.L.\\nCALLE BOUCHARD 710, PISO 11\\nC1106ABL CIUDAD DE BU"
+}

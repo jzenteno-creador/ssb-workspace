@@ -1,0 +1,151 @@
+{
+ "order": "117779695",
+ "status": "SCHEMA_OK",
+ "stop_reason": "end_turn",
+ "usage": {
+  "input_tokens": 5611,
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "cache_creation": {
+   "ephemeral_5m_input_tokens": 0,
+   "ephemeral_1h_input_tokens": 0
+  },
+  "output_tokens": 897,
+  "service_tier": "standard",
+  "inference_geo": "global"
+ },
+ "parsed": {
+  "maersk_extract": {
+   "order_number": "117779695",
+   "booking_no": "258199683",
+   "bl_no": "258199683",
+   "export_references": [
+    "117779695",
+    "46816286"
+   ],
+   "vessel": "AS SILJE",
+   "voyage": "537N",
+   "pol": "Bahia Blanca",
+   "pod": "Manaus",
+   "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+   "consignee": "VERDE BRASIL IND DE PRODUTOS PLASTICOS LTDA\nAV CUPIUBA, 625, DISTRITO INDUSTRIAL I\n69075-060, MANAUS, AMAZONAS, BRAZIL\nCNPJ: 36.848.050/0001-70\nEmail: leandro.oliveira@sapphireoffice.com.br",
+   "notify": "SAME AS CONSIGNEE",
+   "type_of_move": "CY/CY",
+   "description": {
+    "goods_raw": "5400 BAGS IN 90 PALLETS WITH 135000 KG OF PE MDPE NG 6895 BG6025 KG",
+    "producto": "Polyethylene Resin",
+    "grade": "NG 6895",
+    "embalaje": "BAGS",
+    "ncm": "3901",
+    "pe_code": "25003EC01004683K",
+    "wooden_material": "YES",
+    "wooden_condition": "TREATED AND CERTIFIED",
+    "cantidad_contenedores": 5,
+    "items": [
+     {
+      "goods": "PE MDPE NG 6895 BG6025 KG",
+      "bags": 5400,
+      "pallets": 90,
+      "gross_kg": null,
+      "net_kg": 135000
+     }
+    ],
+    "bags_total": 5400,
+    "pallets_total": 90,
+    "gross_total_kg": 137700.0,
+    "net_total_kg": 135000
+   },
+   "equipos": [
+    {
+     "container": "HASU4846396",
+     "seal": "ABS37967",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "MRSU5311531",
+     "seal": "ABS37995",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "TCNU2253050",
+     "seal": "JK96863",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "SUDU8880637",
+     "seal": "ABS37993",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    },
+    {
+     "container": "MSKU0983321",
+     "seal": "ABS37965",
+     "pallets": 18,
+     "gross_kg": 27540.0,
+     "cbm": 45.522
+    }
+   ],
+   "freight_lines": {
+    "freight_marker": "PREPAID",
+    "concepts": [
+     {
+      "concept": "Basic Ocean Freight",
+      "rate": 1035.0,
+      "rate_currency": "USD",
+      "amount": 5175.0,
+      "currency": "USD",
+      "line_number": 1,
+      "column": "Prepaid",
+      "section": "freight"
+     },
+     {
+      "concept": "Terminal Handling Service - Destination",
+      "rate": 940.0,
+      "rate_currency": "BRL",
+      "amount": 4700.0,
+      "currency": "BRL",
+      "line_number": 2,
+      "column": "Collect",
+      "section": "freight"
+     },
+     {
+      "concept": "Detention Fee - Export",
+      "rate": 595.0,
+      "rate_currency": "USD",
+      "amount": 1785.0,
+      "currency": "USD",
+      "line_number": 3,
+      "column": "Prepaid",
+      "section": "freight"
+     }
+    ],
+    "totals_lines": [
+     {
+      "currency": "BRL",
+      "prepaid_amount": 0,
+      "collect_amount": 4700.0,
+      "line_number": 1,
+      "column": "Collect",
+      "section": "totals"
+     },
+     {
+      "currency": "USD",
+      "prepaid_amount": 6960.0,
+      "collect_amount": 0,
+      "line_number": 2,
+      "column": "Prepaid",
+      "section": "totals"
+     }
+    ]
+   }
+  }
+ },
+ "raw_head": "{\"maersk_extract\":{\"order_number\":\"117779695\",\"booking_no\":\"258199683\",\"bl_no\":\"258199683\",\"export_references\":[\"117779695\",\"46816286\"],\"vessel\":\"AS SILJE\",\"voyage\":\"537N\",\"pol\":\"Bahia Blanca\",\"pod\":\"Manaus\",\"shipper\":\"PBBPOLISUR S.R.L.\\nCALLE BOUCHARD 710, PISO 11\\nC1106ABL CIUDAD DE BUENOS AIRES C"
+}

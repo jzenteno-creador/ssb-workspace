@@ -1,0 +1,197 @@
+BILL OF LADING FOR OCEAN TRANSPORT OR MULTIMODAL TRANSPORT
+
+Notify Party (see clause 22) Same as Consignee
+
+262780340
+
+Shipper (As principal, where "care of", "c/o", or other variants used.) PBBPOLISUR S.R.L. CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+B/L No.
+
+Booking No. 262780340
+
+Export references
+
+Svc Contract 117801109 / 47385358
+
+299593739
+
+Onward inland routing (Not part of Carriage as defined in clause 1. For account and risk of Merchant)
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where "care of", "c/o", or other variants used.) INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA ROD BR 158 KM 537 10265 DAL ROSS 85509-262 PATO BRANCO - PR BRAZIL Tax ID: 75635144000113 Email: roberto.dagios@inplasul.ind.br
+
+Vessel (see clause 1 + 19)
+
+Voyage No.
+
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1) MAERSK LONDRINA
+
+552N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Paranagua
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+
+Weight Measurement 3 containers said to contain 54 PALLET
+
+3 CONTAINERS OF 40 HC SAID TO CONTAIN
+
+QUANTITY: 1080 BAGS IN 18 PALLETS GROSS NET DOWLEX QUANTITY: GROSS NET WEIGHT: WEIGHT: WEIGHT: WEIGHT: TG 2160 2085B 27000 54000
+
+BAGS 27540 55080
+
+Polyethylene IN 36 PALLETS Resin
+
+COPY DOWLEX NG2045B Polyethylene Resin
+
+SAP/NEA: 117801109 SHP: 47385358 PE: 25003EC01007506H
+
+NCM: 3901 WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+MRSU7680210 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+
+Freight & Charges Rate Unit Currency Prepaid Collect Basic Ocean Freight 801.00 Per Container USD 2403.00 Terminal Handling Service - Destination 1270.00 Per Container BRL 3810.00
+
+Total BRL BRL 3810.00
+
+Total USD USD 2403.00
+
+SHIPPED, as far as ascertained by reasonable means of checking, in apparent good order and condition unless otherwise stated herein, [RECORTE legal — texto de clausulas omitido en fixture] THREE/3
+
+This transport document has one or more numbered pages82620.000 KGS 136.5660 CBM Above particulars as declared by Shipper, but without responsibility of or representation by Carrier (see clause 14)
+
+Carrier's Receipt (see clause 1 and 14). Total number
+
+Place of Issue of B/L of containers or packages received by Carrier.
+
+3 containers
+
+Buenos Aires
+
+Number & Sequence of Original B(s)/L Date of Issue of B/L
+
+Declared Value (see clause 7.3)
+
+Signed for the Carrier Maersk A/S
+
+MAERSK LINE ARGENTINA SA
+
+As Agent(s)
+
+MAEU SCAC
+
+Page B/L: 262780340 : 2 Customs Seal : BAA45195 MSKU1821840 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM Customs Seal : BAA45194 TCLU5195449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM Customs Seal : BAA45879 VERY IMPORTANT: Container demurrage and detention tariffs and conditions applicable for the port of discharge, including the free time, can be obtained with local agents and are available at the carriers website, at: https://www.sealandmaersk.com/local-information/brazil/export. [RECORTE legal — texto de clausulas omitido en fixture]
+
+Page B/L: 262780340 : 3 may suffer as a result of this situation.
+
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+
+FREIGHT PREPAID
+
+[RECORTE legal — texto de clausulas omitido en fixture]
+
+Applicable free time 21 days Combined (Detention & Demurrage) at (port of discharge / place of delivery)
+
+AGENT AT DESTINATION:
+
+MAERSK BRASIL LTDA. PA RUI BARBOSA, N26/27 11010-130 SANTOS BRAZIL PHONE: 55 13 3211-7800 FAX: 55 13 3211-7801
+
+CY/CY
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+Page B/L: 262780340 : 4 Consignee Ref: 117801109 / 47385358
+
+First Notify Ref: 117801109 / 47385358
+
+Freight & Charges Rate Unit Currency Prepaid Collect
+
+BILL OF LADING FOR OCEAN TRANSPORT OR MULTIMODAL TRANSPORT
+
+Notify Party (see clause 22) Same as Consignee
+
+262780340
+
+Shipper (As principal, where "care of", "c/o", or other variants used.) PBBPOLISUR S.R.L. CALLE BOUCHARD 710, PISO 11 C1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL ARGENTINA, CUIT: 30560254195
+
+B/L No.
+
+Booking No. 262780340
+
+Export references
+
+Svc Contract 117801109 / 47385358
+
+299593739
+
+Consignee (Negotiable only if consigned "to order", "to order of" a named Person or "to order of bearer". As principal, where "care of", "c/o", or other variants used.) INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA ROD BR 158 KM 537 10265 DAL ROSS 85509-262 PATO BRANCO - PR BRAZIL Tax ID: 75635144000113 Email: roberto.dagios@inplasul.ind.br
+
+Vessel (see clause 1 + 19)
+
+Voyage No.
+
+Place of Receipt. Applicable only when document used as Multimodal Transport B/L. (see clause 1) MAERSK LONDRINA
+
+552N
+
+Port of Loading
+
+Port of Discharge
+
+Place of Delivery. Applicable only when document used as Multimodal Transport B/L. (see clause 1) Buenos Aires
+
+Paranagua
+
+PARTICULARS FURNISHED BY SHIPPER
+
+Kind of Packages; Description of goods; Marks and Numbers; Container No./Seal No.
+
+Weight Measurement 3 containers said to contain 54 PALLET
+
+3 CONTAINERS OF 40 HC SAID TO CONTAIN
+
+QUANTITY: 1080 BAGS IN 18 PALLETS GROSS NET DOWLEX QUANTITY: GROSS NET WEIGHT: WEIGHT: WEIGHT: WEIGHT: TG 2160 2085B 27000 54000
+
+BAGS 27540 55080
+
+Polyethylene IN 36 PALLETS Resin
+
+COPY DOWLEX NG2045B Polyethylene Resin
+
+SAP/NEA: 117801109 SHP: 47385358 PE: 25003EC01007506H
+
+NCM: 3901 WOODEN MATERIAL: YES WOODEN CONDITION : TREATED AND CERTIFIED
+
+MRSU7680210 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM
+
+Freight & Charges Rate Unit Currency Prepaid Collect Basic Ocean Freight 801.00 Per Container USD 2403.00 Terminal Handling Service - Destination 1270.00 Per Container BRL 3810.00
+
+Total BRL BRL 3810.00
+
+Total USD USD 2403.00
+
+SHIPPED, as far as ascertained by reasonable means of checking, [RECORTE legal — segunda copia del documento, mismas tablas]
+
+Page B/L: 262780340 : 2 Customs Seal : BAA45195 MSKU1821840 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM Customs Seal : BAA45194 TCLU5195449 40 DRY 9'6 18 PALLET 27540.000 KGS 45.5220 CBM Customs Seal : BAA45879 [RECORTE legal]
+
+SHIPPER'S LOAD, STOW, WEIGHT AND COUNT
+
+FREIGHT PREPAID
+
+AGENT AT DESTINATION:
+
+MAERSK BRASIL LTDA. PA RUI BARBOSA, N26/27 11010-130 SANTOS BRAZIL PHONE: 55 13 3211-7800 FAX: 55 13 3211-7801
+
+CY/CY
+
+Page B/L: 262780340 : 4 Consignee Ref: 117801109 / 47385358
+
+First Notify Ref: 117801109 / 47385358

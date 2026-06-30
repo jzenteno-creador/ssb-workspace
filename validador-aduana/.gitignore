@@ -1,0 +1,56 @@
+# Node modules
+node_modules/
+npm-debug.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build/Dist
+dist/
+build/
+out/
+
+# Misc
+*.bak
+.cache/
+temp/
+
+# Supabase credentials (NEVER commit!)
+credentials.json
+secrets.json
+
+# Claude Code
+.claude/settings.local.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# n8n scratch GET dumps (reemplazados por workflow_*_pasoN.json nombrados)
+wf_current.json
+
+# n8n evidencia de debug (ejecuciones, findings de explore, batches) — no va al repo
+n8n/**/sdk/_debug/
+
+# Session handoffs (van a Drive/Obsidian vía webhook, no al repo)
+SESSION_HANDOFF.md
+
+# Snapshots de auditoría del harness n8n — se regeneran al correr put_*.py (no van al repo)
+n8n/**/sdk/workflow_*.json

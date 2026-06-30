@@ -1,0 +1,176 @@
+{
+  "order_number": "4010531167",
+  "booking_no": "LA0492133",
+  "bl_no": "283N901413555",
+  "export_references": [
+    "4010531167",
+    "48147321"
+  ],
+  "carrier": "LOG-IN",
+  "vessel": "LOG-IN JATOBA",
+  "voyage": "283N",
+  "pol": "BUENOS AIRES",
+  "pod": "SANTOS",
+  "place_delivery": "FCL/FCL",
+  "shipper": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+  "consignee": "DOW BRASIL IND E COM\nDE PRODUTOS QUIMICOS LTDA\nAV JOAQUIM LOURENCO DE LIMA 120 GALPAO 04\n37644-032 EXTREMA - MG / BRAZIL / TAX ID: 60435351010039",
+  "notify": "COMISSARIA PIBERNAT LTDA\nRUA MANOEL VIEIRA GARCAO 120, CENTRO\n88301-425 ITAJAI - SC, BRAZIL\nTAX ID:92102433000923, E-MAIL: DOW@PIBERNAT.COM.BR",
+  "desc": {
+    "DESC BL - CANTIDAD DE CONTENEDORES": 4,
+    "DESC BL - TIPO DE CONTENEDOR": "40 HC",
+    "DESC BL - GOODS (DESCRIPCIÓN CRUDA)": "POLYETHYLENE 35060L HIGH DE NSITY",
+    "DESC BL - PRODUCTO": "POLYETHYLENE",
+    "DESC BL - GRADE / CALIDAD": "35060L",
+    "DESC BL - DENSIDAD / TIPO": "",
+    "DESC BL - TIPO DE EMBALAJE": "",
+    "DESC BL - PESO POR BOLSA (KG)": null,
+    "DESC BL - CANTIDAD DE BOLSAS": 72,
+    "DESC BL - CANTIDAD DE PALLETS": 72,
+    "DESC BL - NCM": "3901",
+    "DESC BL - PESO BRUTO TOTAL (KG)": 88560,
+    "DESC BL - PESO NETO TOTAL (KG)": 86400,
+    "DESC BL - MADERA (¿USA?)": "YES",
+    "DESC BL - CONDICIÓN DE MADERA": "",
+    "DESC BL - PE (PERMISO DE EMBARQUE)": "26003EC01003509H"
+  },
+  "desc_items": [],
+  "equipos": [
+    {
+      "container": "MSNU8540108",
+      "seal": "BAH98766",
+      "type": "40 HC",
+      "tare": "3940",
+      "gw": "22140,000",
+      "nw": "21600,000",
+      "meas": "36,418",
+      "wood": "Yes",
+      "wood_cond": "Treated and certified"
+    },
+    {
+      "container": "MSMU7089402",
+      "seal": "BAH98763",
+      "type": "40 HC",
+      "tare": "3940",
+      "gw": "22140,000",
+      "nw": "21600,000",
+      "meas": "36,418",
+      "wood": "Yes",
+      "wood_cond": "Treated and certified"
+    },
+    {
+      "container": "MSMU8918236",
+      "seal": "BAH98764",
+      "type": "40 HC",
+      "tare": "3940",
+      "gw": "22140,000",
+      "nw": "21600,000",
+      "meas": "36,418",
+      "wood": "Yes",
+      "wood_cond": "Treated and certified"
+    },
+    {
+      "container": "TRHU8623238",
+      "seal": "BAH98765",
+      "type": "40 HC",
+      "tare": "3940",
+      "gw": "22140,000",
+      "nw": "21600,000",
+      "meas": "36,418",
+      "wood": "Yes",
+      "wood_cond": "Treated and certified"
+    }
+  ],
+  "freight": {
+    "concepts": [
+      {
+        "concept": "AGENCY RATES",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 348,
+        "rate_currency": "USD",
+        "rate": 87
+      },
+      {
+        "concept": "BUNKER",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 80,
+        "rate_currency": "USD",
+        "rate": 20
+      },
+      {
+        "concept": "EEFA",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 256,
+        "rate_currency": "USD",
+        "rate": 64
+      },
+      {
+        "concept": "GATE",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 100,
+        "rate_currency": "USD",
+        "rate": 25
+      },
+      {
+        "concept": "ISPS",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 40,
+        "rate_currency": "USD",
+        "rate": 10
+      },
+      {
+        "concept": "Ocean Freight",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 80,
+        "rate_currency": "USD",
+        "rate": 20
+      },
+      {
+        "concept": "THC DESTINO",
+        "kind": "COLLECT",
+        "currency": "BRL",
+        "amount": 7200,
+        "rate_currency": "BRL",
+        "rate": 1800
+      },
+      {
+        "concept": "THC ORIGEM",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 1040,
+        "rate_currency": "USD",
+        "rate": 260
+      },
+      {
+        "concept": "TOLL FEE",
+        "kind": "PREPAID",
+        "currency": "USD",
+        "amount": 712,
+        "rate_currency": "USD",
+        "rate": 178
+      }
+    ],
+    "totals": {
+      "USD": {
+        "prepaid": 2656,
+        "collect": 0
+      },
+      "BRL": {
+        "prepaid": 0,
+        "collect": 7200
+      }
+    },
+    "ocean_freight_kind": "PREPAID",
+    "per_container": {
+      "USD_prepaid": 664,
+      "USD_collect": 0,
+      "USD": 664
+    },
+    "containers_for_calc": 4
+  }
+}
