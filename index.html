@@ -7980,7 +7980,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       .gte('etd', primerDiaMes)
       .eq('activo', true)
       .order('etd', { ascending: true })
-      .limit(200);
+      .limit(2000);
 
     if(error) {
       el.innerHTML = `<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">Error al cargar schedules</div><div class="empty-sub">${esc(error.message)}</div></div>`;
