@@ -19,7 +19,7 @@ inamovibles:
 
 - `SQL_KEYWORDS` es un Set para ignorar aliases y funciones SQL (`CURRENT_DATE`, etc.) en la validación de tablas — no es un bypass, no agregar nombres de tabla ahí.
 - Si la validación falla, Claude responde sin datos (fallback conversacional). Nunca ejecutar SQL no validado.
-- Read-only de punta a punta: MySQL user `db_reader_jz_1`; Supabase vía RPC `execute_readonly_query` (SECURITY DEFINER, revocada de anon/authenticated).
+- Read-only de punta a punta: MySQL user `db_reader_jz_1`; Supabase vía RPC `execute_readonly_query` (SECURITY DEFINER, **EXECUTE revocado de PUBLIC/anon/authenticated — solo `service_role`**). **Verificado en prod 2026-07-02** (F0 aplicada, ver bloque 🔴 en `CLAUDE.md` raíz): antes el grant a PUBLIC estaba abierto (anon=true); ya no. La función además tiene candado read-only real + rechazo de multi-statement en el cuerpo.
 
 ## Env var names (referencia)
 - `ANTHROPIC_API_KEY` — ambos agentes.

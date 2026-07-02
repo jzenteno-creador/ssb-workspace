@@ -147,6 +147,29 @@ Toda la app vive detrás del gate (`#auth-gate`), gating server-side por `vac_em
 
 ## Deuda técnica conocida (actualizar con `break`)
 
+### 🟢 Seguridad — Fase 0 COMPLETADA (aplicada y verificada en prod 2026-07-02). F1+ PENDIENTE.
+
+Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01); **F0 aplicada y verificada 2026-07-02.** App interna en testeo; **cerrar F1+ antes de tener datos de terceros (rumbo SaaS multi-tenant).**
+
+- **Riesgo original (RESUELTO por F0):** `public.execute_readonly_query(text)` era consola SQL **pública read+write** vía la anon key del front. `SECURITY DEFINER` owner `postgres`, `EXECUTE` a PUBLIC (anon+authenticated), único filtro `LIKE 'SELECT%'`, bypasseable con stacked statements (`;` vía cierre de paréntesis: `SELECT 1) q; DELETE …; --`). No superuser → read+write de la DB, sin RCE/filesystem.
+
+- **F0 — COMPLETADA (owner `postgres` SIN cambios):**
+  - **parte-1 — REVOKE** (verificado: anon/authenticated EXECUTE=false, `service_role` conserva grant):
+    ```sql
+    REVOKE EXECUTE ON FUNCTION public.execute_readonly_query(text) FROM PUBLIC, anon, authenticated;
+    ```
+  - **parte-2 — candado read-only en el CUERPO de la función:**
+    - Read-only real vía `PERFORM set_config('transaction_read_only','on',true)`. **NO** por `ALTER FUNCTION … SET default_transaction_read_only=on`: ese GUC solo aplica al *inicio* de la txn y la de PostgREST ya está abierta → **no corta** (probado: `WRITE_ALLOWED`). No repetir ese intento fallido.
+    - Rechazo de **multi-statement** (cualquier `;`) + **blocklist de escritura** (`INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|GRANT|REVOKE|TRUNCATE|COPY`), ambos sobre el texto con **string literals enmascarados** (evita falso-rechazo de lecturas legítimas tipo `WHERE operacion='UPDATE'` o `LIKE '%;%'`).
+    - **Cambio de owner a rol read-only: DESCARTADO.** Las 21 tablas tienen RLS habilitada; un rol sin `BYPASSRLS` no matchea las policies `{anon,authenticated}` (8 tablas) ni las `vac_*` con claim `auth.role()` (4 tablas) → rompía **12/21 tablas en silencio (0 filas)**. El candado read-only del cuerpo da la garantía anti-escritura sin tocar owner ni RLS.
+  - **Verificado:** 21 tablas del whitelist devuelven datos, write single-statement (función volátil) bloqueada por read-only, multi-statement y blocklist rechazan, endpoint Workspace IA en vivo 200/con datos.
+- **PENDIENTE (F1 en adelante):**
+  - **F1** — **auth Bearer** (JWT de sesión Supabase) en `/api/chat` y `/api/chat-workspace` + **rate limiting** + `chat-workspace` migrar a rol read-only con RLS activa (dejar de usar service_role). Hoy los endpoints siguen **sin auth**.
+  - **F2** — LIMIT forzado server-side (no por regex) + **unificar las 5 defs divergentes de `esc()`/`escHtml`**.
+  - **F3** — hooks de regresión (SQL/secrets + XSS) + subagent `security-reviewer` + **borrar `netlify/functions/`** (gemelas muertas sin auth).
+  - Grants MySQL `db_reader_jz_1` (`SHOW GRANTS` → solo SELECT, sin FILE/SUPER) — sin verificar aún; otra base/sistema (Metric), fuera de Supabase.
+- **Regla:** writes por CC o SQL editor de Supabase, **nunca desde el chat**. Seguridad = capa DB/infra; la capa prompt del LLM **NO** es guardrail.
+
 - innerHTML sin escape en renderAdminBID(), renderSchedModule() y otros renderers
 - XSS pre-existente en renderSchedModule(): `r.OBSERVACIONES` sin `esc()` (línea ~3329)
 - Estado global mutable: rates, efaSheet, schedule, selC, selE, selSC
