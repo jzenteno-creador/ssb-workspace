@@ -756,6 +756,11 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 .sched-row-wrap:last-child{border-bottom:none}
 .sched-row-wrap:hover{background:var(--surface-hv)}
 .sched-main-row{display:grid;grid-template-columns:0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr;padding:8px 12px;gap:8px;align-items:center}
+/* Responsive: bajo 900px la tabla scrollea horizontal (head+rows comparten el wrap → no desalinean) */
+@media (max-width:900px){
+  #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
+  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-main-row{min-width:900px}
+}
 .sr{font-size:12px;color:var(--text)}
 .sr.mono{font-family:var(--mono);font-size:11px}
 .sr.vessel{font-weight:600;font-size:13px}
