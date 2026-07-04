@@ -54,7 +54,8 @@ const server = createServer(async (nodeReq, nodeRes) => {
   }
 
   // Archivos estáticos
-  let filePath = nodeReq.url === '/' ? '/index.html' : nodeReq.url.split('?')[0];
+  let filePath = nodeReq.url.split('?')[0];
+  if (filePath === '/') filePath = '/index.html';
   const fullPath = join(__dirname, filePath);
   try {
     const data = await readFile(fullPath);
