@@ -33,7 +33,7 @@ IMPLEMENT + VERIFY del rediseño visual: **rail lateral estilo Flight Deck** (mo
 ## Próximos pasos
 1. **John: smoke visual en vivo** (Live Server, login real) — especialmente: Vacaciones con badge admin real, pin on/off con Gantt equipo visible, drawer en teléfono físico (touch real no emulado), light mode.
 2. Si smoke OK → merge a `master` + push (auto-deploy Vercel).
-3. **Fase C (diferida, NO tocar sin decidir scope)**: mobile de Detention (grid inline JS ~8400) y Admin BID (tabla 1388px) — rompen el boundary solo-CSS. Control BL mobile también quedó fuera (isla `#cbl-styles` bajo candado no-touch).
+3. **Fase C (diferida, NO tocar sin decidir scope)**: mobile de Detention (grid inline JS ~8400) y Admin BID (tabla 1388px) — rompen el boundary solo-CSS. (Control BL se resolvió en Fase B con overrides externos a la isla `#cbl-styles` — isla byte-idéntica; el "candado" prohíbe editarla, no estilar sus elementos desde el bloque principal.)
 4. Docs menores stale (baja prioridad): `docs/modules/control-bl.md` cita switchTab en línea vieja; `docs/VACACIONES_PLAN.md`/design-ref describen la tab-bar horizontal (históricos).
 
 ## Carry-over de sesiones previas (sigue vigente — detalle en git history de este archivo, commit `73a4d2c`)
