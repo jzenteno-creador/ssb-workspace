@@ -696,6 +696,12 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 .sr.vessel{font-weight:600;font-size:13px}
 .sr.muted{color:var(--muted)}
 .sched-obs-inline{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+/* Baja de servicio (schedules_master.disponible=false) — fila roja + control inline */
+.sched-row-wrap.rt-baja{background:rgba(229,62,62,.12)}
+.sched-row-wrap.rt-baja:hover{background:rgba(229,62,62,.18)}
+.rt-no{color:var(--red);font-weight:700;font-size:11px}
+.rt-disp-btn{font-family:var(--font);font-size:10px;padding:1px 5px;margin-left:3px;border:1px solid var(--border);border-radius:5px;background:var(--faint);color:var(--muted);cursor:pointer;transition:all .12s}
+.rt-disp-btn:hover{border-color:var(--red);color:var(--red)}
 .sched-trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%}
 /* changed cell highlight */
 .changed-cell{background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd);cursor:help}
@@ -2556,9 +2562,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 <div class="tab-bar">
   <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Tarifas BID</button>
   <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-zap"/></svg>EFA</button>
-  <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
   <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
-  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
+  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
   <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
   <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
   <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
@@ -2783,7 +2788,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </div>
 
 <!-- ═══════════ TAB: SCHEDULE ═══════════ -->
-<div class="tab-panel" id="panel-schedule">
+<!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
+<div class="tab-panel" id="panel-schedule-rt">
 
   <!-- Toolbar de datos del Sheet maestro (sólo aquí — alimenta Tarifas BID, EFA y este Schedule) -->
   <div class="sched-tools-bar" role="toolbar" aria-label="Datos del Sheet maestro">
@@ -2800,77 +2806,6 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       <button class="btn-top" id="btn-sync" onclick="syncSheet()" aria-label="Sincronizar datos"><svg class="ic ic-md" aria-hidden="true"><use href="#i-refresh"/></svg> Sincronizar</button>
     </div>
   </div>
-
-  <div class="sched-filter-bar">
-    <div class="sched-filter-row">
-      <div>
-        <span class="flbl">Origen</span>
-        <div class="ac-wrap" id="wrap-s-origen">
-          <input class="ac-in w140" id="f-s-origen" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-origen')" onkeydown="onAcKey(event,'s-origen')" onfocus="onAcFocus('s-origen')">
-          <button class="ac-x" id="x-s-origen" onclick="clearAc('s-origen')">×</button>
-          <div class="ac-drop" id="drop-s-origen"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Destino</span>
-        <div class="ac-wrap" id="wrap-s-destino">
-          <input class="ac-in w140" id="f-s-destino" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-destino')" onkeydown="onAcKey(event,'s-destino')" onfocus="onAcFocus('s-destino')">
-          <button class="ac-x" id="x-s-destino" onclick="clearAc('s-destino')">×</button>
-          <div class="ac-drop" id="drop-s-destino"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Buque</span>
-        <div class="ac-wrap" id="wrap-s-vessel">
-          <input class="ac-in w140" id="f-s-vessel" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-vessel')" onkeydown="onAcKey(event,'s-vessel')" onfocus="onAcFocus('s-vessel')">
-          <button class="ac-x" id="x-s-vessel" onclick="clearAc('s-vessel')">×</button>
-          <div class="ac-drop" id="drop-s-vessel"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Cut Off Físico desde</span>
-        <input class="date-in" type="date" id="f-s-cutoff" oninput="applySchedFilter()">
-      </div>
-      <div>
-        <span class="flbl">ETA hasta</span>
-        <input class="date-in" type="date" id="f-s-eta" oninput="applySchedFilter()">
-      </div>
-      <div>
-        <span class="flbl">Período</span>
-        <select class="estado-sel" id="f-s-periodo" onchange="applySchedFilter()" style="width:160px">
-          <option value="futuro">Mes actual + futuros</option>
-          <option value="historico">Todo el historial</option>
-        </select>
-      </div>
-      <div>
-        <span class="flbl">Línea marítima</span>
-        <div class="btn-grp" id="sched-carrier-grp"></div>
-      </div>
-      <button class="btn-clear" onclick="clearSchedFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
-    </div>
-  </div>
-
-  <div class="sched-module" id="sched-module">
-    <div class="results-bar">
-      <span class="results-title">Schedule de buques</span>
-      <span class="results-ct" id="sched-ct"></span>
-      <!-- D9: Brand colors #e53e3e PDF (Adobe), #276749 Excel (Microsoft). No tokenizados — reconocimiento visual por filetype intencional. -->
-      <div style="display:flex;gap:6px">
-        <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
-        <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
-      </div>
-    </div>
-    <div id="sched-list">
-      <div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-ship"/></svg></div><div class="empty-ttl">Aún no subiste el schedule</div><div class="empty-sub">Usá el botón <b>Subir Schedule</b> de arriba para cargar el Excel con las próximas salidas.</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
-<div class="tab-panel" id="panel-schedule-rt">
 
   <div class="sched-filter-bar">
     <div class="sched-filter-row">
@@ -3857,7 +3792,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -5776,16 +5711,6 @@ function restoreEfaFilters(){
   }catch(e){}
 }
 
-function clearSchedFilters(){
-  ['s-origen','s-destino','s-vessel'].forEach(f=>clearAc(f));
-  document.getElementById('f-s-cutoff').value='';
-  document.getElementById('f-s-eta').value='';
-  document.getElementById('f-s-periodo').value='futuro';
-  selSC.clear();
-  buildSchedCarrierBtns();
-  applySchedFilter();
-}
-
 // ── AUTOCOMPLETE ──
 function opts(f){
   if(f.startsWith('t-')){
@@ -6363,6 +6288,7 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
 // A8: applySchedFilter debounced wrapper — impl renamed to _applySchedFilterImpl
 window.applySchedFilter = debounce(_applySchedFilterImpl, 250);
 function _applySchedFilterImpl(){
+  if(!document.getElementById('f-s-origen'))return; // panel Schedule viejo removido (merge) -> no-op seguro
   if(!schedule.length)return;
   const vO  = document.getElementById('f-s-origen').value.trim();
   const vD  = document.getElementById('f-s-destino').value.trim();
@@ -6751,7 +6677,7 @@ function buildSchedOpts(){
 
 // Initial empty schedule filter render
 window.addEventListener('load', ()=>{
-  if(schedule.length) applySchedFilter();
+  // (merge Schedule) llamada a applySchedFilter removida: el panel viejo ya no existe
   // Migración one-shot darkMode (legacy) → lightMode (nuevo default dark)
   const _oldDark = localStorage.getItem('darkMode');
   if(_oldDark!==null){
@@ -6933,111 +6859,6 @@ function exportTarifasExcel(){
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ── EXPORT SCHEDULE PDF ──
-function exportSchedPDF(){
-  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
-
-  const vO  = document.getElementById('f-s-origen').value.trim();
-  const vD  = document.getElementById('f-s-destino').value.trim();
-  const vV  = document.getElementById('f-s-vessel').value.trim();
-  const per = document.getElementById('f-s-periodo').value;
-  const fecha = new Date().toLocaleDateString('es-AR');
-  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
-
-  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
-
-  let rows=schedule.filter(r=>{
-    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
-    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
-    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
-    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
-    return true;
-  });
-  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
-
-  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
-
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    body{font-family:Arial,sans-serif;font-size:10px;color:#1a2540;margin:20px}
-    h1{font-size:15px;color:#0f2044;margin-bottom:4px}
-    .sub{font-size:9px;color:#6b7a99;margin-bottom:14px}
-    table{width:100%;border-collapse:collapse}
-    th{background:#0f2044;color:#fff;padding:5px 6px;text-align:left;font-size:9px}
-    td{padding:4px 6px;border-bottom:1px solid #e2e8f0;vertical-align:top}
-    tr:nth-child(even) td{background:#f8fafc}
-    .dir{color:#0d9e80;font-weight:700} .one{color:#c87a00} .multi{color:#c0392b}
-    @media print{body{margin:8px}}
-  </style></head><body>
-  <h1>🚢 Schedule de Buques</h1>
-  <div class="sub">Exportado: ${fecha} · ${scheduleFileName||'Schedule local'}</div>
-  <table>
-    <tr><th>Buque</th><th>Naviera</th><th>Origen → Destino</th><th>Cut Off Doc</th><th>Cut Off Físico</th><th>ETD</th><th>ETA</th><th>Tránsito</th><th>Tipo</th></tr>`;
-
-  rows.forEach(r=>{
-    const t=(r.TRASBORDOS||'').toUpperCase();
-    const cls=t.includes('DIRECTO')?'dir':t.includes('2')||t.includes('4')?'multi':'one';
-    html+=`<tr>
-      <td><strong>${r.VESSEL||'—'}</strong></td>
-      <td>${r.NAVIERA||'—'}</td>
-      <td>${r.ORIGEN||'—'} → ${r.DESTINO||'—'}</td>
-      <td>${fDate(r['CUT OFF DOC'])}</td>
-      <td>${fDate(r['CUT OFF FISICO'])}</td>
-      <td><strong>${fDate(r.ETD||r['ETD'])}</strong></td>
-      <td>${fDate(r['ETA ']||r.ETA||r['ETA'])}</td>
-      <td>${r.TRANSITO||'—'}</td>
-      <td class="${cls}">${r.TRASBORDOS||'—'}</td>
-    </tr>`;
-  });
-
-  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">SSB Workspace · DOW/PBB Polisur · ${fecha}</div></bo${''}dy></html>`;
-  const win=window.open('','_blank');
-  win.document.write(html);
-  win.document.close();
-  setTimeout(()=>win.print(),500);
-}
-
-// ── EXPORT SCHEDULE EXCEL ──
-function exportSchedExcel(){
-  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
-
-  const vO  = document.getElementById('f-s-origen').value.trim();
-  const vD  = document.getElementById('f-s-destino').value.trim();
-  const vV  = document.getElementById('f-s-vessel').value.trim();
-  const per = document.getElementById('f-s-periodo').value;
-  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
-  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
-
-  let rows=schedule.filter(r=>{
-    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
-    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
-    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
-    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
-    return true;
-  });
-  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
-
-  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
-
-  const header=[['BUQUE','NAVIERA','ORIGEN','DESTINO','CUT OFF DOC','CUT OFF FISICO','ETD','ETA','SAP DD','TRANSITO','TRASBORDOS','SERVICIO','OBSERVACIONES']];
-  const data=rows.map(r=>[
-    r.VESSEL||'', r.NAVIERA||'', r.ORIGEN||'', r.DESTINO||'',
-    fDate(r['CUT OFF DOC']), fDate(r['CUT OFF FISICO']),
-    fDate(r.ETD||r['ETD']), fDate(r['ETA ']||r.ETA||r['ETA']),
-    fDate(r['"SAP DD"']||r['SAP DD']||r['" SAP DD"']||''),
-    r.TRANSITO||'', r.TRASBORDOS||'', r.SERVICIO||'',
-    r.OBSERVACIONES||r.COMENTARIOS||''
-  ]);
-
-  const csv='\uFEFF'+[...header,...data].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`schedule_buques_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-}
 </script>
 
 <!-- ═══════════ EFA MODAL (C2) ═══════════ -->
@@ -7866,6 +7687,30 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     applyRtFilter();
   };
 
+  // Baja de servicio: write vía cliente AUTENTICADO (window.__ssb.supa), NO el anon del IIFE
+  // (con anon la RPC rechaza por gate auth.role()='authenticated'). Realtime dispara re-render;
+  // forzamos loadScheduleRT por inmediatez. p_disponible = valor NUEVO (isBaja: true=reactivar).
+  window.rtToggleDisp = async function(id, isBaja){
+    const gsupa = window.__ssb && window.__ssb.supa;
+    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    try{
+      const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_id: id });
+      if(error) throw error;
+      if(window.loadScheduleRT) window.loadScheduleRT();
+    }catch(e){ alert('No se pudo actualizar la disponibilidad: ' + (e.message||e)); }
+  };
+  window.rtBajaViaje = async function(id, isBaja){
+    const gsupa = window.__ssb && window.__ssb.supa;
+    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    const r = _rtData.find(x => x.id === id);
+    if(!r || !r.buque){ alert('No encontré el viaje.'); return; }
+    try{
+      const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_buque: r.buque });
+      if(error) throw error;
+      if(window.loadScheduleRT) window.loadScheduleRT();
+    }catch(e){ alert('No se pudo actualizar el viaje: ' + (e.message||e)); }
+  };
+
   window.applyRtFilter = function() {
     clearTimeout(_rtFilterTimer);
     _rtFilterTimer = setTimeout(_doApplyRtFilter, 250);
@@ -7903,7 +7748,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
 
-    const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr';
+    const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr .62fr';
     const today = new Date().toISOString().split('T')[0];
 
     const cutStyle = d => {
@@ -7927,6 +7772,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         <span class="sth">ETA</span>
         <span class="sth">Tránsito / Trasbordos</span>
         <span class="sth">Obs / Comentarios</span>
+        <span class="sth" style="text-align:center">Activo</span>
       </div>
       ${rows.map(r => {
         const flag = portFlag(r.puerto_destino);
@@ -7938,7 +7784,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         const trasLabel = r.trasbordos || 'DIRECTO';
         const obs = [r.observaciones, r.comentarios].filter(Boolean).join(' — ') || '—';
 
-        return `<div class="sched-row-wrap">
+        return `<div class="sched-row-wrap${r.disponible===false?' rt-baja':''}">
           <div class="sched-main-row" style="grid-template-columns:${COLS}">
             <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600">${esc(fMesEtd(r.mes_etd))}</div>
             <div class="sr vessel">${esc(r.buque)||'—'}</div>
@@ -7959,6 +7805,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               <span class="tras-badge ${trasCls}">${esc(trasLabel)}</span>
             </div>
             <div class="sr muted sched-obs-inline" style="font-size:11px;line-height:1.4"${obs&&obs!=='—'?` data-tip="${esc(obs)}"`:''}>${esc(obs)}</div>
+            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}" onclick="rtToggleDisp('${r.id}',${r.disponible===false})">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}" onclick="rtBajaViaje('${r.id}',${r.disponible===false})">viaje</button></div>
           </div>
         </div>`;
       }).join('')}
@@ -7976,7 +7823,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
     const { data, error } = await supa
       .from('schedules_master')
-      .select('naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,mes_etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios')
+      .select('id,naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,mes_etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios,disponible')
       .gte('etd', primerDiaMes)
       .eq('activo', true)
       .order('etd', { ascending: true })
