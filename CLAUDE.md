@@ -129,7 +129,7 @@ Cross-cutting a toda UI de `index.html`:
 - **Skeleton:** `.skel-card` + `.skel-row` + `.skel-line*` con keyframes `skel-shimmer`. Reemplazar loading text por skeleton
 - **Empty states:** `.empty-ico` / `.efa-empty .ico` usan SVG 60-64px via `<use href="#i-*">`. Copy humanizado ("No encontré X que coincidan")
 - **Dark cards:** `#1e293b` (slate-900) + borders `rgba(255,255,255,.08)` — NO `#3d4f6e`
-- **Debounce filtros:** `window.X = debounce(_XImpl, 250)` pattern (no `const X` — rompe inline handlers). Aplicado a applyFilter/applySchedFilter/renderAdminBID/applyRtFilter
+- **Debounce filtros:** `window.X = debounce(_XImpl, 250)` pattern (no `const X` — rompe inline handlers). Aplicado a applyFilter/renderAdminBID/applyRtFilter
 - **prefers-reduced-motion:** respetado globalmente — al agregar animation/transition nueva, verificar que no rompa el guard en `@media (prefers-reduced-motion: reduce)`
 
 ## Auth global (2026-05-05)
@@ -171,9 +171,8 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
   - Grants MySQL `db_reader_jz_1` (`SHOW GRANTS` → solo SELECT, sin FILE/SUPER) — sin verificar aún; otra base/sistema (Metric), fuera de Supabase.
 - **Regla:** writes por CC o SQL editor de Supabase, **nunca desde el chat**. Seguridad = capa DB/infra; la capa prompt del LLM **NO** es guardrail.
 
-- innerHTML sin escape en renderAdminBID(), renderSchedModule() y otros renderers
-- XSS pre-existente en renderSchedModule(): `r.OBSERVACIONES` sin `esc()` (línea ~3329)
-- Estado global mutable: rates, efaSheet, schedule, selC, selE, selSC
+- innerHTML sin escape en renderAdminBID() y otros renderers
+- Estado global mutable: rates, efaSheet, schedule, selC, selE
 - Archivo supera 5000 líneas — candidato a modularización futura
 - Responsive por tiers desde 2026-07-04: rail ≥1101 (pin) / rail colapsado 701-1100 / drawer ≤700; clock compacta ≤820, marca-ícono ≤480. Fase B: h-scroll interno en schedule-rt/tt-dow (≤900), chats 1-col y tarifas 2-col (≤700), EFA labels 140px. **Detention y Admin BID siguen no-usables en teléfono** (grid inline JS ~8400 y tabla 1388px — Fase C diferida, rompe el boundary solo-CSS)
 
