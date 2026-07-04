@@ -213,18 +213,52 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .rail-pin{display:flex;align-items:center;width:40px;height:36px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.4);flex-shrink:0;font-family:var(--font);font-size:12px;white-space:nowrap;transition:background .15s,color .15s}
 .rail-pin:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
 .rail-pin .ic{width:17px;height:17px;margin:0;flex-shrink:0}
-/* Estado expandido — html.rail-pinned lo setea el micro-script anti-FOUC + el botón pin */
-html.rail-pinned .tab-bar{width:var(--rail-w-exp)}
-html.rail-pinned body{padding-left:var(--rail-w-exp)}
-html.rail-pinned .tab-bar .tab-btn,html.rail-pinned .rail-pin{width:100%}
-html.rail-pinned .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1;transition:opacity .15s .05s}
-html.rail-pinned .tab-bar .tab-btn:hover::after,html.rail-pinned .tab-bar .tab-btn:focus-visible::after{display:none}
-html.rail-pinned .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+/* Estado expandido — html.rail-pinned lo setea el micro-script anti-FOUC + el botón pin.
+   Solo aplica ≥1101px: entre 701-1100 el pin se ignora (rail siempre colapsado). */
+@media (min-width:1101px){
+  html.rail-pinned .tab-bar{width:var(--rail-w-exp)}
+  html.rail-pinned body{padding-left:var(--rail-w-exp)}
+  html.rail-pinned .tab-bar .tab-btn,html.rail-pinned .rail-pin{width:100%}
+  html.rail-pinned .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1;transition:opacity .15s .05s}
+  html.rail-pinned .tab-bar .tab-btn:hover::after,html.rail-pinned .tab-bar .tab-btn:focus-visible::after{display:none}
+  html.rail-pinned .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+}
 /* Backdrop del drawer móvil (lo abre el JS solo en el tier ≤700px) */
 .rail-backdrop{position:fixed;inset:0;z-index:240;background:rgba(4,6,10,.55)}
 .rail-backdrop[hidden]{display:none}
 /* Hamburguesa: oculta en desktop — visible en el tier móvil */
 .btn-burger{display:none}
+/* ── CHROME responsive — tier 701-1100: pin oculto (sin efecto acá) ── */
+@media (max-width:1100px){
+  .rail-pin{display:none}
+}
+/* Tier ≤820: clock compacta — solo hora (el topbar completo no entra bajo ~820px) */
+@media (max-width:820px){
+  .clock-widget .clock-weekday,.clock-widget .clock-date,.clock-widget .clock-sep{display:none}
+  .topbar{padding:0 16px}
+}
+/* Tier ≤700: rail → drawer off-canvas + topbar compacta */
+@media (max-width:700px){
+  body{padding-left:0;overflow-x:clip}
+  .tab-bar{width:268px;transform:translateX(-100%);transition:transform .22s cubic-bezier(.16,1,.3,1);z-index:250;box-shadow:8px 0 32px rgba(0,0,0,.45)}
+  body.nav-open .tab-bar{transform:translateX(0)}
+  .tab-bar .tab-btn{width:100%}
+  .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1}
+  .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+  .tab-bar .tab-btn:hover::after,.tab-bar .tab-btn:focus-visible::after{display:none}
+  .btn-burger{display:inline-flex;align-items:center;padding:7px 9px}
+  .topbar{padding:0 12px;gap:8px}
+  .clock-widget{display:none}
+  .btn-logout{padding:7px 9px}
+  .btn-logout .btn-txt{display:none}
+  .bell-panel{position:fixed;left:12px;right:12px;top:calc(var(--topbar-h) + 8px);width:auto}
+  .main{padding:12px}
+  .filter-bar{padding:.85rem 12px}
+}
+/* Tier ≤480: solo la marca-ícono (el texto no entra con burger + controles) */
+@media (max-width:480px){
+  .logo-txt{display:none}
+}
 
 /* ── FILTER BAR ── */
 .filter-bar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
@@ -2594,7 +2628,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
       <span class="clock-offline-dot" id="clock-offline-dot" title="Sin conexión — última hora conocida" aria-hidden="true"></span>
     </div>
     <!-- Logout -->
-    <button class="btn-top btn-logout" id="btn-logout" type="button" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ic ic-md" aria-hidden="true"><use href="#i-logout"/></svg> Salir</button>
+    <button class="btn-top btn-logout" id="btn-logout" type="button" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ic ic-md" aria-hidden="true"><use href="#i-logout"/></svg> <span class="btn-txt">Salir</span></button>
   </div>
 </header>
 
