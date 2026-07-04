@@ -7856,7 +7856,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _rtFilterTimer = null;
 
   function esc(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Escapa también comillas: este render interpola datos de la DB dentro de
+    // atributos (data-tip="...", data-id="..."), donde una comilla sin escapar
+    // rompe el atributo (injection). Alineado con la esc() global.
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
   function brandOf(n) {
@@ -7922,7 +7925,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // Baja de servicio: write vía cliente AUTENTICADO (window.__ssb.supa), NO el anon del IIFE
   // (con anon la RPC rechaza por gate auth.role()='authenticated'). Realtime dispara re-render;
   // forzamos loadScheduleRT por inmediatez. p_disponible = valor NUEVO (isBaja: true=reactivar).
-  window.rtToggleDisp = async function(id, isBaja){
+  // Locales del IIFE: el único caller es la delegación de abajo (antes onclick inline → window.*).
+  const rtToggleDisp = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
     if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
     try{
@@ -7931,7 +7935,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(window.loadScheduleRT) window.loadScheduleRT();
     }catch(e){ alert('No se pudo actualizar la disponibilidad: ' + (e.message||e)); }
   };
-  window.rtBajaViaje = async function(id, isBaja){
+  const rtBajaViaje = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
     if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
     const r = _rtData.find(x => x.id === id);
@@ -7942,6 +7946,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(window.loadScheduleRT) window.loadScheduleRT();
     }catch(e){ alert('No se pudo actualizar el viaje: ' + (e.message||e)); }
   };
+
+  // Delegación única en el container estático (#sched-rt-list, nunca reemplazado):
+  // las filas se regeneran por innerHTML en cada filtro/evento Realtime, así que
+  // listeners por botón morirían en cada render. isBaja se recomputa fresco desde
+  // _rtData (el valor horneado al render puede quedar stale entre eventos).
+  document.getElementById('sched-rt-list')?.addEventListener('click', e => {
+    const btn = e.target.closest('.rt-disp-btn');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const r = _rtData.find(x => x.id === id);
+    if(!r){ alert('No encontré la fila. Refrescá el tab.'); return; }
+    const isBaja = r.disponible === false; // true = está de baja → el click reactiva
+    if(btn.dataset.action === 'viaje') rtBajaViaje(id, isBaja);
+    else rtToggleDisp(id, isBaja);
+  });
 
   window.applyRtFilter = function() {
     clearTimeout(_rtFilterTimer);
@@ -8037,7 +8056,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               <span class="tras-badge ${trasCls}">${esc(trasLabel)}</span>
             </div>
             <div class="sr muted sched-obs-inline" style="font-size:11px;line-height:1.4"${obs&&obs!=='—'?` data-tip="${esc(obs)}"`:''}>${esc(obs)}</div>
-            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}" onclick="rtToggleDisp('${r.id}',${r.disponible===false})">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}" onclick="rtBajaViaje('${r.id}',${r.disponible===false})">viaje</button></div>
+            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" data-id="${esc(r.id)}" data-action="fila" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" data-id="${esc(r.id)}" data-action="viaje" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}">viaje</button></div>
           </div>
         </div>`;
       }).join('')}
