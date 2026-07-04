@@ -774,6 +774,24 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
   #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:900px}
 }
+/* Fase C responsive (2026-07-04) — Detention + Admin BID usables en teléfono.
+   Admin BID: h-scroll interno del wrap (patrón Fase B de arriba). Tradeoff aceptado:
+   dentro del scroller el sticky del thead deja de anclar al scroll vertical — solo
+   bajo el breakpoint, desktop intacto. La tabla conserva su min-width:1388px inline.
+   Detention: .det-body pisa el grid inline del template JS (por eso !important;
+   el render regenera innerHTML en cada filtro → la clase es la vía idempotente). */
+@media (max-width:900px){
+  #bid-table-wrap{overflow-x:auto}
+}
+@media (max-width:700px){
+  #panel-detention .det-body{grid-template-columns:1fr !important}
+  /* min-content de la mini-tabla: .naviera-badge nowrap ("HAPAG LLOYD"=162px) +
+     .tras-badge (92px) sumaban ~387px de piso y clipeaban a 390/360 (medido).
+     Celdas comprimibles + naviera wrappeable → piso ~284px, entra hasta 360. */
+  #panel-detention .det-body .sched-main-row>div{min-width:0}
+  #panel-detention .det-body .naviera-badge,
+  #panel-detention .det-body .tras-badge{white-space:normal;line-height:1.3}
+}
 .sr{font-size:12px;color:var(--text)}
 .sr.mono{font-family:var(--mono);font-size:11px}
 .sr.vessel{font-weight:600;font-size:13px}
@@ -8525,7 +8543,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }).join('');
       const rightHtml = `<div>${tableHead}${rowsHtml}</div>`;
 
-      const bodyHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;background:var(--surface)">${leftHtml}${rightHtml}</div>`;
+      const bodyHtml = `<div class="det-body" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;background:var(--surface)">${leftHtml}${rightHtml}</div>`;
 
       return `<div style="margin-top:18px">${headerHtml}${bodyHtml}</div>`;
     }).join('');
