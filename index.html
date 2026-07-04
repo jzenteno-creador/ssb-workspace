@@ -337,6 +337,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .card.has-efa{border-left:4px solid var(--purple-bd)}
 .card.expiring{border-top:2px solid var(--orange)}
 .card-grid{display:grid;grid-template-columns:2.0fr 1.5fr 1.3fr .65fr 1.9fr;align-items:stretch}
+/* Responsive: bajo 700px la tarjeta pasa a 2 columnas y las salidas embebidas scrollean horizontal */
+@media (max-width:700px){
+  .card-grid{grid-template-columns:1fr 1fr}
+  .sched-card{overflow-x:auto}
+  .sched-card .sched-row{min-width:640px}
+}
 .cell{padding:10px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
 .cell:last-child{border-right:none;padding:0}
 .route-main{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
