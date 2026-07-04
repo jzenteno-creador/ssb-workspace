@@ -3854,6 +3854,86 @@ function switchTab(name) {
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
 }
 
+// ── RAIL: pin (expandir/colapsar) + drawer móvil ──
+// Aislado de la navegación: los onclick inline de los botones siguen siendo el ÚNICO
+// caller de switchTab — acá solo se maneja chrome (expansión, drawer, foco).
+(function(){
+  const rail = document.getElementById('app-rail');
+  const pinBtn = document.getElementById('rail-pin');
+  const burger = document.getElementById('btn-nav');
+  const backdrop = document.getElementById('rail-backdrop');
+  if(!rail || !pinBtn || !burger || !backdrop) return;
+  const mqMobile = window.matchMedia('(max-width:700px)');
+
+  // — Pin persistido (desktop ≥1101px; entre 701-1100 el CSS lo ignora) —
+  function applyPinUi(){
+    const on = document.documentElement.classList.contains('rail-pinned');
+    pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    pinBtn.setAttribute('aria-label', on ? 'Colapsar menú' : 'Expandir menú');
+  }
+  pinBtn.addEventListener('click', () => {
+    const on = !document.documentElement.classList.contains('rail-pinned');
+    document.documentElement.classList.toggle('rail-pinned', on);
+    try{ localStorage.setItem('ssb-rail-pinned', on ? '1' : '0'); }catch(_){}
+    applyPinUi();
+  });
+  applyPinUi();
+  // El reflow del padding desincroniza el mini-timeline de Vacaciones (posiciones en px
+  // muestreadas por render; la app no tiene resize listeners) → re-entrar al tab al
+  // terminar la transición del body re-renderiza con el ancho nuevo.
+  document.body.addEventListener('transitionend', e => {
+    if(e.target !== document.body || e.propertyName !== 'padding-left') return;
+    if(document.getElementById('panel-vacaciones')?.classList.contains('active') && window.vacOnEnterTab) window.vacOnEnterTab();
+  });
+
+  // — Drawer móvil (≤700px) —
+  let lastFocus = null;
+  const drawerOpen = () => document.body.classList.contains('nav-open');
+  function openDrawer(){
+    if(drawerOpen()) return;
+    document.body.classList.add('nav-open');
+    backdrop.hidden = false;
+    burger.setAttribute('aria-expanded','true');
+    lastFocus = document.activeElement;
+    (rail.querySelector('.tab-btn.active') || rail.querySelector('.tab-btn'))?.focus();
+    document.addEventListener('keydown', onDrawerKey, true);
+  }
+  function closeDrawer(){
+    if(!drawerOpen()) return;
+    document.body.classList.remove('nav-open');
+    backdrop.hidden = true;
+    burger.setAttribute('aria-expanded','false');
+    document.removeEventListener('keydown', onDrawerKey, true);
+    if(lastFocus && document.contains(lastFocus) && lastFocus.offsetParent !== null) lastFocus.focus();
+    else burger.focus();
+  }
+  // Focus-trap real: Tab/Shift+Tab ciclan primer↔último foco dentro del drawer; ESC cierra.
+  function onDrawerKey(e){
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeDrawer(); return; }
+    if(e.key !== 'Tab') return;
+    const items = [...rail.querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent !== null);
+    if(!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    const cur = document.activeElement;
+    if(!rail.contains(cur)){ e.preventDefault(); first.focus(); return; }
+    if(e.shiftKey && cur === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && cur === last){ e.preventDefault(); first.focus(); }
+  }
+  burger.addEventListener('click', () => drawerOpen() ? closeDrawer() : openDrawer());
+  backdrop.addEventListener('click', closeDrawer);
+  // Cierre al navegar — en bubbling, DESPUÉS del onclick inline: si el usuario canceló el
+  // confirm de TT-Dow, el tab no cambió y el drawer queda abierto (no hay "tap muerto").
+  rail.addEventListener('click', e => {
+    if(!mqMobile.matches || !drawerOpen()) return;
+    const btn = e.target.closest('.tab-btn'); if(!btn) return;
+    const name = btn.id.replace(/^tab-/, '');
+    if(document.getElementById('panel-' + name)?.classList.contains('active')) closeDrawer();
+  });
+  // Si el viewport sale del tier móvil con el drawer abierto → cerrarlo.
+  const onMq = m => { if(!m.matches) closeDrawer(); };
+  mqMobile.addEventListener ? mqMobile.addEventListener('change', onMq) : mqMobile.addListener(onMq);
+})();
+
 // ── BELL ──
 function toggleBell() {
   document.getElementById('bell-panel').classList.toggle('open');
