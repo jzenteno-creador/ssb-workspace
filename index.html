@@ -2249,6 +2249,12 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 #panel-workspace-ia{padding:0;--wia-accent:#8B5CF6;--wia-accent-hover:#7C3AED;--wia-accent-bg:rgba(139,92,246,.12);--wia-accent-bd:rgba(139,92,246,.25)}
 .wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - var(--topbar-h))}
 @supports (height:100dvh){.wia-layout{height:calc(100dvh - var(--topbar-h))}}
+/* Responsive: bajo 700px el chat pasa a 1 columna; del sidebar queda solo "Nueva conversación" */
+@media (max-width:700px){
+  .wia-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .wia-sidebar{flex-direction:row;align-items:center;padding:10px 12px;border-right:none;border-bottom:1px solid var(--border)}
+  .wia-sidebar > :not(.wia-new-btn){display:none}
+}
 .wia-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .wia-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
 .wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
