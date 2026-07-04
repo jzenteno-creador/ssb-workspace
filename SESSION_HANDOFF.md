@@ -1,46 +1,31 @@
-# Handoff sesión SSB Workspace · 2026-07-04 (cierre)
+# Handoff sesión SSB Workspace · 2026-07-04 (post-push 4 pendientes)
 
 ## Foco de la sesión
-IMPLEMENT + VERIFY del rediseño visual: **rail lateral estilo Flight Deck** (modelo crm-detention) + sistema responsive por tiers. Plan aprobado en sesión previa; alcance estricto: solo diseño y posición, cero cambios de lógica/data-layer.
+Cierre de 4 pendientes en un ciclo (EXPLORE → PLAN → IMPLEMENT → VERIFY con crítica adversarial por pendiente) + push secuencial post-smoke de John. **TODO EN PROD.**
 
-## Estado: IMPLEMENTADO Y VERIFICADO HEADLESS. **NO PUSHEADO** — esperando smoke visual de John.
-- Rama: **`feat/rail-flight-deck`** (12 commits sobre `feat/fase1-migracion-db`). HEAD = `5f84c62`.
-- El primer commit de la rama base (`73a4d2c`) es el **WIP de fase1 que estaba sin commitear** en el working tree (corte del Schedule legacy + baja de servicio): se commiteó en `feat/fase1-migracion-db` para separarlo del rail. **Sin smoke propio — validarlo dentro del flujo fase1.**
-- Gate de salida: John corre smoke en vivo (Live Server) → recién ahí merge/push. `master` NO tocado.
+## Estado: 4/4 MERGEADOS, PUSHEADOS Y VERIFICADOS EN PROD (deploys Vercel green + smoke headless contra ssb-workspace.vercel.app).
+- `master` = `origin/master` = **`f39fffc`**. Working tree limpio. Ramas de trabajo borradas (mergeadas con --no-ff, historia completa en los merge commits).
 
-## Lo hecho (commits en orden)
-1. `689d568` — **Rail**: `<nav class="tab-bar">` fixed left 64px, z:230, nivel −1 (`--rail-bg #080b12`), constant-dark, ítems 40×40 con barra indicadora flush-left, tooltip derecha vía `attr(aria-label)`, labels colapsados con `width:0` (accname preservado), badge Vacaciones dot/inline según modo, íconos únicos (control-bl→`i-file-text`, workspace-ia→`i-sparkles`), anti-FOUC pinned, chats `calc(100dvh - var(--topbar-h))` (var nueva, single source of truth, real medido 60px).
-2. `6ef3ade` — **JS chrome** (~85 líneas aisladas): pin persistido (`ssb-rail-pinned`) + drawer móvil con **focus-trap real** (Tab/Shift+Tab ciclan) + cierre condicional post-confirm TT-Dow + re-render de Vacaciones post-pin (`transitionend`).
-3. `d8e3287` — **Tiers**: ≥1101 pin / 701-1100 colapsado / ≤700 drawer 268px + topbar compacta / ≤820 clock solo-hora / ≤480 marca-ícono. `overflow-x:clip`, `100dvh`.
-4. `7ac9665` — dev-server: `/?tab=` ya no da 404 (solo tooling local).
-5. `2f32b8d`→`6a9020d` — **Fase B** (CSS-only por tab): schedule-rt y tt-dow h-scroll interno ≤900 (head+rows en mismo contenedor, verificado), chats 1-col ≤700 (queda "Nueva conversación"), tarifas 2-col + salidas embebidas scrolleables, EFA labels 280→140px.
-6. `dc4e50c` — **fixes post-crítica adversarial** (3 críticos, 0 blockers, 2 MAJOR): `.sched-row-wrap` en los min-width (borders/hover/rt-baja truncados al scrollear), overflow-y del rail/drawer en viewports bajos (apaisado), `visibility:hidden` del drawer cerrado (tab order), `@media print`, guard `_pinReflow` (fetches en cruces de breakpoint), fallback de foco, limpieza de reglas muertas.
-7. `5f84c62` — CLAUDE.md al día (10 módulos/rail, responsive, anti-bypass).
+## Lo pusheado (orden real, deploy verificado entre cada uno)
+1. `b20f2bc` — **B docs**: invariante `disponible` FUERA del mapRow del workflow `LI5dLhoYdM1jLXDo` (contrato de 2 condiciones: columna ausente + `Prefer: merge-duplicates`; `activo`=workflow vs `disponible`=UI; keying por mes con `on_conflict` 5-col). Verificado contra el activeVersion publicado vía n8n-cli read-only. + `schedule-realtime.md` documenta la baja manual y corrige `.limit(200)`→2000, 10→11 columnas.
+2. `a584383` — **D splash** (merge `fix/splash-sync-decouple`): liberación **985ms vs 13.483ms** (−92,7%). `syncSheet` libera estado tras Tarifas+EFA (Supabase, orden en serie preservado — dependencia real); getAll de Apps Script en `syncScheduleBackground()` fire-and-forget con abort de re-entrada (`_schedCtrl`; re-sync y upload de Excel descartan el fetch en vuelo), `applyFilter()` al resolver gated por `tarifasOk` + `bidRenderImpact()` si hay fila seleccionada, guard de focus en `splashReady`, failsafe 4s intacto (comentario "8s" stale corregido).
+3. `5c9da1f` — **C patrón + deadcode** (merge `chore/rt-onclick-and-deadcode`, encadenada sobre D): botones ⊘/viaje del RT a `data-id`/`data-action` + delegación única en `#sched-rt-list` (isBaja recomputado fresco de `_rtData`; handlers de-exportados de window; `esc()` local del IIFE escapa comillas — cerraba injection latente en data-tip). **−225 líneas de código muerto legacy** (impl+wrapper applySchedFilter, renderSchedModule, updateCascadeOpts, togSC, buildSchedCarrierBtns, buildSchedOpts, rama `s-` de opts(), selSC, displayOrigen) con inalcanzabilidad probada símbolo a símbolo; call-sites vivos editados (incl. `else applySchedFilter()` bomba de onAcIn/pickAc/clearAc); render directo post-fetch en loadScheduleRT (colapsa ventana stale de 250ms). CSS intacto (100% compartido). CLAUDE.md y spec 07-04 al día (la deuda "XSS renderSchedModule" era stale y murió con el borrado; quedan 2 copias de brand-map, no 3).
+4. `f39fffc` — **A Fase C mobile** (merge `feat/faseC-mobile-detention-adminbid`): Admin BID `#bid-table-wrap{overflow-x:auto}` ≤900 (patrón Fase B; tabla 1388px scrollea interna; tradeoff aceptado: thead sticky no ancla bajo el breakpoint, desktop intacto). Detention: clase `det-body` (1 línea de template) + 1 col ≤700 con `!important` sobre el inline; compresión de mini-tabla (celdas `min-width:0` + badges wrappeables) extendida a ≤900 por crítica (badges nowrap pineaban 387px y dejaban el mail en 150px @701). OJO comentario guardia en el CSS: la contención de página en 701-900 la da el `overflow:auto` INLINE de `.efa-content` (~2919) — no borrarlo.
 
-## Decisiones tomadas
-- **Rail = el viejo `.tab-bar` restyleado**: clase/ids/onclick intactos → `switchTab` byte-idéntico, anti-bypass de auth sin tocar (verificado por crítico de invariantes).
-- **Expansión solo por pin (click), sin hover-expand** — 3 modos de fallo verificados en la crítica del plan.
-- **Hex fijos en el rail** (`#5b9bf5`): las vars de acento flipan en `body.light` y el rail es constant-dark.
-- Vanilla in-place, sin build step (decisión del plan, sostenida).
+## Verificación
+- Pre-push: 3 rondas de crítica adversarial (9 críticos, 0 blockers, todos los accionables aplicados y re-verificados) · D 5/5 escenarios (normal/lento/caído/Supabase-caído/doble-sync) · C 562 botones + RPC interceptado con payload exacto + 10/10 paneles + RT/tt-dow pixel-idénticos · A matriz 1440/900/780/720/701/700/390/360 cero h-scroll/overflow · node --check 11/11 por cada diff · security-review por diff (sin hallazgos; C reduce superficie).
+- Post-deploy (prod): splash 1.028ms con `releasedBeforeGetAll:true` y schedule poblado (1506) · 10/10 tabs sin errores · click baja→RPC interceptado OK · detention 1 col + BID scroll interno a 390 sin page h-scroll.
 
-## Verificación (headless Playwright — harness en scratchpad `verify/smoke.mjs`)
-- **134/134 asserts** en matriz final: 1440/1150/1024/820/768/700/390/360 + pinned + light + logged-out. Cero h-scroll de página en todos los tiers; 10 módulos + logout alcanzables a 360; rail invisible pre-auth.
-- **8/8 gates funcionales**: logged-out ✅ · light constant-dark ✅ · cleanup Realtime al salir de schedule-rt ✅ · pin→re-render mini-timeline ✅ (y NO dispara en cruces de breakpoint) · confirm-cancel TT-Dow deja drawer abierto ✅ · deep-link `?tab=` a 390 ✅ · reduced-motion (transitionend sigue disparando) ✅ · chat largo composer visible ✅.
-- Viewports bajos post-fix: 844×390 y 667×375 con control-bl clickeable; head/row-wrap 900/900 alineados; print sin chrome.
-- **Seguridad del diff**: cero interpolación HTML nueva, cero innerHTML nuevo; `content:attr()` lee atributos estáticos; `btn.id` solo alimenta getElementById; localStorage comparado contra constantes (verificado por el crítico js-edges con file:line).
-- Baseline pre-cambio + screenshots finales en scratchpad `verify/shots/`.
+## Deuda nueva/documentada (residuos de crítica, decisión pendiente)
+- D: sin señal UI de "schedule en vuelo/no disponible" (el dot dice Actualizado con el schedule aún bajando — mismo contenido que antes, distinto timing); failsafe no cubre dot/btn-sync si Supabase cuelga eterno (pre-existente).
+- A: alternativa para recuperar sticky móvil de BID (`#bid-table-wrap{overflow:auto;max-height:...}`); edición táctil de BID fuera de alcance (interacción); opcional orden mini-tabla-antes-que-mail en 1 col; scroll-shadow affordance para los 3 scrollers Fase B+C.
+- C: aria-label en botones icon-only ⊘/↺ (pre-existente).
 
-## Próximos pasos
-1. **John: smoke visual en vivo** (Live Server, login real) — especialmente: Vacaciones con badge admin real, pin on/off con Gantt equipo visible, drawer en teléfono físico (touch real no emulado), light mode.
-2. Si smoke OK → merge a `master` + push (auto-deploy Vercel).
-3. **Fase C (diferida, NO tocar sin decidir scope)**: mobile de Detention (grid inline JS ~8400) y Admin BID (tabla 1388px) — rompen el boundary solo-CSS. (Control BL se resolvió en Fase B con overrides externos a la isla `#cbl-styles` — isla byte-idéntica; el "candado" prohíbe editarla, no estilar sus elementos desde el bloque principal.)
-4. Docs menores stale (baja prioridad): `docs/modules/control-bl.md` cita switchTab en línea vieja; `docs/VACACIONES_PLAN.md`/design-ref describen la tab-bar horizontal (históricos).
-
-## Carry-over de sesiones previas (sigue vigente — detalle en git history de este archivo, commit `73a4d2c`)
-- 🔴 Seguridad F1+: auth Bearer + rate limiting en `/api/chat*`; F2 LIMIT server-side + unificar `esc()`; F3 hooks + borrar `netlify/functions/`.
-- 🟠 Fix C-parte-2 (deactivate-missing, 444 filas rancias) · Fix D (re-subidas mismo nombre) · RLS `vac_requests`/`vac_employees` amplia · CSP incompleta · claude-processor OAuth · E2E Control BL pasos 2-3 · migrar validador-aduana a módulo.
-- 🟡 console.log ×2 en prod · WCAG light · dead code · saneo selC/selE.
+## Carry-over intacto (sesiones previas)
+- 🔴 Seguridad F1+: auth Bearer + rate limiting en `/api/chat*`; F2 LIMIT server-side + unificar esc() (la local del RT ya escapa comillas — superset); F3 hooks + borrar `netlify/functions/`.
+- 🟠 deactivate-missing (444 filas rancias) · Fix D re-subidas mismo nombre · RLS `vac_requests`/`vac_employees` amplia · CSP incompleta · claude-processor OAuth · E2E Control BL pasos 2-3 · migrar validador-aduana a módulo.
+- 🟡 console.log ×2 en prod · WCAG light · saneo selC/selE (selSC ya no existe) · warns GoTrueClient multi-instancia (deuda multi-cliente conocida).
+- Fase 2 migración schedule→`schedules_master` + brandmap (spec `docs/superpowers/specs/2026-07-04-migracion-schedule-brandmap-design.md`, actualizada: el fetch ya corre en background, quedan 2 copias de brand-map).
 
 ## Identifiers
-- Rama: `feat/rail-flight-deck` HEAD `5f84c62` · base `feat/fase1-migracion-db` (`73a4d2c`) · `master` sin tocar
-- Prod: https://ssb-workspace.vercel.app · Supabase: `xkppkzfxgtfsmfooozsm`
+- `master`/`origin/master`: `f39fffc` · Prod: https://ssb-workspace.vercel.app · Supabase: `xkppkzfxgtfsmfooozsm` · Workflow schedule: `LI5dLhoYdM1jLXDo` (UI-only, candado).
