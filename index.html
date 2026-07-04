@@ -6174,14 +6174,6 @@ function schedNavieraMatch(schedNaviera, filterCarriers){
   return false;
 }
 
-// Display normalizado para origen/destino (mostrar nombre completo en lugar de códigos)
-function displayOrigen(s){
-  const n=normalizeOrigen(s);
-  if(n==='BUE')return'BUENOS AIRES';
-  if(n==='BAHIA')return'BAHIA BLANCA';
-  return s||'';
-}
-
 // Normalize origen: BUE ↔ BUENOS AIRES, BAHIA ↔ BAHIA BLANCA
 function normalizeOrigen(s){
   if(!s)return'';
@@ -6685,7 +6677,6 @@ function updateSchedIndicator() {
   }
 }
 
-// Initial empty schedule filter render
 window.addEventListener('load', ()=>{
   // Migración one-shot darkMode (legacy) → lightMode (nuevo default dark)
   const _oldDark = localStorage.getItem('darkMode');
@@ -7635,7 +7626,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function esc(s) {
     // Escapa también comillas: este render interpola datos de la DB dentro de
     // atributos (data-tip="...", data-id="..."), donde una comilla sin escapar
-    // rompe el atributo (injection). Alineado con la esc() global.
+    // rompe el atributo (injection). Superset de la esc() global (suma comilla simple).
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
@@ -7891,7 +7882,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     buildRtNavieraBtns();
-    applyRtFilter();
+    // Render DIRECTO (sin debounce): _rtData recién asignado debe pintarse en el
+    // mismo tick — con el debounce quedaban ~250ms de botones stale clickeables
+    // contra _rtData fresco (el handler delegado recomputa isBaja de _rtData).
+    _doApplyRtFilter();
   };
 
   window.setupScheduleRT = function() {
