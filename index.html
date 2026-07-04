@@ -951,6 +951,11 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
 #panel-tt-dow .sched-table-head .sth{color:rgba(255,255,255,.78);font-size:10px;letter-spacing:.08em}
 #panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:var(--shadow)}
 #panel-tt-dow #tt-results > .empty,#panel-tt-dow #tt-hist-list > .empty,#panel-tt-dow #tt-edit-table > .empty{border-radius:10px}
+/* Responsive: bajo 900px las tablas scrollean horizontal (head se inyecta dentro del contenedor → no desalinea) */
+@media (max-width:900px){
+  #panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{overflow-x:auto}
+  #panel-tt-dow .sched-table-head,#panel-tt-dow .sched-main-row{min-width:820px}
+}
 #panel-tt-dow .sched-row-wrap{border-bottom:1px solid var(--row-border);transition:background .12s}
 #panel-tt-dow .sched-row-wrap:nth-child(odd of .sched-row-wrap){background:transparent}
 #panel-tt-dow .sched-row-wrap:hover{background:var(--surface-hv)}
