@@ -2,6 +2,15 @@
 
 > Fecha: 2026-07-04 · Proyecto: ssb-workspace · Rama: master
 > Contexto: primera de tres fases acordadas — (1) **Migración** [este spec], (2) Análisis de la base de datos, (3) Rediseño de la web tomando *CRM Containers* como modelo.
+>
+> **Update 2026-07-04 (rama `chore/rt-onclick-and-deadcode`):** `buildSchedCarrierBtns`
+> (con su copia de `brandMap`) y el `brandOf` local del legacy `_applySchedFilterImpl`
+> fueron **eliminados como código muerto** del corte del Schedule legacy. Quedan
+> **2 copias** del mapeo de marca a consolidar (el `brandOf` del módulo RT y
+> `schedNavieraMatch`), no 3. El ítem de smoke de §"botones de marca
+> (`buildSchedCarrierBtns`)" ya no aplica. Además el fetch `getAll` corre ahora en
+> `syncScheduleBackground()` (no bloquea el splash) — el corte de fuente sigue
+> pendiente como estaba diseñado.
 
 ## 1. Problema / estado actual
 

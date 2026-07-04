@@ -3823,7 +3823,7 @@ let schedule = [];
 let scheduleChanges = [];
 let scheduleFileName = '';
 let scheduleFileDate = '';
-let selC = new Set(), selE = new Set(), selSC = new Set();
+let selC = new Set(), selE = new Set();
 const acs = {};
 
 // ── A8: Debounce utility (reusable) ──
@@ -4136,8 +4136,6 @@ async function syncScheduleBackground(tarifasOk) {
         schedule = raw.schedule;
         scheduleFileName = raw.scheduleFile || '';
         scheduleFileDate = raw.scheduleDate || '';
-        buildSchedCarrierBtns();
-        applySchedFilter();
         updateSchedIndicator();
         // Solo si tarifas cargó OK: con Supabase caído, applyFilter pisaría el
         // empty-state de error de #list con rates stale (hallazgo del crítico).
@@ -4303,7 +4301,6 @@ function buildEquipoBtns(){
   });
 }
 function togE(e){selE.has(e)?selE.delete(e):selE.add(e);buildEquipoBtns();applyFilter();}
-function togSC(b){selSC.has(b)?selSC.delete(b):selSC.add(b);buildSchedCarrierBtns();applySchedFilter();}
 
 function onQty(){
   const v20=parseInt(document.getElementById('f-20').value)||0;
@@ -5906,7 +5903,6 @@ async function reloadEfaFromSheet(){
     if(typeof buildEfaFilterOptions==='function')buildEfaFilterOptions();
     if(typeof renderEFATab==='function')renderEFATab();
     if(typeof applyFilter==='function')applyFilter();
-    if(typeof applySchedFilter==='function')applySchedFilter();
   }catch(e){console.warn('reloadEFA (Supabase) failed',e);}
 }
 
@@ -5970,22 +5966,6 @@ function opts(f){
     );
     return[...new Set(src.map(r=>r[field]).filter(Boolean))].sort();
   }
-  if(f.startsWith('s-')){
-    // Cascading: filter available options based on current selections
-    const vO=document.getElementById('f-s-origen').value.trim();
-    const vD=document.getElementById('f-s-destino').value.trim();
-    let src=schedule;
-    if(f==='s-destino'&&vO){src=src.filter(r=>normalizeOrigen(r.ORIGEN)===normalizeOrigen(vO));}
-    if(f==='s-vessel'){
-      if(vO)src=src.filter(r=>normalizeOrigen(r.ORIGEN)===normalizeOrigen(vO));
-      if(vD)src=src.filter(r=>(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()));
-    }
-    const map={origen:'ORIGEN',destino:'DESTINO',carrier:'NAVIERA',vessel:'VESSEL'};
-    const field=f.replace('s-','');
-    let result = [...new Set(src.map(r=>r[map[field]]).filter(Boolean))].sort();
-    if(field==='origen'||field==='destino') result = result.map(displayOrigen);
-    return result;
-  }
   if(f.startsWith('rt-')){
     const field=f.replace('rt-','');
     return(window._rtAcOpts||{})[field]||[];
@@ -6013,7 +5993,6 @@ function onAcIn(f){
   if(f.startsWith('t-'))applyFilter();
   else if(f.startsWith('bid-'))renderAdminBID();
   else if(f.startsWith('rt-'))applyRtFilter();
-  else applySchedFilter();
 }
 function onAcFocus(f){
   if(!acs[f])acs[f]={i:-1};
@@ -6031,8 +6010,8 @@ function onAcKey(e,f){
   else if(e.key==='Enter'){e.preventDefault();if(acs[f].i>=0&&items[acs[f].i])pickAc(f,items[acs[f].i].dataset.v);else closeDrop(f);}
   else if(e.key==='Escape')closeDrop(f);
 }
-function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classList.add('sel');document.getElementById('x-'+f).classList.add('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();else applySchedFilter();}
-function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();else applySchedFilter();}
+function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classList.add('sel');document.getElementById('x-'+f).classList.add('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();}
+function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();}
 
 // ── HELPERS ──
 const usd = v=>'USD '+(Number(v)||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -6193,14 +6172,6 @@ function schedNavieraMatch(schedNaviera, filterCarriers){
     if(sn.includes(fn))return true;
   }
   return false;
-}
-
-// Display normalizado para origen/destino (mostrar nombre completo en lugar de códigos)
-function displayOrigen(s){
-  const n=normalizeOrigen(s);
-  if(n==='BUE')return'BUENOS AIRES';
-  if(n==='BAHIA')return'BAHIA BLANCA';
-  return s||'';
 }
 
 // Normalize origen: BUE ↔ BUENOS AIRES, BAHIA ↔ BAHIA BLANCA
@@ -6515,68 +6486,6 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
   }).join('');
 }
 
-// ── SCHEDULE MODULE FILTER ──
-// A8: applySchedFilter debounced wrapper — impl renamed to _applySchedFilterImpl
-window.applySchedFilter = debounce(_applySchedFilterImpl, 250);
-function _applySchedFilterImpl(){
-  if(!document.getElementById('f-s-origen'))return; // panel Schedule viejo removido (merge) -> no-op seguro
-  if(!schedule.length)return;
-  const vO  = document.getElementById('f-s-origen').value.trim();
-  const vD  = document.getElementById('f-s-destino').value.trim();
-  const vV  = document.getElementById('f-s-vessel').value.trim();
-  const co  = document.getElementById('f-s-cutoff').value;
-  const eta = document.getElementById('f-s-eta').value;
-  const per = document.getElementById('f-s-periodo').value;
-
-  const today = new Date().toISOString().split('T')[0];
-  const thisMonthStart = today.slice(0,7)+'-01';
-
-  // Brand map for schedule carriers
-  const brandOf = n => {
-    const u=(n||'').toUpperCase();
-    if(u.includes('HAPAG'))return'HAPAG';
-    if(u.includes('MAERSK'))return'MAERSK';
-    if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';
-    if(u.includes('MSC'))return'MSC';
-    if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';
-    return n;
-  };
-
-  let rows = schedule.filter(r=>{
-    if(per==='futuro'){
-      const etdISO=toISO(r.ETD||r['ETD']);
-      if(!etdISO||etdISO<thisMonthStart)return false;
-    }
-    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
-    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selSC.size>0&&!schedNavieraMatch(r.NAVIERA,selSC))return false;
-    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
-    if(co){const c=toISO(r['CUT OFF FISICO']);if(c&&c<co)return false;}
-    if(eta){const e=toISO(r['ETA ']||r.ETA||r['ETA']);if(e&&e>eta)return false;}
-    return true;
-  });
-  rows.sort((a,b)=>(toISO(a.ETD||a['ETD'])||'').localeCompare(toISO(b.ETD||b['ETD'])||''));
-
-  // Cascading filter: update autocomplete options based on current filtered set
-  updateCascadeOpts(rows, vO, vD);
-  renderSchedModule(rows);
-}
-
-function updateCascadeOpts() {
-  // Parte B: recalcular las opciones de destino/vessel si su dropdown está ABIERTO, ante
-  // cualquier cambio de origen/destino — sin depender del foco (antes solo refrescaba si el
-  // input estaba enfocado, así que elegir origen con click dejaba destino stale) y sin abrir
-  // dropdowns cerrados. El `dests` anterior era código muerto (onAcFocus ya recalcula vía opts).
-  ['s-destino','s-vessel'].forEach(f=>{
-    const drop=document.getElementById('drop-'+f);
-    if(!drop||!drop.classList.contains('open'))return;
-    const inp=document.getElementById('f-'+f);
-    const v=inp?inp.value:'';
-    const o=opts(f);
-    openDrop(f, v?o.filter(x=>x.toUpperCase().includes(v.toUpperCase())):o, v);
-  });
-}
-
 // Country flags
 // Country code map for flag images (ISO 3166-1 alpha-2)
 const FLAGS = {
@@ -6616,122 +6525,6 @@ function portFlag(port) {
     }
   }
   return '';
-}
-
-function renderSchedModule(rows){
-  const el=document.getElementById('sched-list');
-  const ct=document.getElementById('sched-ct');
-  ct.textContent=rows.length+' salida'+(rows.length!==1?'s':'')+' encontrada'+(rows.length!==1?'s':'');
-
-  if(!rows.length){
-    el.innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-search"/></svg></div><div class="empty-ttl">No hay salidas que coincidan</div><div class="empty-sub">Ajustá los filtros o ampliá el período de búsqueda para ver más resultados.</div></div>`;
-    return;
-  }
-
-  const trasCls = r=>{
-    const t=(r.TRASBORDOS||'').toUpperCase();
-    const s=(r.SERVICIO||'').toUpperCase();
-    if(t.includes('DIRECTO')||s.includes('DIRECTO'))return'dir';
-    if(t.includes('2')||t.includes('4')||t.includes('MULTI'))return'multi';
-    return'one';
-  };
-  const trasLabel = r => {
-    const t=(r.TRASBORDOS||'').trim();
-    const s=(r.SERVICIO||'').trim();
-    return t || s || '—';
-  };
-  const isChanged=(r,field)=>r._changes&&r._changes[field];
-  const oldVal=(r,field)=>r._changes&&r._changes[field]?r._changes[field].old:'';
-
-  // Days until / elapsed
-  const daysTo = d => {
-    const iso=toISO(d); if(!iso)return null;
-    return Math.ceil((new Date(iso)-new Date())/86400000);
-  };
-
-  // Transit days calc from ETD→ETA
-  const transitDays = r => {
-    const etdISO = toISO(r.ETD||r['ETD']||'');
-    const etaISO = toISO(r['ETA ']||r.ETA||r['ETA']||'');
-    if(!etdISO||!etaISO)return'';
-    const diff = Math.round((new Date(etaISO)-new Date(etdISO))/86400000);
-    return diff>0?`${diff}d tránsito`:'';
-  };
-
-  // Cut off urgency color
-  const cutOffStyle = d => {
-    const n=daysTo(d); if(n===null)return'';
-    if(n<=0)return'color:var(--red);font-weight:700';
-    if(n<=2)return'color:var(--red);font-weight:600';
-    if(n<=5)return'color:var(--orange);font-weight:600';
-    return'';
-  };
-
-  // Date cell — simple display
-  const copyCell = (val, extraStyle='') => {
-    if(!val||val==='—')return`<div class="sr mono" style="${extraStyle}">—</div>`;
-    return`<div class="sr mono" style="${extraStyle}">${fDate(val)}</div>`;
-  };
-
-  // Grid unificado con Schedule Realtime — 10 tracks (col 1 = MES ETD derivado)
-  // Col 4 O/D ensanchada a 1.7fr por data real SSB (BAHIA BLANCA→PARANAGUA ≈ 200px)
-  const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr';
-
-  el.innerHTML = `<div class="sched-table-wrap">
-    <div class="sched-table-head" style="grid-template-columns:${COLS}">
-      <span class="sth" style="text-align:center">MES ETD</span>
-      <span class="sth">Buque</span>
-      <span class="sth">Naviera</span>
-      <span class="sth">Origen → Destino</span>
-      <span class="sth">Cut Off Doc</span>
-      <span class="sth">Cut Off Físico</span>
-      <span class="sth">ETD</span>
-      <span class="sth">ETA</span>
-      <span class="sth">Tránsito / Tipo</span>
-      <span class="sth">Observaciones</span>
-    </div>
-    ${rows.map(r=>{
-      const chEtd=isChanged(r,'ETD'),chEta=isChanged(r,'ETA'),chCof=isChanged(r,'CUT OFF FISICO'),chDoc=isChanged(r,'CUT OFF DOC');
-      const etdField=r.ETD||r['ETD']||'';
-      const etaField=r['ETA ']||r.ETA||r['ETA']||'';
-      const flag=portFlag(r.DESTINO);
-      const obs=r.OBSERVACIONES||r.COMENTARIOS||'';
-      const transit=transitDays(r);
-      const cofDoc=r['CUT OFF DOC']||'';
-      const cofFis=r['CUT OFF FISICO']||'';
-
-      return `<div class="sched-row-wrap">
-        <div class="sched-main-row" style="grid-template-columns:${COLS}">
-          <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600">${esc(fMesEtd(etdField))}</div>
-          <div class="sr vessel">${esc(r.VESSEL||'—')}</div>
-          <div style="min-width:0">
-            <span class="naviera-badge">${esc(r.NAVIERA||'—')}</span>
-            ${r.SERVICIO?`<div class="sched-trunc" style="font-size:10px;color:var(--muted);margin-top:3px" data-tip="${esc(r.SERVICIO)}">${esc(r.SERVICIO)}</div>`:''}
-          </div>
-          <div style="min-width:0">
-            <div class="sr sched-trunc" data-tip="${esc((r.ORIGEN||'—')+' → '+(r.DESTINO||'—'))}">${esc(displayOrigen(r.ORIGEN)||'—')} → ${flag} ${esc(displayOrigen(r.DESTINO)||'—')}</div>
-            ${transit?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(transit)}</div>`:''}
-          </div>
-          <div ${chDoc?`data-tip="Anterior: ${esc(oldVal(r,'CUT OFF DOC'))}"`:''}>
-            ${copyCell(cofDoc, (chDoc?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')+';'+cutOffStyle(cofDoc))}
-          </div>
-          <div ${chCof?`data-tip="Anterior: ${esc(oldVal(r,'CUT OFF FISICO'))}"`:''}>
-            ${copyCell(cofFis, (chCof?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')+';'+cutOffStyle(cofFis))}
-          </div>
-          <div ${chEtd?`data-tip="Anterior: ${esc(oldVal(r,'ETD'))}"`:''}>
-            ${copyCell(etdField, chEtd?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')}
-          </div>
-          <div ${chEta?`data-tip="Anterior: ${esc(oldVal(r,'ETA'))}"`:''}>
-            ${copyCell(etaField, chEta?'background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd)':'')}
-          </div>
-          <div>
-            <span class="tras-badge ${trasCls(r)}">${esc(trasLabel(r))}</span>
-          </div>
-          <div class="sr muted sched-obs-inline" style="font-size:11px;line-height:1.4"${obs?` data-tip="${esc(obs)}"`:''}>${esc(obs||'—')}</div>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>`;
 }
 
 // ── FILE UPLOAD ──
@@ -6776,9 +6569,6 @@ function handleFileUpload(input){
         renderBell();
       }
 
-      // Rebuild schedule autocomplete options
-      buildSchedOpts();
-      applySchedFilter();
       applyFilter(); // refresh schedule in tarifa view
       updateSchedIndicator();
 
@@ -6867,22 +6657,6 @@ async function pushChangesToSheet(changes, fileName){
   }catch(e){console.warn('No se pudo enviar log al Sheet:',e);}
 }
 
-function buildSchedCarrierBtns() {
-  // Map raw naviera names to commercial brands
-  const brandMap = n => {
-    const u = (n||'').toUpperCase();
-    if(u.includes('HAPAG')) return 'HAPAG';
-    if(u.includes('MAERSK')) return 'MAERSK';
-    if(u.includes('LOG IN')||u.includes('LOGIN')) return 'LOGIN';
-    if(u.includes('MSC')) return 'MSC';
-    if(u.includes('CMA')||u.includes('MERCOSUL')) return 'CMA CGM';
-    return n;
-  };
-  const brands = [...new Set(schedule.map(r=>brandMap(r.NAVIERA)).filter(Boolean))].sort();
-  const grp = document.getElementById('sched-carrier-grp');
-  if(grp) grp.innerHTML = brands.map(b=>`<button class="tog${selSC.has(b)?' on':''}" onclick="togSC('${b}')">${b}</button>`).join('');
-}
-
 function updateSchedIndicator() {
   const ind = document.getElementById('sched-indicator');
   if(!scheduleFileName){ind.style.display='none';return;}
@@ -6903,13 +6677,7 @@ function updateSchedIndicator() {
   }
 }
 
-function buildSchedOpts(){
-  buildSchedCarrierBtns();
-}
-
-// Initial empty schedule filter render
 window.addEventListener('load', ()=>{
-  // (merge Schedule) llamada a applySchedFilter removida: el panel viejo ya no existe
   // Migración one-shot darkMode (legacy) → lightMode (nuevo default dark)
   const _oldDark = localStorage.getItem('darkMode');
   if(_oldDark!==null){
@@ -7856,7 +7624,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _rtFilterTimer = null;
 
   function esc(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Escapa también comillas: este render interpola datos de la DB dentro de
+    // atributos (data-tip="...", data-id="..."), donde una comilla sin escapar
+    // rompe el atributo (injection). Superset de la esc() global (suma comilla simple).
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
   function brandOf(n) {
@@ -7922,7 +7693,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // Baja de servicio: write vía cliente AUTENTICADO (window.__ssb.supa), NO el anon del IIFE
   // (con anon la RPC rechaza por gate auth.role()='authenticated'). Realtime dispara re-render;
   // forzamos loadScheduleRT por inmediatez. p_disponible = valor NUEVO (isBaja: true=reactivar).
-  window.rtToggleDisp = async function(id, isBaja){
+  // Locales del IIFE: el único caller es la delegación de abajo (antes onclick inline → window.*).
+  const rtToggleDisp = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
     if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
     try{
@@ -7931,7 +7703,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(window.loadScheduleRT) window.loadScheduleRT();
     }catch(e){ alert('No se pudo actualizar la disponibilidad: ' + (e.message||e)); }
   };
-  window.rtBajaViaje = async function(id, isBaja){
+  const rtBajaViaje = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
     if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
     const r = _rtData.find(x => x.id === id);
@@ -7942,6 +7714,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(window.loadScheduleRT) window.loadScheduleRT();
     }catch(e){ alert('No se pudo actualizar el viaje: ' + (e.message||e)); }
   };
+
+  // Delegación única en el container estático (#sched-rt-list, nunca reemplazado):
+  // las filas se regeneran por innerHTML en cada filtro/evento Realtime, así que
+  // listeners por botón morirían en cada render. isBaja se recomputa fresco desde
+  // _rtData (el valor horneado al render puede quedar stale entre eventos).
+  document.getElementById('sched-rt-list')?.addEventListener('click', e => {
+    const btn = e.target.closest('.rt-disp-btn');
+    if(!btn) return;
+    const id = btn.dataset.id;
+    const r = _rtData.find(x => x.id === id);
+    if(!r){ alert('No encontré la fila. Refrescá el tab.'); return; }
+    const isBaja = r.disponible === false; // true = está de baja → el click reactiva
+    if(btn.dataset.action === 'viaje') rtBajaViaje(id, isBaja);
+    else rtToggleDisp(id, isBaja);
+  });
 
   window.applyRtFilter = function() {
     clearTimeout(_rtFilterTimer);
@@ -8037,7 +7824,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               <span class="tras-badge ${trasCls}">${esc(trasLabel)}</span>
             </div>
             <div class="sr muted sched-obs-inline" style="font-size:11px;line-height:1.4"${obs&&obs!=='—'?` data-tip="${esc(obs)}"`:''}>${esc(obs)}</div>
-            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}" onclick="rtToggleDisp('${r.id}',${r.disponible===false})">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}" onclick="rtBajaViaje('${r.id}',${r.disponible===false})">viaje</button></div>
+            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" data-id="${esc(r.id)}" data-action="fila" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" data-id="${esc(r.id)}" data-action="viaje" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}">viaje</button></div>
           </div>
         </div>`;
       }).join('')}
@@ -8095,7 +7882,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     buildRtNavieraBtns();
-    applyRtFilter();
+    // Render DIRECTO (sin debounce): _rtData recién asignado debe pintarse en el
+    // mismo tick — con el debounce quedaban ~250ms de botones stale clickeables
+    // contra _rtData fresco (el handler delegado recomputa isBaja de _rtData).
+    _doApplyRtFilter();
   };
 
   window.setupScheduleRT = function() {
