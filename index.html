@@ -80,8 +80,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 }
 /* Topbar elements: ring sits over dark navy — use same teal, remains visible */
 .topbar *:focus-visible{outline-color:var(--teal)}
-/* Tab buttons: inset ring so it doesn't collide with the underline indicator */
-.tab-btn:focus-visible{outline-offset:-4px;border-radius:4px}
 /* Tabs/toggles/ghost buttons — ring needs slight offset bump so it doesn't clip on rounded corners */
 .tog:focus-visible,.eq-tog:focus-visible,.efa-tg:focus-visible,.ef-tg:focus-visible,.btn-clear:focus-visible,.btn-top:focus-visible,.efa-btn-sec:focus-visible,.efa-btn-pri:focus-visible,.efa-mod-btn:focus-visible,.splash-btn:focus-visible{outline-offset:2px;border-radius:8px}
 /* Inputs keep their internal activated look (border+shadow) AND add outline for keyboard users */
@@ -95,8 +93,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .ic-md{width:16px;height:16px;vertical-align:-3px}
 .ic-lg{width:20px;height:20px;vertical-align:-4px}
 .ic-xl{width:22px;height:22px;vertical-align:-5px}
-/* .logo-ico .ic size set in topbar A10 block below */
-.tab-btn .ic{margin-right:6px}
 .efa-tg .ic,.ef-tg .ic,.efa-btn-sec .ic,.efa-btn-pri .ic{margin-right:5px}
 .bell-ico .ic{width:22px;height:22px;color:inherit}
 .btn-top .ic{margin-right:4px}
@@ -131,12 +127,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 /* ── TOPBAR ── */
 .topbar{background:var(--header-bg);color:#fff;padding:0 2rem;height:var(--topbar-h);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
 .logo-wrap{display:flex;align-items:center;gap:12px;font-size:var(--fs-base);font-weight:700;letter-spacing:-.3px}
-.logo-ico{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
 /* A10: Topbar icon sizes bumped to 18–20px for better balance */
 .topbar .ic{width:20px;height:20px}
 .topbar .ic-sm{width:16px;height:16px}
 .topbar .ic-md{width:18px;height:18px}
-.logo-ico .ic{width:20px;height:20px;color:#fff;stroke-width:2}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .sync-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.45);font-family:var(--mono)}
 .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
@@ -228,6 +222,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .rail-backdrop[hidden]{display:none}
 /* Hamburguesa: oculta en desktop — visible en el tier móvil */
 .btn-burger{display:none}
+/* Viewports bajos: el rail scrollea interno (el tooltip ::after se clipea solo en este edge) */
+@media (max-height:620px){
+  .tab-bar{overflow-y:auto;overflow-x:hidden}
+}
+/* Print: el chrome de navegación no se imprime */
+@media print{
+  .tab-bar,.rail-backdrop{display:none}
+  body{padding-left:0}
+}
 /* ── CHROME responsive — tier 701-1100: pin oculto (sin efecto acá) ── */
 @media (max-width:1100px){
   .rail-pin{display:none}
@@ -240,8 +243,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 /* Tier ≤700: rail → drawer off-canvas + topbar compacta */
 @media (max-width:700px){
   body{padding-left:0;overflow-x:clip}
-  .tab-bar{width:268px;transform:translateX(-100%);transition:transform .22s cubic-bezier(.16,1,.3,1);z-index:250;box-shadow:8px 0 32px rgba(0,0,0,.45)}
-  body.nav-open .tab-bar{transform:translateX(0)}
+  .tab-bar{width:268px;transform:translateX(-100%);visibility:hidden;overflow-y:auto;transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s .22s;z-index:250;box-shadow:8px 0 32px rgba(0,0,0,.45)}
+  body.nav-open .tab-bar{transform:translateX(0);visibility:visible;transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s 0s}
   .tab-bar .tab-btn{width:100%}
   .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1}
   .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
@@ -769,7 +772,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 /* Responsive: bajo 900px la tabla scrollea horizontal (head+rows comparten el wrap → no desalinean) */
 @media (max-width:900px){
   #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
-  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-main-row{min-width:900px}
+  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:900px}
 }
 .sr{font-size:12px;color:var(--text)}
 .sr.mono{font-family:var(--mono);font-size:11px}
@@ -958,7 +961,7 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
 /* Responsive: bajo 900px las tablas scrollean horizontal (head se inyecta dentro del contenedor → no desalinea) */
 @media (max-width:900px){
   #panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{overflow-x:auto}
-  #panel-tt-dow .sched-table-head,#panel-tt-dow .sched-main-row{min-width:820px}
+  #panel-tt-dow .sched-table-head,#panel-tt-dow .sched-row-wrap,#panel-tt-dow .sched-main-row{min-width:820px}
 }
 #panel-tt-dow .sched-row-wrap{border-bottom:1px solid var(--row-border);transition:background .12s}
 #panel-tt-dow .sched-row-wrap:nth-child(odd of .sched-row-wrap){background:transparent}
@@ -3937,8 +3940,10 @@ function switchTab(name) {
     pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     pinBtn.setAttribute('aria-label', on ? 'Colapsar menú' : 'Expandir menú');
   }
+  let _pinReflow = false;
   pinBtn.addEventListener('click', () => {
     const on = !document.documentElement.classList.contains('rail-pinned');
+    _pinReflow = true;
     document.documentElement.classList.toggle('rail-pinned', on);
     try{ localStorage.setItem('ssb-rail-pinned', on ? '1' : '0'); }catch(_){}
     applyPinUi();
@@ -3946,9 +3951,12 @@ function switchTab(name) {
   applyPinUi();
   // El reflow del padding desincroniza el mini-timeline de Vacaciones (posiciones en px
   // muestreadas por render; la app no tiene resize listeners) → re-entrar al tab al
-  // terminar la transición del body re-renderiza con el ancho nuevo.
+  // terminar la transición del body re-renderiza con el ancho nuevo. El flag _pinReflow
+  // evita disparar fetches en cruces de breakpoint (el padding también anima ahí).
   document.body.addEventListener('transitionend', e => {
     if(e.target !== document.body || e.propertyName !== 'padding-left') return;
+    if(!_pinReflow) return;
+    _pinReflow = false;
     if(document.getElementById('panel-vacaciones')?.classList.contains('active') && window.vacOnEnterTab) window.vacOnEnterTab();
   });
 
@@ -3971,7 +3979,8 @@ function switchTab(name) {
     burger.setAttribute('aria-expanded','false');
     document.removeEventListener('keydown', onDrawerKey, true);
     if(lastFocus && document.contains(lastFocus) && lastFocus.offsetParent !== null) lastFocus.focus();
-    else burger.focus();
+    else if(burger.offsetParent) burger.focus();
+    else rail.querySelector('.tab-btn.active')?.focus();
   }
   // Focus-trap real: Tab/Shift+Tab ciclan primer↔último foco dentro del drawer; ESC cierra.
   function onDrawerKey(e){
