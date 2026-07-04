@@ -32,6 +32,8 @@
   /* Typographic scale — cockpit data-dense */
   --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
   --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
+  /* Rail lateral (Flight Deck) — constantes en ambos modos, NO se redefinen en body.light */
+  --rail-bg:#080b12;--rail-border:rgba(255,255,255,.07);--rail-w:64px;--rail-w-exp:228px;--topbar-h:60px;
 }
 /* ── LIGHT variant (toggle) ──
    Default es dark (via :root). Agregar clase `light` al body activa esta paleta. */
@@ -65,7 +67,8 @@ body.light{
 /* Hover tint purple sobre estados selected/highlighted (commit 6 decisión N) — color-mix requiere Chromium 111+ */
 .bid-xls tbody tr.bid-row-selected:hover td{background:color-mix(in srgb,var(--blue-lt) 85%,var(--purple) 15%)}
 .bid-xls tbody tr.bid-row-highlighted:hover td{background:color-mix(in srgb,var(--amber-bg) 85%,var(--purple) 15%)}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column;padding-left:var(--rail-w);transition:padding-left .2s cubic-bezier(.16,1,.3,1)}
+@supports (min-height:100dvh){body{min-height:100dvh}}
 
 /* ── A3: Accessible focus ring (WCAG AA) ── */
 /* Hide default focus when clicking with mouse, keep visible ring for keyboard (:focus-visible) */
@@ -126,7 +129,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .skel-group{padding:1rem 0}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--header-bg);color:#fff;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
+.topbar{background:var(--header-bg);color:#fff;padding:0 2rem;height:var(--topbar-h);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
 .logo-wrap{display:flex;align-items:center;gap:12px;font-size:var(--fs-base);font-weight:700;letter-spacing:-.3px}
 .logo-ico{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
 /* A10: Topbar icon sizes bumped to 18–20px for better balance */
@@ -185,15 +188,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .bell-item-ts{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
 .bell-empty{padding:2rem;text-align:center;color:var(--muted);font-size:13px}
 
-/* ── TABS ── */
-.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0;flex-shrink:0}
-.tab-btn{padding:12px 20px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s ease;margin-bottom:-1px;position:relative}
-.tab-btn::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--blue);transition:width .3s cubic-bezier(.4,0,.2,1)}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--blue);font-weight:600}
-.tab-btn.active::after{width:100%}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+/* ── RAIL — nav lateral de módulos (Flight Deck) ──
+   Constante dark en ambos modos (patrón .topbar/--header-bg): usa solo vars --rail-* de :root
+   + hex fijos — nunca --surface/--muted/--blue, que flipan en body.light.
+   La clase .tab-bar se CONSERVA: el anti-bypass de auth (body:not(.is-authed)) la referencia. */
+.tab-bar{position:fixed;left:0;top:0;bottom:0;width:var(--rail-w);z-index:230;background:var(--rail-bg);border-right:1px solid var(--rail-border);display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;overflow:visible;transition:width .2s cubic-bezier(.16,1,.3,1)}
+.rail-logo{width:40px;height:40px;border-radius:9px;background:#5b9bf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:10px}
+.rail-logo .ic{width:20px;height:20px;color:#fff;stroke-width:2}
+.tab-bar .tab-btn{display:flex;align-items:center;width:40px;height:40px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.55);position:relative;flex-shrink:0;font-family:var(--font);font-size:13px;font-weight:500;white-space:nowrap;transition:background .15s,color .15s,width .2s cubic-bezier(.16,1,.3,1)}
+.tab-bar .tab-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.tab-bar .tab-btn.active{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+.tab-bar .tab-btn.active::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+.tab-bar .tab-btn .ic{width:18px;height:18px;margin:0;flex-shrink:0}
+.tab-bar .tab-lbl{width:0;padding-left:0;opacity:0;overflow:hidden}
+.tab-bar .tab-btn:focus-visible{outline-offset:2px;border-radius:9px}
+/* Tooltip a la derecha en modo colapsado — solo dispositivos con hover real */
+@media (hover:hover) and (pointer:fine){
+  .tab-bar .tab-btn:hover::after,.tab-bar .tab-btn:focus-visible::after{content:attr(aria-label);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);background:#0b0f17;border:1px solid var(--rail-border);color:rgba(255,255,255,.88);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:1}
+}
+/* Badge de Vacaciones en colapsado: contador chico en la esquina del ítem (el JS solo togglea display) */
+.tab-bar .vac-tab-badge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;margin:0;font-size:9px;border:1.5px solid var(--rail-bg)}
+/* Spacer + botón pin (expandir/colapsar) al pie del rail */
+.rail-spacer{flex:1}
+.rail-pin{display:flex;align-items:center;width:40px;height:36px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.4);flex-shrink:0;font-family:var(--font);font-size:12px;white-space:nowrap;transition:background .15s,color .15s}
+.rail-pin:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+.rail-pin .ic{width:17px;height:17px;margin:0;flex-shrink:0}
+/* Estado expandido — html.rail-pinned lo setea el micro-script anti-FOUC + el botón pin */
+html.rail-pinned .tab-bar{width:var(--rail-w-exp)}
+html.rail-pinned body{padding-left:var(--rail-w-exp)}
+html.rail-pinned .tab-bar .tab-btn,html.rail-pinned .rail-pin{width:100%}
+html.rail-pinned .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1;transition:opacity .15s .05s}
+html.rail-pinned .tab-bar .tab-btn:hover::after,html.rail-pinned .tab-bar .tab-btn:focus-visible::after{display:none}
+html.rail-pinned .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+/* Backdrop del drawer móvil (lo abre el JS solo en el tier ≤700px) */
+.rail-backdrop{position:fixed;inset:0;z-index:240;background:rgba(4,6,10,.55)}
+.rail-backdrop[hidden]{display:none}
+/* Hamburguesa: oculta en desktop — visible en el tier móvil */
+.btn-burger{display:none}
 
 /* ── FILTER BAR ── */
 .filter-bar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
@@ -734,6 +765,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 body:not(.is-authed) .topbar,
 body:not(.is-authed) .tab-bar,
 body:not(.is-authed) .tab-panel,
+body:not(.is-authed) .rail-backdrop,
 body:not(.is-authed) .sched-tools-bar{display:none !important}
 .auth-gate{position:fixed;inset:0;z-index:9999;background:#0b0f17;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .auth-gate.is-active{display:flex}
@@ -2100,7 +2132,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 /* ═══════════════════════════════ AGENTE IA ═══════════════════════════════ */
 #panel-agente{padding:0}
-.agent-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.agent-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - var(--topbar-h))}
+@supports (height:100dvh){.agent-layout{height:calc(100dvh - var(--topbar-h))}}
 .agent-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .agent-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
 .agent-new-btn{display:flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
@@ -2169,7 +2202,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 /* ═══════════════════════════════ WORKSPACE IA ═══════════════════════════════ */
 #panel-workspace-ia{padding:0;--wia-accent:#8B5CF6;--wia-accent-hover:#7C3AED;--wia-accent-bg:rgba(139,92,246,.12);--wia-accent-bd:rgba(139,92,246,.25)}
-.wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - var(--topbar-h))}
+@supports (height:100dvh){.wia-layout{height:calc(100dvh - var(--topbar-h))}}
 .wia-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .wia-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
 .wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
@@ -2376,6 +2410,9 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </head>
 <body>
 
+<script>/* anti-FOUC: aplica el estado pinned del rail antes del primer paint */
+try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.classList.add('rail-pinned')}catch(_){}</script>
+
 <!-- ── A1: Lucide SVG icon sprite (hidden, used via <use href="#i-*">) ── -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
   <defs>
@@ -2410,6 +2447,9 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
     <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
   </defs>
 </svg>
 
@@ -2528,7 +2568,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>SSB Workspace</div>
+  <div class="logo-wrap"><button class="btn-top btn-burger" id="btn-nav" type="button" aria-label="Abrir menú de módulos" aria-expanded="false" aria-controls="app-rail"><svg class="ic ic-md" aria-hidden="true"><use href="#i-menu"/></svg></button><span class="logo-txt">SSB Workspace</span></div>
   <div class="topbar-right">
     <!-- Dark mode toggle -->
     <button class="btn-top" id="btn-light" onclick="toggleLight()" title="Modo claro" aria-label="Alternar modo claro"><svg class="ic ic-md" aria-hidden="true"><use href="#i-sun"/></svg></button>
@@ -2558,19 +2598,23 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   </div>
 </header>
 
-<!-- TABS -->
-<div class="tab-bar">
-  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Tarifas BID</button>
-  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-zap"/></svg>EFA</button>
-  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
-  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
-  <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
-  <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
-  <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
-  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>SSB Copilot</button>
-  <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Workspace IA</button>
-  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Control BL</button>
-</div>
+<!-- RAIL de módulos (ex tab-bar horizontal) — conserva clase, ids y onclick: switchTab intacto -->
+<nav class="tab-bar" id="app-rail" aria-label="Módulos">
+  <div class="rail-logo" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>
+  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')" aria-label="Tarifas BID"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg><span class="tab-lbl">Tarifas BID</span></button>
+  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')" aria-label="EFA"><svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg><span class="tab-lbl">EFA</span></button>
+  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')" aria-label="Admin BID"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg><span class="tab-lbl">Admin BID</span></button>
+  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')" aria-label="Schedule"><svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg><span class="tab-lbl">Schedule</span></button>
+  <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')" aria-label="Detention"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span class="tab-lbl">Detention</span></button>
+  <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')" aria-label="Tarifas Terrestres Dow"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg><span class="tab-lbl">Tarifas Terrestres Dow</span></button>
+  <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')" aria-label="Vacaciones"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span><span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
+  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')" aria-label="SSB Copilot"><svg class="ic" aria-hidden="true"><use href="#i-bot"/></svg><span class="tab-lbl">SSB Copilot</span></button>
+  <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
+  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+  <div class="rail-spacer" aria-hidden="true"></div>
+  <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
+</nav>
+<div class="rail-backdrop" id="rail-backdrop" hidden></div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
 <div class="tab-panel active" id="panel-tarifas">
