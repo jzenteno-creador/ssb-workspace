@@ -5,8 +5,9 @@
 > "Patrones a evitar").
 
 - Tab `📊 Schedule Realtime` → panel `#panel-schedule-rt`, tab button `#tab-schedule-rt`
-- Datos: Supabase `schedules_master`, query con `.gte('etd', primerDiaMes).eq('activo', true).limit(200)`
-- Columnas (10): MES ETD | Buque | Naviera/Servicio/Terminal | Origen→Destino | Cut Off Doc | Cut Off Físico | ETD | ETA | Tránsito/Trasbordos | Obs/Comentarios
+- Datos: Supabase `schedules_master`, query con `.gte('etd', primerDiaMes).eq('activo', true).limit(2000)`
+- Columnas (11): MES ETD | Buque | Naviera/Servicio/Terminal | Origen→Destino | Cut Off Doc | Cut Off Físico | ETD | ETA | Tránsito/Trasbordos | Obs/Comentarios | Activo
+- Baja manual: botones ⊘/"viaje" por fila (`rtToggleDisp` fila / `rtBajaViaje` viaje entero por buque) → RPC `set_schedule_disponible` con el cliente AUTENTICADO (`window.__ssb.supa`, no el anon del IIFE). `disponible=false` marca la fila `.rt-baja`. La ingesta n8n NO pisa la columna — invariante documentada en `docs/integrations/n8n-schedule-excel.md`
 - Autocomplete: prefix `rt-` en sistema `acs[]`, opciones en `window._rtAcOpts = { origen, destino, vessel }`
 - Filtro Mes ETD: `<select id="f-rt-mes">`, opciones populadas dinámicamente desde datos cargados
 - Filtro naviera: botones toggle via `buildRtNavieraBtns()` + `window._rtNavSet` (Set)
