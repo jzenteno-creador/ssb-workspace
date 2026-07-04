@@ -46,19 +46,20 @@ python3 upload_detention.py <archivo.xlsx>
 
 No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
 
-## Mapa de la app — 12 tabs
+## Mapa de la app — 10 módulos (rail lateral)
 
-`switchTab` **hardcodea el array de tab-ids** → al agregar un tab nuevo hay que sumar el id ahí o el panel nunca se activa.
+La nav es un **rail lateral fijo** estilo Flight Deck (2026-07-04): `<nav class="tab-bar">` fixed left 64px icon-only + tooltip, expandible a 228px vía botón pin (persistido en `localStorage['ssb-rail-pinned']`, solo ≥1101px), y drawer off-canvas ≤700px con hamburguesa en topbar. La clase `.tab-bar` se conserva a propósito: la referencia el anti-bypass de auth. Constant-dark en ambos temas (vars `--rail-*` + hex fijos — nunca vars que flipen en `body.light`).
 
-Cada tab es un `#tab-<x>` (botón) + `#panel-<x>` (contenido), conmutados por `switchTab(x)`. En orden:
+`switchTab` **hardcodea el array de tab-ids** → al agregar un módulo nuevo hay que sumar el id ahí y el botón al rail (con `aria-label` e ícono único del sprite) o el panel nunca se activa.
+
+Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conmutados por `switchTab(x)`. En orden:
 
 | Tab | Datos | Doc / nota |
 |-----|-------|------------|
 | `tarifas` | Tarifas marítimas — **Supabase** `v_tarifas_maritimas` vía `loadTarifasFromSupabase()` (Apps Script legacy en `loadTarifas()`) | saneo selC/selE duplicado en ambas (deuda: unificar en helper; mientras tanto, tocar las dos) |
 | `admin-bid` | BID (carga/edición) | `docs/modules/admin-bid.md` |
 | `efa` | EFA Gantt | `docs/modules/efa-gantt.md` |
-| `schedule` | Schedule marítimo (BID) | `renderSchedModule()` — XSS pre-existente en `r.OBSERVACIONES` |
-| `schedule-rt` | Supabase `schedules_master` Realtime | `docs/modules/schedule-realtime.md` |
+| `schedule-rt` | Supabase `schedules_master` Realtime (único Schedule — el legacy BID/Apps Script se cortó en fase1) | `docs/modules/schedule-realtime.md` |
 | `detention` | Detention (Supabase) | filtros multi-select estilo `.ac-wrap` |
 | `tt-dow` | Tarifas Terrestres Dow (Supabase) | `docs/modules/tarifas-terrestres-dow.md` |
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | `docs/modules/vacaciones.md` + `docs/modules/auth-global.md` |
@@ -141,7 +142,7 @@ Toda la app vive detrás del gate (`#auth-gate`), gating server-side por `vac_em
   - `window.__ssbAuth = { user, email, employeeId, session } | null` — sesión validada.
   - `window.ssbLogout()` — signOut + reload.
   - `window.vacApplySsbSession(session)` — lo llama el global tras validar; Vacaciones arma `__vacAuth`.
-- **Anti-bypass UI:** `body:not(.is-authed) .topbar, .tab-bar, .tab-panel, .sched-tools-bar { display:none !important }`. `body.is-authed` solo se setea tras validar contra `vac_employees` server-side.
+- **Anti-bypass UI:** `body:not(.is-authed) .topbar, .tab-bar, .tab-panel, .rail-backdrop, .sched-tools-bar { display:none !important }`. `body.is-authed` solo se setea tras validar contra `vac_employees` server-side.
 - **Headers de seguridad (`vercel.json`):** `X-Frame-Options: DENY`, `Content-Security-Policy: frame-ancestors 'none'` (anti-clickjacking), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
 - **Invariante de seguridad:** RLS = **última línea de defensa** (tablas `vac_*` y `schedules_master`); la UI solo oculta. Tarifas BID/EFA/Schedule (BID)/Tarifas Terrestres son accesibles a **anon por decisión arquitectónica** (datos públicos).
 
@@ -174,7 +175,7 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
 - XSS pre-existente en renderSchedModule(): `r.OBSERVACIONES` sin `esc()` (línea ~3329)
 - Estado global mutable: rates, efaSheet, schedule, selC, selE, selSC
 - Archivo supera 5000 líneas — candidato a modularización futura
-- Sin diseño responsive — desktop-only, no hay breakpoints móvil
+- Responsive por tiers desde 2026-07-04: rail ≥1101 (pin) / rail colapsado 701-1100 / drawer ≤700; clock compacta ≤820, marca-ícono ≤480. Fase B: h-scroll interno en schedule-rt/tt-dow (≤900), chats 1-col y tarifas 2-col (≤700), EFA labels 140px. **Detention y Admin BID siguen no-usables en teléfono** (grid inline JS ~8400 y tabla 1388px — Fase C diferida, rompe el boundary solo-CSS)
 
 ## Decisiones de diseño inamovibles
 
