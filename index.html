@@ -2335,6 +2335,20 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .wia-send-btn:hover{background:var(--wia-accent-hover);transform:translateY(-1px)}
 .wia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 /* ═══════════════════════════════ FIN WORKSPACE IA ═══════════════════════════════ */
+
+/* ── Control BL responsive (Fase B) — overrides EXTERNOS a la isla #cbl-styles (no-touch).
+   La isla viene DESPUÉS en el documento → a igual specificity ganaría por orden: se dobla
+   la clase para subir specificity (patrón D8, mismo truco que .bid-row-selected). ── */
+@media (max-width:900px){
+  #panel-control-bl .cbl-layout.cbl-layout{grid-template-columns:1fr}
+  #panel-control-bl .cbl-master.cbl-master{max-height:45vh;overflow-y:auto}
+  #panel-control-bl .cbl-detail.cbl-detail{min-height:0}
+}
+@media (max-width:700px){
+  #panel-control-bl .cbl-search.cbl-search{width:100%}
+  #panel-control-bl .cbl-search-field.cbl-search-field{min-width:0;flex:1}
+  #panel-control-bl .cbl-root.cbl-root{padding:14px 12px 20px}
+}
 </style>
 <style id="cbl-styles">
 /* ═══════════ Control BL — estilos scoped (isla clara dentro de la app dark) ═══════════ */
