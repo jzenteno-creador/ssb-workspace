@@ -4076,9 +4076,11 @@ const setDot = (t,txt) => { document.getElementById('dot').className='dot '+t; d
 function splashReady(kind,msg){
   const s=document.getElementById('splash-status');const b=document.getElementById('splash-btn');
   if(s){s.className='splash-status '+(kind||'ok');s.innerHTML=msg;}
-  if(b){b.disabled=false;b.focus();}
+  // focus solo si el splash sigue operativo: en fade-out (.hide) robaría el foco del gate de login
+  if(b){b.disabled=false;if(!document.getElementById('splash')?.classList.contains('hide'))b.focus();}
 }
-// Failsafe: si syncSheet se cuelga (típico abriendo con file://), habilitar Ingresar a los 8s
+// Failsafe: si syncSheet se cuelga (Supabase colgado o file:// — los loaders no tienen abort),
+// habilitar Ingresar a los 4s. El schedule de Apps Script ya NO gatea esto: baja en background.
 setTimeout(()=>{const b=document.getElementById('splash-btn');if(b&&b.disabled)splashReady('err','⚠ Sincronización lenta — podés ingresar igual');},4000);
 
 // ── SYNC TARIFAS ──
@@ -4098,10 +4100,33 @@ async function syncSheet() {
     console.warn('syncSheet: tarifas/EFA desde Supabase falló', e);
   }
 
-  // ── Schedule: sigue viniendo del Apps Script vía getAll (sin cambios).
-  //    Solo usamos raw.schedule; raw.tarifas/raw.efa quedan ignorados a propósito. ──
+  // ── Estado + splash: se liberan con Tarifas+EFA (Supabase, sub-segundo).
+  //    El schedule (Apps Script, lento) baja en background y no gatea la entrada. ──
+  if (tarifasOk) {
+    const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+    setDot('ok','Actualizado '+t);
+    splashReady('ok','✓ Información sincronizada');
+  } else {
+    setDot('err','Error de conexión');
+    document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
+    splashReady('err','⚠ Error de conexión — podés ingresar igual');
+  }
+  document.getElementById('btn-sync').disabled = false;
+
+  syncScheduleBackground(tarifasOk); // fire-and-forget: maneja sus errores adentro
+}
+
+// ── Schedule: sigue viniendo del Apps Script vía getAll (sin cambios de fuente;
+//    su migración a schedules_master es Fase 2). Solo usamos raw.schedule;
+//    raw.tarifas/raw.efa quedan ignorados a propósito. Corre en background:
+//    puebla el global `schedule` (Próximas salidas de tarifas, vessel-chip,
+//    preview EFA, impact BID) sin gatear el splash. ──
+let _schedCtrl = null;
+async function syncScheduleBackground(tarifasOk) {
+  const ctrl = new AbortController();
   try {
-    const ctrl = new AbortController();
+    if (_schedCtrl) _schedCtrl.abort(); // re-sync manual: descarta el fetch anterior en vuelo
+    _schedCtrl = ctrl;
     const tmo = setTimeout(()=>ctrl.abort(), 30000);
     const res = await fetch(SCRIPT_URL+'?action=getAll', {redirect:'follow',method:'GET',headers:{'Accept':'application/json'},signal:ctrl.signal});
     clearTimeout(tmo);
@@ -4114,23 +4139,16 @@ async function syncSheet() {
         buildSchedCarrierBtns();
         applySchedFilter();
         updateSchedIndicator();
+        // Solo si tarifas cargó OK: con Supabase caído, applyFilter pisaría el
+        // empty-state de error de #list con rates stale (hallazgo del crítico).
+        if (tarifasOk) applyFilter(); // refresca "Próximas salidas" embebidas (mismo patrón que handleFileUpload)
+        if (bidSelectedRowKey) bidRenderImpact(); // impact panel abierto: refresca "Buques afectados" (patrón línea ~7471)
       }
     }
   } catch(e) {
+    if (e && e.name === 'AbortError' && _schedCtrl !== ctrl) return; // superseded por un re-sync más nuevo
     console.warn('syncSheet: schedule (Apps Script) no disponible', e);
   }
-
-  // ── Estado ──
-  if (tarifasOk) {
-    const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-    setDot('ok','Actualizado '+t);
-    splashReady('ok','✓ Información sincronizada');
-  } else {
-    setDot('err','Error de conexión');
-    document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
-    splashReady('err','⚠ Error de conexión — podés ingresar igual');
-  }
-  document.getElementById('btn-sync').disabled = false;
 }
 
 // ── UPLOAD TARIFAS BID ──
@@ -6720,6 +6738,7 @@ function renderSchedModule(rows){
 function handleFileUpload(input){
   const file = input.files[0];
   if(!file) return;
+  if(_schedCtrl){ _schedCtrl.abort(); _schedCtrl = null; } // el upload manual manda: descarta el fetch background de schedule en vuelo (evita que un resolve tardío pise lo subido)
   const reader = new FileReader();
   reader.onload = e => {
     try {
