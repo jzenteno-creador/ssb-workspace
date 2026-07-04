@@ -32,6 +32,8 @@
   /* Typographic scale — cockpit data-dense */
   --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
   --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
+  /* Rail lateral (Flight Deck) — constantes en ambos modos, NO se redefinen en body.light */
+  --rail-bg:#080b12;--rail-border:rgba(255,255,255,.07);--rail-w:64px;--rail-w-exp:228px;--topbar-h:60px;
 }
 /* ── LIGHT variant (toggle) ──
    Default es dark (via :root). Agregar clase `light` al body activa esta paleta. */
@@ -65,7 +67,8 @@ body.light{
 /* Hover tint purple sobre estados selected/highlighted (commit 6 decisión N) — color-mix requiere Chromium 111+ */
 .bid-xls tbody tr.bid-row-selected:hover td{background:color-mix(in srgb,var(--blue-lt) 85%,var(--purple) 15%)}
 .bid-xls tbody tr.bid-row-highlighted:hover td{background:color-mix(in srgb,var(--amber-bg) 85%,var(--purple) 15%)}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:var(--fs-base);line-height:var(--lh-base);min-height:100vh;display:flex;flex-direction:column;padding-left:var(--rail-w);transition:padding-left .2s cubic-bezier(.16,1,.3,1)}
+@supports (min-height:100dvh){body{min-height:100dvh}}
 
 /* ── A3: Accessible focus ring (WCAG AA) ── */
 /* Hide default focus when clicking with mouse, keep visible ring for keyboard (:focus-visible) */
@@ -77,8 +80,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 }
 /* Topbar elements: ring sits over dark navy — use same teal, remains visible */
 .topbar *:focus-visible{outline-color:var(--teal)}
-/* Tab buttons: inset ring so it doesn't collide with the underline indicator */
-.tab-btn:focus-visible{outline-offset:-4px;border-radius:4px}
 /* Tabs/toggles/ghost buttons — ring needs slight offset bump so it doesn't clip on rounded corners */
 .tog:focus-visible,.eq-tog:focus-visible,.efa-tg:focus-visible,.ef-tg:focus-visible,.btn-clear:focus-visible,.btn-top:focus-visible,.efa-btn-sec:focus-visible,.efa-btn-pri:focus-visible,.efa-mod-btn:focus-visible,.splash-btn:focus-visible{outline-offset:2px;border-radius:8px}
 /* Inputs keep their internal activated look (border+shadow) AND add outline for keyboard users */
@@ -92,8 +93,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .ic-md{width:16px;height:16px;vertical-align:-3px}
 .ic-lg{width:20px;height:20px;vertical-align:-4px}
 .ic-xl{width:22px;height:22px;vertical-align:-5px}
-/* .logo-ico .ic size set in topbar A10 block below */
-.tab-btn .ic{margin-right:6px}
 .efa-tg .ic,.ef-tg .ic,.efa-btn-sec .ic,.efa-btn-pri .ic{margin-right:5px}
 .bell-ico .ic{width:22px;height:22px;color:inherit}
 .btn-top .ic{margin-right:4px}
@@ -126,14 +125,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .skel-group{padding:1rem 0}
 
 /* ── TOPBAR ── */
-.topbar{background:var(--header-bg);color:#fff;padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
+.topbar{background:var(--header-bg);color:#fff;padding:0 2rem;height:var(--topbar-h);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:200;gap:12px}
 .logo-wrap{display:flex;align-items:center;gap:12px;font-size:var(--fs-base);font-weight:700;letter-spacing:-.3px}
-.logo-ico{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
 /* A10: Topbar icon sizes bumped to 18–20px for better balance */
 .topbar .ic{width:20px;height:20px}
 .topbar .ic-sm{width:16px;height:16px}
 .topbar .ic-md{width:18px;height:18px}
-.logo-ico .ic{width:20px;height:20px;color:#fff;stroke-width:2}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .sync-pill{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.45);font-family:var(--mono)}
 .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex-shrink:0}
@@ -185,15 +182,86 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .bell-item-ts{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
 .bell-empty{padding:2rem;text-align:center;color:var(--muted);font-size:13px}
 
-/* ── TABS ── */
-.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:0;flex-shrink:0}
-.tab-btn{padding:12px 20px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s ease;margin-bottom:-1px;position:relative}
-.tab-btn::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--blue);transition:width .3s cubic-bezier(.4,0,.2,1)}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--blue);font-weight:600}
-.tab-btn.active::after{width:100%}
-.tab-btn:hover{color:var(--text)}
-.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+/* ── RAIL — nav lateral de módulos (Flight Deck) ──
+   Constante dark en ambos modos (patrón .topbar/--header-bg): usa solo vars --rail-* de :root
+   + hex fijos — nunca --surface/--muted/--blue, que flipan en body.light.
+   La clase .tab-bar se CONSERVA: el anti-bypass de auth (body:not(.is-authed)) la referencia. */
+.tab-bar{position:fixed;left:0;top:0;bottom:0;width:var(--rail-w);z-index:230;background:var(--rail-bg);border-right:1px solid var(--rail-border);display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;overflow:visible;transition:width .2s cubic-bezier(.16,1,.3,1)}
+.rail-logo{width:40px;height:40px;border-radius:9px;background:#5b9bf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:10px}
+.rail-logo .ic{width:20px;height:20px;color:#fff;stroke-width:2}
+.tab-bar .tab-btn{display:flex;align-items:center;width:40px;height:40px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.55);position:relative;flex-shrink:0;font-family:var(--font);font-size:13px;font-weight:500;white-space:nowrap;transition:background .15s,color .15s,width .2s cubic-bezier(.16,1,.3,1)}
+.tab-bar .tab-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.tab-bar .tab-btn.active{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+.tab-bar .tab-btn.active::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+.tab-bar .tab-btn .ic{width:18px;height:18px;margin:0;flex-shrink:0}
+.tab-bar .tab-lbl{width:0;padding-left:0;opacity:0;overflow:hidden}
+.tab-bar .tab-btn:focus-visible{outline-offset:2px;border-radius:9px}
+/* Tooltip a la derecha en modo colapsado — solo dispositivos con hover real */
+@media (hover:hover) and (pointer:fine){
+  .tab-bar .tab-btn:hover::after,.tab-bar .tab-btn:focus-visible::after{content:attr(aria-label);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);background:#0b0f17;border:1px solid var(--rail-border);color:rgba(255,255,255,.88);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:1}
+}
+/* Badge de Vacaciones en colapsado: contador chico en la esquina del ítem (el JS solo togglea display) */
+.tab-bar .vac-tab-badge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;margin:0;font-size:9px;border:1.5px solid var(--rail-bg)}
+/* Spacer + botón pin (expandir/colapsar) al pie del rail */
+.rail-spacer{flex:1}
+.rail-pin{display:flex;align-items:center;width:40px;height:36px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.4);flex-shrink:0;font-family:var(--font);font-size:12px;white-space:nowrap;transition:background .15s,color .15s}
+.rail-pin:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
+.rail-pin .ic{width:17px;height:17px;margin:0;flex-shrink:0}
+/* Estado expandido — html.rail-pinned lo setea el micro-script anti-FOUC + el botón pin.
+   Solo aplica ≥1101px: entre 701-1100 el pin se ignora (rail siempre colapsado). */
+@media (min-width:1101px){
+  html.rail-pinned .tab-bar{width:var(--rail-w-exp)}
+  html.rail-pinned body{padding-left:var(--rail-w-exp)}
+  html.rail-pinned .tab-bar .tab-btn,html.rail-pinned .rail-pin{width:100%}
+  html.rail-pinned .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1;transition:opacity .15s .05s}
+  html.rail-pinned .tab-bar .tab-btn:hover::after,html.rail-pinned .tab-bar .tab-btn:focus-visible::after{display:none}
+  html.rail-pinned .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+}
+/* Backdrop del drawer móvil (lo abre el JS solo en el tier ≤700px) */
+.rail-backdrop{position:fixed;inset:0;z-index:240;background:rgba(4,6,10,.55)}
+.rail-backdrop[hidden]{display:none}
+/* Hamburguesa: oculta en desktop — visible en el tier móvil */
+.btn-burger{display:none}
+/* Viewports bajos: el rail scrollea interno (el tooltip ::after se clipea solo en este edge) */
+@media (max-height:620px){
+  .tab-bar{overflow-y:auto;overflow-x:hidden}
+}
+/* Print: el chrome de navegación no se imprime */
+@media print{
+  .tab-bar,.rail-backdrop{display:none}
+  body{padding-left:0}
+}
+/* ── CHROME responsive — tier 701-1100: pin oculto (sin efecto acá) ── */
+@media (max-width:1100px){
+  .rail-pin{display:none}
+}
+/* Tier ≤820: clock compacta — solo hora (el topbar completo no entra bajo ~820px) */
+@media (max-width:820px){
+  .clock-widget .clock-weekday,.clock-widget .clock-date,.clock-widget .clock-sep{display:none}
+  .topbar{padding:0 16px}
+}
+/* Tier ≤700: rail → drawer off-canvas + topbar compacta */
+@media (max-width:700px){
+  body{padding-left:0;overflow-x:clip}
+  .tab-bar{width:268px;transform:translateX(-100%);visibility:hidden;overflow-y:auto;transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s .22s;z-index:250;box-shadow:8px 0 32px rgba(0,0,0,.45)}
+  body.nav-open .tab-bar{transform:translateX(0);visibility:visible;transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s 0s}
+  .tab-bar .tab-btn{width:100%}
+  .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1}
+  .tab-bar .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+  .tab-bar .tab-btn:hover::after,.tab-bar .tab-btn:focus-visible::after{display:none}
+  .btn-burger{display:inline-flex;align-items:center;padding:7px 9px}
+  .topbar{padding:0 12px;gap:8px}
+  .clock-widget{display:none}
+  .btn-logout{padding:7px 9px}
+  .btn-logout .btn-txt{display:none}
+  .bell-panel{position:fixed;left:12px;right:12px;top:calc(var(--topbar-h) + 8px);width:auto}
+  .main{padding:12px}
+  .filter-bar{padding:.85rem 12px}
+}
+/* Tier ≤480: solo la marca-ícono (el texto no entra con burger + controles) */
+@media (max-width:480px){
+  .logo-txt{display:none}
+}
 
 /* ── FILTER BAR ── */
 .filter-bar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
@@ -272,6 +340,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .card.has-efa{border-left:4px solid var(--purple-bd)}
 .card.expiring{border-top:2px solid var(--orange)}
 .card-grid{display:grid;grid-template-columns:2.0fr 1.5fr 1.3fr .65fr 1.9fr;align-items:stretch}
+/* Responsive: bajo 700px la tarjeta pasa a 2 columnas y las salidas embebidas scrollean horizontal */
+@media (max-width:700px){
+  .card-grid{grid-template-columns:1fr 1fr}
+  .sched-card{overflow-x:auto}
+  .sched-card .sched-row{min-width:640px}
+}
 .cell{padding:10px 12px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
 .cell:last-child{border-right:none;padding:0}
 .route-main{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2}
@@ -361,6 +435,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 .gantt-row:nth-child(even){background:var(--row-bg-dark)}
 .gantt-row:hover{background:var(--purple-tint)}
 .gantt-row .gc-label{flex:0 0 280px;padding:10px 14px;border-right:2px solid var(--border);position:sticky;left:0;background:var(--surface);z-index:2;display:flex;flex-direction:column;justify-content:center}
+/* Responsive: bajo 700px la columna sticky de labels baja a 140px para liberar timeline */
+@media (max-width:700px){
+  .gantt-head .gh-label,.gantt-row .gc-label{flex:0 0 140px;padding:8px 10px}
+}
 .gantt-row .gc-label .gc-carrier{font-weight:700;font-size:12px;color:var(--purple)}
 .gantt-row .gc-label .gc-route{font-size:11px;color:var(--text);font-weight:600;margin-top:2px}
 .gantt-row .gc-label .gc-eq{font-size:10px;color:var(--muted);margin-top:1px}
@@ -691,11 +769,22 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 .sched-row-wrap:last-child{border-bottom:none}
 .sched-row-wrap:hover{background:var(--surface-hv)}
 .sched-main-row{display:grid;grid-template-columns:0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr;padding:8px 12px;gap:8px;align-items:center}
+/* Responsive: bajo 900px la tabla scrollea horizontal (head+rows comparten el wrap → no desalinean) */
+@media (max-width:900px){
+  #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
+  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:900px}
+}
 .sr{font-size:12px;color:var(--text)}
 .sr.mono{font-family:var(--mono);font-size:11px}
 .sr.vessel{font-weight:600;font-size:13px}
 .sr.muted{color:var(--muted)}
 .sched-obs-inline{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+/* Baja de servicio (schedules_master.disponible=false) — fila roja + control inline */
+.sched-row-wrap.rt-baja{background:rgba(229,62,62,.12)}
+.sched-row-wrap.rt-baja:hover{background:rgba(229,62,62,.18)}
+.rt-no{color:var(--red);font-weight:700;font-size:11px}
+.rt-disp-btn{font-family:var(--font);font-size:10px;padding:1px 5px;margin-left:3px;border:1px solid var(--border);border-radius:5px;background:var(--faint);color:var(--muted);cursor:pointer;transition:all .12s}
+.rt-disp-btn:hover{border-color:var(--red);color:var(--red)}
 .sched-trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%}
 /* changed cell highlight */
 .changed-cell{background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd);cursor:help}
@@ -728,6 +817,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 body:not(.is-authed) .topbar,
 body:not(.is-authed) .tab-bar,
 body:not(.is-authed) .tab-panel,
+body:not(.is-authed) .rail-backdrop,
 body:not(.is-authed) .sched-tools-bar{display:none !important}
 .auth-gate{position:fixed;inset:0;z-index:9999;background:#0b0f17;display:none;align-items:center;justify-content:center;padding:20px;overflow:auto}
 .auth-gate.is-active{display:flex}
@@ -868,6 +958,11 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
 #panel-tt-dow .sched-table-head .sth{color:rgba(255,255,255,.78);font-size:10px;letter-spacing:.08em}
 #panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:var(--shadow)}
 #panel-tt-dow #tt-results > .empty,#panel-tt-dow #tt-hist-list > .empty,#panel-tt-dow #tt-edit-table > .empty{border-radius:10px}
+/* Responsive: bajo 900px las tablas scrollean horizontal (head se inyecta dentro del contenedor → no desalinea) */
+@media (max-width:900px){
+  #panel-tt-dow #tt-results,#panel-tt-dow #tt-edit-table,#panel-tt-dow #tt-edit-carriers-table,#panel-tt-dow #tt-hist-list{overflow-x:auto}
+  #panel-tt-dow .sched-table-head,#panel-tt-dow .sched-row-wrap,#panel-tt-dow .sched-main-row{min-width:820px}
+}
 #panel-tt-dow .sched-row-wrap{border-bottom:1px solid var(--row-border);transition:background .12s}
 #panel-tt-dow .sched-row-wrap:nth-child(odd of .sched-row-wrap){background:transparent}
 #panel-tt-dow .sched-row-wrap:hover{background:var(--surface-hv)}
@@ -2094,7 +2189,14 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 /* ═══════════════════════════════ AGENTE IA ═══════════════════════════════ */
 #panel-agente{padding:0}
-.agent-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.agent-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - var(--topbar-h))}
+@supports (height:100dvh){.agent-layout{height:calc(100dvh - var(--topbar-h))}}
+/* Responsive: bajo 700px el chat pasa a 1 columna; del sidebar queda solo "Nueva conversación" */
+@media (max-width:700px){
+  .agent-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .agent-sidebar{flex-direction:row;align-items:center;padding:10px 12px;border-right:none;border-bottom:1px solid var(--border)}
+  .agent-sidebar > :not(.agent-new-btn){display:none}
+}
 .agent-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .agent-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
 .agent-new-btn{display:flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
@@ -2163,7 +2265,14 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 /* ═══════════════════════════════ WORKSPACE IA ═══════════════════════════════ */
 #panel-workspace-ia{padding:0;--wia-accent:#8B5CF6;--wia-accent-hover:#7C3AED;--wia-accent-bg:rgba(139,92,246,.12);--wia-accent-bd:rgba(139,92,246,.25)}
-.wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 120px)}
+.wia-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - var(--topbar-h))}
+@supports (height:100dvh){.wia-layout{height:calc(100dvh - var(--topbar-h))}}
+/* Responsive: bajo 700px el chat pasa a 1 columna; del sidebar queda solo "Nueva conversación" */
+@media (max-width:700px){
+  .wia-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .wia-sidebar{flex-direction:row;align-items:center;padding:10px 12px;border-right:none;border-bottom:1px solid var(--border)}
+  .wia-sidebar > :not(.wia-new-btn){display:none}
+}
 .wia-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .wia-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
 .wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
@@ -2226,6 +2335,20 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .wia-send-btn:hover{background:var(--wia-accent-hover);transform:translateY(-1px)}
 .wia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 /* ═══════════════════════════════ FIN WORKSPACE IA ═══════════════════════════════ */
+
+/* ── Control BL responsive (Fase B) — overrides EXTERNOS a la isla #cbl-styles (no-touch).
+   La isla viene DESPUÉS en el documento → a igual specificity ganaría por orden: se dobla
+   la clase para subir specificity (patrón D8, mismo truco que .bid-row-selected). ── */
+@media (max-width:900px){
+  #panel-control-bl .cbl-layout.cbl-layout{grid-template-columns:1fr}
+  #panel-control-bl .cbl-master.cbl-master{max-height:45vh;overflow-y:auto}
+  #panel-control-bl .cbl-detail.cbl-detail{min-height:0}
+}
+@media (max-width:700px){
+  #panel-control-bl .cbl-search.cbl-search{width:100%}
+  #panel-control-bl .cbl-search-field.cbl-search-field{min-width:0;flex:1}
+  #panel-control-bl .cbl-root.cbl-root{padding:14px 12px 20px}
+}
 </style>
 <style id="cbl-styles">
 /* ═══════════ Control BL — estilos scoped (isla clara dentro de la app dark) ═══════════ */
@@ -2370,6 +2493,9 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </head>
 <body>
 
+<script>/* anti-FOUC: aplica el estado pinned del rail antes del primer paint */
+try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.classList.add('rail-pinned')}catch(_){}</script>
+
 <!-- ── A1: Lucide SVG icon sprite (hidden, used via <use href="#i-*">) ── -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
   <defs>
@@ -2404,6 +2530,9 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
     <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
   </defs>
 </svg>
 
@@ -2522,7 +2651,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 
 <!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo-wrap"><div class="logo-ico" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>SSB Workspace</div>
+  <div class="logo-wrap"><button class="btn-top btn-burger" id="btn-nav" type="button" aria-label="Abrir menú de módulos" aria-expanded="false" aria-controls="app-rail"><svg class="ic ic-md" aria-hidden="true"><use href="#i-menu"/></svg></button><span class="logo-txt">SSB Workspace</span></div>
   <div class="topbar-right">
     <!-- Dark mode toggle -->
     <button class="btn-top" id="btn-light" onclick="toggleLight()" title="Modo claro" aria-label="Alternar modo claro"><svg class="ic ic-md" aria-hidden="true"><use href="#i-sun"/></svg></button>
@@ -2548,24 +2677,27 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       <span class="clock-offline-dot" id="clock-offline-dot" title="Sin conexión — última hora conocida" aria-hidden="true"></span>
     </div>
     <!-- Logout -->
-    <button class="btn-top btn-logout" id="btn-logout" type="button" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ic ic-md" aria-hidden="true"><use href="#i-logout"/></svg> Salir</button>
+    <button class="btn-top btn-logout" id="btn-logout" type="button" title="Cerrar sesión" aria-label="Cerrar sesión"><svg class="ic ic-md" aria-hidden="true"><use href="#i-logout"/></svg> <span class="btn-txt">Salir</span></button>
   </div>
 </header>
 
-<!-- TABS -->
-<div class="tab-bar">
-  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Tarifas BID</button>
-  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-zap"/></svg>EFA</button>
-  <button class="tab-btn" id="tab-schedule" onclick="switchTab('schedule')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-ship"/></svg>Schedule</button>
-  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-wrench"/></svg>Admin BID</button>
-  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bars"/></svg>Schedule Realtime</button>
-  <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clock"/></svg>Detention</button>
-  <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-truck"/></svg>Tarifas Terrestres Dow</button>
-  <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-calendar"/></svg>Vacaciones<span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
-  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>SSB Copilot</button>
-  <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-bot"/></svg>Workspace IA</button>
-  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')"><svg class="ic ic-md" aria-hidden="true"><use href="#i-clipboard"/></svg>Control BL</button>
-</div>
+<!-- RAIL de módulos (ex tab-bar horizontal) — conserva clase, ids y onclick: switchTab intacto -->
+<nav class="tab-bar" id="app-rail" aria-label="Módulos">
+  <div class="rail-logo" aria-hidden="true"><svg class="ic"><use href="#i-anchor"/></svg></div>
+  <button class="tab-btn active" id="tab-tarifas" onclick="switchTab('tarifas')" aria-label="Tarifas BID"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg><span class="tab-lbl">Tarifas BID</span></button>
+  <button class="tab-btn" id="tab-efa" onclick="switchTab('efa')" aria-label="EFA"><svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg><span class="tab-lbl">EFA</span></button>
+  <button class="tab-btn" id="tab-admin-bid" onclick="switchTab('admin-bid')" aria-label="Admin BID"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg><span class="tab-lbl">Admin BID</span></button>
+  <button class="tab-btn" id="tab-schedule-rt" onclick="switchTab('schedule-rt')" aria-label="Schedule"><svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg><span class="tab-lbl">Schedule</span></button>
+  <button class="tab-btn" id="tab-detention" onclick="switchTab('detention')" aria-label="Detention"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg><span class="tab-lbl">Detention</span></button>
+  <button class="tab-btn" id="tab-tt-dow" onclick="switchTab('tt-dow')" aria-label="Tarifas Terrestres Dow"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg><span class="tab-lbl">Tarifas Terrestres Dow</span></button>
+  <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')" aria-label="Vacaciones"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span><span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
+  <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')" aria-label="SSB Copilot"><svg class="ic" aria-hidden="true"><use href="#i-bot"/></svg><span class="tab-lbl">SSB Copilot</span></button>
+  <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
+  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+  <div class="rail-spacer" aria-hidden="true"></div>
+  <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
+</nav>
+<div class="rail-backdrop" id="rail-backdrop" hidden></div>
 
 <!-- ═══════════ TAB: TARIFAS ═══════════ -->
 <div class="tab-panel active" id="panel-tarifas">
@@ -2783,7 +2915,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </div>
 
 <!-- ═══════════ TAB: SCHEDULE ═══════════ -->
-<div class="tab-panel" id="panel-schedule">
+<!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
+<div class="tab-panel" id="panel-schedule-rt">
 
   <!-- Toolbar de datos del Sheet maestro (sólo aquí — alimenta Tarifas BID, EFA y este Schedule) -->
   <div class="sched-tools-bar" role="toolbar" aria-label="Datos del Sheet maestro">
@@ -2800,77 +2933,6 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
       <button class="btn-top" id="btn-sync" onclick="syncSheet()" aria-label="Sincronizar datos"><svg class="ic ic-md" aria-hidden="true"><use href="#i-refresh"/></svg> Sincronizar</button>
     </div>
   </div>
-
-  <div class="sched-filter-bar">
-    <div class="sched-filter-row">
-      <div>
-        <span class="flbl">Origen</span>
-        <div class="ac-wrap" id="wrap-s-origen">
-          <input class="ac-in w140" id="f-s-origen" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-origen')" onkeydown="onAcKey(event,'s-origen')" onfocus="onAcFocus('s-origen')">
-          <button class="ac-x" id="x-s-origen" onclick="clearAc('s-origen')">×</button>
-          <div class="ac-drop" id="drop-s-origen"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Destino</span>
-        <div class="ac-wrap" id="wrap-s-destino">
-          <input class="ac-in w140" id="f-s-destino" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-destino')" onkeydown="onAcKey(event,'s-destino')" onfocus="onAcFocus('s-destino')">
-          <button class="ac-x" id="x-s-destino" onclick="clearAc('s-destino')">×</button>
-          <div class="ac-drop" id="drop-s-destino"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Buque</span>
-        <div class="ac-wrap" id="wrap-s-vessel">
-          <input class="ac-in w140" id="f-s-vessel" type="text" placeholder="Buscar..." autocomplete="off"
-            oninput="onAcIn('s-vessel')" onkeydown="onAcKey(event,'s-vessel')" onfocus="onAcFocus('s-vessel')">
-          <button class="ac-x" id="x-s-vessel" onclick="clearAc('s-vessel')">×</button>
-          <div class="ac-drop" id="drop-s-vessel"></div>
-        </div>
-      </div>
-      <div>
-        <span class="flbl">Cut Off Físico desde</span>
-        <input class="date-in" type="date" id="f-s-cutoff" oninput="applySchedFilter()">
-      </div>
-      <div>
-        <span class="flbl">ETA hasta</span>
-        <input class="date-in" type="date" id="f-s-eta" oninput="applySchedFilter()">
-      </div>
-      <div>
-        <span class="flbl">Período</span>
-        <select class="estado-sel" id="f-s-periodo" onchange="applySchedFilter()" style="width:160px">
-          <option value="futuro">Mes actual + futuros</option>
-          <option value="historico">Todo el historial</option>
-        </select>
-      </div>
-      <div>
-        <span class="flbl">Línea marítima</span>
-        <div class="btn-grp" id="sched-carrier-grp"></div>
-      </div>
-      <button class="btn-clear" onclick="clearSchedFilters()" aria-label="Limpiar filtros"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-x"/></svg> Limpiar</button>
-    </div>
-  </div>
-
-  <div class="sched-module" id="sched-module">
-    <div class="results-bar">
-      <span class="results-title">Schedule de buques</span>
-      <span class="results-ct" id="sched-ct"></span>
-      <!-- D9: Brand colors #e53e3e PDF (Adobe), #276749 Excel (Microsoft). No tokenizados — reconocimiento visual por filetype intencional. -->
-      <div style="display:flex;gap:6px">
-        <button onclick="exportSchedPDF()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#e53e3e';this.style.color='#e53e3e'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar PDF"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-text"/></svg> PDF</button>
-        <button onclick="exportSchedExcel()" style="font-family:var(--font);font-size:11px;font-weight:500;padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--faint);color:var(--muted);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='#276749';this.style.color='#276749'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'" aria-label="Exportar Excel"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-file-spread"/></svg> Excel</button>
-      </div>
-    </div>
-    <div id="sched-list">
-      <div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-ship"/></svg></div><div class="empty-ttl">Aún no subiste el schedule</div><div class="empty-sub">Usá el botón <b>Subir Schedule</b> de arriba para cargar el Excel con las próximas salidas.</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════ TAB: SCHEDULE REALTIME ═══════════ -->
-<div class="tab-panel" id="panel-schedule-rt">
 
   <div class="sched-filter-bar">
     <div class="sched-filter-row">
@@ -3857,7 +3919,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','schedule','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -3874,6 +3936,92 @@ function switchTab(name) {
   if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
 }
+
+// ── RAIL: pin (expandir/colapsar) + drawer móvil ──
+// Aislado de la navegación: los onclick inline de los botones siguen siendo el ÚNICO
+// caller de switchTab — acá solo se maneja chrome (expansión, drawer, foco).
+(function(){
+  const rail = document.getElementById('app-rail');
+  const pinBtn = document.getElementById('rail-pin');
+  const burger = document.getElementById('btn-nav');
+  const backdrop = document.getElementById('rail-backdrop');
+  if(!rail || !pinBtn || !burger || !backdrop) return;
+  const mqMobile = window.matchMedia('(max-width:700px)');
+
+  // — Pin persistido (desktop ≥1101px; entre 701-1100 el CSS lo ignora) —
+  function applyPinUi(){
+    const on = document.documentElement.classList.contains('rail-pinned');
+    pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    pinBtn.setAttribute('aria-label', on ? 'Colapsar menú' : 'Expandir menú');
+  }
+  let _pinReflow = false;
+  pinBtn.addEventListener('click', () => {
+    const on = !document.documentElement.classList.contains('rail-pinned');
+    _pinReflow = true;
+    document.documentElement.classList.toggle('rail-pinned', on);
+    try{ localStorage.setItem('ssb-rail-pinned', on ? '1' : '0'); }catch(_){}
+    applyPinUi();
+  });
+  applyPinUi();
+  // El reflow del padding desincroniza el mini-timeline de Vacaciones (posiciones en px
+  // muestreadas por render; la app no tiene resize listeners) → re-entrar al tab al
+  // terminar la transición del body re-renderiza con el ancho nuevo. El flag _pinReflow
+  // evita disparar fetches en cruces de breakpoint (el padding también anima ahí).
+  document.body.addEventListener('transitionend', e => {
+    if(e.target !== document.body || e.propertyName !== 'padding-left') return;
+    if(!_pinReflow) return;
+    _pinReflow = false;
+    if(document.getElementById('panel-vacaciones')?.classList.contains('active') && window.vacOnEnterTab) window.vacOnEnterTab();
+  });
+
+  // — Drawer móvil (≤700px) —
+  let lastFocus = null;
+  const drawerOpen = () => document.body.classList.contains('nav-open');
+  function openDrawer(){
+    if(drawerOpen()) return;
+    document.body.classList.add('nav-open');
+    backdrop.hidden = false;
+    burger.setAttribute('aria-expanded','true');
+    lastFocus = document.activeElement;
+    (rail.querySelector('.tab-btn.active') || rail.querySelector('.tab-btn'))?.focus();
+    document.addEventListener('keydown', onDrawerKey, true);
+  }
+  function closeDrawer(){
+    if(!drawerOpen()) return;
+    document.body.classList.remove('nav-open');
+    backdrop.hidden = true;
+    burger.setAttribute('aria-expanded','false');
+    document.removeEventListener('keydown', onDrawerKey, true);
+    if(lastFocus && document.contains(lastFocus) && lastFocus.offsetParent !== null) lastFocus.focus();
+    else if(burger.offsetParent) burger.focus();
+    else rail.querySelector('.tab-btn.active')?.focus();
+  }
+  // Focus-trap real: Tab/Shift+Tab ciclan primer↔último foco dentro del drawer; ESC cierra.
+  function onDrawerKey(e){
+    if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeDrawer(); return; }
+    if(e.key !== 'Tab') return;
+    const items = [...rail.querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent !== null);
+    if(!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    const cur = document.activeElement;
+    if(!rail.contains(cur)){ e.preventDefault(); first.focus(); return; }
+    if(e.shiftKey && cur === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && cur === last){ e.preventDefault(); first.focus(); }
+  }
+  burger.addEventListener('click', () => drawerOpen() ? closeDrawer() : openDrawer());
+  backdrop.addEventListener('click', closeDrawer);
+  // Cierre al navegar — en bubbling, DESPUÉS del onclick inline: si el usuario canceló el
+  // confirm de TT-Dow, el tab no cambió y el drawer queda abierto (no hay "tap muerto").
+  rail.addEventListener('click', e => {
+    if(!mqMobile.matches || !drawerOpen()) return;
+    const btn = e.target.closest('.tab-btn'); if(!btn) return;
+    const name = btn.id.replace(/^tab-/, '');
+    if(document.getElementById('panel-' + name)?.classList.contains('active')) closeDrawer();
+  });
+  // Si el viewport sale del tier móvil con el drawer abierto → cerrarlo.
+  const onMq = m => { if(!m.matches) closeDrawer(); };
+  mqMobile.addEventListener ? mqMobile.addEventListener('change', onMq) : mqMobile.addListener(onMq);
+})();
 
 // ── BELL ──
 function toggleBell() {
@@ -5776,16 +5924,6 @@ function restoreEfaFilters(){
   }catch(e){}
 }
 
-function clearSchedFilters(){
-  ['s-origen','s-destino','s-vessel'].forEach(f=>clearAc(f));
-  document.getElementById('f-s-cutoff').value='';
-  document.getElementById('f-s-eta').value='';
-  document.getElementById('f-s-periodo').value='futuro';
-  selSC.clear();
-  buildSchedCarrierBtns();
-  applySchedFilter();
-}
-
 // ── AUTOCOMPLETE ──
 function opts(f){
   if(f.startsWith('t-')){
@@ -6363,6 +6501,7 @@ function renderSchedInTarifa(etd, vOrigen, vDestino, hasFilter){
 // A8: applySchedFilter debounced wrapper — impl renamed to _applySchedFilterImpl
 window.applySchedFilter = debounce(_applySchedFilterImpl, 250);
 function _applySchedFilterImpl(){
+  if(!document.getElementById('f-s-origen'))return; // panel Schedule viejo removido (merge) -> no-op seguro
   if(!schedule.length)return;
   const vO  = document.getElementById('f-s-origen').value.trim();
   const vD  = document.getElementById('f-s-destino').value.trim();
@@ -6751,7 +6890,7 @@ function buildSchedOpts(){
 
 // Initial empty schedule filter render
 window.addEventListener('load', ()=>{
-  if(schedule.length) applySchedFilter();
+  // (merge Schedule) llamada a applySchedFilter removida: el panel viejo ya no existe
   // Migración one-shot darkMode (legacy) → lightMode (nuevo default dark)
   const _oldDark = localStorage.getItem('darkMode');
   if(_oldDark!==null){
@@ -6933,111 +7072,6 @@ function exportTarifasExcel(){
   a.click(); URL.revokeObjectURL(url);
 }
 
-// ── EXPORT SCHEDULE PDF ──
-function exportSchedPDF(){
-  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
-
-  const vO  = document.getElementById('f-s-origen').value.trim();
-  const vD  = document.getElementById('f-s-destino').value.trim();
-  const vV  = document.getElementById('f-s-vessel').value.trim();
-  const per = document.getElementById('f-s-periodo').value;
-  const fecha = new Date().toLocaleDateString('es-AR');
-  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
-
-  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
-
-  let rows=schedule.filter(r=>{
-    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
-    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
-    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
-    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
-    return true;
-  });
-  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
-
-  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
-
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    body{font-family:Arial,sans-serif;font-size:10px;color:#1a2540;margin:20px}
-    h1{font-size:15px;color:#0f2044;margin-bottom:4px}
-    .sub{font-size:9px;color:#6b7a99;margin-bottom:14px}
-    table{width:100%;border-collapse:collapse}
-    th{background:#0f2044;color:#fff;padding:5px 6px;text-align:left;font-size:9px}
-    td{padding:4px 6px;border-bottom:1px solid #e2e8f0;vertical-align:top}
-    tr:nth-child(even) td{background:#f8fafc}
-    .dir{color:#0d9e80;font-weight:700} .one{color:#c87a00} .multi{color:#c0392b}
-    @media print{body{margin:8px}}
-  </style></head><body>
-  <h1>🚢 Schedule de Buques</h1>
-  <div class="sub">Exportado: ${fecha} · ${scheduleFileName||'Schedule local'}</div>
-  <table>
-    <tr><th>Buque</th><th>Naviera</th><th>Origen → Destino</th><th>Cut Off Doc</th><th>Cut Off Físico</th><th>ETD</th><th>ETA</th><th>Tránsito</th><th>Tipo</th></tr>`;
-
-  rows.forEach(r=>{
-    const t=(r.TRASBORDOS||'').toUpperCase();
-    const cls=t.includes('DIRECTO')?'dir':t.includes('2')||t.includes('4')?'multi':'one';
-    html+=`<tr>
-      <td><strong>${r.VESSEL||'—'}</strong></td>
-      <td>${r.NAVIERA||'—'}</td>
-      <td>${r.ORIGEN||'—'} → ${r.DESTINO||'—'}</td>
-      <td>${fDate(r['CUT OFF DOC'])}</td>
-      <td>${fDate(r['CUT OFF FISICO'])}</td>
-      <td><strong>${fDate(r.ETD||r['ETD'])}</strong></td>
-      <td>${fDate(r['ETA ']||r.ETA||r['ETA'])}</td>
-      <td>${r.TRANSITO||'—'}</td>
-      <td class="${cls}">${r.TRASBORDOS||'—'}</td>
-    </tr>`;
-  });
-
-  html+=`</table><div style="font-size:8px;color:#999;margin-top:10px">SSB Workspace · DOW/PBB Polisur · ${fecha}</div></bo${''}dy></html>`;
-  const win=window.open('','_blank');
-  win.document.write(html);
-  win.document.close();
-  setTimeout(()=>win.print(),500);
-}
-
-// ── EXPORT SCHEDULE EXCEL ──
-function exportSchedExcel(){
-  if(!schedule.length){ alert('No hay schedule cargado.'); return; }
-
-  const vO  = document.getElementById('f-s-origen').value.trim();
-  const vD  = document.getElementById('f-s-destino').value.trim();
-  const vV  = document.getElementById('f-s-vessel').value.trim();
-  const per = document.getElementById('f-s-periodo').value;
-  const thisMonthStart = new Date().toISOString().slice(0,7)+'-01';
-  const brandOf = n=>{const u=(n||'').toUpperCase();if(u.includes('HAPAG')&&u.includes('MAERSK'))return'HAPAG-MAERSK';if(u.includes('HAPAG'))return'HAPAG';if(u.includes('MAERSK'))return'MAERSK';if(u.includes('LOG IN')||u.includes('LOGIN'))return'LOGIN';if(u.includes('MSC'))return'MSC';if(u.includes('CMA')||u.includes('MERCOSUL'))return'CMA CGM';return n;};
-
-  let rows=schedule.filter(r=>{
-    if(per==='futuro'){const e=toISO(r.ETD||'');if(!e||e<thisMonthStart)return false;}
-    if(vO){const no=normalizeOrigen(vO),nr=normalizeOrigen(r.ORIGEN);if(no&&nr&&no!==nr)return false;}
-    if(vD&&!(r.DESTINO||'').toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selSC.size>0&&!selSC.has(brandOf(r.NAVIERA)))return false;
-    if(vV&&!(r.VESSEL||'').toUpperCase().includes(vV.toUpperCase()))return false;
-    return true;
-  });
-  rows.sort((a,b)=>(toISO(a.ETD||'')||'').localeCompare(toISO(b.ETD||'')||''));
-
-  if(!rows.length){ alert('No hay salidas para exportar.'); return; }
-
-  const header=[['BUQUE','NAVIERA','ORIGEN','DESTINO','CUT OFF DOC','CUT OFF FISICO','ETD','ETA','SAP DD','TRANSITO','TRASBORDOS','SERVICIO','OBSERVACIONES']];
-  const data=rows.map(r=>[
-    r.VESSEL||'', r.NAVIERA||'', r.ORIGEN||'', r.DESTINO||'',
-    fDate(r['CUT OFF DOC']), fDate(r['CUT OFF FISICO']),
-    fDate(r.ETD||r['ETD']), fDate(r['ETA ']||r.ETA||r['ETA']),
-    fDate(r['"SAP DD"']||r['SAP DD']||r['" SAP DD"']||''),
-    r.TRANSITO||'', r.TRASBORDOS||'', r.SERVICIO||'',
-    r.OBSERVACIONES||r.COMENTARIOS||''
-  ]);
-
-  const csv='\uFEFF'+[...header,...data].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`schedule_buques_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-}
 </script>
 
 <!-- ═══════════ EFA MODAL (C2) ═══════════ -->
@@ -7866,6 +7900,30 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     applyRtFilter();
   };
 
+  // Baja de servicio: write vía cliente AUTENTICADO (window.__ssb.supa), NO el anon del IIFE
+  // (con anon la RPC rechaza por gate auth.role()='authenticated'). Realtime dispara re-render;
+  // forzamos loadScheduleRT por inmediatez. p_disponible = valor NUEVO (isBaja: true=reactivar).
+  window.rtToggleDisp = async function(id, isBaja){
+    const gsupa = window.__ssb && window.__ssb.supa;
+    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    try{
+      const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_id: id });
+      if(error) throw error;
+      if(window.loadScheduleRT) window.loadScheduleRT();
+    }catch(e){ alert('No se pudo actualizar la disponibilidad: ' + (e.message||e)); }
+  };
+  window.rtBajaViaje = async function(id, isBaja){
+    const gsupa = window.__ssb && window.__ssb.supa;
+    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    const r = _rtData.find(x => x.id === id);
+    if(!r || !r.buque){ alert('No encontré el viaje.'); return; }
+    try{
+      const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_buque: r.buque });
+      if(error) throw error;
+      if(window.loadScheduleRT) window.loadScheduleRT();
+    }catch(e){ alert('No se pudo actualizar el viaje: ' + (e.message||e)); }
+  };
+
   window.applyRtFilter = function() {
     clearTimeout(_rtFilterTimer);
     _rtFilterTimer = setTimeout(_doApplyRtFilter, 250);
@@ -7903,7 +7961,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
 
-    const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr';
+    const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr .62fr';
     const today = new Date().toISOString().split('T')[0];
 
     const cutStyle = d => {
@@ -7927,6 +7985,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         <span class="sth">ETA</span>
         <span class="sth">Tránsito / Trasbordos</span>
         <span class="sth">Obs / Comentarios</span>
+        <span class="sth" style="text-align:center">Activo</span>
       </div>
       ${rows.map(r => {
         const flag = portFlag(r.puerto_destino);
@@ -7938,7 +7997,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         const trasLabel = r.trasbordos || 'DIRECTO';
         const obs = [r.observaciones, r.comentarios].filter(Boolean).join(' — ') || '—';
 
-        return `<div class="sched-row-wrap">
+        return `<div class="sched-row-wrap${r.disponible===false?' rt-baja':''}">
           <div class="sched-main-row" style="grid-template-columns:${COLS}">
             <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600">${esc(fMesEtd(r.mes_etd))}</div>
             <div class="sr vessel">${esc(r.buque)||'—'}</div>
@@ -7959,6 +8018,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               <span class="tras-badge ${trasCls}">${esc(trasLabel)}</span>
             </div>
             <div class="sr muted sched-obs-inline" style="font-size:11px;line-height:1.4"${obs&&obs!=='—'?` data-tip="${esc(obs)}"`:''}>${esc(obs)}</div>
+            <div class="sr rt-activo" style="text-align:center;white-space:nowrap">${r.disponible===false?'<span class="rt-no">no</span> ':''}<button class="rt-disp-btn" title="${r.disponible===false?'Reactivar esta fila':'Dar de baja esta fila'}" onclick="rtToggleDisp('${r.id}',${r.disponible===false})">${r.disponible===false?'↺':'⊘'}</button><button class="rt-disp-btn" title="${r.disponible===false?'Reactivar el viaje entero':'Dar de baja el viaje entero'}" onclick="rtBajaViaje('${r.id}',${r.disponible===false})">viaje</button></div>
           </div>
         </div>`;
       }).join('')}
@@ -7976,7 +8036,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
     const { data, error } = await supa
       .from('schedules_master')
-      .select('naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,mes_etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios')
+      .select('id,naviera,buque,servicio,terminal,puerto_origen,puerto_destino,etd,mes_etd,eta,cut_off_doc,cut_off_cargo,trasbordos,observaciones,comentarios,disponible')
       .gte('etd', primerDiaMes)
       .eq('activo', true)
       .order('etd', { ascending: true })
