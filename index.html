@@ -774,6 +774,27 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
   #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
   #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:900px}
 }
+/* Fase C responsive (2026-07-04) — Detention + Admin BID usables en teléfono.
+   Admin BID: h-scroll interno del wrap (patrón Fase B de arriba). Tradeoff aceptado:
+   dentro del scroller el sticky del thead deja de anclar al scroll vertical — solo
+   bajo el breakpoint, desktop intacto. La tabla conserva su min-width:1388px inline.
+   OJO: la contención de página en 701-900 la da el overflow:auto INLINE de
+   .efa-content (~línea 2919) — no borrar ese inline creyendo que esto lo cubre.
+   Detention: .det-body pisa el grid inline del template JS (por eso !important;
+   el render regenera innerHTML en cada filtro → la clase es la vía idempotente). */
+@media (max-width:900px){
+  #bid-table-wrap{overflow-x:auto}
+  /* Compresión de la mini-tabla de Detention también en 701-900 (sigue 2 col):
+     los badges nowrap (.naviera-badge "HAPAG LLOYD"=162px + .tras-badge=92px)
+     pinean la col derecha a ~387px de min-content y dejan el mail en ~150px
+     a 701 (medido). Celdas min-width:0 + badges wrappeables → piso ~284px. */
+  #panel-detention .det-body .sched-main-row>div{min-width:0}
+  #panel-detention .det-body .naviera-badge,
+  #panel-detention .det-body .tras-badge{white-space:normal;line-height:1.3}
+}
+@media (max-width:700px){
+  #panel-detention .det-body{grid-template-columns:1fr !important}
+}
 .sr{font-size:12px;color:var(--text)}
 .sr.mono{font-family:var(--mono);font-size:11px}
 .sr.vessel{font-weight:600;font-size:13px}
@@ -8334,7 +8355,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }).join('');
       const rightHtml = `<div>${tableHead}${rowsHtml}</div>`;
 
-      const bodyHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;background:var(--surface)">${leftHtml}${rightHtml}</div>`;
+      const bodyHtml = `<div class="det-body" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;background:var(--surface)">${leftHtml}${rightHtml}</div>`;
 
       return `<div style="margin-top:18px">${headerHtml}${bodyHtml}</div>`;
     }).join('');
