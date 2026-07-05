@@ -1,0 +1,385 @@
+{
+  "type": "object",
+  "properties": {
+    "booking_extract": {
+      "type": "object",
+      "properties": {
+        "order_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "booking_no": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "terms_of_delivery": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incoterm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incoterm_place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pol": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pod": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "destino_pais": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hs": {
+          "type": "object",
+          "properties": {
+            "export": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "import": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "export",
+            "import"
+          ]
+        },
+        "producto": {
+          "type": "object",
+          "properties": {
+            "cadena": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "familia": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "grado": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "embalaje": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "cadena",
+            "familia",
+            "grado",
+            "embalaje"
+          ]
+        },
+        "totales": {
+          "type": "object",
+          "properties": {
+            "piece_count": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "net_kg": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "gross_kg": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "piece_count",
+            "net_kg",
+            "gross_kg"
+          ]
+        },
+        "consignee": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tax_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "address_lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "address_str": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "tax_id",
+            "address_lines",
+            "address_str"
+          ]
+        },
+        "notify": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tax_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "email": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "address_lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "address_str": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "tax_id",
+            "email",
+            "address_lines",
+            "address_str"
+          ]
+        },
+        "equipos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "container": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "seal": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "net_kg": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "gross_kg": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "container",
+              "seal",
+              "net_kg",
+              "gross_kg"
+            ]
+          }
+        },
+        "dates": {
+          "type": "object",
+          "properties": {
+            "document_date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "cutoff_origin": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "etd_pol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "eta_destination": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "document_date",
+            "cutoff_origin",
+            "etd_pol",
+            "eta_destination"
+          ]
+        },
+        "sold_to": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "address_str": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "address_str"
+          ]
+        },
+        "document_recip": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "email": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "email"
+          ]
+        },
+        "shipping_recip": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "email": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "email"
+          ]
+        },
+        "partner_emails": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "order_number",
+        "booking_no",
+        "terms_of_delivery",
+        "incoterm",
+        "incoterm_place",
+        "pol",
+        "pod",
+        "destino_pais",
+        "hs",
+        "producto",
+        "totales",
+        "consignee",
+        "notify",
+        "equipos",
+        "dates",
+        "sold_to",
+        "document_recip",
+        "shipping_recip",
+        "partner_emails"
+      ]
+    }
+  },
+  "required": [
+    "booking_extract"
+  ]
+}

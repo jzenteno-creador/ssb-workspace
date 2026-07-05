@@ -1,0 +1,562 @@
+Consolidated Booking Advice Page 1 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048277475
+Document Date
+06/24/2026
+Ship-to / Consignee 79687588000153
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Terms of Delivery
+CPT NAVEGANTES PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/24/2026
+Final Destination Delivery Date
+07/06/2026
+Sold-to
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Customer Tax ID Number
+79687588000153
+Port of Discharge
+Navegantes Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Order Number: 0118828652
+Customer Order Number: 7700003466 - 30 / 5000004249
+CONTAINERS ON BOARD : 03
+Deliver-To
+NAVEGANTES PORT
+NAVEGANTES PORT
+SC
+88375-000 NAVEGANTES - SC
+BRAZIL
+Document Recip Orig
+INTERSEAS COMERCIO EXTERIOR ADRIELL
+E-Mail:inter@interseas.com.br
+Ph No.:5549 5669624
+INTERSEAS COMERCIO EXTERIOR ADRIELLY
+ADRIELLY
+R CRISTOVAO NUNES PIRES 110 SL 701
+88010-120 FLORIANOPOLIS - SC
+BRAZIL
+Document Recip Copy2
+INTERSEAS COMERCIO EXTERIOR ADRIELL
+E-Mail:inter@interseas.com.br
+Ph No.:5549 5669624
+Document Recip Copy3
+TAIZE CRESTANI
+E-Mail:taize.crestani@videplast.com.br
+Ph No.:5549 5669624
+Document Recip Copy4
+TAIS FIORELLI
+E-Mail:tais.fiorelli@videplast.com.br
+Ph No.:5549 5669624
+Document Recip Copy5
+GELSON NASCIMENTO
+E-Mail:gelson.nascimento@videplast.com.br
+Ph No.:5549 5669624
+Notify Party
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Ph No.:5549 5669624
+E-Mail:waldir.junior@videplast.com.br
+Tax ID:79687588000153
+Bill of Lading Consignee:
+VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA
+
+Consolidated Booking Advice Page 2 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048277475
+Document Date
+06/24/2026
+Ship-to / Consignee 79687588000153
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Terms of Delivery
+CPT NAVEGANTES PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/24/2026
+Final Destination Delivery Date
+07/06/2026
+Sold-to
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Customer Tax ID Number
+79687588000153
+Port of Discharge
+Navegantes Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+ROD SC 135 KM 123,5
+VIDEIRA – SC – BRASIL - 89560-130
+CNPJ: 79.687.588/0001-53
+12A Loading Exceptions
+USE 40' CONTAINERS
+Statement Examples:
+Transshipment not allowed
+13A BILL OF LADING TYPE
+ORIGINAL
+13B Transport Document
+RECEIVED FOR SHIPMENT (RFS)
+13C Release Point
+B/L Release Point Destination
+13F Miscellaneous Statements
+BL SHOULD MENTION TYPE OF WOODEN PACKAGE USED FOR SHIPMENT IN COMPLIANCE WITH ISPM 15 NIMF
+PLEASE MENTION THE NCM 3901 IN THE B/L AS PER LEGAL REQUIREMENT FROM BRAZILIAN CUSTOMS
+PLEASE INCLUDE CUSTOMER PO NUMBER
+PLEASE INCLUDE SALES ORDER NUMBER
+PLEASE INFORM CNPJ ON BL:
+CONSIGNEE:
+VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA
+ROD SC 135 KM 123,5
+VIDEIRA – SC – BRASIL - 89560-130
+CNPJ: 79.687.588/0001-53
+CONTACT Adriana Cristina Machado
+E-MAIL inter@interseas.com.br
+NOTIFY:
+VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA
+ROD SC 135 KM 123,5
+VIDEIRA – SC – BRASIL - 89560-130
+CNPJ: 79.687.588/0001-53
+CONTACT: Tais Fiorelli
+E-MAIL: tais.fiorelli@videplast.com.br
+14H Insurance and Freight on Invoice
+Display freight on Invoice as text only
+SAME FREIGHT VALUE INFORMED ON B/L MUST BE THE SAME INFORMED ON INVOICE
+15B Documents Required & Distribution
+Partner – UA
+INTERSEAS COMERCIO EXTERIOR
+A/C ADRIANA CRISTINA MACHADO
+R CRISTOVAO NUNES PIRES 110 SL 701
+FLORIANOPOLIS - SC - BRAZIL
+CEP 88010-120
+Partner – UB
+PLEASE SEND SCANED DOCUMENTS TO:
+inter@interseas.com.br
+tais.fiorelli@videplast.com.br
+vsolda@dow.com
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+CAIU8744422 831891677 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6L081
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374369 ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0344097-ANA
+Material Group: 13111000
+MSNU7406558 831891693 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+1,080 BAG / C101Q6L081
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374369 ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+
+Consolidated Booking Advice Page 3 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048277475
+Document Date
+06/24/2026
+Ship-to / Consignee 79687588000153
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Terms of Delivery
+CPT NAVEGANTES PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/24/2026
+Final Destination Delivery Date
+07/06/2026
+Sold-to
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Customer Tax ID Number
+79687588000153
+Port of Discharge
+Navegantes Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+Item Volume :
+45,522.000 CD3 
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0344096-ANA
+Material Group: 13111000
+FCIU8723644 831891694 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6L081
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374369 ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0344095-ANA
+Material Group: 13111000
+Total Gross weight:
+Total Net weight:
+Total Volume:
+82,620.000 KG
+81,000.000 KG
+136,566.000 CD3
+Piece Count : 3,240.000 BAG
+PHS Number and Description 000000527064 : PHS - P&SP - Solution PE
+00000374369 : ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60 Bags on a Pallet
+International Maritime
+Requirement :PLX - Freight container contains plastic pellets in accordance with
+paragraphs 1.1 and 1.2 of IMO Circular MEPC.1/Circ.909 and is subject to
+proper stowage and securement under deck wherever reasonably
+practicable, or inboard in sheltered areas of exposed decks (in
+accordance with paragraph 1.3 of that Circular).
+In Transit
+In Transit Temperature : No In-Transit Temp Requirements
+In Transit Comments : Check for moisture/droplets inside the liner
+Loading
+Sample size :Samples from inbound hopper cars at terminals should be retained until 60 days has elapsed after release of the hopper car
+, Samples from truck shipments should be retained for 4 months plus the current month or if customer use dictates shorter time frame
+Samples from bag shipments should be retained for 11 months from the
+time packaged plus the current month or if customer use dictates shorter
+time frame.
+Sampling Location :Outplant/Terminal Samples for both truck and railcar retains should be at least one pound, minimum.
+, Whirl-Paks /Small Ziploc for retains
+Sampling Method :Samples will only be pulled by sourcing plant and/or terminal personnel
+that are trained in sample pulling. Driver samples are not acceptable
+unless driver self-loading. There will be no eating and drinking when
+pulling samples.
+Sample retention time :Retains can be disposed of through Dow approved waste handling
+facilities. One can also arrange product pickup by a PE recycler like
+Poly America. Contact Dow to assist in setting this up.
+Loading Notes: : All loading procedures and equipment should meet minimum Dow Guidelines
+including applicable Safety and Loss Prevention Guidelines. Some
+recommendations for procedures would include the following:
+a. Truck should be chocked during loading operation.
+b. Driver should be out of vehicle during loading operation with
+emergency brake on.
+c. Driver must have standard PPE.
+d. Driver must be qualified to operate all equipment associated with the
+Hopper Truck.
+e. Use of leather gloves required to protect against pinch points
+f. Hopper trucks should be accessed only if proper fall protection
+tie-off or carriage is in place (Plants) or training on three points of
+contact has been documented (Outplants/Terminals).
+g. Driver/Loader cannot break the plane of the manway with the intent of
+
+Consolidated Booking Advice Page 4 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048277475
+Document Date
+06/24/2026
+Ship-to / Consignee 79687588000153
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Terms of Delivery
+CPT NAVEGANTES PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/24/2026
+Final Destination Delivery Date
+07/06/2026
+Sold-to
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Customer Tax ID Number
+79687588000153
+Port of Discharge
+Navegantes Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+entry
+Loading Procedure Comments : Average Testing Time - 2 hours; 4 hours
+Loading
+Package Types the Product Uses :Bags
+, Box
+, FIBC
+Unloading
+Carrier Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Customer Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Unloading
+Carrier Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Customer Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Regulatory and Special Handling Instruct
+React Chemis / Polymeriz Event :Reference Safety Data Sheet (SDS)
+General Regulatory Notes :Reference Safety Data Sheet (SDS)
+Safe Handling Instructions : Reference Safety Data Sheet (SDS)
+Product Handling Training Required : Reference Safety Data Sheet (SDS)
+Product Specific Notes/ Warni : Reference Safety Data Sheet (SDS)
+Owning Company
+Owning Company :THE DOW CHEMICAL COMPANY
+Equipment
+State of the Container :Clean, Dry and Odor Free
+, See Prior Content Restrictions
+Equipment Capability :Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Acceptable Pneumatic Trans Sys :Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Acceptable Material of Constru :Stainless Steel
+, Aluminum
+Gasket Material of Contruction :White neoprene and sized exactly for the fittings
+Hose Material of Construction :Minimum hose length must be 10 meters (2 X 5 meters) or 20 Ft, diameter 4”
+, New hoses should be inspected thoroughly and cleaned thoroughly before being put into service
+Fitting type/size :Stainless steel self locking groove cam lock fitting are required.
+Equipment Notes : US/CAN - hose construction should be of winded, stainless steel. Note:
+Europe does use white neoprene lined rubber hoses in some plastics
+pellet service.
+Equipment
+Acceptable Packaging Covering: :Shrink Wrap/Plastic Wrapping
+State of the Container :Flooring that is free of debris and contains no soft areas or holes
+, Doors that open and close without difficulty; Pins that are in place
+, Containers must be covered in transport. No open trailer allowed.
+, Clean, Dry and Odor Free
+, Watertight; Free of Debris; No Flatbed Allowed
+, Food Compliant
+, Inspect for raised screws / no metal sticking up on trailer floor - Shovel Test
+
+Consolidated Booking Advice Page 5 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048277475
+Document Date
+06/24/2026
+Ship-to / Consignee 79687588000153
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Terms of Delivery
+CPT NAVEGANTES PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/24/2026
+Final Destination Delivery Date
+07/06/2026
+Sold-to
+VIDEPLAST INDUSTRIA DE
+EMBALAGENS LTDA
+ROD SC 135 KM 123,5 SN
+OFICINA
+89565-130 VIDEIRA - SC
+BRAZIL
+Customer Tax ID Number
+79687588000153
+Port of Discharge
+Navegantes Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Temperature Control Equip Requ :No
+General
+Deliver Bulk Granules Intro :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+General
+Deliver Package Introduction :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+Road - Carrier Notification : Protect from moisture.
+MPC - Carrier Notification : Protect from moisture.
+(TM) Trademark of The Dow Chemical Company ("Dow") or an affiliated company of Dow
+Order / Item # Country of
+Origin 
+Commodity Code Transport Hazard Classification
+118828652
+10 
+Argentina Export: 39014000000K
+Import: 39014000 
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Wood Packing Materials External Carrier Notes Shipping Marks
+June 02 2026
+BOOKING NUMBER:LA0498054
+ETD PORT OF LOAD: 20260622
+CUTOFF AT ORIGIN: 20260620
+ETA DESTINATION: 20260628
+NOTES: BID LOGIN 162140-
+EXPOARPBB@SSBINT.COM
+June 18 2026
+BOOKING NUMBER:LA0496666
+ETD PORT OF LOAD: 20260629
+CUTOFF AT ORIGIN: 20260627
+ETA DESTINATION: 20260705
+NOTES: BID LOGIN 162140-
+EXPOARPBB@SSBINT.COM RB:F
+F01 MOTIVO: POR FALTA DE CONSOLIDADO.
+In case of emergency 24/7, or in case of spill, accident, injury, security incident, theft, chemical mixture or reaction, unexpected temperature
+increase, call:
+Argentina : 54 3476-43-8600
+Brazil : 0800-763-8422
+CONTACT: Vinicius Storto Solda VSOLDA@DOW.COM
+Ph.: Fax:

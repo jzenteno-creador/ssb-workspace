@@ -1,0 +1,3505 @@
+[
+ {
+  "order": "118828652",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "REGRESSION",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [
+   "order_number"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "order_number": {
+    "v1": "0118828652",
+    "v2": "118828652"
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "INTERSEAS COMERCIO EXTERIOR ADRIELL",
+    "email": "inter@interseas.com.br"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "inter@interseas.com.br",
+    "tais.fiorelli@videplast.com.br",
+    "vsolda@dow.com",
+    "VSOLDA@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 79687588000153 — VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118828652",
+   "booking_no": "LA0496666",
+   "terms_of_delivery": "CPT NAVEGANTES PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "NAVEGANTES PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "5220B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 3240,
+    "net_kg": 81000,
+    "gross_kg": 82620
+   },
+   "consignee": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "tax_id": "79687588000153",
+    "address_lines": [
+     "ROD SC 135 KM 123,5 SN",
+     "OFICINA",
+     "89565-130 VIDEIRA - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "tax_id": "79687588000153",
+    "email": "waldir.junior@videplast.com.br",
+    "address_lines": [
+     "ROD SC 135 KM 123,5 SN",
+     "OFICINA",
+     "89565-130 VIDEIRA - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "CAIU8744422",
+     "seal": "0344097-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSNU7406558",
+     "seal": "0344096-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FCIU8723644",
+     "seal": "0344095-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/24/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260629",
+    "eta_destination": "20260705"
+   }
+  },
+  "v2_out": {
+   "order_number": "118828652",
+   "booking_no": "LA0496666",
+   "terms_of_delivery": "CPT NAVEGANTES PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "NAVEGANTES PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "5220B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 3240,
+    "net_kg": 81000,
+    "gross_kg": 82620
+   },
+   "consignee": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "tax_id": "79687588000153",
+    "address_lines": [
+     "ROD SC 135 KM 123,5 SN",
+     "OFICINA",
+     "89565-130 VIDEIRA - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "tax_id": "79687588000153",
+    "email": "waldir.junior@videplast.com.br",
+    "address_lines": [
+     "ROD SC 135 KM 123,5 SN",
+     "OFICINA",
+     "89565-130 VIDEIRA - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "VIDEPLAST INDUSTRIA DE EMBALAGENS LTDA",
+    "address_str": "ROD SC 135 KM 123,5 SN, OFICINA, 89565-130 VIDEIRA - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "INTERSEAS COMERCIO EXTERIOR ADRIELL",
+    "email": "inter@interseas.com.br"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "inter@interseas.com.br",
+    "tais.fiorelli@videplast.com.br",
+    "vsolda@dow.com",
+    "VSOLDA@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "CAIU8744422",
+     "seal": "0344097-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSNU7406558",
+     "seal": "0344096-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FCIU8723644",
+     "seal": "0344095-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/24/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260629",
+    "eta_destination": "20260705"
+   }
+  }
+ },
+ {
+  "order": "118929800",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "REGRESSION",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "REGRESSION",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "REGRESSION"
+  },
+  "regressions": [
+   "booking_no",
+   "producto",
+   "dates"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "booking_no": {
+    "v1": "LOGIN",
+    "v2": "LA0498603"
+   },
+   "producto": {
+    "v1": {
+     "cadena": "HDPE Wax HCG Bulk",
+     "familia": "POLYETHYLENE",
+     "grado": "HCG",
+     "embalaje": "Bulk"
+    },
+    "v2": {
+     "cadena": "HDPE Wax HCG Bulk",
+     "familia": "POLYETHYLENE",
+     "grado": "00099191352",
+     "embalaje": "Bulk"
+    }
+   },
+   "dates": {
+    "v1": {
+     "document_date": "22.06.2026",
+     "cutoff_origin": "20260627",
+     "etd_pol": "20260629",
+     "eta_destination": "20260706"
+    },
+    "v2": {
+     "document_date": "22.06.2026",
+     "cutoff_origin": "20260620",
+     "etd_pol": "20260622",
+     "eta_destination": "20260629"
+    }
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BRUNNA",
+    "email": "BRUNNA@MEGH.COM.BR"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "brunna.arruda@megh.com.br",
+    "bruno.monteiro@megh.com.br",
+    "anacaroline.marques@megh.com.br",
+    "CSERVLAA1@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 57109241000514 — MEGH INDUSTRIA E COMERCIO LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118929800",
+   "booking_no": "LOGIN",
+   "terms_of_delivery": "CPT SANTOS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "SANTOS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "34049012000D",
+    "import": null
+   },
+   "producto": {
+    "cadena": "HDPE Wax HCG Bulk",
+    "familia": "POLYETHYLENE",
+    "grado": "HCG",
+    "embalaje": "Bulk"
+   },
+   "totales": {
+    "piece_count": 107153,
+    "net_kg": 107153,
+    "gross_kg": 107153
+   },
+   "consignee": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "tax_id": "57109241000514",
+    "address_lines": [
+     "ROD MARECHAL RONDON SN",
+     "SP 300 KM 1345",
+     "CANGUERA",
+     "18540-000 PORTO FELIZ - SP",
+     "BRAZIL"
+    ],
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "tax_id": "57109241000514",
+    "email": "alda@megh.com.br",
+    "address_lines": [
+     "ROD MARECHAL RONDON SN",
+     "SP 300 KM 1345",
+     "CANGUERA",
+     "18540-000 PORTO FELIZ - SP",
+     "BRAZIL"
+    ],
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSNU7242650",
+     "seal": "351278",
+     "net_kg": 21484,
+     "gross_kg": 21484
+    },
+    {
+     "container": "MSMU4913684",
+     "seal": "0351279-ANA",
+     "net_kg": 20675,
+     "gross_kg": 20675
+    },
+    {
+     "container": "CAAU6492632",
+     "seal": "0342602-ANA",
+     "net_kg": 21672,
+     "gross_kg": 21672
+    },
+    {
+     "container": "CAIU9813169",
+     "seal": "0342604-ANA",
+     "net_kg": 21454,
+     "gross_kg": 21454
+    },
+    {
+     "container": "MSMU5247200",
+     "seal": "351279",
+     "net_kg": 21868,
+     "gross_kg": 21868
+    }
+   ],
+   "dates": {
+    "document_date": "22.06.2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260629",
+    "eta_destination": "20260706"
+   }
+  },
+  "v2_out": {
+   "order_number": "0118929800",
+   "booking_no": "LA0498603",
+   "terms_of_delivery": "CPT SANTOS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "SANTOS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "34049012000D",
+    "import": null
+   },
+   "producto": {
+    "cadena": "HDPE Wax HCG Bulk",
+    "familia": "POLYETHYLENE",
+    "grado": "00099191352",
+    "embalaje": "Bulk"
+   },
+   "totales": {
+    "piece_count": 107153,
+    "net_kg": 107153,
+    "gross_kg": 107153
+   },
+   "consignee": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "tax_id": "57109241000514",
+    "address_lines": [
+     "ROD MARECHAL RONDON SN",
+     "SP 300 KM 1345",
+     "CANGUERA",
+     "18540-000 PORTO FELIZ - SP",
+     "BRAZIL"
+    ],
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "tax_id": "57109241000514",
+    "email": "alda@megh.com.br",
+    "address_lines": [
+     "ROD MARECHAL RONDON SN",
+     "SP 300 KM 1345",
+     "CANGUERA",
+     "18540-000 PORTO FELIZ - SP",
+     "BRAZIL"
+    ],
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "sold_to": {
+    "name": "MEGH INDUSTRIA E COMERCIO LTDA",
+    "address_str": "ROD MARECHAL RONDON SN, SP 300 KM 1345, CANGUERA, 18540-000 PORTO FELIZ - SP, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BRUNNA",
+    "email": "BRUNNA@MEGH.COM.BR"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "brunna.arruda@megh.com.br",
+    "bruno.monteiro@megh.com.br",
+    "anacaroline.marques@megh.com.br",
+    "CSERVLAA1@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSNU7242650",
+     "seal": "351278",
+     "net_kg": 21484,
+     "gross_kg": 21484
+    },
+    {
+     "container": "MSMU4913684",
+     "seal": "0351279-ANA",
+     "net_kg": 20675,
+     "gross_kg": 20675
+    },
+    {
+     "container": "CAAU6492632",
+     "seal": "0342602-ANA",
+     "net_kg": 21672,
+     "gross_kg": 21672
+    },
+    {
+     "container": "CAIU9813169",
+     "seal": "0342604-ANA",
+     "net_kg": 21454,
+     "gross_kg": 21454
+    },
+    {
+     "container": "MSMU5247200",
+     "seal": "351279",
+     "net_kg": 21868,
+     "gross_kg": 21868
+    }
+   ],
+   "dates": {
+    "document_date": "22.06.2026",
+    "cutoff_origin": "20260620",
+    "etd_pol": "20260622",
+    "eta_destination": "20260629"
+   }
+  }
+ },
+ {
+  "order": "118958471",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "document_recip": {
+    "name": null,
+    "email": null
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "citiservice.tradebr@citi.com",
+    "yrodrigues@dow.com",
+    "daniel.perina@megapackmanaus.com.br",
+    "renato.lucena@megapackmanaus.com.br",
+    "jose.adenilson@megapackmanaus.com.br",
+    "YRODRIGUES@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "MEGA PACK PLASTICOS SA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 19631376000203 — MEGA PACK PLASTICOS SA, AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118958471",
+   "booking_no": "LA0500706",
+   "terms_of_delivery": "CPT MANAUS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "MANAUS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Manaus Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "1630",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "email": "DANIEL.PERINA@MEGAPACKMANAUS.COM.BR",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "TGBU7576729",
+     "seal": "344469-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU8701582",
+     "seal": "344465-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU6117562",
+     "seal": "344464-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "CAIU4949321",
+     "seal": "344487-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/19/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260723"
+   }
+  },
+  "v2_out": {
+   "order_number": "0118958471",
+   "booking_no": "LA0500706",
+   "terms_of_delivery": "CPT MANAUS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "MANAUS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Manaus Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "1630",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "email": "DANIEL.PERINA@MEGAPACKMANAUS.COM.BR",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "sold_to": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "document_recip": {
+    "name": null,
+    "email": null
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "citiservice.tradebr@citi.com",
+    "yrodrigues@dow.com",
+    "daniel.perina@megapackmanaus.com.br",
+    "renato.lucena@megapackmanaus.com.br",
+    "jose.adenilson@megapackmanaus.com.br",
+    "YRODRIGUES@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "TGBU7576729",
+     "seal": "344469-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU8701582",
+     "seal": "344465-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU6117562",
+     "seal": "344464-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "CAIU4949321",
+     "seal": "344487-ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/19/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260723"
+   }
+  }
+ },
+ {
+  "order": "118958472",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "REGRESSION",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [
+   "producto"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "producto": {
+    "v1": {
+     "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "1630",
+     "embalaje": "Bags"
+    },
+    "v2": {
+     "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "1630",
+     "embalaje": "25 KG Bags"
+    }
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "document_recip": {
+    "name": null,
+    "email": null
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "citiservice.tradebr@citi.com",
+    "yrodrigues@dow.com",
+    "daniel.perina@megapackmanaus.com.br",
+    "renato.lucena@megapackmanaus.com.br",
+    "jose.adenilson@megapackmanaus.com.br",
+    "YRODRIGUES@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "MEGA PACK PLASTICOS SA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 19631376000203 — MEGA PACK PLASTICOS SA, AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118958472",
+   "booking_no": "LA0500706",
+   "terms_of_delivery": "CPT MANAUS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "MANAUS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Manaus Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "1630",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "email": "DANIEL.PERINA@MEGAPACKMANAUS.COM.BR",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "TCLU8168426",
+     "seal": "0344386TRASB",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "CAAU5767967",
+     "seal": "0346385",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU8975730",
+     "seal": "344421",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FBLU0039345",
+     "seal": "0344468",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/19/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260723"
+   }
+  },
+  "v2_out": {
+   "order_number": "0118958472",
+   "booking_no": "LA0500706",
+   "terms_of_delivery": "CPT MANAUS PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "MANAUS PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Manaus Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "1630",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "notify": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "tax_id": "19631376000203",
+    "email": "DANIEL.PERINA@MEGAPACKMANAUS.COM.BR",
+    "address_lines": [
+     "AV BURITI 6170",
+     "DISTRITO INDUSTRIAL I",
+     "69075-000 MANAUS - AM",
+     "BRAZIL"
+    ],
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "sold_to": {
+    "name": "MEGA PACK PLASTICOS SA",
+    "address_str": "AV BURITI 6170, DISTRITO INDUSTRIAL I, 69075-000 MANAUS - AM, BRAZIL"
+   },
+   "document_recip": {
+    "name": null,
+    "email": null
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "citiservice.tradebr@citi.com",
+    "yrodrigues@dow.com",
+    "daniel.perina@megapackmanaus.com.br",
+    "renato.lucena@megapackmanaus.com.br",
+    "jose.adenilson@megapackmanaus.com.br",
+    "YRODRIGUES@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "TCLU8168426",
+     "seal": "0344386TRASB",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "CAAU5767967",
+     "seal": "0346385",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU8975730",
+     "seal": "344421",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FBLU0039345",
+     "seal": "0344468",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/19/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260723"
+   }
+  }
+ },
+ {
+  "order": "118959520",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "document_recip": {
+    "name": "ROSA GARCIA",
+    "email": "rgarcia@tdm.com.pe"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PCULQUE@TDM.COM.PE",
+    "MCHILLCCE@TDM.COM.PE",
+    "DCARRILLO@TDM.COM.PE",
+    "ASCHREIBERANGELES@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "TECNOLOGIA DE MATERIALES SA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 20123531389 — TECNOLOGIA DE MATERIALES SA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118959520",
+   "booking_no": "272246551",
+   "terms_of_delivery": "CPT CALLAO PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "CALLAO PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Callao Port",
+   "destino_pais": "PERU",
+   "hs": {
+    "export": "39011030000X",
+    "import": "3901100000"
+   },
+   "producto": {
+    "cadena": "Polyethylene NG 6895 Medium Density 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "NG 6895",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 2160,
+    "net_kg": 54000,
+    "gross_kg": 55080
+   },
+   "consignee": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "tax_id": "20123531389",
+    "address_lines": [
+     "AV ALAMEDA LOS HORIZONTES 905",
+     "URB HUERTOS DE VILLA CHORRILLOS",
+     "003 LIMA",
+     "PERU"
+    ],
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "notify": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "tax_id": "20123531389",
+    "email": "ASANCHEZ@TDM.COM.PE",
+    "address_lines": [
+     "AV ALAMEDA LOS HORIZONTES 905",
+     "URB HUERTOS DE VILLA CHORRILLOS",
+     "003 LIMA",
+     "PERU"
+    ],
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "equipos": [
+    {
+     "container": "MAGU5132880",
+     "seal": "343970",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MRSU6496234",
+     "seal": "343947",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260703",
+    "etd_pol": "20260706",
+    "eta_destination": "20260807"
+   }
+  },
+  "v2_out": {
+   "order_number": "0118959520",
+   "booking_no": "272246551",
+   "terms_of_delivery": "CPT CALLAO PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "CALLAO PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Callao Port",
+   "destino_pais": "PERU",
+   "hs": {
+    "export": "39011030000X",
+    "import": "3901100000"
+   },
+   "producto": {
+    "cadena": "Polyethylene NG 6895 Medium Density 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "NG 6895",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 2160,
+    "net_kg": 54000,
+    "gross_kg": 55080
+   },
+   "consignee": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "tax_id": "20123531389",
+    "address_lines": [
+     "AV ALAMEDA LOS HORIZONTES 905",
+     "URB HUERTOS DE VILLA CHORRILLOS",
+     "003 LIMA",
+     "PERU"
+    ],
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "notify": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "tax_id": "20123531389",
+    "email": "ASANCHEZ@TDM.COM.PE",
+    "address_lines": [
+     "AV ALAMEDA LOS HORIZONTES 905",
+     "URB HUERTOS DE VILLA CHORRILLOS",
+     "003 LIMA",
+     "PERU"
+    ],
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "sold_to": {
+    "name": "TECNOLOGIA DE MATERIALES SA",
+    "address_str": "AV ALAMEDA LOS HORIZONTES 905, URB HUERTOS DE VILLA CHORRILLOS, 003 LIMA, PERU"
+   },
+   "document_recip": {
+    "name": "ROSA GARCIA",
+    "email": "rgarcia@tdm.com.pe"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PCULQUE@TDM.COM.PE",
+    "MCHILLCCE@TDM.COM.PE",
+    "DCARRILLO@TDM.COM.PE",
+    "ASCHREIBERANGELES@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MAGU5132880",
+     "seal": "343970",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MRSU6496234",
+     "seal": "343947",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260703",
+    "etd_pol": "20260706",
+    "eta_destination": "20260807"
+   }
+  }
+ },
+ {
+  "order": "118962688",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "document_recip": {
+    "name": "CUSTOMER MASTER INVOICE RECIPIENT",
+    "email": "denise@inplasul.ind.br"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "suziane@swslogistics.com.br",
+    "icostaendsfeldzcandido@dow.com",
+    "ICOSTAENDSFELDZCANDIDO@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 75635144000113 — INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "0118962688",
+   "booking_no": "272246659",
+   "terms_of_delivery": "CPT PARANAGUA PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "PARANAGUA PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Paranagua Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOW™ LDPE 230N Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "230N",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 5400,
+    "net_kg": 135000,
+    "gross_kg": 137700
+   },
+   "consignee": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "tax_id": "75635144000113",
+    "address_lines": [
+     "ROD BR 158 KM 537 10265",
+     "DAL ROSS",
+     "85509-262 PATO BRANCO - PR",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "notify": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "tax_id": "75635144000113",
+    "email": "ROBERTO.DAGIOS@INPLASUL.IND.BR",
+    "address_lines": [
+     "ROD BR 158 KM 537 10265",
+     "DAL ROSS",
+     "85509-262 PATO BRANCO - PR",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "SUDU8506530",
+     "seal": "0342300ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU6264143",
+     "seal": "0351139ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCKU6590287",
+     "seal": "342156",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCKU7702864",
+     "seal": "0342153ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MRSU6165323",
+     "seal": "0351140ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/23/2026",
+    "cutoff_origin": "20260630",
+    "etd_pol": "20260705",
+    "eta_destination": "20260712"
+   }
+  },
+  "v2_out": {
+   "order_number": "0118962688",
+   "booking_no": "272246659",
+   "terms_of_delivery": "CPT PARANAGUA PORT",
+   "incoterm": "CPT",
+   "incoterm_place": "PARANAGUA PORT",
+   "pol": "Buenos Aires Port",
+   "pod": "Paranagua Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOW™ LDPE 230N Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "230N",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 5400,
+    "net_kg": 135000,
+    "gross_kg": 137700
+   },
+   "consignee": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "tax_id": "75635144000113",
+    "address_lines": [
+     "ROD BR 158 KM 537 10265",
+     "DAL ROSS",
+     "85509-262 PATO BRANCO - PR",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "notify": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "tax_id": "75635144000113",
+    "email": "ROBERTO.DAGIOS@INPLASUL.IND.BR",
+    "address_lines": [
+     "ROD BR 158 KM 537 10265",
+     "DAL ROSS",
+     "85509-262 PATO BRANCO - PR",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "sold_to": {
+    "name": "INPLASUL INDUSTRIA DE PLASTICOS SUDOESTE LTDA",
+    "address_str": "ROD BR 158 KM 537 10265, DAL ROSS, 85509-262 PATO BRANCO - PR, BRAZIL"
+   },
+   "document_recip": {
+    "name": "CUSTOMER MASTER INVOICE RECIPIENT",
+    "email": "denise@inplasul.ind.br"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "roberto.dagios@inplasul.ind.br",
+    "compras@inplasul.ind.br",
+    "suziane@swslogistics.com.br",
+    "icostaendsfeldzcandido@dow.com",
+    "ICOSTAENDSFELDZCANDIDO@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "SUDU8506530",
+     "seal": "0342300ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU6264143",
+     "seal": "0351139ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCKU6590287",
+     "seal": "342156",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCKU7702864",
+     "seal": "0342153ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MRSU6165323",
+     "seal": "0351140ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/23/2026",
+    "cutoff_origin": "20260630",
+    "etd_pol": "20260705",
+    "eta_destination": "20260712"
+   }
+  }
+ },
+ {
+  "order": "4010531167",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010531167",
+   "booking_no": "LA0492133",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "Polyethylene 35060L High Density 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "35060L",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSMU7089402",
+     "seal": "346079",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSMU8918236",
+     "seal": "346080",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "TRHU8623238",
+     "seal": "346011",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8540108",
+     "seal": "346078",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "05/21/2026",
+    "cutoff_origin": "20260523",
+    "etd_pol": "20260526",
+    "eta_destination": "20260602"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010531167",
+   "booking_no": "LA0492133",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "Polyethylene 35060L High Density 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "35060L",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSMU7089402",
+     "seal": "346079",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSMU8918236",
+     "seal": "346080",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "TRHU8623238",
+     "seal": "346011",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8540108",
+     "seal": "346078",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "05/21/2026",
+    "cutoff_origin": "20260523",
+    "etd_pol": "20260526",
+    "eta_destination": "20260602"
+   }
+  }
+ },
+ {
+  "order": "4010660871",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "REGRESSION",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [
+   "producto"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "producto": {
+    "v1": {
+     "cadena": "HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag",
+     "familia": "POLYETHYLENE",
+     "grado": "LP 8000",
+     "embalaje": "Big Bag"
+    },
+    "v2": {
+     "cadena": "HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag",
+     "familia": "POLYETHYLENE",
+     "grado": "LP 8000 HD",
+     "embalaje": "Big Bag"
+    }
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "LOG IN LOGISTICA INTERMODAL SA",
+    "address_str": "PLANT L040, RUA ONORIO BORTOLATO 1717, PEDREIRAS, 88373-180 NAVEGANTES - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "email": "ALESSANDRO.OLIVEIRA@PIBERNAT.COM.BR"
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351000319 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010660871",
+   "booking_no": "LA0499051",
+   "terms_of_delivery": "FOB Buenos Aires Port",
+   "incoterm": "FOB",
+   "incoterm_place": "Buenos Aires Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "LP 8000",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88128
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "tax_id": "60435351000319",
+    "address_lines": [
+     "ROD BR-101 700",
+     "KM 112 ANDAR 2 GALPAO 2",
+     "88311-600 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR-101 700, KM 112 ANDAR 2 GALPAO 2, 88311-600 ITAJAI - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSMU7438340",
+     "seal": "MSMU7438340-BAH16886",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "CAAU6388192",
+     "seal": "CAAU6388192-BAH16887",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "MEDU7061649",
+     "seal": "MEDU7061649-BAH16888",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "TLLU7603091",
+     "seal": "TLLU7603091-BAH16889",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    }
+   ],
+   "dates": {
+    "document_date": "06/25/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260706"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010660871",
+   "booking_no": "LA0499051",
+   "terms_of_delivery": "FOB Buenos Aires Port",
+   "incoterm": "FOB",
+   "incoterm_place": "Buenos Aires Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "HDPE LP 8000 HD Polyethylene Resin 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "LP 8000 HD",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88128
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "tax_id": "60435351000319",
+    "address_lines": [
+     "ROD BR-101 700",
+     "KM 112 ANDAR 2 GALPAO 2",
+     "88311-600 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR-101 700, KM 112 ANDAR 2 GALPAO 2, 88311-600 ITAJAI - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "LOG IN LOGISTICA INTERMODAL SA",
+    "address_str": "PLANT L040, RUA ONORIO BORTOLATO 1717, PEDREIRAS, 88373-180 NAVEGANTES - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "email": "ALESSANDRO.OLIVEIRA@PIBERNAT.COM.BR"
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSMU7438340",
+     "seal": "MSMU7438340-BAH16886",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "CAAU6388192",
+     "seal": "CAAU6388192-BAH16887",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "MEDU7061649",
+     "seal": "MEDU7061649-BAH16888",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    },
+    {
+     "container": "TLLU7603091",
+     "seal": "TLLU7603091-BAH16889",
+     "net_kg": 21600,
+     "gross_kg": 22032
+    }
+   ],
+   "dates": {
+    "document_date": "06/25/2026",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260706"
+   }
+  }
+ },
+ {
+  "order": "4010671114",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010671114",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "DOW™ Polyethylene 36553L High Density Resin 1200 KG Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "36553L",
+    "embalaje": "Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "TCLU8699443",
+     "seal": "TCLU8699443",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8712070",
+     "seal": "MSNU8712070",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSMU4972584",
+     "seal": "MSMU4972584",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSDU7951758",
+     "seal": "MSDU7951758",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "06/27/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010671114",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "DOW™ Polyethylene 36553L High Density Resin 1200 KG Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "36553L",
+    "embalaje": "Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "TCLU8699443",
+     "seal": "TCLU8699443",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8712070",
+     "seal": "MSNU8712070",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSMU4972584",
+     "seal": "MSMU4972584",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSDU7951758",
+     "seal": "MSDU7951758",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "06/27/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ },
+ {
+  "order": "4010679834",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "LOG IN LOGISTICA INTERMODAL SA",
+    "address_str": "PLANT L040, RUA ONORIO BORTOLATO 1717, PEDREIRAS, 88373-180 NAVEGANTES - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "email": "ALESSANDRO.OLIVEIRA@PIBERNAT.COM.BR"
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351000319 DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010679834",
+   "booking_no": "LA0499052",
+   "terms_of_delivery": "FOB Buenos Aires Port",
+   "incoterm": "FOB",
+   "incoterm_place": "Buenos Aires Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "5220B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 1080,
+    "net_kg": 27000,
+    "gross_kg": 27540
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "tax_id": "60435351000319",
+    "address_lines": [
+     "ROD BR-101 700",
+     "KM 112 ANDAR 2 GALPAO 2",
+     "88311-600 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR-101 700, KM 112 ANDAR 2 GALPAO 2, 88311-600 ITAJAI - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "CAIU8761760",
+     "seal": "0351109ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "2026.06.24",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260706"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010679834",
+   "booking_no": "LA0499052",
+   "terms_of_delivery": "FOB Buenos Aires Port",
+   "incoterm": "FOB",
+   "incoterm_place": "Buenos Aires Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Navegantes Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39014000000K",
+    "import": "39014000"
+   },
+   "producto": {
+    "cadena": "ELITE™ 5220B Enhanced Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "5220B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 1080,
+    "net_kg": 27000,
+    "gross_kg": 27540
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA.",
+    "tax_id": "60435351000319",
+    "address_lines": [
+     "ROD BR-101 700",
+     "KM 112 ANDAR 2 GALPAO 2",
+     "88311-600 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "ROD BR-101 700, KM 112 ANDAR 2 GALPAO 2, 88311-600 ITAJAI - SC, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "LOG IN LOGISTICA INTERMODAL SA",
+    "address_str": "PLANT L040, RUA ONORIO BORTOLATO 1717, PEDREIRAS, 88373-180 NAVEGANTES - SC, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "email": "ALESSANDRO.OLIVEIRA@PIBERNAT.COM.BR"
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "CAIU8761760",
+     "seal": "0351109ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "2026.06.24",
+    "cutoff_origin": "20260627",
+    "etd_pol": "20260630",
+    "eta_destination": "20260706"
+   }
+  }
+ },
+ {
+  "order": "4010692237",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010692237",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "Polyethylene 35060L High Density 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "35060L",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSMU7502265",
+     "seal": "MSMU7502265",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "BEAU5696455",
+     "seal": "BEAU5696455",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "FCIU9171010",
+     "seal": "FCIU9171010",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8443936",
+     "seal": "MSNU8443936",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "06/28/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010692237",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39012029900U",
+    "import": "39012029"
+   },
+   "producto": {
+    "cadena": "Polyethylene 35060L High Density 1200 KG Big Bag",
+    "familia": "POLYETHYLENE",
+    "grado": "35060L",
+    "embalaje": "Big Bag"
+   },
+   "totales": {
+    "piece_count": 72,
+    "net_kg": 86400,
+    "gross_kg": 88560
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "AFERRARO@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSMU7502265",
+     "seal": "MSMU7502265",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "BEAU5696455",
+     "seal": "BEAU5696455",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "FCIU9171010",
+     "seal": "FCIU9171010",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    },
+    {
+     "container": "MSNU8443936",
+     "seal": "MSNU8443936",
+     "net_kg": 21600,
+     "gross_kg": 22140
+    }
+   ],
+   "dates": {
+    "document_date": "06/28/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ },
+ {
+  "order": "4010713009",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "REGRESSION",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [
+   "producto"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "producto": {
+    "v1": {
+     "cadena": "DOWLEX™ NG 2038B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "NG 2038B",
+     "embalaje": "Bags"
+    },
+    "v2": {
+     "cadena": "DOWLEX™ NG 2038B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "NG 2038B",
+     "embalaje": "25 KG Bags"
+    }
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010713009",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "NG 2038B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 2160,
+    "net_kg": 54000,
+    "gross_kg": 55080
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "TCLU8702336",
+     "seal": "TCLU8702336",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TEMU8165337",
+     "seal": "TEMU8165337",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/28/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010713009",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "NG 2038B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 2160,
+    "net_kg": 54000,
+    "gross_kg": 55080
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "TCLU8702336",
+     "seal": "TCLU8702336",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TEMU8165337",
+     "seal": "TEMU8165337",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/28/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ },
+ {
+  "order": "4010713061",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010713061",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSMU8360360",
+     "seal": "0345065ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU6077310",
+     "seal": "0345064ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU8292859",
+     "seal": "0345035ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MEDU7396133",
+     "seal": "0345063ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010713061",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSMU8360360",
+     "seal": "0345065ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSMU6077310",
+     "seal": "0345064ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCLU8292859",
+     "seal": "0345035ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MEDU7396133",
+     "seal": "0345063ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ },
+ {
+  "order": "4010713062",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "REGRESSION",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [
+   "producto"
+  ],
+  "flaky": [],
+  "regressionDetail": {
+   "producto": {
+    "v1": {
+     "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "2038.11B",
+     "embalaje": "Bags"
+    },
+    "v2": {
+     "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+     "familia": "POLYETHYLENE",
+     "grado": "2038.11B",
+     "embalaje": "25 KG Bags"
+    }
+   }
+  },
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010713062",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "TRHU7047713",
+     "seal": "0345062ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCNU2373570",
+     "seal": "0345061ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSDU5664656",
+     "seal": "0345034ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSCU4956984",
+     "seal": "0345033ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010713062",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "TRHU7047713",
+     "seal": "0345062ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "TCNU2373570",
+     "seal": "0345061ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSDU5664656",
+     "seal": "0345034ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSCU4956984",
+     "seal": "0345033ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ },
+ {
+  "order": "4010713063",
+  "stop_v1": "tool_use",
+  "stop_v2": "tool_use",
+  "fieldResults": {
+   "order_number": "MATCH",
+   "booking_no": "MATCH",
+   "terms_of_delivery": "MATCH",
+   "incoterm": "MATCH",
+   "incoterm_place": "MATCH",
+   "pol": "MATCH",
+   "pod": "MATCH",
+   "destino_pais": "MATCH",
+   "hs": "MATCH",
+   "producto": "MATCH",
+   "totales": "MATCH",
+   "consignee": "MATCH",
+   "notify": "MATCH",
+   "equipos": "MATCH",
+   "dates": "MATCH"
+  },
+  "regressions": [],
+  "flaky": [],
+  "regressionDetail": {},
+  "newFields": {
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ]
+  },
+  "shipToConsignee": {
+   "regexCombined": true,
+   "probe": {
+    "ship_to_name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "consignee_name_if_separate": null,
+    "combined_label": true,
+    "same_company": null,
+    "evidence": "\"Ship-to / Consignee 60435351010039 — DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA\""
+   }
+  },
+  "v1_out": {
+   "order_number": "4010713063",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "equipos": [
+    {
+     "container": "MSNU8613863",
+     "seal": "0345032ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FFAU2019142",
+     "seal": "0345080ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSCU5207738",
+     "seal": "0345036ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSBU5153643",
+     "seal": "0345066ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  },
+  "v2_out": {
+   "order_number": "4010713063",
+   "booking_no": "LA0500989",
+   "terms_of_delivery": "CFR Santos Port",
+   "incoterm": "CFR",
+   "incoterm_place": "Santos Port",
+   "pol": "Buenos Aires Port",
+   "pod": "Santos Port",
+   "destino_pais": "BRAZIL",
+   "hs": {
+    "export": "39011030000X",
+    "import": "39011030"
+   },
+   "producto": {
+    "cadena": "DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet",
+    "familia": "POLYETHYLENE",
+    "grado": "2038.11B",
+    "embalaje": "25 KG Bags"
+   },
+   "totales": {
+    "piece_count": 4320,
+    "net_kg": 108000,
+    "gross_kg": 110160
+   },
+   "consignee": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "tax_id": "60435351010039",
+    "address_lines": [
+     "AV JOAQUIM LOURENCO DE LIMA 120",
+     "GALPAO 04",
+     "37644-032 EXTREMA - MG",
+     "BRAZIL"
+    ],
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "notify": {
+    "name": "COMISSARIA PIBERNAT LTDA",
+    "tax_id": "92102433000923",
+    "email": "thais.kleinschmidt@pibernat.com.br",
+    "address_lines": [
+     "RUA MANOEL VIEIRA GARCAO 120",
+     "CENTRO",
+     "88301-425 ITAJAI - SC",
+     "BRAZIL"
+    ],
+    "address_str": "RUA MANOEL VIEIRA GARCAO 120, CENTRO, 88301-425 ITAJAI - SC, BRAZIL"
+   },
+   "sold_to": {
+    "name": "DOW BRASIL IND E COM DE PRODUTOS QUIMICOS LTDA",
+    "address_str": "AV JOAQUIM LOURENCO DE LIMA 120, GALPAO 04, 37644-032 EXTREMA - MG, BRAZIL"
+   },
+   "document_recip": {
+    "name": "BDP SOUTH AMERICA LTDA",
+    "email": "br.sao.dowimp@bdpint.com"
+   },
+   "shipping_recip": {
+    "name": null,
+    "email": null
+   },
+   "partner_emails": [
+    "PALVAREZFONT@DOW.COM"
+   ],
+   "equipos": [
+    {
+     "container": "MSNU8613863",
+     "seal": "0345032ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "FFAU2019142",
+     "seal": "0345080ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSCU5207738",
+     "seal": "0345036ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    },
+    {
+     "container": "MSBU5153643",
+     "seal": "0345066ANA",
+     "net_kg": 27000,
+     "gross_kg": 27540
+    }
+   ],
+   "dates": {
+    "document_date": "06/29/2026",
+    "cutoff_origin": "20260702",
+    "etd_pol": "20260704",
+    "eta_destination": "20260711"
+   }
+  }
+ }
+]

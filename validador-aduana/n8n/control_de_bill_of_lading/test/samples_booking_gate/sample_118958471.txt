@@ -1,0 +1,554 @@
+Consolidated Booking Advice Page 1 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048352407
+Document Date
+06/19/2026
+Ship-to / Consignee 19631376000203
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Terms of Delivery
+CPT MANAUS PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/19/2026
+Final Destination Delivery Date
+08/21/2026
+Sold-to
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Customer Tax ID Number
+19631376000203
+Port of Discharge
+Manaus Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Order Number: 0118958471
+Customer Order Number: 15584
+CONTAINERS ON BOARD : 04
+Deliver-To
+MANAUS PORT
+RUA MARQUES DE SANTA CRUZ SN
+MANAUS PORT
+CENTRO
+69005-050 MANAUS - AM
+BRAZIL
+Notify Party
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Ph No.:5509233019006
+E-Mail:DANIEL.PERINA@MEGAPACKMANAUS.COM.BR
+Tax ID:19631376000203
+Cust Bank Partner
+BANCO CITIBANK SA
+AV PAULISTA 2 ANDAR 1111
+TERREO SANTOS
+BELA VISTA
+01311-920 SAO PAULO - SP
+BRAZIL
+Ph No.:(55 11) 2109-248
+Fax:(55 11) 2122-2062
+E-Mail:CITISERVICE.TRADEBR@CITI.COM
+Tax ID:33479023000180
+Bill of Lading Consignee:
+MEGA PACK PLASTICOS SA
+AV BURITI, 6170 SALA 01
+DISTRITO INDUSTRIAL - MANAUS
+AMAZONAS - BRASIL
+CNPJ: 19.631.376/0002-03
+12A LOABABILITY EXCEPTION
+PLEASE USE 40FT OR 40HC CONTAINER
+12H MISCELLANEOUS STATEMENTS
+PLS DO NOT MIX PRODUCTS FROM DIFFERENT COUNTRIES
+13A BILL OF LADING TYPE
+Original
+13B TRANSPORT DOCUMENT
+Bill of lading RFS (Received for shipment)
+13C RELEASE POINT
+B/L Release Point ORIGIN
+13F MISCELLANEOUS STATEMENTS
+Notify Party:
+MEGA PACK PLASTICOS SA
+AV BURITI, 6170
+DISTRITO INDUSTRIAL I - Manaus
+Postal Code: 69075-000
+CNPJ: 19631376000203
+CONTACT: Daniel Perina
+EMAIL: daniel.perina@megapackmanaus.com.br
+renato.lucena@megapackmanaus.com.br
+jose.adenilson@megapackmanaus.com.br
+
+Consolidated Booking Advice Page 2 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048352407
+Document Date
+06/19/2026
+Ship-to / Consignee 19631376000203
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Terms of Delivery
+CPT MANAUS PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/19/2026
+Final Destination Delivery Date
+08/21/2026
+Sold-to
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Customer Tax ID Number
+19631376000203
+Port of Discharge
+Manaus Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Include on Bill of Lading
+Number of pallets
+BL gross and net weight should match to Invoice and packing list
+Print only first 4 digits of the HS code: 3901
+BL should mention type of wooden package
+Wooden package used in compliance with ISPM 15 NIMF 15 Treated / certified
+15 DOCUMENT DISTRIBUTION DETAILS
+Customer Bank involved - Collection terms
+IT IS MANDATORY THAT THE DOCUMENTS BE SENT BY COURIER EXCLUSIVELY TO THE BANK – YN PARTNER
+**PLEASE DO DOUBLE CHECK THE DOCUMENTS BEFORE SENDING TO THE BANK.**
+BILL OF LADING – 3 ORIGINALS PLUS NON-NEGOTIABLE COPIES
+COMMERCIAL INVOICE – 2 ORIGINALS
+PACKING LIST – 2 ORIGINALS
+All documents must be signed with blue ink.
+Banco Citibank S/A
+Av. Paulista 1.111 – 1º Subsolo do Citi Center - Bairro: Bela Vista
+São Paulo - SP – Brazil
+01311-920
+Contacts:
+Ms Silvana Santos
+Mr Carlos Alberto Guedes
+Mr Lucas Oliveira
+Phone +55 11 2109-2484 (extension 0 and 4)
+EMAIL citiservice.tradebr@citi.com
+Document packet #2 - Dispatch EMAIL exclusively to:
+yrodrigues@dow.com
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+TGBU7576729 831979627 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q5L962
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00011094727 LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a
+Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 344469-ANA
+Material Group: 13111000
+TCLU8701582 831979673 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q5L962
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00011094727 LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a
+Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 344465-ANA
+Material Group: 13111000
+MSMU6117562 831979674 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q5L962
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00011094727 LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a
+Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 344464-ANA
+Material Group: 13111000
+CAIU4949321 831979675 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+1,080 BAG / C101Q5K960
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00011094727 LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a
+Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+
+Consolidated Booking Advice Page 3 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048352407
+Document Date
+06/19/2026
+Ship-to / Consignee 19631376000203
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Terms of Delivery
+CPT MANAUS PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/19/2026
+Final Destination Delivery Date
+08/21/2026
+Sold-to
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Customer Tax ID Number
+19631376000203
+Port of Discharge
+Manaus Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+Item Volume :
+45,522.000 CD3 
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 344487-ANA
+Material Group: 13111000
+Total Gross weight:
+Total Net weight:
+Total Volume:
+110,160.000 KG
+108,000.000 KG
+182,088.000 CD3
+Piece Count : 4,320.000 BAG
+PHS Number and Description 000000527064 : PHS - P&SP - Solution PE
+00011094727 : LLDPE 1630 Polyethylene Resin 25 KG Bags 60 Bags on a Pallet
+International Maritime
+Requirement :PLX - Freight container contains plastic pellets in accordance with
+paragraphs 1.1 and 1.2 of IMO Circular MEPC.1/Circ.909 and is subject to
+proper stowage and securement under deck wherever reasonably
+practicable, or inboard in sheltered areas of exposed decks (in
+accordance with paragraph 1.3 of that Circular).
+In Transit
+In Transit Temperature : No In-Transit Temp Requirements
+In Transit Comments : Check for moisture/droplets inside the liner
+Loading
+Sample size :Samples from inbound hopper cars at terminals should be retained until 60 days has elapsed after release of the hopper car
+, Samples from truck shipments should be retained for 4 months plus the current month or if customer use dictates shorter time frame
+Samples from bag shipments should be retained for 11 months from the
+time packaged plus the current month or if customer use dictates shorter
+time frame.
+Sampling Location :Outplant/Terminal Samples for both truck and railcar retains should be at least one pound, minimum.
+, Whirl-Paks /Small Ziploc for retains
+Sampling Method :Samples will only be pulled by sourcing plant and/or terminal personnel
+that are trained in sample pulling. Driver samples are not acceptable
+unless driver self-loading. There will be no eating and drinking when
+pulling samples.
+Sample retention time :Retains can be disposed of through Dow approved waste handling
+facilities. One can also arrange product pickup by a PE recycler like
+Poly America. Contact Dow to assist in setting this up.
+Loading Notes: : All loading procedures and equipment should meet minimum Dow Guidelines
+including applicable Safety and Loss Prevention Guidelines. Some
+recommendations for procedures would include the following:
+a. Truck should be chocked during loading operation.
+b. Driver should be out of vehicle during loading operation with
+emergency brake on.
+c. Driver must have standard PPE.
+d. Driver must be qualified to operate all equipment associated with the
+Hopper Truck.
+e. Use of leather gloves required to protect against pinch points
+f. Hopper trucks should be accessed only if proper fall protection
+tie-off or carriage is in place (Plants) or training on three points of
+contact has been documented (Outplants/Terminals).
+g. Driver/Loader cannot break the plane of the manway with the intent of
+entry
+Loading Procedure Comments : Average Testing Time - 2 hours; 4 hours
+Loading
+Package Types the Product Uses :Bags
+, Box
+, FIBC
+Unloading
+Carrier Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+
+Consolidated Booking Advice Page 4 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048352407
+Document Date
+06/19/2026
+Ship-to / Consignee 19631376000203
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Terms of Delivery
+CPT MANAUS PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/19/2026
+Final Destination Delivery Date
+08/21/2026
+Sold-to
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Customer Tax ID Number
+19631376000203
+Port of Discharge
+Manaus Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+the product.
+Customer Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Unloading
+Carrier Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Customer Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Regulatory and Special Handling Instruct
+React Chemis / Polymeriz Event :Reference Safety Data Sheet (SDS)
+General Regulatory Notes :Reference Safety Data Sheet (SDS)
+Safe Handling Instructions : Reference Safety Data Sheet (SDS)
+Product Handling Training Required : Reference Safety Data Sheet (SDS)
+Product Specific Notes/ Warni : Reference Safety Data Sheet (SDS)
+Owning Company
+Owning Company :THE DOW CHEMICAL COMPANY
+Equipment
+State of the Container :Clean, Dry and Odor Free
+, See Prior Content Restrictions
+Equipment Capability :Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Acceptable Pneumatic Trans Sys :Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Acceptable Material of Constru :Stainless Steel
+, Aluminum
+Gasket Material of Contruction :White neoprene and sized exactly for the fittings
+Hose Material of Construction :Minimum hose length must be 10 meters (2 X 5 meters) or 20 Ft, diameter 4”
+, New hoses should be inspected thoroughly and cleaned thoroughly before being put into service
+Fitting type/size :Stainless steel self locking groove cam lock fitting are required.
+Equipment Notes : US/CAN - hose construction should be of winded, stainless steel. Note:
+Europe does use white neoprene lined rubber hoses in some plastics
+pellet service.
+Equipment
+Acceptable Packaging Covering: :Shrink Wrap/Plastic Wrapping
+State of the Container :Flooring that is free of debris and contains no soft areas or holes
+, Doors that open and close without difficulty; Pins that are in place
+, Containers must be covered in transport. No open trailer allowed.
+, Clean, Dry and Odor Free
+, Watertight; Free of Debris; No Flatbed Allowed
+, Food Compliant
+, Inspect for raised screws / no metal sticking up on trailer floor - Shovel Test
+Temperature Control Equip Requ :No
+General
+Deliver Bulk Granules Intro :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+
+Consolidated Booking Advice Page 5 of5
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048352407
+Document Date
+06/19/2026
+Ship-to / Consignee 19631376000203
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Terms of Delivery
+CPT MANAUS PORT
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/19/2026
+Final Destination Delivery Date
+08/21/2026
+Sold-to
+MEGA PACK PLASTICOS SA
+AV BURITI 6170
+DISTRITO INDUSTRIAL I
+69075-000 MANAUS - AM
+BRAZIL
+Customer Tax ID Number
+19631376000203
+Port of Discharge
+Manaus Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+General
+Deliver Package Introduction :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+Road - Carrier Notification : Protect from moisture.
+MPC - Carrier Notification : Protect from moisture.
+(TM) Trademark of The Dow Chemical Company ("Dow") or an affiliated company of Dow
+Order / Item # Country of
+Origin 
+Commodity Code Transport Hazard Classification
+118958471
+10 
+Argentina Export: 39014000000K
+Import: 39014000 
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Wood Packing Materials External Carrier Notes Shipping Marks
+June 16 2026
+BOOKING NUMBER:LA0500706
+ETD PORT OF LOAD: 20260630
+CUTOFF AT ORIGIN: 20260627
+ETA DESTINATION: 20260723
+NOTES: BID LOGIN 172741-
+EXPOARPBB@SSBINT.COM
+In case of emergency 24/7, or in case of spill, accident, injury, security incident, theft, chemical mixture or reaction, unexpected temperature
+increase, call:
+Argentina : 54 3476-43-8600
+Brazil : 0800-763-8422
+CONTACT: Yohana Nunes Rodrigues YRODRIGUES@DOW.COM
+Ph.: Fax:
