@@ -1,0 +1,675 @@
+{
+ "name": "CO Drive Gateway",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "co-gw-256f678a3b7a9cd9-find",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "id": "01db4f77-e0f5-46f3-9462-ef44bed91614",
+   "name": "WH find",
+   "webhookId": "dc078259-4cc4-4e81-be77-be5e273298bd"
+  },
+  {
+   "parameters": {
+    "jsCode": "if ((($input.first().json.headers||{})['x-co-gateway-token']||'') !== '***TOKEN***') throw new Error('unauthorized');\nconst b = $input.first().json.body || {};\nconst ALLOWED = ['1hyNXrtWHcX-Q940t8ZwG6Ghf5E3DgQ8I','1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL'];\nconst folderId = String(b.folderId||'');\nif (!ALLOWED.includes(folderId)) throw new Error('folder not allowed');\nconst name = String(b.name||'').trim();\nif (!name || name.length > 140) throw new Error('bad name');\nconst safe = name.replace(/\\\\/g,'\\\\\\\\').replace(/'/g,\"\\\\'\");\nreturn [{ json: { q: \"name='\" + safe + \"' and '\" + folderId + \"' in parents and trashed=false\" } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    0
+   ],
+   "id": "99fae8d5-7f67-4640-bdbd-9ab360c6d91d",
+   "name": "Prep find"
+  },
+  {
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "options": {},
+    "url": "https://www.googleapis.com/drive/v3/files",
+    "sendQuery": true,
+    "queryParameters": {
+     "parameters": [
+      {
+       "name": "q",
+       "value": "={{ $json.q }}"
+      },
+      {
+       "name": "fields",
+       "value": "files(id,name,modifiedTime,webViewLink)"
+      },
+      {
+       "name": "orderBy",
+       "value": "modifiedTime desc"
+      },
+      {
+       "name": "pageSize",
+       "value": "10"
+      },
+      {
+       "name": "supportsAllDrives",
+       "value": "true"
+      },
+      {
+       "name": "includeItemsFromAllDrives",
+       "value": "true"
+      },
+      {
+       "name": "corpora",
+       "value": "allDrives"
+      }
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ],
+   "id": "f04f2f69-eb80-402e-8c7b-2a0c76213aed",
+   "name": "HTTP find",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "return [{ json: { ok: true, files: ($input.first().json.files) || [] } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    0
+   ],
+   "id": "0a63c155-73da-490d-8ea8-67e6dc7efc4d",
+   "name": "Shape find"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    880,
+    0
+   ],
+   "id": "abf9ef38-8d9f-4f0d-bb12-3637f336a62d",
+   "name": "Respond find"
+  },
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "co-gw-256f678a3b7a9cd9-download",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    200
+   ],
+   "id": "653c604e-6476-4167-9a35-ce9ad34a6638",
+   "name": "WH download",
+   "webhookId": "4aacf77a-df61-45f1-9f31-e1330aed41fc"
+  },
+  {
+   "parameters": {
+    "jsCode": "if ((($input.first().json.headers||{})['x-co-gateway-token']||'') !== '***TOKEN***') throw new Error('unauthorized');\nconst fileId = String(($input.first().json.body||{}).fileId||'');\nif (!/^[A-Za-z0-9_-]{10,90}$/.test(fileId)) throw new Error('bad fileId');\nreturn [{ json: { fileId } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    200
+   ],
+   "id": "7e316d13-761e-4ae2-a21b-5210050dd99e",
+   "name": "Prep download"
+  },
+  {
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "options": {},
+    "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.fileId + '?fields=id,name,parents,webViewLink&supportsAllDrives=true' }}"
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    200
+   ],
+   "id": "18e6b630-8680-45fb-958c-4e50be991daf",
+   "name": "Meta download",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const m = $input.first().json;\nif (!(m.parents||[]).includes('1hyNXrtWHcX-Q940t8ZwG6Ghf5E3DgQ8I')) throw new Error('file outside CO ZIP');\nreturn [{ json: { id: m.id, name: m.name, webViewLink: m.webViewLink } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    200
+   ],
+   "id": "b90dc9c9-4a34-480c-a3e1-03e6370cc383",
+   "name": "Gate download"
+  },
+  {
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "options": {
+     "response": {
+      "response": {
+       "responseFormat": "file"
+      }
+     }
+    },
+    "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.id + '?alt=media&supportsAllDrives=true' }}"
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    200
+   ],
+   "id": "528827d2-bc8d-41ad-b906-4a1ea991023f",
+   "name": "HTTP download",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const meta = $('Gate download').first().json;\nconst buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nreturn [{ json: { ok: true, fileId: meta.id, name: meta.name, webViewLink: meta.webViewLink, bytesBase64: buf.toString('base64') } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1100,
+    200
+   ],
+   "id": "e65b5402-268d-4688-9427-3dec1dcbd1d9",
+   "name": "Shape download"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    1320,
+    200
+   ],
+   "id": "4bc98a08-e0eb-46ed-bc6c-92a542f7c5ba",
+   "name": "Respond download"
+  },
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "co-gw-256f678a3b7a9cd9-upload",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    400
+   ],
+   "id": "9fb8a332-7c8f-4acf-a4a8-31a450355e1f",
+   "name": "WH upload",
+   "webhookId": "e6bc3515-4e0d-48b6-a7d4-1a7d6ab9425a"
+  },
+  {
+   "parameters": {
+    "jsCode": "if ((($input.first().json.headers||{})['x-co-gateway-token']||'') !== '***TOKEN***') throw new Error('unauthorized');\nconst b = $input.first().json.body || {};\nconst name = String(b.name||'');\nif (!/^[A-Za-z0-9_-]{5,130}\\.pdf$/i.test(name)) throw new Error('bad name');\nconst buf = Buffer.from(String(b.pdfBase64||''), 'base64');\nif (!buf.length || buf.length > 5242880) throw new Error('bad pdf size');\nconst bin = await this.helpers.prepareBinaryData(buf, name, 'application/pdf');\nreturn [{ json: { name }, binary: { data: bin } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    400
+   ],
+   "id": "3f1f4c59-69bf-46be-af37-033a1eadfe0e",
+   "name": "Prep upload"
+  },
+  {
+   "parameters": {
+    "name": "={{ $json.name }}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL",
+     "mode": "list",
+     "cachedResultName": "CO PDF",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    440,
+    400
+   ],
+   "id": "c8b1f656-f37f-4b88-acaa-a858cb40e5b3",
+   "name": "GD upload",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const j = $input.first().json;\nreturn [{ json: { ok: true, fileId: j.id, name: j.name, webViewLink: j.webViewLink || ('https://drive.google.com/file/d/' + j.id + '/view') } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    400
+   ],
+   "id": "d4ddfea2-f494-4930-9010-72e7ea5469ef",
+   "name": "Shape upload"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    880,
+    400
+   ],
+   "id": "97cf5fc1-a053-45b9-828e-884dcae8254c",
+   "name": "Respond upload"
+  },
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "co-gw-256f678a3b7a9cd9-update",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    600
+   ],
+   "id": "30ff78e0-0a70-4947-a9ba-3b24f0bfcb03",
+   "name": "WH update",
+   "webhookId": "c444860d-bc41-4a73-900f-d57d096a5d11"
+  },
+  {
+   "parameters": {
+    "jsCode": "if ((($input.first().json.headers||{})['x-co-gateway-token']||'') !== '***TOKEN***') throw new Error('unauthorized');\nconst b = $input.first().json.body || {};\nconst fileId = String(b.fileId||'');\nif (!/^[A-Za-z0-9_-]{10,90}$/.test(fileId)) throw new Error('bad fileId');\nconst buf = Buffer.from(String(b.pdfBase64||''), 'base64');\nif (!buf.length || buf.length > 5242880) throw new Error('bad pdf size');\nconst bin = await this.helpers.prepareBinaryData(buf, 'update.pdf', 'application/pdf');\nreturn [{ json: { fileId }, binary: { data: bin } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    600
+   ],
+   "id": "af58becd-88e0-4c40-912b-e6bc8ae812f8",
+   "name": "Prep update"
+  },
+  {
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "options": {},
+    "url": "={{ 'https://www.googleapis.com/drive/v3/files/' + $json.fileId + '?fields=id,name,parents&supportsAllDrives=true' }}"
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    600
+   ],
+   "id": "ed7aa9fa-4644-4085-9bf4-b26c0708172e",
+   "name": "Meta update",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const m = $input.first().json;\nif (!(m.parents||[]).includes('1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL')) throw new Error('file outside CO PDF');\nreturn [{ json: { id: m.id, name: m.name }, binary: $('Prep update').first().binary }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    600
+   ],
+   "id": "2a0177d4-1a04-4e39-b0e7-e2af8501c666",
+   "name": "Gate update"
+  },
+  {
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "googleDriveOAuth2Api",
+    "options": {},
+    "method": "PATCH",
+    "url": "={{ 'https://www.googleapis.com/upload/drive/v3/files/' + $json.id + '?uploadType=media&supportsAllDrives=true&fields=id,name,webViewLink' }}",
+    "sendBody": true,
+    "contentType": "binaryData",
+    "inputDataFieldName": "data"
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    600
+   ],
+   "id": "3e76a8b4-b303-423c-bdb6-7bb64dafac09",
+   "name": "PATCH update",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const j = $input.first().json;\nreturn [{ json: { ok: true, fileId: j.id, name: j.name, webViewLink: j.webViewLink || ('https://drive.google.com/file/d/' + j.id + '/view') } }];"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1100,
+    600
+   ],
+   "id": "8c67f8bb-fa21-4a20-bd96-9fe1ea232967",
+   "name": "Shape update"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    1320,
+    600
+   ],
+   "id": "fa606c37-a0ab-433b-8351-ee936995fa3a",
+   "name": "Respond update"
+  }
+ ],
+ "connections": {
+  "WH find": {
+   "main": [
+    [
+     {
+      "node": "Prep find",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep find": {
+   "main": [
+    [
+     {
+      "node": "HTTP find",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "HTTP find": {
+   "main": [
+    [
+     {
+      "node": "Shape find",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape find": {
+   "main": [
+    [
+     {
+      "node": "Respond find",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "WH download": {
+   "main": [
+    [
+     {
+      "node": "Prep download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep download": {
+   "main": [
+    [
+     {
+      "node": "Meta download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Meta download": {
+   "main": [
+    [
+     {
+      "node": "Gate download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gate download": {
+   "main": [
+    [
+     {
+      "node": "HTTP download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "HTTP download": {
+   "main": [
+    [
+     {
+      "node": "Shape download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape download": {
+   "main": [
+    [
+     {
+      "node": "Respond download",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "WH upload": {
+   "main": [
+    [
+     {
+      "node": "Prep upload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep upload": {
+   "main": [
+    [
+     {
+      "node": "GD upload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GD upload": {
+   "main": [
+    [
+     {
+      "node": "Shape upload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape upload": {
+   "main": [
+    [
+     {
+      "node": "Respond upload",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "WH update": {
+   "main": [
+    [
+     {
+      "node": "Prep update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Prep update": {
+   "main": [
+    [
+     {
+      "node": "Meta update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Meta update": {
+   "main": [
+    [
+     {
+      "node": "Gate update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gate update": {
+   "main": [
+    [
+     {
+      "node": "PATCH update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "PATCH update": {
+   "main": [
+    [
+     {
+      "node": "Shape update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape update": {
+   "main": [
+    [
+     {
+      "node": "Respond update",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}
