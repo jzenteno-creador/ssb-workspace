@@ -19,7 +19,7 @@ import AdmZip from 'adm-zip';
 import { createDriveClient, DriveError } from './_lib/driveClient.js';
 import { parseCodXml, buildCoPdf, normalizeOrden } from './_lib/certOrigen.js';
 
-export const config = { maxDuration: 10 }; // op típica ~2-4s; corre en cualquier plan
+export const config = { maxDuration: 30 }; // medido real vía gateway n8n: ~10s create / ~6s update (Hobby permite hasta 60)
 
 const ORDEN_RE = /^\d{7,12}$/; // acepta el 0 de padding de trade ANTES de normalizar
 const CERT_RE = /^AR\d{3}A\d{2}\d{12}$/; // no hardcodea (18|35): tolera acuerdos futuros
@@ -55,16 +55,18 @@ export default async function handler(req, res) {
   // ── Guard de config AL INICIO (pedido explícito post-primer-deploy): una env var
   // faltante tiene que salir como error legible, nunca como crash/500 vacío. Va antes
   // del gate a propósito: permite diagnosticar el setup con curl sin token.
+  // Variante n8n-gateway (2026-07-05): el SA-direct quedó descartado; Drive I/O va
+  // por el workflow "CO Drive Gateway" (ver docs/modules/certificado-origen.md).
   const missing = [
-    'GOOGLE_SA_EMAIL', 'GOOGLE_SA_PRIVATE_KEY',
-    'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID', 'DRIVE_TEAM_DRIVE_ID',
+    'N8N_DRIVE_GATEWAY_URL', 'N8N_DRIVE_GATEWAY_TOKEN',
+    'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID',
   ].filter((k) => !process.env[k]);
   if (missing.length)
     return res.status(500).json({
       estado: 'error',
-      error_code: 'SA_CONFIG_MISSING',
+      error_code: 'SA_CONFIG_MISSING', // código estable (el front ya lo mapea)
       error: `Falta env var: ${missing.join(', ')}`,
-      detail: 'Setup del service account incompleto en Vercel (ver docs/modules/certificado-origen.md).',
+      detail: 'Setup del gateway de Drive incompleto en Vercel (ver docs/modules/certificado-origen.md).',
     });
 
   const supaUrl = process.env.SUPABASE_URL;

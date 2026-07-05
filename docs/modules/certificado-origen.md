@@ -77,22 +77,33 @@ literal `` `${code || 'HTTP '+status}: ${error || detail || '(sin cuerpo)'}` `` 
 "Error desconocido" pelado. La orden NO se puede auto-derivar del XML (verificado en 4
 muestras: los únicos números largos son control code y declaración) → input manual queda.
 
-## Drive layer (swapeable)
+## Drive layer (swapeable) — variante ACTIVA: n8n-gateway (2026-07-05)
 
-TODO el I/O de Drive vive en `api/_lib/driveClient.js`: service account con JWT RS256
-firmado a mano (`node:crypto`, sin deps), token cacheado module-level. Si la org
-policy bloquea el SA → se reemplaza SOLO ese módulo por una variante n8n-gateway
-(misma interfaz `findByName/download/uploadNew/updateContent`).
+El SA-direct quedó DESCARTADO (exigía crear service account + key + shares en GCP a
+mano). TODO el I/O de Drive vive en `api/_lib/driveClient.js`, que llama al workflow
+n8n **"CO Drive Gateway" (`L68kJ7uGWauFRANX`)** — 4 webhooks lineales token-autenticados
+(`co-gw-<sufijo>-{find,download,upload,update}`) que reusan la credential Google Drive
+EXISTENTE (`Hdz3HCDRSA2GStDS` "Google Drive account 2", la misma del clasificador
+`pBN4Wd1lcTSHNkFg`). Cero GCP nuevo.
 
-Env (Vercel): `GOOGLE_SA_EMAIL`, `GOOGLE_SA_PRIVATE_KEY` (con `\n` escapados),
-`DRIVE_CO_ZIP_FOLDER_ID=1hyNXrtWHcX-Q940t8ZwG6Ghf5E3DgQ8I`,
-`DRIVE_CO_PDF_FOLDER_ID=1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL`,
-`DRIVE_TEAM_DRIVE_ID=0AKuox28BE9ytUk9PVA` (opcional, acota el search — verificado
-por cadena de parents), + `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` (fallback al
-legacy `SUPABASE_DB_PASSWORD`, que ya contiene el JWT service_role).
+- Seguridad del gateway: token en header `x-co-gateway-token` + path con sufijo
+  aleatorio + allowlist de carpetas server-side (download solo desde CO ZIP; update
+  solo dentro de CO PDF; upload crea siempre en CO PDF). `update` = PATCH media
+  in-place → **preserva fileId** (links ya enviados siguen vivos).
+- Caveat n8n Cloud: ejecución fallida (token malo, gate, error Drive) responde
+  **HTTP 200 con cuerpo VACÍO** → driveClient trata todo body vacío/no-JSON/`ok!==true`
+  como error (`DRIVE_GATEWAY_DOWN` / `DRIVE_SEARCH` / `DRIVE_DOWNLOAD` / `UPLOAD_FAILED`).
+- **IRON LAW del workflow:** create/update SOLO por el harness
+  `scripts/n8n-co-gateway/put_co_drive_gateway.py` (REST + checks node-count/cred-refs/
+  paths + rollback + activate). El token/sufijo viven en `ssb-workspace/.env`
+  (gitignored) y se generan ahí la primera vez.
+- Latencia medida vía gateway: ~10s create / ~6s update → `maxDuration: 30`.
 
-Setup del SA (lo hace John): GCP → habilitar Drive API → service account → key JSON →
-compartir CO ZIP (Lector) y CO PDF (Gestor de contenido) con el email del SA.
+Env (Vercel): `N8N_DRIVE_GATEWAY_URL` (base sin sufijo de acción),
+`N8N_DRIVE_GATEWAY_TOKEN`, `DRIVE_CO_ZIP_FOLDER_ID=1hyNXrtWHcX-Q940t8ZwG6Ghf5E3DgQ8I`,
+`DRIVE_CO_PDF_FOLDER_ID=1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL`, + `SUPABASE_URL`/
+`SUPABASE_SERVICE_ROLE_KEY` (fallback al legacy `SUPABASE_DB_PASSWORD`). Las
+`GOOGLE_SA_*` y `DRIVE_TEAM_DRIVE_ID` ya NO se usan.
 
 ## Integración mailing (fase pendiente)
 
