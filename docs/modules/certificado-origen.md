@@ -62,9 +62,20 @@ zip/pdf_drive_id+url, pdf_nombre, estado(`generado`|`error`), error_detalle, gen
 
 ## Taxonomía de errores del endpoint
 
+Contrato: TODO error responde `{estado:'error', error_code, error, detail?}` — cero 500 sin
+cuerpo. `SA_CONFIG_MISSING` 500 (guard AL INICIO del handler, antes del gate — las 5 env de
+Drive son obligatorias, incl. `DRIVE_TEAM_DRIVE_ID`; diagnóstico por curl sin token) ·
 `ZIP_NOT_FOUND` 404 · `ZIP_CORRUPTO`/`ZIP_NO_XML`/`XML_MALFORMADO`/`CERT_MISMATCH` 422 ·
-`DRIVE_AUTH`/`DRIVE_*` 502 · `DB_FAILED` → 502 `estado='error_registro'` · `CONFIG` 500.
-Todo intento fallido con cert identificado deja fila `estado='error'` + `error_detalle`.
+`DRIVE_AUTH` 502 (el `detail` distingue key malformada — `firma RS256: …` — de rechazo de
+Google — `token endpoint NNN: código — descripción`) · `DRIVE_SEARCH/DOWNLOAD/UPLOAD` 502
+(403/404 sugieren carpetas sin compartir al SA) · `DB_FAILED` → 502 `estado='error_registro'`
+(UI ámbar + Regenerar) · `CONFIG` 500 (Supabase). Todo intento fallido con cert identificado
+deja fila `estado='error'` + `error_detalle` (incluye el detail).
+
+El front mapea cada code a un mensaje claro y SIEMPRE muestra además la línea técnica
+literal `` `${code || 'HTTP '+status}: ${error || detail || '(sin cuerpo)'}` `` — nunca un
+"Error desconocido" pelado. La orden NO se puede auto-derivar del XML (verificado en 4
+muestras: los únicos números largos son control code y declaración) → input manual queda.
 
 ## Drive layer (swapeable)
 

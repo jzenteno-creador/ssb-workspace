@@ -50,7 +50,22 @@ async function upsertRegistro(supaUrl, supaKey, row) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ estado: 'error', error: 'Method Not Allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ estado: 'error', error_code: 'METHOD', error: 'Method Not Allowed' });
+
+  // ── Guard de config AL INICIO (pedido explícito post-primer-deploy): una env var
+  // faltante tiene que salir como error legible, nunca como crash/500 vacío. Va antes
+  // del gate a propósito: permite diagnosticar el setup con curl sin token.
+  const missing = [
+    'GOOGLE_SA_EMAIL', 'GOOGLE_SA_PRIVATE_KEY',
+    'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID', 'DRIVE_TEAM_DRIVE_ID',
+  ].filter((k) => !process.env[k]);
+  if (missing.length)
+    return res.status(500).json({
+      estado: 'error',
+      error_code: 'SA_CONFIG_MISSING',
+      error: `Falta env var: ${missing.join(', ')}`,
+      detail: 'Setup del service account incompleto en Vercel (ver docs/modules/certificado-origen.md).',
+    });
 
   const supaUrl = process.env.SUPABASE_URL;
   const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_DB_PASSWORD;
@@ -99,27 +114,23 @@ export default async function handler(req, res) {
   if (!CERT_RE.test(certificado))
     return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'certificado inválido (formato tipo AR004A18 + 12 dígitos)' });
 
-  // El check de env de Drive va DESPUÉS de auth (patrón mailing: el 401 sin token
-  // debe funcionar aunque el setup de Drive todavía no esté hecho).
-  const missing = ['GOOGLE_SA_EMAIL', 'GOOGLE_SA_PRIVATE_KEY', 'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID']
-    .filter((k) => !process.env[k]);
-  if (missing.length)
-    return res.status(500).json({ estado: 'error', error_code: 'CONFIG', error: `Faltan env vars: ${missing.join(', ')}` });
-
   const drive = createDriveClient(process.env);
   const pdfNombre = `${orden}_${certificado}_CO.pdf`;
   const warnings = [];
   const baseRow = { orden, certificado_numero: certificado, generado_por: user.email };
 
   // Registra el intento fallido (sin pisar refs previas no incluidas) y responde.
-  const fail = async (status, code, msg, extra = {}) => {
+  // Contrato de error: SIEMPRE {estado:'error', error_code, error, detail?} — cero 500 sin cuerpo.
+  const fail = async (status, code, msg, extra = {}, detail = null) => {
     await upsertRegistro(supaUrl, supaKey, {
       ...baseRow,
       ...extra,
       estado: 'error',
-      error_detalle: `${code}: ${msg}`.slice(0, 500),
+      error_detalle: `${code}: ${msg}${detail ? ` · ${detail}` : ''}`.slice(0, 500),
     });
-    return res.status(status).json({ estado: 'error', error_code: code, error: msg });
+    const body = { estado: 'error', error_code: code, error: msg };
+    if (detail) body.detail = detail;
+    return res.status(status).json(body);
   };
   const zipRefs = (z) => ({ zip_drive_id: z.id, zip_drive_url: z.webViewLink || null });
 
@@ -218,9 +229,17 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({ ...payload, estado: 'generado' });
   } catch (e) {
-    const code = e instanceof DriveError ? e.code : 'INTERNO';
-    console.error('certificado-origen error:', code, e.message);
+    const isDrive = e instanceof DriveError;
+    const code = isDrive ? e.code : 'INTERNO';
+    console.error('certificado-origen error:', code, e.message, isDrive ? e.detail : '');
     const status = code.startsWith('DRIVE') ? 502 : 500;
-    return fail(status, code, e instanceof DriveError ? e.message : 'Error interno generando el certificado');
+    // INTERNO también propaga e.message como detail: el motivo real tiene que llegar al front.
+    return fail(
+      status,
+      code,
+      isDrive ? e.message : 'Error interno generando el certificado',
+      {},
+      isDrive ? e.detail : e.message
+    );
   }
 }

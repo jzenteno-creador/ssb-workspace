@@ -2658,6 +2658,7 @@ body.light #panel-mailing{
 #panel-cert-origen .co-btn .ic{width:16px;height:16px}
 #panel-cert-origen .co-btn--ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:7px 10px}
 #panel-cert-origen .co-err{font-size:12.5px;color:#f87171;margin:10px 0 0}
+#panel-cert-origen .co-err--tech{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;overflow-wrap:anywhere;margin-top:4px}
 #panel-cert-origen .co-result-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 #panel-cert-origen .co-result-name{font-size:14px;font-weight:700;color:var(--text)}
 #panel-cert-origen .co-kv{display:grid;grid-template-columns:190px minmax(0,1fr);gap:4px 14px;font-size:13px}
@@ -15995,19 +15996,47 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return a;
   }
 
+  // Nunca tira: siempre devuelve {status, data} para que renderResult muestre el
+  // motivo real (code + error + detail) — jamás un "Error desconocido" pelado.
   async function apiGenerate(orden, certificado){
     const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
-    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
-    const res = await fetch('/api/certificado-origen', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
-      body: JSON.stringify({ orden, certificado }),
-    });
-    const data = await res.json().catch(() => ({}));
+    if(!token) return { status: 0, data: { estado:'error', error_code:'SESION', error:'Sesión no disponible — recargá e ingresá de nuevo.' } };
+    let res;
+    try {
+      res = await fetch('/api/certificado-origen', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+        body: JSON.stringify({ orden, certificado }),
+      });
+    } catch (e) {
+      return { status: 0, data: { estado:'error', error_code:'RED', error:'No se pudo contactar /api/certificado-origen: ' + e.message } };
+    }
+    let data = null;
+    try { data = await res.json(); } catch(_){ /* cuerpo vacío o no-JSON (crash del server) */ }
+    if(!data || typeof data !== 'object') data = {};
     return { status: res.status, data };
   }
 
-  function renderResult(data){
+  // Taxonomía del endpoint → mensaje claro. Cualquier code no mapeado cae al literal.
+  const CO_ERR_MSG = {
+    ZIP_NOT_FOUND: 'No existe ese ZIP en la carpeta CO ZIP de Drive — revisá el número de certificado.',
+    ZIP_NO_XML: 'El ZIP existe pero no contiene ningún XML.',
+    ZIP_CORRUPTO: 'El ZIP del certificado está dañado o no es un ZIP válido.',
+    XML_MALFORMADO: 'El XML dentro del ZIP no se pudo leer.',
+    CERT_MISMATCH: 'El XML del ZIP declara OTRO certificado — probable ZIP renombrado en Drive.',
+    DRIVE_AUTH: 'Google Drive rechazó al service account — revisá GOOGLE_SA_PRIVATE_KEY (los \\n al pegarla) y que el SA exista.',
+    DRIVE_SEARCH: 'Drive falló buscando el archivo — ¿las carpetas están compartidas con el service account?',
+    DRIVE_DOWNLOAD: 'Drive falló descargando el ZIP.',
+    DRIVE_UPLOAD: 'Drive falló subiendo el PDF — ¿el service account es Gestor de contenido en CO PDF?',
+    UPLOAD_FAILED: 'Drive falló subiendo el PDF a CO PDF.',
+    SA_CONFIG_MISSING: 'Setup incompleto en Vercel: faltan variables de entorno del service account.',
+    DB_FAILED: 'El PDF se subió a Drive pero el registro en la base falló.',
+    AUTH: 'Sesión inválida o usuario sin acceso — recargá e ingresá de nuevo.',
+    INPUT: 'Dato de entrada inválido.',
+    CONFIG: 'Config del servidor incompleta (Supabase).',
+  };
+
+  function renderResult(data, status){
     const box = $('co-result'); if(!box) return;
     box.textContent = '';
     box.hidden = false;
@@ -16040,7 +16069,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       retry.onclick = () => generar();
       box.appendChild(retry);
     } else if(data.estado !== 'generado'){
-      box.appendChild(el('p','co-err', (data.error_code ? data.error_code + ' — ' : '') + (data.error || 'Error desconocido')));
+      // Regla: el motivo real SIEMPRE en pantalla. Mensaje amigable si el code está
+      // mapeado + línea técnica literal `code: error · detail`; sin mapeo, el literal solo.
+      const code = data.error_code;
+      const literal = (code || ('HTTP ' + (status || '?'))) + ': ' + (data.error || data.detail || '(sin cuerpo)');
+      const friendly = CO_ERR_MSG[code];
+      if(friendly) box.appendChild(el('p','co-err', friendly));
+      box.appendChild(el('p', friendly ? 'co-err co-err--tech' : 'co-err', literal));
+      if(data.detail && data.error) box.appendChild(el('p','co-err co-err--tech', data.detail));
     }
     for(const w of (data.warnings || [])) box.appendChild(el('p','co-warn', '⚠ ' + w));
   }
@@ -16061,11 +16097,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const spin = el('span','co-spin');
     btn.insertBefore(spin, lbl);
     try {
-      const { data } = await apiGenerate(orden, cert);
-      renderResult(data);
+      const { status, data } = await apiGenerate(orden, cert); // no tira: siempre {status, data}
+      renderResult(data, status);
       loadHist();
-    } catch (e) {
-      renderResult({ estado:'error', error: e.message });
     } finally {
       _busy = false;
       btn.disabled = false;

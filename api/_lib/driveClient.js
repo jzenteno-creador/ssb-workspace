@@ -14,9 +14,10 @@ const SCOPE = 'https://www.googleapis.com/auth/drive';
 let _tokenCache = { token: null, exp: 0 };
 
 export class DriveError extends Error {
-  constructor(code, message) {
+  constructor(code, message, detail) {
     super(message);
     this.code = code;
+    this.detail = detail || null; // técnico: status + cuerpo del servicio que rechazó
   }
 }
 
@@ -40,7 +41,12 @@ async function getAccessToken(env) {
   try {
     signature = b64url(crypto.createSign('RSA-SHA256').update(input).sign(key));
   } catch (e) {
-    throw new DriveError('DRIVE_AUTH', `Clave privada del service account inválida: ${e.message}`);
+    // Key malformada (típico: los \n de GOOGLE_SA_PRIVATE_KEY mal pegados en Vercel)
+    throw new DriveError(
+      'DRIVE_AUTH',
+      'Clave privada del service account inválida — revisá el pegado de GOOGLE_SA_PRIVATE_KEY (saltos \\n)',
+      `firma RS256: ${e.message}`
+    );
   }
 
   const res = await fetch(TOKEN_URL, {
@@ -53,7 +59,12 @@ async function getAccessToken(env) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.access_token)
-    throw new DriveError('DRIVE_AUTH', `Token OAuth rechazado (${res.status}): ${data.error_description || data.error || 'sin detalle'}`);
+    // Key bien formada pero rechazada por Google (SA borrado, key revocada, reloj, iss equivocado)
+    throw new DriveError(
+      'DRIVE_AUTH',
+      'Google rechazó el token del service account',
+      `token endpoint ${res.status}: ${data.error || 'sin código'} — ${data.error_description || 'sin descripción'}`
+    );
   _tokenCache = { token: data.access_token, exp: now + (data.expires_in || 3600) };
   return _tokenCache.token;
 }
@@ -66,7 +77,11 @@ async function driveFetch(env, path, opts = {}, errCode = 'DRIVE_HTTP') {
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new DriveError(errCode, `Drive API ${res.status} en ${path.split('?')[0]}: ${body.slice(0, 300)}`);
+    // 403/404 acá casi siempre = el SA no tiene acceso a la carpeta/Shared Drive
+    const hint = res.status === 403 || res.status === 404
+      ? ' — ¿las carpetas CO ZIP/CO PDF están compartidas con el email del service account?'
+      : '';
+    throw new DriveError(errCode, `Drive API ${res.status}${hint}`, `${res.status} en ${path.split('?')[0]}: ${body.slice(0, 300)}`);
   }
   return res;
 }
