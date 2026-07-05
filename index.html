@@ -2676,6 +2676,23 @@ body.light #panel-mailing{
 #panel-mailing .mail-sla.amar{color:var(--mail-test);background:var(--mail-test-bg)}
 #panel-mailing .mail-sla.rojo{color:var(--mail-warn);background:var(--mail-warn-bg)}
 #panel-mailing .mail-sla.fut{color:var(--mail-accent);background:var(--mail-accent-soft)}
+/* ── Chip-bar de documentos + viewer Drive (A-c5) ── */
+#panel-mailing .mail-docbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#panel-mailing .mail-docchip{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--mail-line-strong);background:var(--mail-surface-2);color:var(--mail-ink);cursor:pointer;max-width:340px}
+#panel-mailing .mail-docchip .ic{width:14px;height:14px;color:var(--mail-accent);flex:none}
+#panel-mailing .mail-docchip-lbl{font-weight:800;color:var(--mail-accent);flex:none}
+#panel-mailing .mail-docchip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mail-ink-soft)}
+#panel-mailing .mail-docchip:hover{border-color:var(--mail-accent);background:var(--mail-accent-soft)}
+#panel-mailing .mail-docchip:disabled{cursor:default;opacity:.7}
+#panel-mailing .mail-docchip:disabled:hover{border-color:var(--mail-line-strong);background:var(--mail-surface-2)}
+#panel-mailing .mail-docchip.on{border-color:var(--mail-accent);background:var(--mail-accent-soft)}
+#panel-mailing .mail-docchip--miss{border-style:dashed;border-color:var(--mail-warn-bd);background:var(--mail-warn-bg);color:var(--mail-warn);cursor:default}
+#panel-mailing .mail-docchip--miss .ic{color:var(--mail-warn)}
+#panel-mailing .mail-docview{margin-top:10px;border:1px solid var(--mail-line);border-radius:10px;overflow:hidden}
+#panel-mailing .mail-docview-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--mail-surface-2);border-bottom:1px solid var(--mail-line);font-size:12px;font-weight:700;color:var(--mail-ink-soft)}
+#panel-mailing .mail-docview-head .ic{width:14px;height:14px;flex:none}
+#panel-mailing .mail-docview-head button{margin-left:auto}
+#panel-mailing .mail-docframe{width:100%;height:70vh;border:none;background:#fff;display:block}
 @media (max-width:900px){
   #panel-mailing .mail-layout{grid-template-columns:1fr}
   #panel-mailing .mail-master{max-height:45vh}
@@ -15306,6 +15323,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _previewError = null; // último fallo de preview (render en card + Reintentar)
   let _pvTimer = null;
   function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer = setTimeout(runPreview, 400); }
+  // ── Chip-bar de docs (A-c5): PDF abierto en el viewer embebido de Drive ──
+  let _docOpen = null; // { fid, label } | null
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -15367,6 +15386,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
+  // Labels humanos de documentos (chips; el copy largo del mail vive en el workflow)
+  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT' };
   function badge(status, testMode){
     const b = el('span', 'mail-badge ' + (BADGE_CLS[status] || 'pend'));
     b.appendChild(el('span','mail-dot'));
@@ -15714,12 +15735,57 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
     }
 
+    // A-c5: chip-bar de documentos — el checklist visual de John: labels humanos +
+    // filenames reales, separado del cuerpo del mail. Con file_id (lo expone el
+    // workflow desde Batch B) el chip abre el PDF embebido de Drive; sin file_id
+    // queda no-clickeable — degradación que se activa sola al mergear B.
     const att = p.attachments || { found:[], missing:[] };
-    const attLine = el('p','mail-status-line');
-    attLine.textContent = 'Adjuntos: ' + (att.found.length ? att.found.map(f => f.name).join(' · ') : 'ninguno');
-    attLine.style.marginTop = '10px';
-    c.appendChild(attLine);
-    if(att.missing && att.missing.length) c.appendChild(el('div','mail-alert','Faltan en Drive: ' + att.missing.join(', ')));
+    const bar = el('div','mail-docbar');
+    for(const f of att.found){
+      const fid = (f.file_id && /^[\w-]+$/.test(String(f.file_id))) ? String(f.file_id) : null;
+      const ch = el('button','mail-docchip' + (fid && _docOpen && _docOpen.fid === fid ? ' on' : ''));
+      ch.type = 'button';
+      ch.appendChild(svgUse('#i-file-text'));
+      ch.appendChild(el('span','mail-docchip-lbl', DOC_LABELS[f.tipo] || f.tipo || 'DOC'));
+      ch.appendChild(el('span','mail-docchip-name', f.name || '—'));
+      if(fid){
+        ch.dataset.act = 'doc-open'; ch.dataset.fid = fid;
+        ch.dataset.dlabel = (DOC_LABELS[f.tipo] || f.tipo || 'Doc') + ' · ' + (f.name || '');
+        ch.title = 'Ver el PDF (Drive embebido)';
+      } else {
+        ch.disabled = true;
+        ch.title = 'Vista embebida disponible cuando el workflow exponga el file_id (Batch B)';
+      }
+      bar.appendChild(ch);
+    }
+    for(const mtipo of (att.missing || [])){
+      const ch = el('span','mail-docchip mail-docchip--miss');
+      ch.appendChild(svgUse('#i-alert'));
+      ch.appendChild(el('span','mail-docchip-lbl','Falta'));
+      ch.appendChild(el('span','mail-docchip-name', DOC_LABELS[mtipo] || mtipo));
+      ch.title = 'No está en Drive todavía';
+      bar.appendChild(ch);
+    }
+    if(!att.found.length && !(att.missing || []).length) bar.appendChild(el('span','mail-status-line','Adjuntos: ninguno'));
+    c.appendChild(bar);
+    if(_docOpen){
+      const dv = el('div','mail-docview');
+      const dh = el('div','mail-docview-head');
+      dh.appendChild(svgUse('#i-file-text'));
+      dh.appendChild(document.createTextNode(_docOpen.label + ' — embebido desde Google Drive (requiere sesión Google con acceso al Shared Drive).'));
+      const x = el('button','mail-btn','Cerrar'); x.type = 'button'; x.dataset.act = 'doc-close';
+      dh.appendChild(x);
+      dv.appendChild(dh);
+      const fr = document.createElement('iframe');
+      fr.className = 'mail-docframe';
+      // SIN sandbox: el preview de Drive necesita sus cookies/scripts (mismo
+      // criterio que el viewer del Control BL). fid validado /^[\w-]+$/.
+      fr.src = 'https://drive.google.com/file/d/' + encodeURIComponent(_docOpen.fid) + '/preview';
+      fr.setAttribute('allow', 'autoplay');
+      fr.title = _docOpen.label;
+      dv.appendChild(fr);
+      c.appendChild(dv);
+    }
 
     c.appendChild(el('span','mail-lbl','ASUNTO'));
     c.appendChild(el('p','mail-status-line', (p.gmail_preview && p.gmail_preview.subject) || '—'));
@@ -15848,7 +15914,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     clearTimeout(_pvTimer); // y desarma un auto-preview agendado para la orden vieja
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
-    _preview = null; _previewError = null; _lastResult = null; _candidates = [];
+    _preview = null; _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
     window.__mailTestOff = null;
     renderMaster();
     if(!_row){ renderDetail(); return; }
@@ -15933,6 +15999,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!resp || typeof resp !== 'object' || !resp.recipients || !resp.gmail_preview)
         throw new Error(resp && (resp.error || (resp.errors || []).join(' · ')) || 'respuesta de preview inválida (sin recipients)');
       _preview = resp; _previewError = null;
+      _docOpen = null; // preview nuevo → el viewer viejo puede apuntar a un fid stale
     } catch(e){
       if(gen !== _gen || order !== _sel) return;
       // A-c4: sin alert — el fallo se renderiza en el card con "Reintentar"
@@ -16097,6 +16164,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(sum) sum.textContent = p.listas.length + ' lista(s) para confirmar · ' + p.conflictos.length + ' conflicto(s) · ' + p.errores.length + ' error(es)';
       if(p.server && p.server.error) box.appendChild(el('div','mail-alert','No se pudo confirmar el lote: ' + p.server.error));
     }
+    t.appendChild(tb);
     box.appendChild(t);
   }
 
@@ -16164,6 +16232,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       else if(act === 'atd-parse') atdParse();
       else if(act === 'atd-confirm') atdConfirm();
       else if(act === 'sent-toggle'){ _showSent = !_showSent; renderMaster(); }
+      else if(act === 'doc-open'){ _docOpen = { fid: t.dataset.fid, label: t.dataset.dlabel || 'Documento' }; renderDetail(); }
+      else if(act === 'doc-close'){ _docOpen = null; renderDetail(); }
     });
     panel.addEventListener('keydown', e => {
       if(e.key !== 'Enter') return;
