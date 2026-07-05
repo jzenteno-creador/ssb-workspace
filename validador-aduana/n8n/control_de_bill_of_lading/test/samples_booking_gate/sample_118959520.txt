@@ -1,0 +1,433 @@
+Consolidated Booking Advice Page 1 of4
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048359051
+Document Date
+06/29/2026
+Ship-to / Consignee 20123531389
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Terms of Delivery
+CPT CALLAO PORT
+Carrier
+MAERSK A/S
+ESPLANADEN 50
+DK-1263 COPENHAGEN
+Carrier VAT number
+'DK53139655
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+08/10/2026
+Sold-to
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Customer Tax ID Number
+20123531389
+Port of Discharge
+Callao Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Order Number: 0118959520
+Customer Order Number: 4600003298/6P
+CONTAINERS ON BOARD : 02
+Deliver-To
+CALLAO PORT
+CALLAO PORT
+07021 CALLAO
+PERU
+Document Recip Orig
+ROSA GARCIA
+E-Mail:rgarcia@tdm.com.pe
+ROSA GARCIA
+URB HUERTOS DE VILLA CHORRILLO
+AV ALAMEDA LOS HORIZONTES 905
+003 LIMA
+PERU
+Document Recip Copy2
+PABLO CULQUE
+E-Mail:PCULQUE@TDM.COM.PE
+Document Recip Copy3
+MARY CHILLCCE
+E-Mail:MCHILLCCE@TDM.COM.PE
+Document Recip Copy4
+DANIEL CARRILLO
+E-Mail:DCARRILLO@TDM.COM.PE
+Notify Party
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+E-Mail:ASANCHEZ@TDM.COM.PE
+Tax ID:20123531389
+13A Bill of Lading Type
+SEAWAYBILL
+13B Transport Document
+RECEIVED FOR SHIPMENT
+13B3 Ocean Freight
+PREPAID
+13C Release Point
+RELEASE B/L AS SEAWAYBILL
+13F Miscellaneous Statements
+INCLUDE NUMBER OF PALLETS AND BAGS IN B/L AND PACKING LIST.
+INCLUDE PO NUMBER ON THE B/L REFERENCE BOX
+14D Insurance and Freight on Invoice
+Display Freight on Invoice
+15 Documentation
+Send the following documentation as soon as the ship is dispatched
+Invoice without copy mark
+Packing list
+Certificate of origin (if apply)
+
+Consolidated Booking Advice Page 2 of4
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048359051
+Document Date
+06/29/2026
+Ship-to / Consignee 20123531389
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Terms of Delivery
+CPT CALLAO PORT
+Carrier
+MAERSK A/S
+ESPLANADEN 50
+DK-1263 COPENHAGEN
+Carrier VAT number
+'DK53139655
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+08/10/2026
+Sold-to
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Customer Tax ID Number
+20123531389
+Port of Discharge
+Callao Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Certificate of analysis
+DOCS TO PARTNERS VIA EMAIL
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+MAGU5132880 831987015 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C100Q5C215
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374344 Polyethylene NG 6895 Medium Density 25 KG Bags 60 Bags
+on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 343970
+Material Group: 13111000
+MRSU6496234 831987032 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+960 BAG / C100Q6P407
+Country of Origin : Argentina
+Gross Weight 24,480.000 KG
+Net Weight 24,000.000 KG
+Volume 40,464.000 CD3
+120 BAG / C100Q6P408
+Country of Origin : Argentina
+Gross Weight 3,060.000 KG
+Net Weight 3,000.000 KG
+Volume 5,058.000 CD3
+00000374344 Polyethylene NG 6895 Medium Density 25 KG Bags 60 Bags
+on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 343947
+Material Group: 13111000
+Total Gross weight:
+Total Net weight:
+Total Volume:
+55,080.000 KG
+54,000.000 KG
+91,044.000 CD3
+Piece Count : 2,160.000 BAG
+PHS Number and Description 000000527065 : PHS - P&SP - Gas Phase PE
+00000374344 : Polyethylene NG 6895 Medium Density 25 KG Bags 60 Bags on a Pallet
+International Maritime
+Requirement :PLX - Freight container contains plastic pellets in accordance with
+paragraphs 1.1 and 1.2 of IMO Circular MEPC.1/Circ.909 and is subject to
+proper stowage and securement under deck wherever reasonably
+practicable, or inboard in sheltered areas of exposed decks (in
+accordance with paragraph 1.3 of that Circular).
+In Transit
+In Transit Temperature : No In-Transit Temp Requirements
+In Transit Comments : Check for moisture/droplets inside the liner
+Loading
+Sample size :Samples from inbound hopper cars at terminals should be retained until 60 days has elapsed after release of the hopper car
+, Samples from truck shipments should be retained for 4 months plus the current month or if customer use dictates shorter time frame
+Samples from bag shipments should be retained for 11 months from the
+time packaged plus the current month or if customer use dictates shorter
+time frame.
+Sampling Location :Outplant/Terminal Samples for both truck and railcar retains should be at least one pound, minimum.
+, Whirl-Paks /Small Ziploc for retains
+Sampling Method :Samples will only be pulled by sourcing plant and/or terminal personnel
+that are trained in sample pulling. Driver samples are not acceptable
+unless driver self-loading. There will be no eating and drinking when
+pulling samples.
+Sample retention time :Retains can be disposed of through Dow approved waste handling
+facilities. One can also arrange product pickup by a PE recycler like
+Poly America. Contact Dow to assist in setting this up.
+Loading Notes: : All loading procedures and equipment should meet minimum Dow Guidelines
+including applicable Safety and Loss Prevention Guidelines. Some
+recommendations for procedures would include the following:
+a. Truck should be chocked during loading operation.
+b. Driver should be out of vehicle during loading operation with
+emergency brake on.
+
+Consolidated Booking Advice Page 3 of4
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048359051
+Document Date
+06/29/2026
+Ship-to / Consignee 20123531389
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Terms of Delivery
+CPT CALLAO PORT
+Carrier
+MAERSK A/S
+ESPLANADEN 50
+DK-1263 COPENHAGEN
+Carrier VAT number
+'DK53139655
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+08/10/2026
+Sold-to
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Customer Tax ID Number
+20123531389
+Port of Discharge
+Callao Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+c. Driver must have standard PPE.
+d. Driver must be qualified to operate all equipment associated with the
+Hopper Truck.
+e. Use of leather gloves required to protect against pinch points
+f. Hopper trucks should be accessed only if proper fall protection
+tie-off or carriage is in place (Plants) or training on three points of
+contact has been documented (Outplants/Terminals).
+g. Driver/Loader cannot break the plane of the manway with the intent of
+entry
+Loading Procedure Comments : Average Testing Time - 2 hours; 4 hours
+Loading
+Package Types the Product Uses :Bags
+, Box
+, FIBC
+Unloading
+Carrier Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Customer Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Unloading
+Carrier Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Customer Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Regulatory and Special Handling Instruct
+React Chemis / Polymeriz Event :Reference Safety Data Sheet (SDS)
+General Regulatory Notes :Reference Safety Data Sheet (SDS)
+Safe Handling Instructions : Reference Safety Data Sheet (SDS)
+Product Handling Training Required : Reference Safety Data Sheet (SDS)
+Product Specific Notes/ Warni : Reference Safety Data Sheet (SDS)
+Owning Company
+Owning Company :THE DOW CHEMICAL COMPANY
+Equipment
+State of the Container :Clean, Dry and Odor Free
+, See Prior Content Restrictions
+Equipment Capability :Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Acceptable Pneumatic Trans Sys :Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Acceptable Material of Constru :Stainless Steel
+, Aluminum
+Gasket Material of Contruction :White neoprene and sized exactly for the fittings
+Hose Material of Construction :Minimum hose length must be 10 meters (2 X 5 meters) or 20 Ft, diameter 4”
+, New hoses should be inspected thoroughly and cleaned thoroughly before being put into service
+Fitting type/size :Stainless steel self locking groove cam lock fitting are required.
+Equipment Notes : US/CAN - hose construction should be of winded, stainless steel. Note:
+Europe does use white neoprene lined rubber hoses in some plastics
+pellet service.
+Equipment
+
+Consolidated Booking Advice Page 4 of4
+Shipped From
+PBB Polisur S.R.L. Site Logistics
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048359051
+Document Date
+06/29/2026
+Ship-to / Consignee 20123531389
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Terms of Delivery
+CPT CALLAO PORT
+Carrier
+MAERSK A/S
+ESPLANADEN 50
+DK-1263 COPENHAGEN
+Carrier VAT number
+'DK53139655
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+08/10/2026
+Sold-to
+TECNOLOGIA DE MATERIALES SA
+AV ALAMEDA LOS HORIZONTES 905
+URB HUERTOS DE VILLA CHORRILLOS
+003 LIMA
+PERU
+Customer Tax ID Number
+20123531389
+Port of Discharge
+Callao Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Acceptable Packaging Covering: :Shrink Wrap/Plastic Wrapping
+State of the Container :Flooring that is free of debris and contains no soft areas or holes
+, Doors that open and close without difficulty; Pins that are in place
+, Containers must be covered in transport. No open trailer allowed.
+, Clean, Dry and Odor Free
+, Watertight; Free of Debris; No Flatbed Allowed
+, Food Compliant
+, Inspect for raised screws / no metal sticking up on trailer floor - Shovel Test
+Temperature Control Equip Requ :No
+General
+Deliver Bulk Granules Intro :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+General
+Deliver Package Introduction :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+Road - Carrier Notification : Protect from moisture.
+MPC - Carrier Notification : Protect from moisture.
+(TM) Trademark of The Dow Chemical Company ("Dow") or an affiliated company of Dow
+Order / Item # Country of
+Origin 
+Commodity Code Transport Hazard Classification
+118959520
+10 
+Argentina Export: 39011030000X
+Import: 3901100000 
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Wood Packing Materials External Carrier Notes Shipping Marks
+June 17 2026
+BOOKING NUMBER:272246551
+ETD PORT OF LOAD: 20260706
+CUTOFF AT ORIGIN: 20260703
+ETA DESTINATION: 20260807
+NOTES: MAERKS - 299593739-
+EXPOARPBB@SSBINT.COM
+In case of emergency 24/7, or in case of spill, accident, injury, security incident, theft, chemical mixture or reaction, unexpected temperature
+increase, call:
+Argentina : 54 3476-43-8600
+Peru : (57) 60 5 6688027
+CONTACT: Andre Angeles ASCHREIBERANGELES@DOW.COM
+Ph.: Fax:

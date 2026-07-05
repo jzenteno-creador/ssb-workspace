@@ -1,0 +1,35 @@
+-- ============================================================================
+-- before.sql — estado ANTES de la migración Mailing MVP · T0
+-- Proyecto xkppkzfxgtfsmfooozsm · PG 17.x · 2026-07-05 · solo documental
+-- ============================================================================
+--
+-- Verificado 2026-07-05 vía information_schema / pg_policies:
+--
+-- 1) Tablas mailing_*: NO existen.
+--      select table_name from information_schema.tables
+--       where table_schema='public' and table_name like 'mailing%';  → 0 filas
+--
+-- 2) Fuentes que el módulo consume (NO se tocan en esta migración):
+--    - public.bl_controls: 36 cols, PK id, sin UNIQUE en order_number (INSERT por
+--      corrida). RLS: SELECT anon+authenticated ("bl_controls_select_anon_auth");
+--      sin policies de escritura; n8n escribe con service_role.
+--    - public.v_bl_controls_latest: existe (distinct on (order_number) ... order by
+--      created_at desc, security_invoker=on, grant select anon+authenticated).
+--    - public.schedules_master: 25 cols; UNIQUE (naviera,buque,puerto_origen,
+--      puerto_destino,mes_etd) "schedules_master_unico"; etd/eta tipo date.
+--      RLS abierta a public en SELECT/INSERT/UPDATE (deuda pre-existente,
+--      fuera de scope de esta migración — señalada en el PLAN).
+--
+-- 3) Datos de referencia del análisis de match (2026-07-05, 9 órdenes reales
+--    en bl_controls vs schedules_master):
+--    - MAERSK: 2/2 match T1 exacto (upper(buque) == vessel||' '||voyage + pol/pod).
+--    - LOG-IN: 0/7 en T1 (voyage BL "214N"/"496N" vs schedule "214"/"496"/códigos
+--      CMA "0YO3JN1RCN"); 7/7 resolubles por T2 (vessel prefix + pod + dígitos de
+--      voyage iguales: existe "MERCOSUL ITAJAI 214" LOG IN activo+disponible).
+--    - 9/9: el vessel del BL existe en schedules con el pod correcto ⇒ el BL es
+--      fuente confiable de IDENTIDAD buque+viaje; el formato se reconcilia por tiers.
+--    - Calidad de datos en schedules_master.buque: valores con '\n' inicial y
+--      dobles espacios ("\nMAERSK FREEPORT  543N"); mismo buque físico bajo dos
+--      navieras ("LOG IN" y "CMA CGM/MERCOSUL LINE") con formatos de voyage
+--      distintos ⇒ la normalización del matcher DEBE colapsar whitespace.
+-- ============================================================================

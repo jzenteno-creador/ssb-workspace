@@ -2511,6 +2511,136 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 @keyframes cbl-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#panel-control-bl .cbl-spinner{animation:none}}
 </style>
+<style id="mailing-styles">
+/* ═══════════ Mailing — estilos scoped (T3, patrón isla #cbl-styles) ═══════════ */
+/* Todo bajo #panel-mailing, clases mail-*. DARK-AWARE (T3.1, a diferencia del CBL
+   que es papel constante — a propósito): en dark las vars locales referencian los
+   tokens de la app; body.light re-mapea a los valores papel aprobados en T3 (light
+   queda pixel-idéntico). Reusa el MISMO mecanismo body.light — sin segundo tema. */
+#panel-mailing{
+  --mail-paper:var(--bg); --mail-surface:#1e293b; --mail-surface-2:#161e2b;
+  --mail-ink:var(--text); --mail-ink-soft:var(--muted); --mail-ink-faint:#6b7488;
+  --mail-line:rgba(255,255,255,.08); --mail-line-strong:rgba(255,255,255,.16);
+  --mail-accent:var(--blue); --mail-accent-soft:var(--blue-lt);
+  --mail-ok:var(--green); --mail-ok-bg:var(--green-bg); --mail-ok-bd:var(--green-bd);
+  --mail-warn:var(--orange); --mail-warn-bg:var(--orange-bg); --mail-warn-bd:var(--orange-bd);
+  --mail-miss:var(--muted); --mail-miss-bg:#141925;
+  --mail-test:var(--amber); --mail-test-bg:var(--amber-bg); --mail-test-bd:var(--amber-bd);
+  --mail-shadow:var(--shadow);
+}
+body.light #panel-mailing{
+  --mail-paper:#F7F6F2; --mail-surface:#FFFFFF; --mail-surface-2:#FBFAF7;
+  --mail-ink:#1C1B19; --mail-ink-soft:#6B6863; --mail-ink-faint:#9C988F;
+  --mail-line:#E7E4DD; --mail-line-strong:#D9D5CC;
+  --mail-accent:#1F5FAE; --mail-accent-soft:#EAF0F8;
+  --mail-ok:#3F7A1E; --mail-ok-bg:#EAF3DE; --mail-ok-bd:#CFE3BD;
+  --mail-warn:#C2410C; --mail-warn-bg:#FBEEDB; --mail-warn-bd:#ECC79A;
+  --mail-miss:#8a897f; --mail-miss-bg:#f0eee8;
+  --mail-test:#7a5d00; --mail-test-bg:#fff3cd; --mail-test-bd:#e0c860;
+  --mail-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+}
+#panel-mailing .mail-root{background:var(--mail-paper);color:var(--mail-ink);font-family:var(--font);font-size:14px;line-height:1.5;border:1px solid var(--mail-line);border-radius:14px;padding:20px 22px 28px;-webkit-font-smoothing:antialiased}
+#panel-mailing .mail-root *{box-sizing:border-box}
+#panel-mailing .mail-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+#panel-mailing .mail-title{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+#panel-mailing .mail-sub{font-size:13px;color:var(--mail-ink-soft);margin:4px 0 0;line-height:1.5}
+#panel-mailing .mail-search-field{display:flex;align-items:center;gap:8px;background:var(--mail-surface);border:1px solid var(--mail-line-strong);border-radius:11px;padding:0 12px;min-width:300px}
+#panel-mailing .mail-search-field .ic{width:16px;height:16px;color:var(--mail-ink-faint)}
+#panel-mailing .mail-search-input{flex:1;border:none;background:none;outline:none;font-family:var(--font);font-size:13.5px;color:var(--mail-ink);padding:10px 0}
+#panel-mailing .mail-search-input::placeholder{color:var(--mail-ink-faint)}
+#panel-mailing .mail-filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+#panel-mailing .mail-flabel{font-size:12px;color:var(--mail-ink-faint);font-weight:600}
+#panel-mailing .mail-fchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink-soft);cursor:pointer}
+#panel-mailing .mail-fchip--on{border-color:var(--mail-accent);background:var(--mail-accent-soft);color:var(--mail-accent)}
+#panel-mailing .mail-summary{font-size:12px;color:var(--mail-ink-faint);margin-left:auto}
+#panel-mailing .mail-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+#panel-mailing .mail-master{background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);overflow:hidden;max-height:72vh;overflow-y:auto}
+#panel-mailing .mail-item{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--mail-line);padding:12px 14px;cursor:pointer;font-family:var(--font)}
+#panel-mailing .mail-item:hover{background:var(--mail-surface-2)}
+#panel-mailing .mail-item.sel{background:var(--mail-accent-soft);box-shadow:inset 3px 0 0 var(--mail-accent)}
+#panel-mailing .mail-item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#panel-mailing .mail-item-order{font-weight:800;font-size:13.5px;color:var(--mail-ink)}
+#panel-mailing .mail-item-cli{font-size:12px;color:var(--mail-ink-soft);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-mailing .mail-item-meta{font-size:11.5px;color:var(--mail-ink-faint);margin-top:3px}
+#panel-mailing .mail-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+#panel-mailing .mail-badge .mail-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+#panel-mailing .mail-badge.pend{color:var(--mail-miss);background:var(--mail-miss-bg)}
+#panel-mailing .mail-badge.listo{color:var(--mail-accent);background:var(--mail-accent-soft)}
+#panel-mailing .mail-badge.env{color:var(--mail-ok);background:var(--mail-ok-bg)}
+#panel-mailing .mail-badge.err{color:var(--mail-warn);background:var(--mail-warn-bg)}
+#panel-mailing .mail-badge.tier{color:var(--mail-ok);background:var(--mail-ok-bg);border:1px solid var(--mail-ok-bd)}
+#panel-mailing .mail-badge.tier-warn{color:var(--mail-warn);background:var(--mail-warn-bg);border:1px solid var(--mail-warn-bd)}
+#panel-mailing .mail-badge.test{color:var(--mail-test);background:var(--mail-test-bg);border:1px solid var(--mail-test-bd)}
+#panel-mailing .mail-detail{min-width:0}
+#panel-mailing .mail-card{background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);padding:16px 18px;margin-bottom:14px}
+#panel-mailing .mail-card h3{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mail-ink-soft)}
+#panel-mailing .mail-meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 18px}
+#panel-mailing .mail-meta-grid dt{font-size:11px;color:var(--mail-ink-faint);font-weight:600;margin:0}
+#panel-mailing .mail-meta-grid dd{font-size:13px;font-weight:700;margin:1px 0 0;color:var(--mail-ink)}
+#panel-mailing .mail-note{font-size:11.5px;color:var(--mail-ink-faint);margin:8px 0 0}
+#panel-mailing .mail-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+#panel-mailing .mail-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:var(--mail-surface-2);border:1px solid var(--mail-line-strong);border-radius:999px;padding:4px 6px 4px 10px;color:var(--mail-ink)}
+#panel-mailing .mail-chip.nuevo{border-style:dashed;border-color:var(--mail-accent);background:var(--mail-accent-soft);color:var(--mail-ink)}
+#panel-mailing .mail-chip.blq{border-color:var(--mail-warn-bd);background:var(--mail-warn-bg);color:var(--mail-warn)}
+#panel-mailing .mail-chip.blq .mail-chip-txt{text-decoration:line-through}
+#panel-mailing .mail-chip button{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:none;border-radius:50%;background:var(--mail-line);color:var(--mail-ink-soft);cursor:pointer;font-size:11px;line-height:1;padding:0}
+#panel-mailing .mail-chip button:hover{background:var(--mail-warn-bg);color:var(--mail-warn)}
+#panel-mailing .mail-chip .mail-mini{width:auto;height:auto;border-radius:6px;font-size:10px;font-weight:700;padding:2px 7px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink-soft)}
+#panel-mailing .mail-chip .mail-mini:hover{background:var(--mail-accent-soft);color:var(--mail-accent);border-color:var(--mail-accent)}
+#panel-mailing .mail-chip .mail-mini.blq:hover{background:var(--mail-warn-bg);color:var(--mail-warn);border-color:var(--mail-warn-bd)}
+#panel-mailing .mail-sendlists{margin-top:10px;border:1px solid var(--mail-line);border-radius:10px;overflow:hidden}
+#panel-mailing .mail-sendlists>div{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--mail-line);font-size:12.5px;align-items:baseline}
+#panel-mailing .mail-sendlists>div:last-child{border-bottom:none}
+#panel-mailing .mail-sendlists .k{flex:0 0 210px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+#panel-mailing .mail-sendlists .k.van{color:var(--mail-ok)}
+#panel-mailing .mail-sendlists .k.nue{color:var(--mail-accent)}
+#panel-mailing .mail-sendlists .k.blq{color:var(--mail-warn)}
+#panel-mailing .mail-sendlists .v{color:var(--mail-ink);min-width:0;overflow-wrap:anywhere}
+#panel-mailing .mail-addrow{display:flex;gap:8px;margin-top:8px}
+#panel-mailing .mail-addrow input{flex:1;font-family:var(--font);font-size:13px;color:var(--mail-ink);background:var(--mail-surface);border:1px solid var(--mail-line-strong);border-radius:9px;padding:7px 10px;outline:none}
+#panel-mailing .mail-addrow input:focus{border-color:var(--mail-accent)}
+#panel-mailing .mail-lbl{font-size:11px;font-weight:700;color:var(--mail-ink-faint);letter-spacing:.03em;margin:10px 0 5px;display:block}
+#panel-mailing .mail-btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:13px;font-weight:700;padding:8px 14px;border-radius:9px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink);cursor:pointer}
+#panel-mailing .mail-btn:hover{background:var(--mail-surface-2)}
+#panel-mailing .mail-btn.pri{background:var(--mail-accent);border-color:var(--mail-accent);color:#fff}
+#panel-mailing .mail-btn.pri:hover{filter:brightness(1.06)}
+#panel-mailing .mail-btn.danger{background:var(--mail-warn);border-color:var(--mail-warn);color:#fff}
+#panel-mailing .mail-btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+#panel-mailing .mail-btnrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+#panel-mailing .mail-status-line{font-size:12px;color:var(--mail-ink-soft)}
+#panel-mailing .mail-alert{border:1px solid var(--mail-warn-bd);background:var(--mail-warn-bg);color:var(--mail-warn);border-radius:9px;padding:8px 12px;font-size:12.5px;margin-top:10px}
+#panel-mailing .mail-okbox{border:1px solid var(--mail-ok-bd);background:var(--mail-ok-bg);color:var(--mail-ok);border-radius:9px;padding:8px 12px;font-size:12.5px;margin-top:10px}
+#panel-mailing .mail-testbox{border:1px solid var(--mail-test-bd);background:var(--mail-test-bg);color:var(--mail-test);border-radius:9px;padding:8px 12px;font-size:12.5px}
+#panel-mailing .mail-frame{width:100%;height:460px;border:1px solid var(--mail-line);border-radius:10px;background:#fff;margin-top:10px}
+#panel-mailing .mail-picker{margin-top:10px;border:1px solid var(--mail-line);border-radius:10px;overflow:hidden}
+#panel-mailing .mail-picker label{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--mail-line);font-size:12.5px;cursor:pointer}
+#panel-mailing .mail-picker label:last-child{border-bottom:none}
+#panel-mailing .mail-picker label:hover{background:var(--mail-surface-2)}
+#panel-mailing .mail-picker b{font-size:12.5px}
+#panel-mailing .mail-toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;user-select:none}
+#panel-mailing .mail-toggle input{width:36px;height:20px;appearance:none;background:var(--mail-line-strong);border-radius:999px;position:relative;cursor:pointer;outline:none;transition:background .15s;margin:0}
+#panel-mailing .mail-toggle input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+#panel-mailing .mail-toggle input:checked{background:var(--mail-test-bd)}
+#panel-mailing .mail-toggle input:checked::after{left:18px}
+#panel-mailing .mail-toggle input:disabled{opacity:.6;cursor:not-allowed}
+#panel-mailing .mail-hist{width:100%;border-collapse:collapse;font-size:12px}
+#panel-mailing .mail-hist th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mail-ink-faint);padding:6px 8px;border-bottom:1px solid var(--mail-line-strong)}
+#panel-mailing .mail-hist td{padding:7px 8px;border-bottom:1px solid var(--mail-line);color:var(--mail-ink);vertical-align:top}
+#panel-mailing .mail-hist td.sub{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mail-ink-soft)}
+#panel-mailing .mail-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 30px;min-height:380px;background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px}
+#panel-mailing .mail-state .ic{width:34px;height:34px;color:var(--mail-line-strong);margin-bottom:14px}
+#panel-mailing .mail-state h3{margin:0 0 6px;font-size:15px;font-weight:700}
+#panel-mailing .mail-state p{margin:0;color:var(--mail-ink-soft);max-width:340px;font-size:13px;line-height:1.55}
+#panel-mailing .mail-spinner{width:26px;height:26px;border:3px solid var(--mail-line);border-top-color:var(--mail-accent);border-radius:50%;animation:mail-spin .7s linear infinite;margin:20px auto}
+@keyframes mail-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#panel-mailing .mail-spinner{animation:none}#panel-mailing .mail-toggle input,#panel-mailing .mail-toggle input::after{transition:none}}
+@media (max-width:900px){
+  #panel-mailing .mail-layout{grid-template-columns:1fr}
+  #panel-mailing .mail-master{max-height:45vh}
+  #panel-mailing .mail-search-field{min-width:0;width:100%}
+  #panel-mailing .mail-root{padding:14px 12px 20px}
+}
+</style>
 </head>
 <body>
 
@@ -2551,6 +2681,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
     <symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
     <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
@@ -2715,6 +2846,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
   <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')" aria-label="SSB Copilot"><svg class="ic" aria-hidden="true"><use href="#i-bot"/></svg><span class="tab-lbl">SSB Copilot</span></button>
   <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
   <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+  <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
   <div class="rail-spacer" aria-hidden="true"></div>
   <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
 </nav>
@@ -3817,6 +3949,47 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
 </div>
 <!-- ═══════════ FIN TAB: CONTROL BL ═══════════ -->
 
+<!-- ═══════════ TAB: MAILING — panel (T3) ═══════════ -->
+<div class="tab-panel" id="panel-mailing">
+  <div class="mail-root">
+
+    <header class="mail-head">
+      <div>
+        <h1 class="mail-title">Mailing</h1>
+        <p class="mail-sub">Envío de documentación de embarque al cliente — directorio, preview y seguimiento. ETD/ETA se resuelven en vivo contra el schedule en cada preview.</p>
+      </div>
+      <div class="mail-search" role="search">
+        <div class="mail-search-field">
+          <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+          <input class="mail-search-input" id="mail-q" type="text" autocomplete="off" placeholder="Filtrar por orden, cliente, buque…">
+        </div>
+      </div>
+    </header>
+
+    <div class="mail-filterbar" id="mail-filterbar">
+      <span class="mail-flabel">Estado:</span>
+      <button class="mail-fchip" data-mail-f="PENDIENTE" type="button">Pendiente</button>
+      <button class="mail-fchip" data-mail-f="LISTO" type="button">Listo</button>
+      <button class="mail-fchip" data-mail-f="ENVIADO" type="button">Enviado</button>
+      <button class="mail-fchip" data-mail-f="ERROR" type="button">Error</button>
+      <span class="mail-summary" id="mail-summary"></span>
+    </div>
+
+    <div class="mail-layout">
+      <div class="mail-master" id="mail-master"></div>
+      <div class="mail-detail" id="mail-detail">
+        <div class="mail-state">
+          <svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>
+          <h3>Seleccioná una orden</h3>
+          <p>Elegí una orden de la lista para preparar el envío de documentación al cliente.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: MAILING ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -3940,7 +4113,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -3956,6 +4129,7 @@ function switchTab(name) {
   else if(window.vacOnLeaveTab){ window.vacOnLeaveTab(); }
   if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
+  if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
 }
 
 // ── RAIL: pin (expandir/colapsar) + drawer móvil ──
@@ -15026,6 +15200,677 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         if(_cblFilters.has(f)){ _cblFilters.delete(f); chip.classList.remove('cbl-fchip--on'); }
         else { _cblFilters.add(f); chip.classList.add('cbl-fchip--on'); }
         cblAfterDataChange();
+      });
+    }
+  })();
+})();
+</script>
+
+<!-- ═══════════ TAB: MAILING — lógica (T3) ═══════════ -->
+<script>
+/* ═══════════ Mailing — solapa (T3) ═══════════ */
+/* Lecturas: window.__ssb.supa (RLS SELECT authenticated; anon no ve nada — PII).
+   Escrituras: SOLO vía /api/mailing (Bearer JWT validado server-side) → webhook n8n
+   "Mailing Envío Documentación". Render XSS-safe: createElement + textContent en todo
+   dato dinámico; body_html SOLO dentro de <iframe sandbox> (sin scripts, sin same-origin). */
+(function(){
+  let _orders = [];
+  let _sel = null;        // order_number seleccionado
+  let _row = null;        // fila mailing_orders seleccionada
+  let _contact = null;    // fila mailing_contacts del par (ship,sold)
+  let _preview = null;    // última respuesta action=preview
+  let _to = [], _cc = []; // CONFIRMADOS en edición (enviables al guardar)
+  let _blocked = [];      // BLOQUEADOS en edición (exclusión dura persistente)
+  let _dirty = false;     // hay cambios de directorio sin guardar
+  // 'nuevo' NO es estado: se DERIVA en render = propuesta − (_to∪_cc) − _blocked
+  // (mismo contrato que el resolver v2 — el front nunca recalcula distinto)
+  let _candidates = [];   // picker sin-match
+  let _sends = [];        // historial mailing_sends
+  let _busy = null;       // 'preview' | 'send' | 'contacts' | 'confirm' | null
+  let _lastResult = null; // resultado del último send {ok, ...}
+  let _gen = 0;           // token de generación: invalida awaits en vuelo al cambiar de orden
+  const _filters = new Set();
+  let _q = '';
+  let _loaded = false;
+
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
+  const svgUse = (href, cls) => { const NS='http://www.w3.org/2000/svg'; const s=document.createElementNS(NS,'svg'); s.setAttribute('class',cls||'ic'); s.setAttribute('aria-hidden','true'); const u=document.createElementNS(NS,'use'); u.setAttribute('href',href); s.appendChild(u); return s; };
+  const supa = () => (window.__ssb && window.__ssb.supa) || null;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const fmtTs = ts => { if(!ts) return '—'; const d = new Date(ts); if(isNaN(d.getTime())) return '—'; const p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+  const fmtD = s => (s && /^\d{4}-\d{2}-\d{2}/.test(String(s))) ? `${String(s).slice(8,10)}/${String(s).slice(5,7)}/${String(s).slice(0,4)}` : '—';
+
+  const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
+  function badge(status, testMode){
+    const b = el('span', 'mail-badge ' + (BADGE_CLS[status] || 'pend'));
+    b.appendChild(el('span','mail-dot'));
+    b.appendChild(document.createTextNode(String(status || '—') + (status === 'ENVIADO' && testMode ? ' · TEST' : '')));
+    return b;
+  }
+
+  async function apiMailing(body){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
+    const res = await fetch('/api/mailing', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+
+  // ── data layer (reads por supa; RLS authenticated) ──
+  let _loadError = null;
+  async function fetchOrders(){
+    const s = supa(); if(!s){ _loadError = 'Cliente Supabase no inicializado.'; return []; }
+    const { data, error } = await s.from('mailing_orders').select('*').order('updated_at', { ascending:false }).limit(500);
+    if(error){
+      // RLS: mailing_* es SELECT solo-authenticated (PII) — sin sesión válida esto es esperado.
+      _loadError = /permission denied/i.test(error.message)
+        ? 'Sin acceso: la sesión expiró o no está autenticada. Recargá e ingresá de nuevo.'
+        : error.message;
+      return [];
+    }
+    _loadError = null;
+    return data || [];
+  }
+  async function fetchContact(row){
+    const s = supa(); if(!s || !row || !row.ship_to_key) return null;
+    const { data, error } = await s.from('mailing_contacts').select('*')
+      .eq('ship_to_key', row.ship_to_key).eq('sold_to_key', row.sold_to_key || '').maybeSingle();
+    if(error){ console.error('[mailing] contacts:', error.message); return null; }
+    return data || null;
+  }
+  async function fetchSends(order){
+    const s = supa(); if(!s) return [];
+    const { data, error } = await s.from('mailing_sends')
+      .select('created_at,mode,test_mode,status,subject,gmail_message_id,error,schedule_matched_by,etd,eta')
+      .eq('order_number', order).order('created_at', { ascending:false }).limit(20);
+    if(error){ console.error('[mailing] sends:', error.message); return []; }
+    return data || [];
+  }
+
+  function proposalEmails(row){
+    const ce = (row && row.contacts_extracted && typeof row.contacts_extracted === 'object') ? row.contacts_extracted : {};
+    const to = [], cc = [];
+    for(const e of (ce.partner_emails || [])) to.push(e);
+    if(ce.document_recip && ce.document_recip.email) to.push(ce.document_recip.email);
+    if(ce.notify && ce.notify.email) cc.push(ce.notify.email);
+    if(ce.shipping_recip && ce.shipping_recip.email) cc.push(ce.shipping_recip.email);
+    const clean = arr => { const seen = new Set(); const out = []; for(const e of arr){ const v = String(e||'').trim().toLowerCase(); if(EMAIL_RE.test(v) && v !== 'expoarpbb@ssbint.com' && !seen.has(v)){ seen.add(v); out.push(v); } } return out; };
+    const toC = clean(to);
+    return { to: toC, cc: clean(cc).filter(e => !toC.includes(e)) };
+  }
+
+  // ── master ──
+  function renderMaster(){
+    const box = $('mail-master'); if(!box) return;
+    box.textContent = '';
+    const q = _q.trim().toLowerCase();
+    const rows = _orders.filter(r => {
+      if(_filters.size && !_filters.has(r.status)) return false;
+      if(!q) return true;
+      return [r.order_number, r.ship_to_name, r.sold_to_name, r.vessel, r.voyage, r.booking_no, r.bl_number, r.pod]
+        .some(v => String(v || '').toLowerCase().includes(q));
+    });
+    const sum = $('mail-summary');
+    if(sum) sum.textContent = rows.length + ' de ' + _orders.length + ' órdenes';
+    if(!rows.length){
+      const st = el('div','mail-state');
+      st.appendChild(svgUse('#i-mail'));
+      st.appendChild(el('h3', null, _loadError ? 'No se pudo cargar' : (_orders.length ? 'Sin resultados' : 'Sin órdenes asentadas')));
+      st.appendChild(el('p', null, _loadError || (_orders.length ? 'Ningún asiento coincide con el filtro.' : 'Las órdenes aparecen acá cuando el Control BL corre y asienta el mailing.')));
+      box.appendChild(st);
+      return;
+    }
+    for(const r of rows){
+      const it = el('button','mail-item' + (r.order_number === _sel ? ' sel' : ''));
+      it.type = 'button'; it.dataset.act = 'sel'; it.dataset.id = r.order_number;
+      const top = el('div','mail-item-top');
+      top.appendChild(el('span','mail-item-order', r.order_number));
+      top.appendChild(badge(r.status, r.sent_test_mode));
+      it.appendChild(top);
+      it.appendChild(el('div','mail-item-cli', r.ship_to_name || '—'));
+      it.appendChild(el('div','mail-item-meta', [ [r.vessel, r.voyage].filter(Boolean).join(' '), r.pod, fmtTs(r.updated_at) ].filter(Boolean).join(' · ')));
+      box.appendChild(it);
+    }
+  }
+
+  // ── detail ──
+  function detailBox(){ return $('mail-detail'); }
+
+  function renderDetail(){
+    const box = detailBox(); if(!box) return;
+    box.textContent = '';
+    if(!_row){
+      const st = el('div','mail-state');
+      st.appendChild(svgUse('#i-mail'));
+      st.appendChild(el('h3', null, 'Seleccioná una orden'));
+      st.appendChild(el('p', null, 'Elegí una orden de la lista para preparar el envío de documentación al cliente.'));
+      box.appendChild(st);
+      return;
+    }
+    box.appendChild(cardResumen());
+    box.appendChild(cardDestinatarios());
+    box.appendChild(cardPreview());
+    box.appendChild(cardEnvio());
+    box.appendChild(cardHistorial());
+  }
+
+  function cardResumen(){
+    const c = el('div','mail-card');
+    const head = el('div','mail-item-top');
+    const h = el('h3', null, 'Orden ' + _row.order_number);
+    h.style.margin = '0';
+    head.appendChild(h);
+    head.appendChild(badge(_row.status, _row.sent_test_mode));
+    c.appendChild(head);
+    const dl = el('dl','mail-meta-grid');
+    const item = (k, v) => { const w = el('div'); w.appendChild(el('dt', null, k)); w.appendChild(el('dd', null, v || '—')); dl.appendChild(w); };
+    item('Cliente', _row.ship_to_name);
+    item('Booking', _row.booking_no);
+    item('BL', _row.bl_number);
+    item('Buque / Viaje', [_row.vessel, _row.voyage].filter(Boolean).join(' '));
+    item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → '));
+    item('Factura', _row.invoice_no);
+    dl.style.marginTop = '12px';
+    c.appendChild(dl);
+    c.appendChild(el('p','mail-note','ETD/ETA no se persisten: los resuelve el Preview en vivo contra schedules_master (activo + disponible).'));
+    return c;
+  }
+
+  // nuevos DERIVADOS (contrato resolver v2): propuesta − confirmados en edición − bloqueados
+  function nuevosDerivados(){
+    const p = proposalEmails(_row);
+    return [...p.to, ...p.cc].filter(e => !_to.includes(e) && !_cc.includes(e) && !_blocked.includes(e));
+  }
+
+  function chip(email, variant, actions){
+    const ch = el('span','mail-chip' + (variant ? ' ' + variant : ''));
+    ch.appendChild(el('span','mail-chip-txt', email));
+    for(const a of (actions || [])){
+      const b = el('button', a.cls || null, a.label);
+      b.type = 'button'; b.dataset.act = a.act; b.dataset.mail = email;
+      if(a.list) b.dataset.list = a.list;
+      b.setAttribute('aria-label', a.aria + ' ' + email);
+      b.title = a.aria;
+      ch.appendChild(b);
+    }
+    return ch;
+  }
+  function chipRow(cls){ const w = el('div','mail-chips'); if(cls) w.classList.add(cls); return w; }
+  function fillChips(wrap, chips){
+    if(!chips.length) wrap.appendChild(el('span','mail-status-line','— ninguno —'));
+    else chips.forEach(ch => wrap.appendChild(ch));
+    return wrap;
+  }
+
+  function cardDestinatarios(){
+    const c = el('div','mail-card');
+    c.appendChild(el('h3', null, 'Destinatarios — directorio del cliente'));
+
+    const status = el('p','mail-status-line');
+    if(_contact && _contact.confirmed){
+      status.textContent = 'Directorio CONFIRMADO (' + (_contact.source || 'ba') + ') — actualizado ' + fmtTs(_contact.updated_at) + (_contact.updated_by ? ' por ' + _contact.updated_by : '') + '. Habilita envío real.' + (_dirty ? ' · CAMBIOS SIN GUARDAR' : '');
+      status.style.color = _dirty ? 'var(--mail-warn)' : 'var(--mail-ok)';
+    } else {
+      status.textContent = 'Sin directorio confirmado para este cliente. Confirmá los extraídos (o cargá manuales) y guardá: hasta entonces todo envío sale en modo TEST (tercera red).' + (_dirty ? ' · CAMBIOS SIN GUARDAR' : '');
+      status.style.color = 'var(--mail-warn)';
+    }
+    c.appendChild(status);
+
+    // ── CONFIRMADOS (enviables) — si la fila existe pero confirmed=false (seed
+    // a medio curar vía API), el rótulo no debe mentir: se confirman al guardar ──
+    const lblConf = (_contact && _contact.confirmed === false && (_to.length || _cc.length)) ? ' (sin confirmar — guardar confirma)' : '';
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — PARA (to)' + lblConf));
+    c.appendChild(fillChips(chipRow(), _to.map(e => chip(e, null, [
+      { act:'chip-del', list:'to', label:'×', aria:'Quitar de PARA (vuelve a nuevo si es extraído)' }]))));
+    const addTo = el('div','mail-addrow');
+    const inTo = el('input'); inTo.id = 'mail-add-to'; inTo.type = 'email'; inTo.placeholder = 'agregar@email.com';
+    const btTo = el('button','mail-btn','Agregar'); btTo.type = 'button'; btTo.dataset.act = 'add-email'; btTo.dataset.list = 'to';
+    addTo.appendChild(inTo); addTo.appendChild(btTo);
+    c.appendChild(addTo);
+
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — CC' + lblConf));
+    c.appendChild(fillChips(chipRow(), _cc.map(e => chip(e, null, [
+      { act:'chip-del', list:'cc', label:'×', aria:'Quitar de CC' }]))));
+    const addCc = el('div','mail-addrow');
+    const inCc = el('input'); inCc.id = 'mail-add-cc'; inCc.type = 'email'; inCc.placeholder = 'agregar@email.com';
+    const btCc = el('button','mail-btn','Agregar'); btCc.type = 'button'; btCc.dataset.act = 'add-email'; btCc.dataset.list = 'cc';
+    addCc.appendChild(inCc); addCc.appendChild(btCc);
+    c.appendChild(addCc);
+
+    // ── NUEVOS (derivados: extraídos sin decidir — no enviables en real) ──
+    const nuevos = nuevosDerivados();
+    c.appendChild(el('span','mail-lbl','NUEVOS — extraídos del BA sin decidir (no van en real)'));
+    c.appendChild(fillChips(chipRow('nuevos'), nuevos.map(e => chip(e, 'nuevo', [
+      { act:'nuevo-to', label:'✓ Para', cls:'mail-mini', aria:'Confirmar en PARA' },
+      { act:'nuevo-cc', label:'CC', cls:'mail-mini', aria:'Confirmar en CC' },
+      { act:'nuevo-blq', label:'⊘', cls:'mail-mini blq', aria:'Bloquear (llegó por error)' }]))));
+
+    // ── BLOQUEADOS (exclusión dura persistente por cliente) ──
+    c.appendChild(el('span','mail-lbl','BLOQUEADOS — nunca se envían ni se re-proponen'));
+    c.appendChild(fillChips(chipRow('bloqueados'), _blocked.map(e => chip(e, 'blq', [
+      { act:'unblock', label:'Desbloquear', cls:'mail-mini', aria:'Desbloquear (vuelve a nuevo si es extraído)' }]))));
+
+    const row = el('div','mail-btnrow');
+    const save = el('button','mail-btn pri', _busy === 'contacts' ? 'Guardando…' : 'Guardar directorio (confirma)');
+    save.type = 'button'; save.dataset.act = 'save-contacts';
+    save.disabled = _busy != null || !_to.length || !_dirty;
+    row.appendChild(save);
+    const hint = el('span','mail-status-line',
+      !_to.length ? 'Para guardar necesitás al menos 1 confirmado en PARA (regla del workflow).'
+      : (_dirty ? '' : 'Sin cambios pendientes.'));
+    row.appendChild(hint);
+    c.appendChild(row);
+    return c;
+  }
+
+  function tierBadge(sch){
+    const mb = (sch && sch.matched_by) || 'sin-match';
+    const warn = mb === 'sin-match' || mb === 'T3';
+    const b = el('span','mail-badge ' + (warn ? 'tier-warn' : 'tier'));
+    b.appendChild(el('span','mail-dot'));
+    const label = { T1:'T1 · exacto', T2:'T2 · viaje reconciliado', T3:'T3 · próxima salida (débil)', override:'PICK HUMANO', 'sin-match':'SIN SCHEDULE' }[mb] || mb;
+    b.appendChild(document.createTextNode(label));
+    return b;
+  }
+
+  function cardPreview(){
+    const c = el('div','mail-card');
+    c.appendChild(el('h3', null, 'Schedule + Preview'));
+
+    const row = el('div','mail-btnrow');
+    const bt = el('button','mail-btn pri', _busy === 'preview' ? 'Generando…' : (_preview ? 'Re-generar preview' : 'Preview'));
+    bt.type = 'button'; bt.dataset.act = 'preview'; bt.disabled = _busy != null;
+    row.appendChild(bt);
+    c.appendChild(row);
+
+    if(_busy === 'preview'){ c.appendChild(el('div','mail-spinner')); return c; }
+    if(!_preview){ c.appendChild(el('p','mail-note','El preview arma el mail completo (destinatarios, schedule en vivo, adjuntos y cuerpo) sin enviar nada.')); return c; }
+
+    const p = _preview;
+    const schedRow = el('div','mail-btnrow');
+    schedRow.appendChild(tierBadge(p.schedule));
+    schedRow.appendChild(el('span','mail-status-line', 'ETD ' + fmtD(p.schedule && p.schedule.etd) + ' · ETA ' + fmtD(p.schedule && p.schedule.eta) + ((p.schedule && p.schedule.buque) ? ' · ' + p.schedule.buque : '')));
+    c.appendChild(schedRow);
+    if(p.schedule && p.schedule.note) c.appendChild(el('div','mail-alert', p.schedule.note));
+
+    if(p.schedule && p.schedule.matched_by === 'sin-match'){
+      c.appendChild(el('div','mail-alert','Sin schedule para esta orden: elegí la vela correcta y confirmala. El envío queda bloqueado hasta entonces.'));
+      _candidates = (p.schedule.candidates || []);
+      if(_candidates.length){
+        const pick = el('div','mail-picker');
+        _candidates.forEach((cand, i) => {
+          const lb = el('label');
+          const rd = el('input'); rd.type = 'radio'; rd.name = 'mail-pick'; rd.value = String(i);
+          lb.appendChild(rd);
+          const info = el('span');
+          info.appendChild(el('b', null, cand.buque + ' · ' + cand.naviera));
+          info.appendChild(document.createTextNode(' — ' + cand.puerto_origen + ' → ' + cand.puerto_destino + ' · ETD ' + fmtD(cand.etd) + ' · ETA ' + fmtD(cand.eta)));
+          lb.appendChild(info);
+          pick.appendChild(lb);
+        });
+        c.appendChild(pick);
+        const rowP = el('div','mail-btnrow');
+        const btP = el('button','mail-btn pri', _busy === 'confirm' ? 'Confirmando…' : 'Confirmar vela elegida');
+        btP.type = 'button'; btP.dataset.act = 'confirm-schedule'; btP.disabled = _busy != null;
+        rowP.appendChild(btP);
+        c.appendChild(rowP);
+      } else {
+        c.appendChild(el('p','mail-note','No hay velas activas+disponibles hacia ' + (p.pod || 'el POD') + ' con ETD futuro.'));
+      }
+    }
+
+    const att = p.attachments || { found:[], missing:[] };
+    const attLine = el('p','mail-status-line');
+    attLine.textContent = 'Adjuntos: ' + (att.found.length ? att.found.map(f => f.name).join(' · ') : 'ninguno');
+    attLine.style.marginTop = '10px';
+    c.appendChild(attLine);
+    if(att.missing && att.missing.length) c.appendChild(el('div','mail-alert','Faltan en Drive: ' + att.missing.join(', ')));
+
+    c.appendChild(el('span','mail-lbl','ASUNTO'));
+    c.appendChild(el('p','mail-status-line', (p.gmail_preview && p.gmail_preview.subject) || '—'));
+    c.appendChild(el('span','mail-lbl','DESTINO DEL ENVÍO (según modo)'));
+    c.appendChild(el('p','mail-status-line', 'To: ' + ((p.gmail_preview && p.gmail_preview.to) || '—') + (p.gmail_preview && p.gmail_preview.cc ? ' · CC: ' + p.gmail_preview.cc : '')));
+    if(p.recipients){
+      c.appendChild(el('p','mail-status-line', 'Estados: ' + (p.recipients.nuevos || []).length + ' nuevo(s) sin decidir · ' + (p.recipients.bloqueados_excluidos || []).length + ' bloqueado(s) excluido(s) — detalle en el card Envío.'));
+    }
+
+    const frame = document.createElement('iframe');
+    frame.className = 'mail-frame';
+    frame.setAttribute('sandbox', '');           // sin scripts, sin same-origin: render inerte
+    frame.setAttribute('title', 'Preview del mail');
+    frame.setAttribute('srcdoc', p.body_html || '');
+    c.appendChild(frame);
+    return c;
+  }
+
+  function testLockState(){
+    if(!_preview) return { offOk:false, why:'Generá un Preview primero para habilitar el modo real.' };
+    const reasons = _preview.test_reasons || [];
+    if(reasons.some(t => String(t).includes('candado'))) return { offOk:false, why:'El candado TEST_MODE del workflow está ON: apagarlo requiere un PUT deliberado. Todo envío sale a expoarpbb.' };
+    if(!(_preview.recipients && _preview.recipients.sendable_real)) return { offOk:false, why:'Destinatarios sin confirmar en el directorio: solo TEST (tercera red).' };
+    return { offOk:true, why:'' };
+  }
+
+  function cardEnvio(){
+    const c = el('div','mail-card');
+    c.appendChild(el('h3', null, 'Envío'));
+
+    const lock = testLockState();
+    const tgWrap = el('label','mail-toggle');
+    const tg = el('input'); tg.type = 'checkbox'; tg.id = 'mail-test-toggle';
+    tg.checked = true;
+    if(window.__mailTestOff === _sel && lock.offOk) tg.checked = false;
+    tg.disabled = !lock.offOk;
+    tgWrap.appendChild(tg);
+    tgWrap.appendChild(document.createTextNode('Modo TEST (a expoarpbb@ssbint.com)'));
+    c.appendChild(tgWrap);
+    if(!lock.offOk) c.appendChild(el('p','mail-note', lock.why));
+
+    const modeBox = el('div', tg.checked ? 'mail-testbox' : 'mail-alert');
+    modeBox.id = 'mail-mode-box';
+    modeBox.textContent = tg.checked
+      ? 'El mail va a expoarpbb con asunto [TEST → real: …]. Nada le llega al cliente.'
+      : '⚠ ENVÍO REAL: el mail sale a ' + (_preview && _preview.recipients ? _preview.recipients.to.join(', ') : '—');
+    modeBox.style.marginTop = '10px';
+    c.appendChild(modeBox);
+
+    // ── Las 3 categorías del envío, SIEMPRE visibles con preview (test y real) ──
+    if(_preview && _preview.recipients){
+      const rcp = _preview.recipients;
+      const lists = el('div','mail-sendlists');
+      const rowL = (kcls, klbl, arr, empty) => {
+        const d = el('div');
+        d.appendChild(el('span','k ' + kcls, klbl));
+        d.appendChild(el('span','v', (arr && arr.length) ? arr.join(', ') : (empty || '— ninguno —')));
+        lists.appendChild(d);
+      };
+      // Sin directorio confirmado NO hay enviables: la propuesta vive en NUEVOS
+      // (evita rotular el mismo email como "van" y "NO van" a la vez).
+      const sr = !!rcp.sendable_real;
+      rowL('van', 'Enviables (van)', sr ? [...rcp.to, ...rcp.cc.map(e => e + ' (cc)')] : [],
+           sr ? null : '— ninguno (directorio sin confirmar: solo TEST) —');
+      rowL('nue', 'Nuevos sin decidir (NO van)', rcp.nuevos);
+      rowL('blq', 'Bloqueados excluidos (NO van)', rcp.bloqueados_excluidos);
+      c.appendChild(lists);
+      if(!tg.checked && rcp.nuevos && rcp.nuevos.length){
+        c.appendChild(el('div','mail-alert','⚠ Hay ' + rcp.nuevos.length + ' extraído(s) sin decidir que NO van en este envío real. Confirmalos o bloquealos en el directorio si corresponde.'));
+      }
+    }
+
+    const row = el('div','mail-btnrow');
+    const canSend = _preview && !_preview.send_blocked && _busy == null && !_dirty;
+    const bt = el('button','mail-btn ' + (tg.checked ? 'pri' : 'danger'), _busy === 'send' ? 'Enviando…' : (tg.checked ? 'Enviar TEST' : 'ENVIAR REAL'));
+    bt.type = 'button'; bt.dataset.act = 'send'; bt.disabled = !canSend;
+    row.appendChild(bt);
+    if(_preview && _preview.send_blocked){
+      row.appendChild(el('span','mail-status-line','Bloqueado: ' + (_preview.block_reasons || []).join(' · ')));
+    } else if(!_preview){
+      row.appendChild(el('span','mail-status-line','Requiere un Preview previo.'));
+    } else if(_dirty){
+      row.appendChild(el('span','mail-status-line','Guardá el directorio antes de enviar (cambios sin guardar).'));
+    }
+    c.appendChild(row);
+
+    if(_lastResult){
+      const box = el('div', _lastResult.ok ? 'mail-okbox' : 'mail-alert');
+      box.textContent = _lastResult.ok
+        ? 'Enviado ' + (_lastResult.test_mode ? '(TEST) ' : '(REAL) ') + 'a ' + _lastResult.enviado_a + ' — Gmail id ' + (_lastResult.gmail_message_id || '—') + ' · adjuntos: ' + ((_lastResult.adjuntos || []).length)
+        : 'Falló el envío: ' + (_lastResult.error || 'error desconocido');
+      c.appendChild(box);
+    }
+    return c;
+  }
+
+  function cardHistorial(){
+    const c = el('div','mail-card');
+    c.appendChild(el('h3', null, 'Seguimiento (' + _sends.length + ')'));
+    if(!_sends.length){ c.appendChild(el('p','mail-note','Todavía no hay envíos registrados para esta orden.')); return c; }
+    const t = el('table','mail-hist');
+    const thead = el('thead'); const trh = el('tr');
+    for(const h of ['Fecha','Modo','Estado','ETD/ETA dichos','Asunto','Gmail id']) trh.appendChild(el('th', null, h));
+    thead.appendChild(trh); t.appendChild(thead);
+    const tb = el('tbody');
+    for(const s of _sends){
+      const tr = el('tr');
+      tr.appendChild(el('td', null, fmtTs(s.created_at)));
+      tr.appendChild(el('td', null, (s.mode || 'send') + (s.test_mode ? ' · TEST' : ' · REAL')));
+      tr.appendChild(el('td', null, s.status === 'ok' ? 'ok' : ('error: ' + (s.error || '—'))));
+      tr.appendChild(el('td', null, fmtD(s.etd) + ' / ' + fmtD(s.eta) + (s.schedule_matched_by ? ' (' + s.schedule_matched_by + ')' : '')));
+      const tdSub = el('td','sub', s.subject || '—'); tdSub.title = s.subject || '';
+      tr.appendChild(tdSub);
+      tr.appendChild(el('td', null, s.gmail_message_id || '—'));
+      tb.appendChild(tr);
+    }
+    t.appendChild(tb);
+    const wrap = el('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(t);
+    c.appendChild(wrap);
+    return c;
+  }
+
+  // ── acciones ──
+  async function selectOrder(order){
+    const gen = ++_gen; // invalida cualquier carga/preview en vuelo de la orden anterior
+    _sel = order;
+    _row = _orders.find(r => r.order_number === order) || null;
+    _preview = null; _lastResult = null; _candidates = [];
+    window.__mailTestOff = null;
+    renderMaster();
+    if(!_row){ renderDetail(); return; }
+    const box = detailBox(); box.textContent = ''; box.appendChild(el('div','mail-spinner'));
+    const contact = await fetchContact(_row);
+    if(gen !== _gen) return; // el usuario ya seleccionó otra orden: descartar
+    _contact = contact;
+    _sends = await fetchSends(order);
+    if(gen !== _gen) return;
+    // 3 estados: confirmados y bloqueados vienen del directorio GUARDADO;
+    // los extraídos sin decidir se derivan en render (nuevosDerivados) — la UI
+    // NO pre-carga la propuesta en PARA: confirmar es una decisión explícita.
+    _to = (_contact && _contact.to_emails || []).slice();
+    _cc = (_contact && _contact.cc_emails || []).slice();
+    _blocked = (_contact && (_contact.blocked_emails || _contact.rejected_emails) || []).slice();
+    _dirty = false;
+    renderDetail();
+  }
+
+  function addEmail(kind){
+    const inp = $(kind === 'to' ? 'mail-add-to' : 'mail-add-cc');
+    if(!inp) return;
+    const v = String(inp.value || '').trim().toLowerCase();
+    if(!EMAIL_RE.test(v)){ inp.reportValidity ? inp.reportValidity() : alert('Email inválido'); return; }
+    if(v === 'expoarpbb@ssbint.com'){ alert('expoarpbb es la casilla propia — no va como destinatario del cliente.'); return; }
+    if(_blocked.includes(v)){ alert(v + ' está BLOQUEADO para este cliente. Desbloquealo primero si corresponde.'); return; }
+    const list = kind === 'to' ? _to : _cc;
+    if(!list.includes(v)) list.push(v);
+    const other = kind === 'to' ? _cc : _to;
+    const idx = other.indexOf(v); if(idx >= 0) other.splice(idx, 1);
+    inp.value = '';
+    _dirty = true;
+    renderDetail();
+  }
+
+  // mover un email entre categorías (los conjuntos quedan disjuntos; el resolver
+  // re-particiona igual server-side con blocked ganando — doble cinturón)
+  function moveEmail(email, dest){
+    for(const list of [_to, _cc, _blocked]){
+      const i = list.indexOf(email); if(i >= 0) list.splice(i, 1);
+    }
+    if(dest === 'to') _to.push(email);
+    else if(dest === 'cc') _cc.push(email);
+    else if(dest === 'blocked') _blocked.push(email);
+    // dest 'nuevo' = solo sacarlo de donde estaba (si es extraído reaparece derivado)
+    _dirty = true;
+    renderDetail();
+  }
+
+  async function saveContacts(){
+    if(!_row || !_to.length || _busy) return;
+    const gen = _gen;
+    _busy = 'contacts'; renderDetail();
+    try {
+      const p = proposalEmails(_row);
+      const source = (p.to.length + p.cc.length) ? 'ba' : 'manual';
+      const resp = await apiMailing({
+        order_number: _sel, action: 'save_contacts',
+        contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
+      });
+      if(gen !== _gen) return; // cambió la orden durante el await
+      if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
+      _contact = (resp && resp.contact) || _contact;
+      _dirty = false;
+      _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
+      window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
+    } catch(e){ if(gen === _gen) alert('No se pudo guardar el directorio: ' + e.message); }
+    if(gen !== _gen) return;
+    _busy = null; renderDetail();
+  }
+
+  async function runPreview(){
+    if(!_row || _busy) return;
+    const gen = _gen, order = _sel;
+    _busy = 'preview'; _lastResult = null; renderDetail();
+    try {
+      const resp = await apiMailing({ order_number: order, action: 'preview' });
+      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
+      // validación de forma: un 2xx degenerado (sin recipients) NO habilita Enviar
+      if(!resp || typeof resp !== 'object' || !resp.recipients || !resp.gmail_preview)
+        throw new Error(resp && (resp.error || (resp.errors || []).join(' · ')) || 'respuesta de preview inválida (sin recipients)');
+      _preview = resp;
+    } catch(e){
+      if(gen !== _gen || order !== _sel) return;
+      _preview = null; alert('Preview falló: ' + e.message);
+    }
+    _busy = null; renderDetail();
+  }
+
+  async function confirmSchedule(){
+    if(!_row || _busy) return;
+    const rd = document.querySelector('#panel-mailing input[name="mail-pick"]:checked');
+    if(!rd){ alert('Elegí una vela del picker.'); return; }
+    const cand = _candidates[parseInt(rd.value, 10)];
+    if(!cand) return;
+    _busy = 'confirm'; renderDetail();
+    try {
+      const resp = await apiMailing({ order_number: _sel, action: 'confirm_schedule',
+        overrides: { schedule: { naviera: cand.naviera, buque: cand.buque, puerto_origen: cand.puerto_origen, puerto_destino: cand.puerto_destino, mes_etd: cand.mes_etd } } });
+      if(resp && resp.ok === false) throw new Error((resp.errors || [resp.error || 'rechazado']).join(' · '));
+      _busy = null;
+      await runPreview(); // re-resuelve con el override recién persistido
+      return;
+    } catch(e){ alert('No se pudo confirmar la vela: ' + e.message); }
+    _busy = null; renderDetail();
+  }
+
+  async function doSend(){
+    if(!_row || !_preview || _preview.send_blocked || _busy) return;
+    if(_dirty){ alert('Tenés cambios de directorio sin guardar: guardalos (o descartalos re-seleccionando la orden) antes de enviar.'); return; }
+    const tg = $('mail-test-toggle');
+    const testMode = !tg || tg.checked;
+    // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
+    // puede confirmar sin ver qué va, qué quedó sin decidir y qué está excluido.
+    const rcp = _preview.recipients || { to:[], cc:[], nuevos:[], bloqueados_excluidos:[] };
+    const sr = !!rcp.sendable_real;
+    const secc =
+      '── ENVIABLES (van): ' + (sr ? (rcp.to.join(', ') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '')) : '— ninguno (directorio sin confirmar: solo TEST) —') +
+      '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
+      '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—') +
+      '\n(El envío se re-resuelve contra el directorio vigente al momento de enviar.)';
+    const msg = testMode
+      ? 'Enviar en MODO TEST a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : '')
+      : '⚠ ENVÍO REAL AL CLIENTE ⚠\n\n' + secc + '\n\n¿Confirmás?';
+    if(!confirm(msg)) return;
+    // Guard doble-click: reenviar tras un envío REAL exige decisión explícita (resend).
+    const overrides = {};
+    if(_row.status === 'ENVIADO' && _row.sent_test_mode === false){
+      if(!confirm('Esta orden YA tuvo un envío REAL al cliente.\n¿Reenviar igual?')) return;
+      overrides.resend = true;
+    }
+    const gen = _gen, order = _sel;
+    _busy = 'send'; renderDetail();
+    try {
+      const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides });
+      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
+      _lastResult = resp;
+      if(resp && resp.send_blocked){ _lastResult = { ok:false, error: (resp.block_reasons || []).join(' · ') }; }
+    } catch(e){
+      if(gen !== _gen || order !== _sel) return;
+      _lastResult = { ok:false, error: e.message };
+    }
+    _busy = null;
+    window.__mailTestOff = null;
+    const orders = await fetchOrders();
+    if(gen !== _gen || order !== _sel) return;
+    _orders = orders;
+    _row = _orders.find(r => r.order_number === order) || _row;
+    _sends = await fetchSends(order);
+    if(gen !== _gen || order !== _sel) return;
+    renderMaster(); renderDetail();
+  }
+
+  // ── carga del tab ──
+  let _loading = false;
+  window.loadMailing = async function(){
+    if(_loading) return;
+    _loading = true;
+    try {
+      const box = $('mail-master');
+      if(box && !_loaded){ box.textContent = ''; box.appendChild(el('div','mail-spinner')); }
+      _orders = await fetchOrders();
+      _loaded = true;
+      renderMaster();
+      if(_sel){ _row = _orders.find(r => r.order_number === _sel) || null; renderDetail(); }
+    } finally { _loading = false; }
+  };
+
+  // ── wiring (delegación única en el panel) ──
+  (function wire(){
+    const panel = $('panel-mailing'); if(!panel) return;
+    panel.addEventListener('click', e => {
+      const t = e.target.closest('[data-act]');
+      if(!t || !panel.contains(t)) return;
+      const act = t.dataset.act;
+      if(act === 'sel') selectOrder(t.dataset.id);
+      else if(act === 'chip-del') moveEmail(t.dataset.mail, 'nuevo');
+      else if(act === 'nuevo-to') moveEmail(t.dataset.mail, 'to');
+      else if(act === 'nuevo-cc') moveEmail(t.dataset.mail, 'cc');
+      else if(act === 'nuevo-blq') moveEmail(t.dataset.mail, 'blocked');
+      else if(act === 'unblock') moveEmail(t.dataset.mail, 'nuevo');
+      else if(act === 'add-email') addEmail(t.dataset.list);
+      else if(act === 'save-contacts') saveContacts();
+      else if(act === 'preview') runPreview();
+      else if(act === 'confirm-schedule') confirmSchedule();
+      else if(act === 'send') doSend();
+    });
+    panel.addEventListener('keydown', e => {
+      if(e.key !== 'Enter') return;
+      if(e.target && e.target.id === 'mail-add-to'){ e.preventDefault(); addEmail('to'); }
+      if(e.target && e.target.id === 'mail-add-cc'){ e.preventDefault(); addEmail('cc'); }
+    });
+    panel.addEventListener('change', e => {
+      if(e.target && e.target.id === 'mail-test-toggle'){
+        window.__mailTestOff = e.target.checked ? null : _sel;
+        renderDetail();
+      }
+    });
+    const q = $('mail-q');
+    if(q){
+      let tmr = null;
+      q.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { _q = q.value; renderMaster(); }, 250); });
+    }
+    const fbar = $('mail-filterbar');
+    if(fbar){
+      fbar.addEventListener('click', e => {
+        const chip = e.target.closest('[data-mail-f]');
+        if(!chip || !fbar.contains(chip)) return;
+        const f = chip.getAttribute('data-mail-f');
+        if(_filters.has(f)){ _filters.delete(f); chip.classList.remove('mail-fchip--on'); }
+        else { _filters.add(f); chip.classList.add('mail-fchip--on'); }
+        renderMaster();
       });
     }
   })();

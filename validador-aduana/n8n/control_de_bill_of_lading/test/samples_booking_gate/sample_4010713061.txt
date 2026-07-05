@@ -1,0 +1,554 @@
+Consolidated Booking Advice Page 1 of5
+Shipped From
+PBBPolisur SRL Contenedor Linea Maritima
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048396595
+Document Date
+06/29/2026
+Delivery Date to Destination Port
+07/11/2026
+Ship-to / Consignee 60435351010039
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Terms of Delivery
+CFR Santos Port
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+07/24/2026
+Sold-to
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Customer Tax ID Number
+60435351010039
+Port of Discharge
+Santos Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Order Number: 4010713061
+CONTAINERS ON BOARD : 04
+Document Recip Orig
+BDP SOUTH AMERICA LTDA
+E-Mail:br.sao.dowimp@bdpint.com
+BDP SOUTH AMERICA LTDA
+BDP SOUTH AMERICA LTDA
+EDIF SHOPPING SAO CAETANO
+R MANOEL COELHO 600
+09510-101 SAO CAETANO DO SUL - SP
+BRAZIL
+Document Recip Copy2
+BDP SOUTH AMERICA LTDA
+E-Mail:br.sao.dowimp@bdpint.com
+Notify Party
+COMISSARIA PIBERNAT LTDA
+RUA MANOEL VIEIRA GARCAO 120
+CENTRO
+88301-425 ITAJAI - SC
+BRAZIL
+Ph No.:55 47 3248-8115
+E-Mail:thais.kleinschmidt@pibernat.com.br
+Tax ID:92102433000923
+SET OF DOCUMENTS:
+- Invoice - 1 original signed (without watermark)
+- Certificate of origin - 1 original
+- Packing list - 1 copy (not required for Bulk nor Isotank shipments)
+- Full set of Bill of Lading (1 copy non-negotiable per email and 1 original that will be released at destination) or Airwaybill (1 copy)
+- Insurance Certificate in case of CIF/CIP Incoterms
+SPECIAL INSTRUCTIONS
+1) Set of Documents:
+ALL MODALS: The "Set of Documents" must be sent by e-mail to UB Partner
+OCEAN MODAL: Original Invoice signed must be sent by courier to UA Partner, EXCEPT from these Sales Organizations:
+Exception: Scanned original documents by email to UA Partner only for these Sales Organizations:
+A119 - Dow Quimica Colombia
+A136 - Pbbpolisur
+2) BILL OF LADING:
+Original Bill of Lading must be released at Destination
+Freight needs to be printed on the Bill of Lading
+For MPC shipments, the ocean freight on the Bill of Lading need to be the same as the Ocean freight printed on the commercial invoice and as per Dow's
+BID.
+For ISO shipments the freight on the Bill of Lading does not need to match with the freight on the invoice.
+CNPJ (= Tax Identification number) of the consignee and the notify need to be printed on the Bill of Lading.
+First 4 digits of HS code to be printed on the Bill of Lading. In case multiple tariff codes on same B/L, please inform 4 first digits of all of them.
+If the HS Code from the exporting region is different from the HS code from the receiving region, both HS codes must be mentioned on the Bill of Lading:
+Exporter and Importer HS Codes
+3) AIR SHIPMENTS:
+A previous green light from destination is required prior air shipment
+It's mandatory to properly weight the cargo and issue the HAWB in accordance to the gross weight verified
+The correct freight amount must be included in the Commercial Invoice
+Preferred airport with direct flight: Viracopos (VCP) or Guarulhos (GRU)
+All set of documents must follow with cargo
+4) CERTIFICATE OF ORIGIN:
+It must be issued from Chamber of Commerce
+Required for origins who do have Free Trade Agreement in place with Brazil.
+5) WOOD TREATMENT:
+Any wood (pallets, wooden dunnage, block, brace, etc) in all modals must be treated and stamped at origin according to ISPM 15
+Provide the below “packaging details” on Bill of ladings. Be sure to fill the correct information as per plant confirmation,
+
+Consolidated Booking Advice Page 2 of5
+Shipped From
+PBBPolisur SRL Contenedor Linea Maritima
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048396595
+Document Date
+06/29/2026
+Delivery Date to Destination Port
+07/11/2026
+Ship-to / Consignee 60435351010039
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Terms of Delivery
+CFR Santos Port
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+07/24/2026
+Sold-to
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Customer Tax ID Number
+60435351010039
+Port of Discharge
+Santos Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+otherwise Brazilian importers will be obligated to return the goods and packages (in case there's evidence of insects, irregularities) to the origin and all
+extra costs will be charged from those responsible.
+Packaging details:
+Wooden Package : Not applicable (Not used)
+Wooden Package used : Processed
+Wooden Package used : Treated / Certified
+Container ID Delivery / Item # Quantity / Batch Number Material Description
+MSMU8360360 832031268 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6R104
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374360 DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0345065ANA
+Material Group: 13111000
+MSMU6077310 832031322 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6R104
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374360 DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0345064ANA
+Material Group: 13111000
+TCLU8292859 832031323 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6Q103
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374360 DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0345035ANA
+Material Group: 13111000
+MEDU7396133 832031324 / 000010
+Item Gross Weight :
+27,540.000 KG
+Item Net Weight :
+27,000.000 KG
+Item Volume :
+45,522.000 CD3
+1,080 BAG / C101Q6R104
+Country of Origin : Argentina
+Gross Weight 27,540.000 KG
+Net Weight 27,000.000 KG
+Volume 45,522.000 CD3
+00000374360 DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60
+Bags on a Pallet
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Country of Origin: Argentina
+Equipment Type : 40' Container
+MAINTAIN TEMPERATURE BETWEEN No In-Transit Temp R
+Seal Number : 0345063ANA
+Material Group: 13111000
+Total Gross weight:
+Total Net weight:
+Total Volume:
+110,160.000 KG
+108,000.000 KG
+182,088.000 CD3
+Piece Count : 4,320.000 BAG
+PHS Number and Description 000000527064 : PHS - P&SP - Solution PE
+00000374360 : DOWLEX™ NG 2038.11B Polyethylene Resin 25 KG Bags 60 Bags on a Pallet
+International Maritime
+Requirement :PLX - Freight container contains plastic pellets in accordance with
+paragraphs 1.1 and 1.2 of IMO Circular MEPC.1/Circ.909 and is subject to
+proper stowage and securement under deck wherever reasonably
+
+Consolidated Booking Advice Page 3 of5
+Shipped From
+PBBPolisur SRL Contenedor Linea Maritima
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048396595
+Document Date
+06/29/2026
+Delivery Date to Destination Port
+07/11/2026
+Ship-to / Consignee 60435351010039
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Terms of Delivery
+CFR Santos Port
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+07/24/2026
+Sold-to
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Customer Tax ID Number
+60435351010039
+Port of Discharge
+Santos Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+practicable, or inboard in sheltered areas of exposed decks (in
+accordance with paragraph 1.3 of that Circular).
+In Transit
+In Transit Temperature : No In-Transit Temp Requirements
+In Transit Comments : Check for moisture/droplets inside the liner
+Loading
+Sample size :Samples from inbound hopper cars at terminals should be retained until 60 days has elapsed after release of the hopper car
+, Samples from truck shipments should be retained for 4 months plus the current month or if customer use dictates shorter time frame
+Samples from bag shipments should be retained for 11 months from the
+time packaged plus the current month or if customer use dictates shorter
+time frame.
+Sampling Location :Outplant/Terminal Samples for both truck and railcar retains should be at least one pound, minimum.
+, Whirl-Paks /Small Ziploc for retains
+Sampling Method :Samples will only be pulled by sourcing plant and/or terminal personnel
+that are trained in sample pulling. Driver samples are not acceptable
+unless driver self-loading. There will be no eating and drinking when
+pulling samples.
+Sample retention time :Retains can be disposed of through Dow approved waste handling
+facilities. One can also arrange product pickup by a PE recycler like
+Poly America. Contact Dow to assist in setting this up.
+Loading Notes: : All loading procedures and equipment should meet minimum Dow Guidelines
+including applicable Safety and Loss Prevention Guidelines. Some
+recommendations for procedures would include the following:
+a. Truck should be chocked during loading operation.
+b. Driver should be out of vehicle during loading operation with
+emergency brake on.
+c. Driver must have standard PPE.
+d. Driver must be qualified to operate all equipment associated with the
+Hopper Truck.
+e. Use of leather gloves required to protect against pinch points
+f. Hopper trucks should be accessed only if proper fall protection
+tie-off or carriage is in place (Plants) or training on three points of
+contact has been documented (Outplants/Terminals).
+g. Driver/Loader cannot break the plane of the manway with the intent of
+entry
+Loading Procedure Comments : Average Testing Time - 2 hours; 4 hours
+Loading
+Package Types the Product Uses :Bags
+, Box
+, FIBC
+Unloading
+Carrier Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Customer Unloading Notes : Product must be stored or handled with clean transfer air, through
+lines/hoses, silos, or in vessels/package (protected by nitrogen if
+necessary), which are clean and do not degrade, contaminate or damage
+the product.
+Unloading
+Carrier Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Customer Unloading Notes : Material protected from outside elements (e.g. rain, humidity, animal
+droppings, etc.). Check for moisture/droplets inside the liner.
+Regulatory and Special Handling Instruct
+React Chemis / Polymeriz Event :Reference Safety Data Sheet (SDS)
+General Regulatory Notes :Reference Safety Data Sheet (SDS)
+Safe Handling Instructions : Reference Safety Data Sheet (SDS)
+Product Handling Training Required : Reference Safety Data Sheet (SDS)
+Product Specific Notes/ Warni : Reference Safety Data Sheet (SDS)
+Owning Company
+Owning Company :THE DOW CHEMICAL COMPANY
+Equipment
+
+Consolidated Booking Advice Page 4 of5
+Shipped From
+PBBPolisur SRL Contenedor Linea Maritima
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048396595
+Document Date
+06/29/2026
+Delivery Date to Destination Port
+07/11/2026
+Ship-to / Consignee 60435351010039
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Terms of Delivery
+CFR Santos Port
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+07/24/2026
+Sold-to
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Customer Tax ID Number
+60435351010039
+Port of Discharge
+Santos Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+State of the Container :Clean, Dry and Odor Free
+, See Prior Content Restrictions
+Equipment Capability :Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Blower discharge filter mounted on trailer or tractor. Filter should be
+capable of filtering particles 40 microns or smaller. It should
+withstand temperature of 500 degrees F, pressure of 20 PSIG, and be
+sized for at least 1000 CFM. See DG107 for suggested manufacturers.
+Acceptable Pneumatic Trans Sys :Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Avoid pellet degradation of resins by ensuring the pneumatic conveying
+system has a gas velocity below 100 ft/second (30 meters/second).
+Acceptable Material of Constru :Stainless Steel
+, Aluminum
+Gasket Material of Contruction :White neoprene and sized exactly for the fittings
+Hose Material of Construction :Minimum hose length must be 10 meters (2 X 5 meters) or 20 Ft, diameter 4”
+, New hoses should be inspected thoroughly and cleaned thoroughly before being put into service
+Fitting type/size :Stainless steel self locking groove cam lock fitting are required.
+Equipment Notes : US/CAN - hose construction should be of winded, stainless steel. Note:
+Europe does use white neoprene lined rubber hoses in some plastics
+pellet service.
+Equipment
+Acceptable Packaging Covering: :Shrink Wrap/Plastic Wrapping
+State of the Container :Flooring that is free of debris and contains no soft areas or holes
+, Doors that open and close without difficulty; Pins that are in place
+, Containers must be covered in transport. No open trailer allowed.
+, Clean, Dry and Odor Free
+, Watertight; Free of Debris; No Flatbed Allowed
+, Food Compliant
+, Inspect for raised screws / no metal sticking up on trailer floor - Shovel Test
+Temperature Control Equip Requ :No
+General
+Deliver Bulk Granules Intro :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+General
+Deliver Package Introduction :This document applies to Logistics Service Providers providing logistics
+related services to and/or on behalf of Dow (for example,
+transportation, storage, handling, packaging, sampling, etc.). This
+document is being provided in good faith for the purpose of safe
+handling and protecting the quality of Dow product. While it is accurate
+as far as the authors are aware, no representations or warranties are
+made about its completeness.# All fields are required unless noted as
+otherwise and/or superseded by written instructions from Dow.# In
+instances where this document cannot be followed and/or where there are
+questions, please contact a Dow Representative. Current Safety Data
+Sheets are available on www.dow.com.
+Road - Carrier Notification : Protect from moisture.
+MPC - Carrier Notification : Protect from moisture.
+(TM) Trademark of The Dow Chemical Company ("Dow") or an affiliated company of Dow
+
+Consolidated Booking Advice Page 5 of5
+Shipped From
+PBBPolisur SRL Contenedor Linea Maritima
+18 DE JULIO SN
+B8000XAU BAHIA BLANCA BUENOS AIRES
+ARGENTINA
+Shipment Number
+0048396595
+Document Date
+06/29/2026
+Delivery Date to Destination Port
+07/11/2026
+Ship-to / Consignee 60435351010039
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Terms of Delivery
+CFR Santos Port
+Carrier
+LOG-IN MERCOSUR SRL
+AV EDUARDO MADERO 1020
+PISO 1
+C1106ACX CAPITAL FEDERAL
+CAPITAL FEDERAL
+ARGENTINA
+Carrier VAT number
+Shipment Date (MM/DD/YYYY)
+06/29/2026
+Final Destination Delivery Date
+07/24/2026
+Sold-to
+DOW BRASIL IND E COM
+DE PRODUTOS QUIMICOS LTDA
+AV JOAQUIM LOURENCO DE LIMA 120
+GALPAO 04
+37644-032 EXTREMA - MG
+BRAZIL
+Customer Tax ID Number
+60435351010039
+Port of Discharge
+Santos Port
+Port of Loading
+Buenos Aires Port
+Transport Mode
+FCL (Full Container)
+Order / Item # Country of
+Origin 
+Commodity Code Transport Hazard Classification
+4010713061
+1 
+Argentina Export: 39011030000X
+Import: 39011030 
+HAZARDOUS GOODS INFO
+Not regulated for transport
+Wood Packing Materials External Carrier Notes Shipping Marks
+June 24 2026
+BOOKING NUMBER:LA0500989
+ETD PORT OF LOAD: 20260704
+CUTOFF AT ORIGIN: 20260702
+ETA DESTINATION: 20260711
+NOTES: BID LOGIN 162141-
+EXPOARPBB@SSBINT.COM
+In case of emergency 24/7, or in case of spill, accident, injury, security incident, theft, chemical mixture or reaction, unexpected temperature
+increase, call:
+Argentina : 54 3476-43-8600
+Brazil : 0800-763-8422
+CONTACT: Pilar Alvarez Font PALVAREZFONT@DOW.COM
+Ph.: Fax:
