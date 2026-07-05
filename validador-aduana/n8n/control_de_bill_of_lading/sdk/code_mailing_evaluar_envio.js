@@ -7,6 +7,8 @@
  *   - response → respuesta del webhook
  * to/cc del log = lo efectivamente ENVIADO (en test: expoarpbb); el subject
  * [TEST → real: …] preserva la intención. etd/eta = snapshot strings YYYY-MM-DD.
+ * atd_at_send (Batch B): snapshot del ATD vigente al enviar — congela el SLA
+ * histórico ante correcciones posteriores; NULL-safe si el send llega sin ATD.
  */
 const r = $('Resolver Mailing').first().json;
 const u = $('Unir binarios').first().json || {};
@@ -25,6 +27,7 @@ const send_log_payload = {
   body_html: r.gmail.body_html,
   etd: r.schedule.etd || null,
   eta: r.schedule.eta || null,
+  atd_at_send: r.atd || null,
   schedule_matched_by: r.schedule.matched_by,
   attachments: (r.attachments_found || []).map((f) => ({ tipo: f.tipo, name: f.name, file_id: f.file_id })),
   gmail_message_id: g.id || null,

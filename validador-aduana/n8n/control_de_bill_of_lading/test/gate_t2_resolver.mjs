@@ -5,6 +5,9 @@
  * Cubre: tiers T1/T2/sin-match+picker, TEST_MODE inviolable (2 llaves),
  * tercera red (propuesta-ba nunca real), override de destinatarios, guard
  * doble-click, confirm_schedule server-side, save_contacts payload.
+ * Batch B (ATD-gate): template ATD+ETA+tránsito sin ETD, degradación sin ATD,
+ * ATD>ETA, labels humanos de adjuntos, file_id expuesto, y el 2º nodo target
+ * "Evaluar envío" (snapshot atd_at_send NULL-safe) — mismo harness, mismo gate.
  * Uso: node test/gate_t2_resolver.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -84,7 +87,8 @@ ok(r.effective_test === true && r.gmail.to === 'expoarpbb@ssbint.com' && r.gmail
    'TEST: To=expoarpbb, CC vacío');
 ok(r.gmail.subject.startsWith('[TEST → real: pculque@tdm.com.pe'), `subject TEST: "${r.gmail.subject.slice(0, 60)}…"`);
 ok(!/POLYETHYLENE|Big Bag|\d+\s?(KG|kg)\b/.test(r.gmail.body_html), 'body sin producto/cantidad');
-ok(r.gmail.body_html.includes('06/07/2026') && r.gmail.body_html.includes('07/08/2026'), 'body ETD/ETA dd/mm/yyyy');
+ok(!/ETD/.test(r.gmail.body_html) && r.gmail.body_html.includes('07/08/2026'),
+   'body Batch B: sin ETD; Arribo est. dd/mm/yyyy presente');
 ok(r.route === 'respond', 'preview → route respond');
 
 // ---- 2. T2 LOG-IN voyage desfasado ----
@@ -211,5 +215,65 @@ ok(r.sc_payload.to_emails.join(',') === 'a@x.com' && r.sc_payload.cc_emails.join
    && r.sc_payload.blocked_emails.join(',') === 'b@x.com',
    'save_contacts: partición disjunta con blocked ganando');
 
+// ═══════ Batch B — ATD-gate: copy ATD+ETA+tránsito, file_id, snapshot ═══════
+
+// ---- 18. ATD confirmado (modo real p/ subject exacto): template completo ----
+r = run(base({
+  'Validar request': { ...base()['Validar request'], lock_test_mode: false, request_test_mode: false },
+  'GET mailing_orders': { ...MO_MAERSK, atd: '2026-07-01' },
+  'GET mailing_contacts': { confirmed: true, to_emails: ['cliente@tdm.com.pe'], cc_emails: [] },
+}));
+ok(r.gmail.subject === 'Documentación de embarque · Orden 118959520 · WIELAND 627N · Zarpe 01/07/2026',
+   `subject template exacto: "${r.gmail.subject}"`);
+ok(r.gmail.body_html.includes('zarpó de BUENOS AIRES el <b>01/07/2026</b>')
+   && r.gmail.body_html.includes('con destino a CALLAO'),
+   'párrafo narrativo: zarpó de POL el ATD con destino a POD');
+ok(r.gmail.body_html.includes('Arribo estimado: <b>07/08/2026</b> (tránsito estimado 37 días)'),
+   'tránsito = ETA − ATD corridos (01/07 → 07/08 = 37 días)');
+ok(r.gmail.body_html.includes('Zarpe (ATD)') && r.gmail.body_html.includes('Tránsito est.')
+   && !/ETD/.test(r.gmail.body_html), 'tabla: Zarpe/Arribo/Tránsito — ETD no existe más');
+ok(r.gmail.body_html.includes('Bill of Lading (BL)') && r.gmail.body_html.includes('Factura Comercial (FC)')
+   && !r.gmail.body_html.includes('118959520_BL.pdf'), 'adjuntos con label humano (no filename crudo)');
+ok(r.response.attachments.found[0].file_id === 'F1' && r.response.attachments.found[1].file_id === 'F2',
+   'attachments.found expone file_id (habilita chip-bar del front)');
+ok(r.atd === '2026-07-01', 'atd re-emitido en el root (input de Evaluar envío)');
+
+// ---- 19. degradación sin ATD: subject sin Zarpe, sin narrativo, tabla "—" ----
+r = run(base());
+ok(r.gmail.subject.endsWith('Documentación de embarque · Orden 118959520 · WIELAND 627N')
+   && !r.gmail.subject.includes('Zarpe'), 'sin ATD: subject sin segmento Zarpe');
+ok(!r.gmail.body_html.includes('zarpó'), 'sin ATD: sin párrafo narrativo');
+ok(/Zarpe \(ATD\)<\/td><td[^>]*><b>—<\/b>/.test(r.gmail.body_html)
+   && /Tránsito est\.<\/td><td[^>]*><b>—<\/b>/.test(r.gmail.body_html),
+   'sin ATD: tabla con Zarpe (ATD) y Tránsito est. en "—" — no rompe');
+
+// ---- 20. ATD > ETA (dato viejo/corrección): tránsito omitido, nunca negativo ----
+r = run(base({ 'GET mailing_orders': { ...MO_MAERSK, atd: '2026-09-01' } }));
+ok(r.gmail.body_html.includes('zarpó') && !r.gmail.body_html.includes('tránsito estimado')
+   && /Tránsito est\.<\/td><td[^>]*><b>—<\/b>/.test(r.gmail.body_html),
+   'ATD > ETA: párrafo sin tránsito + tabla "—" (jamás días negativos)');
+
+// ═══════ 21. GATE del 2º nodo target — "Evaluar envío": snapshot atd_at_send ═══════
+const SRC_EV = readFileSync(join(__dirname, '../sdk/code_mailing_evaluar_envio.js'), 'utf8');
+const runEv = (rJson, gJson) => {
+  const mocks = { 'Resolver Mailing': rJson, 'Unir binarios': {} };
+  const $ = (n) => { if (!(n in mocks)) throw new Error('nodo no mockeado: ' + n); return { first: () => ({ json: mocks[n] }) }; };
+  return new Function('$', '$json', 'console', SRC_EV)($, gJson, console).json;
+};
+const R_BASE = { order_number: '118959520', effective_test: true,
+  gmail: { to: 'expoarpbb@ssbint.com', cc: '', subject: 's', body_html: '<b>x</b>' },
+  schedule: { matched_by: 'T1', etd: '2026-07-06', eta: '2026-08-07' },
+  attachments_found: [{ tipo: 'bl_draft', name: 'n.pdf', file_id: 'F1' }],
+  attachments_missing: [], recipients: {}, triggered_by: 't@x' };
+let ev = runEv({ ...R_BASE, atd: '2026-07-01' }, { id: 'gm1' });
+ok(ev.send_log_payload.atd_at_send === '2026-07-01' && ev.send_log_payload.status === 'ok',
+   'Evaluar envío: atd_at_send = snapshot del atd del resolver (send ok)');
+ev = runEv(R_BASE, { id: 'gm2' });
+ok('atd_at_send' in ev.send_log_payload && ev.send_log_payload.atd_at_send === null,
+   'Evaluar envío: send SIN ATD (path no-gateado) → atd_at_send NULL explícito, INSERT no rompe');
+ev = runEv({ ...R_BASE, atd: '2026-07-01' }, {});
+ok(ev.send_log_payload.status === 'error' && ev.send_log_payload.atd_at_send === '2026-07-01',
+   'Evaluar envío: el path de error de Gmail también snapshotea');
+
 if (fails.length) { console.log('\nGATE-T2: FAIL'); for (const f of fails) console.log(' -', f); process.exit(1); }
-console.log('\nGATE-T2: PASS (tiers + candados TEST_MODE + picker + guards + acciones + 3 estados)');
+console.log('\nGATE-T2: PASS (tiers + candados + picker + guards + acciones + 3 estados + Batch B ATD/atd_at_send)');
