@@ -2640,6 +2640,49 @@ body.light #panel-mailing{
   #panel-mailing .mail-search-field{min-width:0;width:100%}
   #panel-mailing .mail-root{padding:14px 12px 20px}
 }
+
+/* ═══════════ CERTIFICADO DE ORIGEN — solapa ═══════════ */
+/* Namespace co-* (lección crm-detention: nunca clases genéricas). Vars globales → dark/light-aware. */
+#panel-cert-origen .co-root{max-width:980px;margin:0 auto}
+#panel-cert-origen .co-title{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+#panel-cert-origen .co-sub{font-size:13px;color:var(--muted);margin:4px 0 18px;line-height:1.5}
+#panel-cert-origen .co-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px}
+#panel-cert-origen .co-form{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+#panel-cert-origen .co-field{display:flex;flex-direction:column;gap:5px}
+#panel-cert-origen .co-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+#panel-cert-origen .co-input{font-family:var(--font);font-size:14px;color:var(--text);background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:9px 12px;width:170px}
+#panel-cert-origen .co-input--cert{width:250px;text-transform:uppercase}
+#panel-cert-origen .co-input::placeholder{color:var(--muted);opacity:.6;text-transform:none}
+#panel-cert-origen .co-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);font-size:13.5px;font-weight:700;color:#06251f;background:var(--teal);border:none;border-radius:9px;padding:10px 16px;cursor:pointer}
+#panel-cert-origen .co-btn:disabled{opacity:.55;cursor:progress}
+#panel-cert-origen .co-btn .ic{width:16px;height:16px}
+#panel-cert-origen .co-btn--ghost{background:none;border:1px solid var(--border);color:var(--muted);padding:7px 10px}
+#panel-cert-origen .co-err{font-size:12.5px;color:#f87171;margin:10px 0 0}
+#panel-cert-origen .co-result-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+#panel-cert-origen .co-result-name{font-size:14px;font-weight:700;color:var(--text)}
+#panel-cert-origen .co-kv{display:grid;grid-template-columns:190px minmax(0,1fr);gap:4px 14px;font-size:13px}
+#panel-cert-origen .co-kv dt{color:var(--muted)}
+#panel-cert-origen .co-kv dd{margin:0;color:var(--text);overflow-wrap:anywhere}
+#panel-cert-origen .co-links{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+#panel-cert-origen .co-links a{font-size:13px;font-weight:600;color:var(--blue);text-decoration:none}
+#panel-cert-origen .co-links a:hover{text-decoration:underline}
+#panel-cert-origen .co-warn{font-size:12px;color:#fbbf24;margin-top:10px}
+#panel-cert-origen .co-hist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+#panel-cert-origen .co-hist-title{font-size:15px;font-weight:700;margin:0}
+#panel-cert-origen .co-hist-wrap{overflow-x:auto}
+#panel-cert-origen .co-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+#panel-cert-origen .co-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+#panel-cert-origen .co-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;white-space:nowrap}
+#panel-cert-origen .co-table td.co-td-cert{font-family:ui-monospace,monospace;font-size:11.5px}
+#panel-cert-origen .co-empty{font-size:13px;color:var(--muted);padding:14px 4px}
+#panel-cert-origen .co-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.25);border-top-color:transparent;border-radius:50%;animation:co-rot .7s linear infinite;vertical-align:-2px}
+@keyframes co-rot{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#panel-cert-origen .co-spin{animation:none}}
+@media (max-width:700px){
+  #panel-cert-origen .co-form{align-items:stretch;flex-direction:column}
+  #panel-cert-origen .co-input,#panel-cert-origen .co-input--cert{width:100%}
+  #panel-cert-origen .co-kv{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -2685,6 +2728,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
     <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
+    <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
   </defs>
 </svg>
 
@@ -2847,6 +2891,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
   <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
   <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
   <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+  <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
   <div class="rail-spacer" aria-hidden="true"></div>
   <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
 </nav>
@@ -3990,6 +4035,44 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
 </div>
 <!-- ═══════════ FIN TAB: MAILING ═══════════ -->
 
+<!-- ═══════════ TAB: CERTIFICADO DE ORIGEN — panel ═══════════ -->
+<div class="tab-panel" id="panel-cert-origen">
+  <div class="co-root">
+
+    <header>
+      <h1 class="co-title">Certificado de Origen</h1>
+      <p class="co-sub">Genera el PDF del COD desde el ZIP oficial en Drive (CO ZIP → CO PDF) y lo registra para adjuntarlo en el mailing. El ZIP nunca se modifica.</p>
+    </header>
+
+    <div class="co-card">
+      <div class="co-form">
+        <div class="co-field">
+          <label class="co-lbl" for="co-orden">Orden</label>
+          <input class="co-input" id="co-orden" type="text" inputmode="numeric" autocomplete="off" placeholder="118828606 · 4010708587" maxlength="12">
+        </div>
+        <div class="co-field">
+          <label class="co-lbl" for="co-cert">N° de Certificado</label>
+          <input class="co-input co-input--cert" id="co-cert" type="text" autocomplete="off" placeholder="AR004A18260002208300" maxlength="20">
+        </div>
+        <button class="co-btn" id="co-generar" type="button"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span id="co-generar-lbl">Generar PDF</span></button>
+      </div>
+      <p class="co-err" id="co-form-err" hidden></p>
+    </div>
+
+    <div class="co-card" id="co-result" hidden></div>
+
+    <div class="co-card">
+      <div class="co-hist-head">
+        <h2 class="co-hist-title">Últimos certificados</h2>
+        <button class="co-btn co-btn--ghost" id="co-refresh" type="button" aria-label="Actualizar historial"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      </div>
+      <div class="co-hist-wrap" id="co-hist"></div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: CERTIFICADO DE ORIGEN ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -4113,7 +4196,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing','cert-origen'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -4130,6 +4213,7 @@ function switchTab(name) {
   if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
   if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
+  if(name==='cert-origen' && window.loadCertOrigen){ window.loadCertOrigen(); }
 }
 
 // ── RAIL: pin (expandir/colapsar) + drawer móvil ──
@@ -15873,6 +15957,180 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         renderMaster();
       });
     }
+  })();
+})();
+</script>
+
+<!-- ═══════════ TAB: CERTIFICADO DE ORIGEN — lógica ═══════════ -->
+<script>
+/* ═══════════ Certificado de Origen — solapa ═══════════ */
+/* Lecturas: window.__ssb.supa sobre certificados_origen (RLS SELECT authenticated).
+   Escritura: SOLO vía /api/certificado-origen (Bearer JWT + gate vac_employees
+   server-side; Drive I/O con service account en el backend). Render XSS-safe:
+   createElement + textContent en todo dato dinámico; links solo https. */
+(function(){
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
+  const supa = () => (window.__ssb && window.__ssb.supa) || null;
+
+  const ORDEN_RE = /^\d{7,12}$/;            // acepta el 0 de padding de trade; normaliza el server
+  const CERT_RE = /^AR\d{3}A\d{2}\d{12}$/i; // no hardcodea (18|35)
+  let _busy = false;
+  let _histLoading = false;
+
+  const fmtMoney = v => (v == null || v === '') ? '—' : '$' + Number(v).toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  const fmtTs = ts => { if(!ts) return '—'; const d = new Date(ts); if(isNaN(d.getTime())) return '—'; const p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+  // Badge de estado: verde=generado, ámbar=registro pendiente, rojo=error
+  function coBadge(estado){
+    const map = { generado:['badge badge--success','Generado'], error_registro:['badge badge--warning','Sin registrar'], error:['badge badge--danger','Error'] };
+    const [cls, lbl] = map[estado] || ['badge badge--neutral', String(estado || '—')];
+    return el('span', cls, lbl);
+  }
+
+  function safeLink(url, label){
+    if(!/^https:\/\//.test(String(url || ''))) return null;
+    const a = el('a', null, label);
+    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+    return a;
+  }
+
+  async function apiGenerate(orden, certificado){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
+    const res = await fetch('/api/certificado-origen', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify({ orden, certificado }),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  }
+
+  function renderResult(data){
+    const box = $('co-result'); if(!box) return;
+    box.textContent = '';
+    box.hidden = false;
+
+    const head = el('div','co-result-head');
+    head.appendChild(coBadge(data.estado));
+    if(data.pdf_nombre) head.appendChild(el('span','co-result-name', data.pdf_nombre));
+    box.appendChild(head);
+
+    if(data.estado === 'generado' || data.estado === 'error_registro'){
+      const dl = el('dl','co-kv');
+      const kv = (k, v) => { dl.appendChild(el('dt', null, k)); dl.appendChild(el('dd', null, v || '—')); };
+      kv('Acuerdo', data.agreement_name);
+      kv('Valor de la mercadería', fmtMoney(data.valor_mercaderia));
+      kv('Posición arancelaria', data.posicion_arancelaria);
+      kv('N° de Factura', data.factura_numero);
+      box.appendChild(dl);
+      const links = el('div','co-links');
+      const pdfA = safeLink(data.pdf_url, 'Ver PDF en Drive');
+      const zipA = safeLink(data.zip_url, 'Ver ZIP en Drive');
+      if(pdfA) links.appendChild(pdfA);
+      if(zipA) links.appendChild(zipA);
+      if(links.childNodes.length) box.appendChild(links);
+    }
+    if(data.estado === 'error_registro'){
+      const warn = el('p','co-warn', (data.error || 'El registro en la base falló.') + ' El mailing no lo va a adjuntar hasta que se registre.');
+      box.appendChild(warn);
+      const retry = el('button','co-btn','Regenerar');
+      retry.type = 'button';
+      retry.onclick = () => generar();
+      box.appendChild(retry);
+    } else if(data.estado !== 'generado'){
+      box.appendChild(el('p','co-err', (data.error_code ? data.error_code + ' — ' : '') + (data.error || 'Error desconocido')));
+    }
+    for(const w of (data.warnings || [])) box.appendChild(el('p','co-warn', '⚠ ' + w));
+  }
+
+  async function generar(){
+    if(_busy) return;
+    const errBox = $('co-form-err');
+    const orden = ($('co-orden')?.value || '').trim();
+    const cert = ($('co-cert')?.value || '').trim().toUpperCase();
+    errBox.hidden = true;
+    if(!ORDEN_RE.test(orden)){ errBox.textContent = 'Orden inválida: 7 a 12 dígitos (STO empieza con 4, trade con 1 o 0 de padding).'; errBox.hidden = false; return; }
+    if(!CERT_RE.test(cert)){ errBox.textContent = 'Certificado inválido: formato tipo AR004A18 + 12 dígitos (es el nombre del ZIP sin .zip).'; errBox.hidden = false; return; }
+
+    _busy = true;
+    const btn = $('co-generar'), lbl = $('co-generar-lbl');
+    btn.disabled = true;
+    lbl.textContent = 'Generando…';
+    const spin = el('span','co-spin');
+    btn.insertBefore(spin, lbl);
+    try {
+      const { data } = await apiGenerate(orden, cert);
+      renderResult(data);
+      loadHist();
+    } catch (e) {
+      renderResult({ estado:'error', error: e.message });
+    } finally {
+      _busy = false;
+      btn.disabled = false;
+      spin.remove();
+      lbl.textContent = 'Generar PDF';
+    }
+  }
+
+  async function loadHist(){
+    if(_histLoading) return;
+    _histLoading = true;
+    const box = $('co-hist');
+    try {
+      const s = supa();
+      if(!s){ box.textContent = ''; box.appendChild(el('p','co-empty','Cliente Supabase no inicializado.')); return; }
+      const { data, error } = await s.from('certificados_origen')
+        .select('orden,certificado_numero,agreement_acronym,valor_mercaderia,factura_numero,estado,error_detalle,pdf_drive_url,zip_drive_url,updated_at')
+        .order('updated_at', { ascending:false }).limit(20);
+      box.textContent = '';
+      if(error){ box.appendChild(el('p','co-empty','No pude leer el historial: ' + error.message)); return; }
+      if(!data || !data.length){ box.appendChild(el('p','co-empty','Todavía no se generó ningún certificado desde acá.')); return; }
+
+      const table = el('table','co-table');
+      const thead = el('thead'); const trh = el('tr');
+      for(const h of ['Fecha','Orden','Certificado','Estado','Valor','Factura','Links','']) trh.appendChild(el('th', null, h));
+      thead.appendChild(trh); table.appendChild(thead);
+      const tbody = el('tbody');
+      for(const r of data){
+        const tr = el('tr');
+        tr.appendChild(el('td', null, fmtTs(r.updated_at)));
+        tr.appendChild(el('td', null, r.orden));
+        const tdC = el('td','co-td-cert', r.certificado_numero); tr.appendChild(tdC);
+        const tdE = el('td'); tdE.appendChild(coBadge(r.estado));
+        if(r.estado === 'error' && r.error_detalle) tdE.title = r.error_detalle;
+        tr.appendChild(tdE);
+        tr.appendChild(el('td', null, fmtMoney(r.valor_mercaderia)));
+        tr.appendChild(el('td', null, r.factura_numero || '—'));
+        const tdL = el('td');
+        const pdfA = safeLink(r.pdf_drive_url, 'PDF'); const zipA = safeLink(r.zip_drive_url, 'ZIP');
+        if(pdfA) tdL.appendChild(pdfA);
+        if(pdfA && zipA) tdL.appendChild(document.createTextNode(' · '));
+        if(zipA) tdL.appendChild(zipA);
+        if(!pdfA && !zipA) tdL.textContent = '—';
+        tr.appendChild(tdL);
+        const tdR = el('td');
+        const re = el('button','co-btn co-btn--ghost','Regenerar');
+        re.type = 'button';
+        re.onclick = () => { $('co-orden').value = r.orden; $('co-cert').value = r.certificado_numero; generar(); };
+        tdR.appendChild(re);
+        tr.appendChild(tdR);
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      box.appendChild(table);
+    } finally { _histLoading = false; }
+  }
+
+  window.loadCertOrigen = function(){ loadHist(); };
+
+  (function wire(){
+    const btn = $('co-generar'); if(!btn) return;
+    btn.addEventListener('click', generar);
+    $('co-refresh')?.addEventListener('click', loadHist);
+    for(const id of ['co-orden','co-cert'])
+      $(id)?.addEventListener('keydown', e => { if(e.key === 'Enter') generar(); });
   })();
 })();
 </script>
