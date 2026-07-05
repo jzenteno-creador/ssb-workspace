@@ -2667,6 +2667,7 @@ body.light #panel-mailing{
 #panel-mailing .mail-kpi.fut{color:var(--mail-accent)}
 #panel-mailing .mail-kpi.esp{color:var(--mail-ink-faint)}
 #panel-mailing .mail-kpi.on{outline:2px solid currentColor;outline-offset:-1px}
+#panel-mailing button,#panel-mailing input,#panel-mailing textarea,#panel-mailing summary{scroll-margin-top:76px} /* el focus por teclado no queda tapado por el KPI sticky */
 #panel-mailing .mail-sect{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:var(--mail-surface-2);border:none;border-bottom:1px solid var(--mail-line);font-family:var(--font);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mail-ink-faint);text-align:left}
 #panel-mailing button.mail-sect{cursor:pointer}
 #panel-mailing button.mail-sect:hover{background:var(--mail-accent-soft);color:var(--mail-accent)}
@@ -15476,7 +15477,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     mk('verde', 'enfecha', 'en fecha', counts.enfecha);
     mk('amar', 'porvencer', 'por vencer', counts.porvencer);
     mk('rojo', 'vencida', 'vencida(s)', counts.vencida);
-    if(counts.futuro) mk('fut', 'futuro', 'ATD futuro · revisar', counts.futuro);
+    // FIX verify: si el filtro futuro está activo, el chip se muestra aunque el
+    // count llegue a 0 — sin esto quedaba un filtro fantasma sin salida visible
+    if(counts.futuro || _slaFilter === 'futuro') mk('fut', 'futuro', 'ATD futuro · revisar', counts.futuro);
     mk('esp', 'espera', 'esperando zarpe', counts.espera);
   }
 
@@ -15967,46 +15970,60 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   async function saveContacts(){
     if(!_row || !_to.length || _busy) return;
-    const gen = _gen;
+    const gen = _gen, order = _sel;
     _busy = 'contacts'; renderDetail();
+    let errMsg = null;
     try {
       const p = proposalEmails(_row);
       const source = (p.to.length + p.cc.length) ? 'ba' : 'manual';
       const resp = await apiMailing({
-        order_number: _sel, action: 'save_contacts',
+        order_number: order, action: 'save_contacts',
         contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
       });
-      if(gen !== _gen) return; // cambió la orden durante el await
       if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
-      _contact = (resp && resp.contact) || _contact;
-      _dirty = false;
-      _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
-      window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
-      schedulePreview();             // A-c4: re-preview reactivo contra el directorio recién guardado
-    } catch(e){ if(gen === _gen) alert('No se pudo guardar el directorio: ' + e.message); }
-    if(gen !== _gen) return;
-    _busy = null; renderDetail();
+      if(gen === _gen && order === _sel){
+        _contact = (resp && resp.contact) || _contact;
+        _dirty = false;
+        _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
+        window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
+        schedulePreview();             // A-c4: re-preview reactivo contra el directorio recién guardado
+      }
+    } catch(e){ errMsg = e.message; }
+    _busy = null; // FIX verify (ALTA): SIEMPRE — un return stale no puede dejar el lock puesto
+    if(gen !== _gen || order !== _sel) return;
+    if(errMsg) alert('No se pudo guardar el directorio: ' + errMsg);
+    renderDetail();
   }
 
   async function runPreview(){
     if(!_row || _busy) return;
     const gen = _gen, order = _sel;
     _busy = 'preview'; _lastResult = null; renderDetail();
+    let resp = null, errMsg = null;
     try {
-      const resp = await apiMailing({ order_number: order, action: 'preview' });
-      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
+      resp = await apiMailing({ order_number: order, action: 'preview' });
       // validación de forma: un 2xx degenerado (sin recipients) NO habilita Enviar
       if(!resp || typeof resp !== 'object' || !resp.recipients || !resp.gmail_preview)
         throw new Error(resp && (resp.error || (resp.errors || []).join(' · ')) || 'respuesta de preview inválida (sin recipients)');
+    } catch(e){ errMsg = e.message; }
+    // FIX verify (ALTA): el lock se libera SIEMPRE — antes, el return stale
+    // dentro del try dejaba _busy='preview' para siempre y congelaba la isla.
+    // La respuesta stale solo pierde el derecho a tocar estado/render.
+    _busy = null;
+    if(gen !== _gen || order !== _sel){
+      // La orden actual pudo quedar sin preview (su timer no-opeó contra
+      // nuestro lock): re-agendar para ELLA. Sin loop: gen fresco, una vez.
+      if(_row && !_preview && !_previewError) schedulePreview();
+      return;
+    }
+    if(errMsg){
+      // A-c4: sin alert — el fallo se renderiza en el card con "Reintentar"
+      _preview = null; _previewError = errMsg;
+    } else {
       _preview = resp; _previewError = null;
       _docOpen = null; // preview nuevo → el viewer viejo puede apuntar a un fid stale
-    } catch(e){
-      if(gen !== _gen || order !== _sel) return;
-      // A-c4: sin alert — el fallo se renderiza en el card con "Reintentar"
-      // (con auto-fire, un alert por fallo transitorio sería spam)
-      _preview = null; _previewError = e.message;
     }
-    _busy = null; renderDetail();
+    renderDetail();
   }
 
   async function confirmSchedule(){
@@ -16015,16 +16032,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!rd){ alert('Elegí una vela del picker.'); return; }
     const cand = _candidates[parseInt(rd.value, 10)];
     if(!cand) return;
+    const gen = _gen, order = _sel; // FIX verify: era la única acción sin captura de staleness
     _busy = 'confirm'; renderDetail();
+    let errMsg = null;
     try {
-      const resp = await apiMailing({ order_number: _sel, action: 'confirm_schedule',
+      const resp = await apiMailing({ order_number: order, action: 'confirm_schedule',
         overrides: { schedule: { naviera: cand.naviera, buque: cand.buque, puerto_origen: cand.puerto_origen, puerto_destino: cand.puerto_destino, mes_etd: cand.mes_etd } } });
       if(resp && resp.ok === false) throw new Error((resp.errors || [resp.error || 'rechazado']).join(' · '));
-      _busy = null;
-      await runPreview(); // re-resuelve con el override recién persistido
-      return;
-    } catch(e){ alert('No se pudo confirmar la vela: ' + e.message); }
-    _busy = null; renderDetail();
+    } catch(e){ errMsg = e.message; }
+    _busy = null; // SIEMPRE — antes un throw tardío con orden cambiada dejaba alert huérfano
+    if(gen !== _gen || order !== _sel) return; // stale: ni alert de otra orden ni preview no pedido
+    if(errMsg){ alert('No se pudo confirmar la vela: ' + errMsg); renderDetail(); return; }
+    await runPreview(); // re-resuelve con el override recién persistido (orden vigente)
   }
 
   async function doSend(){
@@ -16053,24 +16072,24 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     const gen = _gen, order = _sel;
     _busy = 'send'; renderDetail();
+    let result = null;
     try {
       const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides });
-      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
-      _lastResult = resp;
-      if(resp && resp.send_blocked){ _lastResult = { ok:false, error: (resp.block_reasons || []).join(' · ') }; }
-    } catch(e){
-      if(gen !== _gen || order !== _sel) return;
-      _lastResult = { ok:false, error: e.message };
-    }
+      result = (resp && resp.send_blocked) ? { ok:false, error: (resp.block_reasons || []).join(' · ') } : resp;
+    } catch(e){ result = { ok:false, error: e.message }; }
+    // FIX verify (ALTA): lock SIEMPRE liberado; el refresh global de la cola vale
+    // aunque el usuario haya cambiado de orden (los writes ya ocurrieron) — solo
+    // el estado/render del DETALLE queda gateado por staleness.
     _busy = null;
     window.__mailTestOff = null;
-    const orders = await fetchOrders();
+    _orders = await fetchOrders();
+    renderMaster();
     if(gen !== _gen || order !== _sel) return;
-    _orders = orders;
+    _lastResult = result;
     _row = _orders.find(r => r.order_number === order) || _row;
     _sends = await fetchSends(order);
     if(gen !== _gen || order !== _sel) return;
-    renderMaster(); renderDetail();
+    renderDetail();
   }
 
   // ── Confirmar zarpe (ATD) — parser del paste-grid + lote a confirm_atd (A-c2) ──
@@ -16085,7 +16104,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!raw.trim()) return; // filas vacías: se ignoran (no son error)
       const nl = i + 1;
       const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
-      const parts = toks.length >= 2 ? toks : raw.trim().split(/\s+/);
+      // Orden con separador de miles (columna Excel formateada Número: 10.234.567 /
+      // 10,234,567) → se normaliza a dígitos. Las fechas no matchean este patrón
+      // (grupos de exactamente 3 dígitos), quedan intactas. [fix verify]
+      const normMiles = t => /^\d{1,3}([.,]\d{3})+$/.test(t) ? t.replace(/[.,]/g, '') : t;
+      const parts = (toks.length >= 2 ? toks : raw.trim().split(/\s+/)).map(normMiles);
       const ords = parts.filter(t => /^\d{7,12}$/.test(t));
       const fechas = parts.filter(t => /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
       if(!ords.length){ errores.push({ linea: nl, orden: null, motivo: 'sin número de orden (7-12 dígitos)' }); return; }
@@ -16142,7 +16165,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       for(const r of (p.server.results || [])){
         const [cls, lbl] = ATD_SRV_LBL[r.status] || ['err', r.status];
         const extra = r.status === 'pisada' ? ' ' + fmtD(r.old_atd) + ' → ' + fmtD(r.atd)
-                    : r.detail ? ' — ' + r.detail : '';
+                    : (r.detail && r.detail !== lbl) ? ' — ' + r.detail : ''; // detail == label → no duplicar
         rowT(r.order_number, fmtD(r.atd || null), cls, lbl + extra);
       }
       if(sum){
@@ -16169,6 +16192,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   function atdParse(){
+    if(_atdBusy) return; // FIX verify (ALTA): no reemplazar el lote con un confirm en vuelo
     const ta = $('mail-atd-ta'); if(!ta) return;
     _atdParsed = ta.value.trim() ? parseAtdGrid(ta.value) : null;
     renderAtdReport();
@@ -16176,23 +16200,30 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   async function atdConfirm(){
     if(!_atdParsed || !_atdParsed.listas.length || _atdBusy || _atdParsed.server) return;
-    const n = _atdParsed.listas.length;
-    const conNota = _atdParsed.conflictos.length || _atdParsed.errores.length
+    // FIX verify (ALTA): referencia LOCAL al lote — si _atdParsed cambiara durante
+    // el await (belt & suspenders del guard de atdParse), el reporte del server se
+    // cuelga de ESTE lote y jamás del nuevo; el textarea solo se limpia si el
+    // lote visible sigue siendo el confirmado.
+    const lote = _atdParsed;
+    const n = lote.listas.length;
+    const conNota = lote.conflictos.length || lote.errores.length
       ? '\n(Conflictos y errores quedan AFUERA del lote — revisalos en la tabla.)' : '';
     if(!confirm('Confirmar zarpe (ATD) para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota + '\n¿Continuar?')) return;
     _atdBusy = true; renderAtdReport();
     try {
-      const resp = await apiMailing({ action: 'confirm_atd', rows: _atdParsed.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
-      _atdParsed.server = resp;
-    } catch(e){ _atdParsed.server = { error: e.message }; }
+      const resp = await apiMailing({ action: 'confirm_atd', rows: lote.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
+      lote.server = resp;
+    } catch(e){ lote.server = { error: e.message }; }
     _atdBusy = false;
-    // Refresh: la cola/detalle reflejan los ATD nuevos (el reporte queda visible)
+    // Refresh SIEMPRE: los writes ya ocurrieron — la cola/KPI/detalle los reflejan
     _orders = await fetchOrders();
     renderMaster();
     if(_sel){ _row = _orders.find(r => r.order_number === _sel) || _row; renderDetail(); }
-    const s = (_atdParsed.server && _atdParsed.server.summary) || {};
-    const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
-    if(_atdParsed.server && !_atdParsed.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
+    if(_atdParsed === lote){
+      const s = (lote.server && lote.server.summary) || {};
+      const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
+      if(lote.server && !lote.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
+    }
     renderAtdReport();
   }
 

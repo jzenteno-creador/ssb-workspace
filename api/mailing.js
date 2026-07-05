@@ -51,25 +51,32 @@ async function handleConfirmAtd(res, body, userEmail, supaUrl, supaKey) {
   const hoyBA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
   const maxAtd = plusDaysIso(hoyBA, 1);
 
-  // 1) Validación por fila + dedupe server-side (no se confía en el front)
+  // 1) Validación agrupada por orden — GARANTÍA (fix verify): UNA sola entrada
+  //    de results por order_number único del lote. Mezclar filas válidas e
+  //    inválidas de la misma orden = conflicto (no se escribe, no se adivina).
+  //    Solo las filas cuyo order_number ni parsea quedan por-fila (sin clave).
   const results = [];
-  const porOrden = new Map(); // order_number → Set<atd> (solo filas válidas)
+  const porOrden = new Map(); // order → { fechas:Set<iso>, motivos:[] }
   for (const r of rowsIn) {
     const order = String((r && r.order_number) || '').trim();
     const atd = String((r && r.atd) || '').trim();
     if (!/^\d{7,12}$/.test(order)) { results.push({ order_number: order || '(vacía)', status: 'invalida', detail: 'orden inválida (7-12 dígitos)' }); continue; }
-    if (!isValidIsoDate(atd)) { results.push({ order_number: order, status: 'invalida', detail: `fecha inválida: ${atd}` }); continue; }
-    if (atd < MIN_ATD) { results.push({ order_number: order, status: 'invalida', detail: `fecha fuera de rango (< ${MIN_ATD})` }); continue; }
-    if (atd > maxAtd) { results.push({ order_number: order, status: 'invalida', detail: `ATD futura (${atd} > hoy+1 = ${maxAtd}) — ¿typo?` }); continue; }
-    if (!porOrden.has(order)) porOrden.set(order, new Set());
-    porOrden.get(order).add(atd);
+    const ent = porOrden.get(order) || { fechas: new Set(), motivos: [] };
+    if (!isValidIsoDate(atd)) ent.motivos.push(`fecha inválida: ${atd}`);
+    else if (atd < MIN_ATD) ent.motivos.push(`fecha fuera de rango (< ${MIN_ATD})`);
+    else if (atd > maxAtd) ent.motivos.push(`ATD futura (${atd} > hoy+1 = ${maxAtd}) — ¿typo?`);
+    else ent.fechas.add(atd);
+    porOrden.set(order, ent);
   }
-
-  // Duplicados en el lote: misma orden con fechas DISTINTAS → conflicto, no se escribe
   const aEscribir = []; // [order, atd]
-  for (const [order, fechas] of porOrden) {
-    if (fechas.size > 1) results.push({ order_number: order, status: 'conflicto', detail: `fechas contradictorias en el lote: ${[...fechas].join(' vs ')}` });
-    else aEscribir.push([order, [...fechas][0]]);
+  for (const [order, ent] of porOrden) {
+    if (ent.motivos.length && ent.fechas.size)
+      results.push({ order_number: order, status: 'conflicto', detail: `filas válidas e inválidas mezcladas para la misma orden (${ent.motivos[0]})` });
+    else if (ent.motivos.length)
+      results.push({ order_number: order, status: 'invalida', detail: ent.motivos[0] + (ent.motivos.length > 1 ? ` (+${ent.motivos.length - 1} fila(s) más)` : '') });
+    else if (ent.fechas.size > 1)
+      results.push({ order_number: order, status: 'conflicto', detail: `fechas contradictorias en el lote: ${[...ent.fechas].join(' vs ')}` });
+    else aEscribir.push([order, [...ent.fechas][0]]);
   }
 
   const svcHeaders = { apikey: supaKey, Authorization: `Bearer ${supaKey}` };
