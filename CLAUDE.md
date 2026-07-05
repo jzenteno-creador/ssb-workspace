@@ -46,7 +46,7 @@ python3 upload_detention.py <archivo.xlsx>
 
 No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
 
-## Mapa de la app — 10 módulos (rail lateral)
+## Mapa de la app — 12 módulos (rail lateral)
 
 La nav es un **rail lateral fijo** estilo Flight Deck (2026-07-04): `<nav class="tab-bar">` fixed left 64px icon-only + tooltip, expandible a 228px vía botón pin (persistido en `localStorage['ssb-rail-pinned']`, solo ≥1101px), y drawer off-canvas ≤700px con hamburguesa en topbar. La clase `.tab-bar` se conserva a propósito: la referencia el anti-bypass de auth. Constant-dark en ambos temas (vars `--rail-*` + hex fijos — nunca vars que flipen en `body.light`).
 
@@ -66,6 +66,8 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `agente` | SSB Copilot — text-to-SQL contra MySQL (orders/shipments) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
 | `workspace-ia` | Workspace IA — text-to-SQL contra Supabase (todas las tablas) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
 | `control-bl` | Control BL read-only (Supabase `bl_controls`) | `docs/modules/control-bl.md` |
+| `mailing` | Mailing — envío de documentación (Supabase `mailing_*` + `/api/mailing` → webhook n8n) | header de `api/mailing.js` |
+| `cert-origen` | Certificado de Origen — ZIP COD en Drive → PDF pdf-lib + registro (Supabase `certificados_origen`) | `docs/modules/certificado-origen.md` · el ZIP jamás se modifica |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
 
@@ -80,6 +82,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **saldos / balance / ajustes / solicitudes / calendario / feriados de Vacaciones** → `docs/modules/vacaciones.md`
 - tocás **login / signup / reset o el gate** → `docs/modules/auth-global.md`
 - tocás **Control BL** o su workflow n8n → `docs/modules/control-bl.md`
+- tocás **Certificado de Origen** (solapa `cert-origen`, `api/certificado-origen.js`, `api/_lib/`) → `docs/modules/certificado-origen.md`
 - tocás **los agentes text-to-SQL** (chat IA) → `docs/modules/agentes-text-to-sql.md` (guardrail de seguridad: `api/CLAUDE.md`, se auto-carga bajo `api/**`)
 - tocás **el workflow Schedule Excel→Supabase** → `docs/integrations/n8n-schedule-excel.md`
 - tocás **`scripts/claude-processor/`** → `scripts/claude-processor/README.md`
