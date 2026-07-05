@@ -2652,6 +2652,30 @@ body.light #panel-mailing{
 #panel-mailing .mail-atd-st.warn{color:var(--mail-test)}
 #panel-mailing .mail-atd-st.err{color:var(--mail-warn)}
 #panel-mailing .mail-atd-st.mut{color:var(--mail-ink-faint)}
+/* ── KPI/SLA sticky + gate de cola (A-c3) ── */
+/* overflow:visible scoped: rompe el clip heredado de .tab-panel{overflow:hidden}
+   para que position:sticky ancle contra el scroller real (.main). Solo mailing. */
+#panel-mailing{overflow:visible}
+#panel-mailing .mail-kpibar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--mail-paper);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);padding:10px 14px;margin-bottom:14px}
+#panel-mailing .mail-kpi{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink-soft);cursor:pointer}
+#panel-mailing .mail-kpi b{font-size:14px}
+#panel-mailing .mail-kpi .mail-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+#panel-mailing .mail-kpi.total{cursor:default;color:var(--mail-ink)}
+#panel-mailing .mail-kpi.verde{color:var(--mail-ok)}
+#panel-mailing .mail-kpi.amar{color:var(--mail-test)}
+#panel-mailing .mail-kpi.rojo{color:var(--mail-warn)}
+#panel-mailing .mail-kpi.fut{color:var(--mail-accent)}
+#panel-mailing .mail-kpi.esp{color:var(--mail-ink-faint)}
+#panel-mailing .mail-kpi.on{outline:2px solid currentColor;outline-offset:-1px}
+#panel-mailing .mail-sect{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:var(--mail-surface-2);border:none;border-bottom:1px solid var(--mail-line);font-family:var(--font);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mail-ink-faint);text-align:left}
+#panel-mailing button.mail-sect{cursor:pointer}
+#panel-mailing button.mail-sect:hover{background:var(--mail-accent-soft);color:var(--mail-accent)}
+#panel-mailing .mail-item--muted{opacity:.62}
+#panel-mailing .mail-sla{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+#panel-mailing .mail-sla.verde{color:var(--mail-ok);background:var(--mail-ok-bg)}
+#panel-mailing .mail-sla.amar{color:var(--mail-test);background:var(--mail-test-bg)}
+#panel-mailing .mail-sla.rojo{color:var(--mail-warn);background:var(--mail-warn-bg)}
+#panel-mailing .mail-sla.fut{color:var(--mail-accent);background:var(--mail-accent-soft)}
 @media (max-width:900px){
   #panel-mailing .mail-layout{grid-template-columns:1fr}
   #panel-mailing .mail-master{max-height:45vh}
@@ -3983,6 +4007,8 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
         </div>
       </div>
     </header>
+
+    <div class="mail-kpibar" id="mail-kpibar" aria-label="SLA de mailing"></div>
 
     <details class="mail-atd" id="mail-atd-panel">
       <summary>
@@ -15270,6 +15296,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── ATD-gate (A-c2): lote del paste-grid Confirmar zarpe ──
   let _atdParsed = null;  // { listas, conflictos, errores, server? } del último "Validar lote"
   let _atdBusy = false;
+  // ── ATD-gate (A-c3): filtro SLA del KPI + toggle de Enviadas ──
+  let _slaFilter = null;  // null | 'enfecha' | 'porvencer' | 'vencida' | 'futuro' | 'espera'
+  let _showSent = false;
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -15294,6 +15323,40 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const dt = new Date(Date.UTC(y, mo - 1, d));
     if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
     return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
+
+  // ── SLA de mailing (A-c3): deadline = atd + SLA_DAYS corridos; amarillo cuando
+  // quedan ≤ SLA_WARN. Umbrales tunables (aprobados en STOP 1). Comparación
+  // date-only: diasDesde opera sobre strings YYYY-MM-DD vía Date.UTC — sin TZ. ──
+  const SLA_DAYS = 4, SLA_WARN = 1;
+  const diasDesde = iso => {
+    const [y1,m1,d1] = hoyBA().split('-').map(Number);
+    const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
+    return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
+  };
+  // Bucket de una fila NO enviada: espera (sin atd, fuera de la cola accionable) ·
+  // futuro (atd > hoy: "revisar", NUNCA verde — corrección STOP 1: un typo futuro
+  // no puede disfrazarse de en-fecha) · enfecha · porvencer · vencida.
+  function slaBucket(r){
+    if(r.status === 'ENVIADO') return null;
+    if(!r.atd) return 'espera';
+    const d = diasDesde(r.atd);
+    if(d < 0) return 'futuro';
+    if(d > SLA_DAYS) return 'vencida';
+    if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
+    return 'enfecha';
+  }
+  const SLA_CLS = { enfecha:'verde', porvencer:'amar', vencida:'rojo', futuro:'fut' };
+  function slaBadge(r){
+    const bk = slaBucket(r); if(!bk || bk === 'espera') return null;
+    const d = diasDesde(r.atd);
+    const txt = bk === 'futuro' ? 'ATD futuro · revisar'
+      : bk === 'vencida' ? 'vencida hace ' + (d - SLA_DAYS) + ' d'
+      : d === SLA_DAYS ? 'vence HOY'
+      : 'quedan ' + (SLA_DAYS - d) + ' d';
+    const b = el('span','mail-sla ' + SLA_CLS[bk], txt);
+    b.title = 'ATD ' + fmtD(r.atd) + ' · límite ' + fmtD(isoPlus(String(r.atd).slice(0,10), SLA_DAYS)) + ' (ATD+' + SLA_DAYS + ' corridos)';
+    return b;
   }
 
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
@@ -15360,13 +15423,43 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return { to: toC, cc: clean(cc).filter(e => !toC.includes(e)) };
   }
 
-  // ── master ──
+  // ── master — gate ATD: 3 secciones DERIVADAS de atd + status (cero estado en DB).
+  // En cola (con atd, no enviada, vencidas arriba) · Esperando zarpe (sin atd,
+  // muteada, sin reloj) · Enviadas (colapsable; el buscador la abre solo). ──
+  function renderKpis(){
+    const bar = $('mail-kpibar'); if(!bar) return;
+    bar.textContent = '';
+    const counts = { enfecha:0, porvencer:0, vencida:0, futuro:0, espera:0 };
+    for(const r of _orders){ const b = slaBucket(r); if(b) counts[b]++; }
+    const cola = counts.enfecha + counts.porvencer + counts.vencida + counts.futuro;
+    const tot = el('span','mail-kpi total');
+    tot.appendChild(el('b', null, String(cola)));
+    tot.appendChild(document.createTextNode(' pendiente(s) de mailing'));
+    bar.appendChild(tot);
+    const mk = (cls, key, label, n) => {
+      const c = el('button','mail-kpi ' + cls + (_slaFilter === key ? ' on' : ''));
+      c.type = 'button'; c.dataset.sla = key;
+      c.title = _slaFilter === key ? 'Quitar filtro' : 'Filtrar la lista';
+      c.appendChild(el('span','mail-dot'));
+      c.appendChild(el('b', null, String(n)));
+      c.appendChild(document.createTextNode(' ' + label));
+      bar.appendChild(c);
+    };
+    mk('verde', 'enfecha', 'en fecha', counts.enfecha);
+    mk('amar', 'porvencer', 'por vencer', counts.porvencer);
+    mk('rojo', 'vencida', 'vencida(s)', counts.vencida);
+    if(counts.futuro) mk('fut', 'futuro', 'ATD futuro · revisar', counts.futuro);
+    mk('esp', 'espera', 'esperando zarpe', counts.espera);
+  }
+
   function renderMaster(){
+    renderKpis();
     const box = $('mail-master'); if(!box) return;
     box.textContent = '';
     const q = _q.trim().toLowerCase();
     const rows = _orders.filter(r => {
       if(_filters.size && !_filters.has(r.status)) return false;
+      if(_slaFilter && slaBucket(r) !== _slaFilter) return false; // enviadas → bucket null → nunca matchean un filtro SLA
       if(!q) return true;
       return [r.order_number, r.ship_to_name, r.sold_to_name, r.vessel, r.voyage, r.booking_no, r.bl_number, r.pod]
         .some(v => String(v || '').toLowerCase().includes(q));
@@ -15381,16 +15474,40 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       box.appendChild(st);
       return;
     }
-    for(const r of rows){
-      const it = el('button','mail-item' + (r.order_number === _sel ? ' sel' : ''));
+    const cola = rows.filter(r => r.status !== 'ENVIADO' && r.atd)
+      .sort((a, b) => diasDesde(b.atd) - diasDesde(a.atd)); // más vencida arriba; ATD futuro (negativo) al fondo
+    const espera = rows.filter(r => r.status !== 'ENVIADO' && !r.atd);
+    const enviadas = rows.filter(r => r.status === 'ENVIADO');
+    const item = (r, muted) => {
+      const it = el('button','mail-item' + (r.order_number === _sel ? ' sel' : '') + (muted ? ' mail-item--muted' : ''));
       it.type = 'button'; it.dataset.act = 'sel'; it.dataset.id = r.order_number;
       const top = el('div','mail-item-top');
       top.appendChild(el('span','mail-item-order', r.order_number));
-      top.appendChild(badge(r.status, r.sent_test_mode));
+      const right = el('span'); right.style.display = 'inline-flex'; right.style.gap = '6px'; right.style.alignItems = 'center';
+      const sb = slaBadge(r); if(sb) right.appendChild(sb);
+      right.appendChild(badge(r.status, r.sent_test_mode));
+      top.appendChild(right);
       it.appendChild(top);
       it.appendChild(el('div','mail-item-cli', r.ship_to_name || '—'));
-      it.appendChild(el('div','mail-item-meta', [ [r.vessel, r.voyage].filter(Boolean).join(' '), r.pod, fmtTs(r.updated_at) ].filter(Boolean).join(' · ')));
-      box.appendChild(it);
+      const meta = [ r.atd ? 'ATD ' + fmtD(r.atd) : 'sin zarpe confirmado',
+        [r.vessel, r.voyage].filter(Boolean).join(' '), r.pod, fmtTs(r.updated_at) ].filter(Boolean).join(' · ');
+      it.appendChild(el('div','mail-item-meta', meta));
+      return it;
+    };
+    if(cola.length){
+      box.appendChild(el('div','mail-sect','En cola de mailing (' + cola.length + ')'));
+      cola.forEach(r => box.appendChild(item(r, false)));
+    }
+    if(espera.length){
+      box.appendChild(el('div','mail-sect','Esperando zarpe (' + espera.length + ') — sin reloj'));
+      espera.forEach(r => box.appendChild(item(r, true)));
+    }
+    if(enviadas.length){
+      const abierta = _showSent || !!q; // el buscador abre Enviadas solo (busca sobre TODO)
+      const tg = el('button','mail-sect'); tg.type = 'button'; tg.dataset.act = 'sent-toggle';
+      tg.textContent = (abierta ? '▾ ' : '▸ ') + 'Enviadas (' + enviadas.length + ')';
+      box.appendChild(tg);
+      if(abierta) enviadas.forEach(r => box.appendChild(item(r, false)));
     }
   }
 
@@ -15431,8 +15548,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     item('Buque / Viaje', [_row.vessel, _row.voyage].filter(Boolean).join(' '));
     item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → '));
     item('Factura', _row.invoice_no);
+    item('Zarpe (ATD)', _row.atd ? fmtD(_row.atd) : '— sin confirmar');
     dl.style.marginTop = '12px';
     c.appendChild(dl);
+    if(_row.atd){
+      const sb = slaBadge(_row);
+      if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
+    }
     c.appendChild(el('p','mail-note','ETD/ETA no se persisten: los resuelve el Preview en vivo contra schedules_master (activo + disponible).'));
     return c;
   }
@@ -16024,6 +16146,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       else if(act === 'send') doSend();
       else if(act === 'atd-parse') atdParse();
       else if(act === 'atd-confirm') atdConfirm();
+      else if(act === 'sent-toggle'){ _showSent = !_showSent; renderMaster(); }
     });
     panel.addEventListener('keydown', e => {
       if(e.key !== 'Enter') return;
@@ -16040,6 +16163,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(q){
       let tmr = null;
       q.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { _q = q.value; renderMaster(); }, 250); });
+    }
+    const kbar = $('mail-kpibar');
+    if(kbar){
+      kbar.addEventListener('click', e => {
+        const k = e.target.closest('[data-sla]');
+        if(!k || !kbar.contains(k)) return;
+        const v = k.dataset.sla;
+        _slaFilter = (_slaFilter === v) ? null : v; // toggle single-select
+        renderMaster();
+      });
     }
     const fbar = $('mail-filterbar');
     if(fbar){
