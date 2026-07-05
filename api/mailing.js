@@ -17,11 +17,10 @@ const ACTIONS = new Set(['preview', 'send', 'save_contacts', 'confirm_schedule']
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
-  const webhookUrl = process.env.MAILING_WEBHOOK_URL;
   const supaUrl = process.env.SUPABASE_URL;
   const supaKey = process.env.SUPABASE_DB_PASSWORD; // service_role JWT (nombre legacy)
-  if (!webhookUrl || !supaUrl || !supaKey)
-    return res.status(500).json({ error: 'MAILING_WEBHOOK_URL / SUPABASE_URL / SUPABASE_DB_PASSWORD no configuradas.' });
+  if (!supaUrl || !supaKey)
+    return res.status(500).json({ error: 'SUPABASE_URL / SUPABASE_DB_PASSWORD no configuradas.' });
 
   // ── Auth: Bearer JWT de sesión Supabase, validado contra /auth/v1/user ──
   const auth = req.headers.authorization || '';
@@ -56,6 +55,11 @@ export default async function handler(req, res) {
     triggered_by: user.email,
   };
   if (b.contacts && typeof b.contacts === 'object') payload.contacts = b.contacts;
+
+  // El check de la URL va DESPUÉS de auth: el 401 sin token debe funcionar
+  // aunque MAILING_WEBHOOK_URL todavía no esté configurada en el ambiente.
+  const webhookUrl = process.env.MAILING_WEBHOOK_URL;
+  if (!webhookUrl) return res.status(500).json({ error: 'MAILING_WEBHOOK_URL no configurada.' });
 
   try {
     const headers = { 'Content-Type': 'application/json' };
