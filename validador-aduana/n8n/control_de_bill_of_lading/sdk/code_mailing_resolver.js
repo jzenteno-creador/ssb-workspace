@@ -117,19 +117,39 @@ const schedule = match
     };
 
 // ---- destinatarios: override → directorio confirmado → propuesta BA ----
+// 3 estados por (cliente, email) — contrato migrations/2026-07-05-mailing-contacts-3-estados:
+//   confirmado = to/cc del directorio (confirmed=true) · bloqueado = blocked_emails
+//   nuevo = DERIVADO: contacts_extracted − confirmados − bloqueados (no se persiste)
 const ov = req.overrides || {};
+const blocked = cleanEmails((ct && (ct.blocked_emails || ct.rejected_emails)) || []);
+const confirmadosDir = (ct && ct.confirmed === true)
+  ? cleanEmails([...(ct.to_emails || []), ...(ct.cc_emails || [])]) : [];
+
+// propuesta del BA (siempre computada: alimenta el diff de nuevos aunque el
+// origen del envío sea el directorio o un override)
+const ce = (m.contacts_extracted && typeof m.contacts_extracted === 'object') ? m.contacts_extracted : {};
+const propTo = cleanEmails([...(ce.partner_emails || []), ce.document_recip && ce.document_recip.email]);
+const propCc = cleanEmails([ce.notify && ce.notify.email, ce.shipping_recip && ce.shipping_recip.email])
+  .filter((e) => !propTo.includes(e));
+const propuesta = [...propTo, ...propCc];
+
 let to = [], cc = [], source;
 if (Array.isArray(ov.to) && cleanEmails(ov.to).length) {
   to = cleanEmails(ov.to); cc = cleanEmails(ov.cc || []); source = 'override';
 } else if (ct && ct.confirmed === true) {
   to = cleanEmails(ct.to_emails); cc = cleanEmails(ct.cc_emails); source = 'directorio';
 } else {
-  const ce = (m.contacts_extracted && typeof m.contacts_extracted === 'object') ? m.contacts_extracted : {};
-  to = cleanEmails([...(ce.partner_emails || []), ce.document_recip && ce.document_recip.email]);
-  cc = cleanEmails([ce.notify && ce.notify.email, ce.shipping_recip && ce.shipping_recip.email])
-    .filter((e) => !to.includes(e));
-  source = 'propuesta-ba';
+  to = propTo.slice(); cc = propCc.slice(); source = 'propuesta-ba';
 }
+
+// FILTRO DURO — bloqueado es el ÚLTIMO filtro y gana sobre TODO origen (incluso
+// un email que por error esté también en confirmados): jamás sale, ni en test.
+const universo = [...to, ...cc, ...propuesta];
+to = to.filter((e) => !blocked.includes(e));
+cc = cc.filter((e) => !blocked.includes(e));
+const bloqueados_excluidos = blocked.filter((e) => universo.includes(e));
+const nuevos = propuesta.filter((e) => !confirmadosDir.includes(e) && !blocked.includes(e));
+
 const sendable_real = source !== 'propuesta-ba' && to.length > 0;
 
 // ---- TEST_MODE: dos llaves + tercera red ----
@@ -176,17 +196,22 @@ if (req.action === 'save_contacts') {
   if (!mo) action_errors.push('save_contacts requiere la orden asentada (aporta las claves ship/sold)');
   else {
     const c = req.contacts || {};
+    // Partición server-side: los 3 conjuntos quedan disjuntos y BLOCKED GANA —
+    // un email bloqueado se saca de to/cc aunque el request lo traiga en ambos.
+    const scBlocked = cleanEmails(c.blocked_emails || c.rejected_emails);
+    const scTo = cleanEmails(c.to_emails).filter((e) => !scBlocked.includes(e));
+    const scCc = cleanEmails(c.cc_emails).filter((e) => !scBlocked.includes(e) && !scTo.includes(e));
     sc_payload = {
       ship_to_key: m.ship_to_key, sold_to_key: m.sold_to_key || '',
       ship_to_name: m.ship_to_name, sold_to_name: m.sold_to_name,
-      to_emails: cleanEmails(c.to_emails), cc_emails: cleanEmails(c.cc_emails),
-      rejected_emails: cleanEmails(c.rejected_emails),
+      to_emails: scTo, cc_emails: scCc,
+      blocked_emails: scBlocked,
       source: c.source === 'manual' ? 'manual' : 'ba',
       confirmed: c.confirmed !== false,
       notes: c.notes ? String(c.notes).slice(0, 500) : null,
       updated_by: req.triggered_by, updated_at: nowIso,
     };
-    if (!sc_payload.to_emails.length) action_errors.push('save_contacts sin to_emails válidos');
+    if (!sc_payload.to_emails.length) action_errors.push('save_contacts sin to_emails válidos (¿todos bloqueados?)');
   }
 }
 if (req.action === 'confirm_schedule') {
@@ -210,7 +235,7 @@ const response = {
   cliente, carrier: pick(m.carrier), vessel, voyage, pol, pod, booking_no, bl_number,
   invoice_no: pick(m.invoice_no), status_actual: mo ? m.status : null,
   schedule,
-  recipients: { source, to, cc, sendable_real },
+  recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },
   test_mode_efectivo: effective_test, test_reasons,
   send_blocked: block.length > 0, block_reasons: block,
   attachments: { found: attachments_found.map(({ tipo, name }) => ({ tipo, name })), missing: attachments_missing },
@@ -221,7 +246,7 @@ const response = {
 
 return { json: {
   route, order_number, response, gmail,
-  recipients: { source, to, cc, sendable_real },
+  recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },
   schedule, attachments_found, attachments_missing,
   effective_test, triggered_by: req.triggered_by,
   sc_payload, cs_payload,

@@ -167,5 +167,49 @@ r = run(base({ 'GET mailing_orders': {}, 'Agg schedules': { data: [] }, 'Validar
 ok(r.route === 'respond' && r.response.encontrada === false
    && r.response.block_reasons.some((b) => b.includes('no asentada')), 'orden inexistente → respond con bloqueo');
 
+// ═══════ T3.1 — 3 estados: bloqueado (filtro DURO) + nuevos (derivado) ═══════
+// propuesta del mock MO_MAERSK: to=[pculque,mchillcce,rgarcia] cc=[thais@x.pe]
+
+// ---- 13. bloqueado excluido de la propuesta (sin directorio confirmado) ----
+r = run(base({ 'GET mailing_contacts': { confirmed: false, blocked_emails: ['rgarcia@tdm.com.pe'] } }));
+ok(!r.recipients.to.includes('rgarcia@tdm.com.pe') && !r.recipients.cc.includes('rgarcia@tdm.com.pe'),
+   'bloqueado: fuera de to/cc en source propuesta-ba');
+ok(r.recipients.bloqueados_excluidos.join(',') === 'rgarcia@tdm.com.pe', 'bloqueados_excluidos lo reporta');
+ok(!r.gmail.subject.includes('rgarcia'), 'bloqueado tampoco aparece en el subject [TEST → real: …]');
+ok(r.recipients.nuevos.join(',') === 'pculque@tdm.com.pe,mchillcce@tdm.com.pe,thais@x.pe',
+   'nuevos = propuesta − bloqueados (sin confirmados)');
+
+// ---- 14. blocked GANA sobre confirmado ----
+r = run(base({ 'GET mailing_contacts': { confirmed: true,
+  to_emails: ['cliente@tdm.com.pe', 'error@tdm.com.pe'], cc_emails: [],
+  blocked_emails: ['error@tdm.com.pe'] } }));
+ok(r.recipients.source === 'directorio' && r.recipients.to.join(',') === 'cliente@tdm.com.pe',
+   'blocked > confirmado: el email en ambos conjuntos NO sale');
+ok(r.recipients.bloqueados_excluidos.includes('error@tdm.com.pe'), 'y queda reportado como excluido');
+
+// ---- 15. blocked filtra también el override del request ----
+r = run(base({
+  'Validar request': { ...base()['Validar request'], overrides: { to: ['op@cliente.com', 'error@x.com'] } },
+  'GET mailing_contacts': { confirmed: false, blocked_emails: ['error@x.com'] },
+}));
+ok(r.recipients.source === 'override' && r.recipients.to.join(',') === 'op@cliente.com'
+   && r.recipients.bloqueados_excluidos.includes('error@x.com'),
+   'blocked filtra el 3er origen (override)');
+
+// ---- 16. nuevos = propuesta − confirmados − bloqueados (diff con directorio) ----
+r = run(base({ 'GET mailing_contacts': { confirmed: true,
+  to_emails: ['pculque@tdm.com.pe'], cc_emails: [], blocked_emails: ['rgarcia@tdm.com.pe'] } }));
+ok(r.recipients.nuevos.join(',') === 'mchillcce@tdm.com.pe,thais@x.pe',
+   'nuevos: solo lo no visto (ni confirmado ni bloqueado)');
+ok(r.recipients.to.join(',') === 'pculque@tdm.com.pe', 'envío usa SOLO el directorio confirmado');
+
+// ---- 17. save_contacts particiona server-side (blocked gana, sets disjuntos) ----
+r = run(base({ 'Validar request': { ...base()['Validar request'], action: 'save_contacts',
+  contacts: { to_emails: ['a@x.com', 'b@x.com'], cc_emails: ['b@x.com', 'c@x.com'],
+    blocked_emails: ['b@x.com'], confirmed: true } } }));
+ok(r.sc_payload.to_emails.join(',') === 'a@x.com' && r.sc_payload.cc_emails.join(',') === 'c@x.com'
+   && r.sc_payload.blocked_emails.join(',') === 'b@x.com',
+   'save_contacts: partición disjunta con blocked ganando');
+
 if (fails.length) { console.log('\nGATE-T2: FAIL'); for (const f of fails) console.log(' -', f); process.exit(1); }
-console.log('\nGATE-T2: PASS (tiers + candados TEST_MODE + picker + guards + acciones)');
+console.log('\nGATE-T2: PASS (tiers + candados TEST_MODE + picker + guards + acciones + 3 estados)');
