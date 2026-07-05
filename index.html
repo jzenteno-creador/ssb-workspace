@@ -2513,9 +2513,22 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 </style>
 <style id="mailing-styles">
 /* ═══════════ Mailing — estilos scoped (T3, patrón isla #cbl-styles) ═══════════ */
-/* Todo bajo #panel-mailing, clases mail-*. Misma isla "papel claro" del Control BL:
-   tokens LOCALES (no filtran a :root), constante en dark y light. */
+/* Todo bajo #panel-mailing, clases mail-*. DARK-AWARE (T3.1, a diferencia del CBL
+   que es papel constante — a propósito): en dark las vars locales referencian los
+   tokens de la app; body.light re-mapea a los valores papel aprobados en T3 (light
+   queda pixel-idéntico). Reusa el MISMO mecanismo body.light — sin segundo tema. */
 #panel-mailing{
+  --mail-paper:var(--bg); --mail-surface:#1e293b; --mail-surface-2:#161e2b;
+  --mail-ink:var(--text); --mail-ink-soft:var(--muted); --mail-ink-faint:#6b7488;
+  --mail-line:rgba(255,255,255,.08); --mail-line-strong:rgba(255,255,255,.16);
+  --mail-accent:var(--blue); --mail-accent-soft:var(--blue-lt);
+  --mail-ok:var(--green); --mail-ok-bg:var(--green-bg); --mail-ok-bd:var(--green-bd);
+  --mail-warn:var(--orange); --mail-warn-bg:var(--orange-bg); --mail-warn-bd:var(--orange-bd);
+  --mail-miss:var(--muted); --mail-miss-bg:#141925;
+  --mail-test:var(--amber); --mail-test-bg:var(--amber-bg); --mail-test-bd:var(--amber-bd);
+  --mail-shadow:var(--shadow);
+}
+body.light #panel-mailing{
   --mail-paper:#F7F6F2; --mail-surface:#FFFFFF; --mail-surface-2:#FBFAF7;
   --mail-ink:#1C1B19; --mail-ink-soft:#6B6863; --mail-ink-faint:#9C988F;
   --mail-line:#E7E4DD; --mail-line-strong:#D9D5CC;
@@ -2567,9 +2580,22 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 #panel-mailing .mail-note{font-size:11.5px;color:var(--mail-ink-faint);margin:8px 0 0}
 #panel-mailing .mail-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
 #panel-mailing .mail-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:var(--mail-surface-2);border:1px solid var(--mail-line-strong);border-radius:999px;padding:4px 6px 4px 10px;color:var(--mail-ink)}
-#panel-mailing .mail-chip.prop{border-style:dashed;color:var(--mail-ink-soft)}
+#panel-mailing .mail-chip.nuevo{border-style:dashed;border-color:var(--mail-accent);background:var(--mail-accent-soft);color:var(--mail-ink)}
+#panel-mailing .mail-chip.blq{border-color:var(--mail-warn-bd);background:var(--mail-warn-bg);color:var(--mail-warn)}
+#panel-mailing .mail-chip.blq .mail-chip-txt{text-decoration:line-through}
 #panel-mailing .mail-chip button{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:none;border-radius:50%;background:var(--mail-line);color:var(--mail-ink-soft);cursor:pointer;font-size:11px;line-height:1;padding:0}
 #panel-mailing .mail-chip button:hover{background:var(--mail-warn-bg);color:var(--mail-warn)}
+#panel-mailing .mail-chip .mail-mini{width:auto;height:auto;border-radius:6px;font-size:10px;font-weight:700;padding:2px 7px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink-soft)}
+#panel-mailing .mail-chip .mail-mini:hover{background:var(--mail-accent-soft);color:var(--mail-accent);border-color:var(--mail-accent)}
+#panel-mailing .mail-chip .mail-mini.blq:hover{background:var(--mail-warn-bg);color:var(--mail-warn);border-color:var(--mail-warn-bd)}
+#panel-mailing .mail-sendlists{margin-top:10px;border:1px solid var(--mail-line);border-radius:10px;overflow:hidden}
+#panel-mailing .mail-sendlists>div{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid var(--mail-line);font-size:12.5px;align-items:baseline}
+#panel-mailing .mail-sendlists>div:last-child{border-bottom:none}
+#panel-mailing .mail-sendlists .k{flex:0 0 210px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+#panel-mailing .mail-sendlists .k.van{color:var(--mail-ok)}
+#panel-mailing .mail-sendlists .k.nue{color:var(--mail-accent)}
+#panel-mailing .mail-sendlists .k.blq{color:var(--mail-warn)}
+#panel-mailing .mail-sendlists .v{color:var(--mail-ink);min-width:0;overflow-wrap:anywhere}
 #panel-mailing .mail-addrow{display:flex;gap:8px;margin-top:8px}
 #panel-mailing .mail-addrow input{flex:1;font-family:var(--font);font-size:13px;color:var(--mail-ink);background:var(--mail-surface);border:1px solid var(--mail-line-strong);border-radius:9px;padding:7px 10px;outline:none}
 #panel-mailing .mail-addrow input:focus{border-color:var(--mail-accent)}
@@ -15193,8 +15219,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _row = null;        // fila mailing_orders seleccionada
   let _contact = null;    // fila mailing_contacts del par (ship,sold)
   let _preview = null;    // última respuesta action=preview
-  let _to = [], _cc = []; // edición local de destinatarios
-  let _extracted = [];    // propuesta del BA (para calcular rejected al guardar)
+  let _to = [], _cc = []; // CONFIRMADOS en edición (enviables al guardar)
+  let _blocked = [];      // BLOQUEADOS en edición (exclusión dura persistente)
+  let _dirty = false;     // hay cambios de directorio sin guardar
+  // 'nuevo' NO es estado: se DERIVA en render = propuesta − (_to∪_cc) − _blocked
+  // (mismo contrato que el resolver v2 — el front nunca recalcula distinto)
   let _candidates = [];   // picker sin-match
   let _sends = [];        // historial mailing_sends
   let _busy = null;       // 'preview' | 'send' | 'contacts' | 'confirm' | null
@@ -15352,71 +15381,87 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return c;
   }
 
-  function chipList(list, kind, editable){
-    const wrap = el('div','mail-chips');
-    if(!list.length) wrap.appendChild(el('span','mail-status-line','— vacío —'));
-    list.forEach((e, i) => {
-      const ch = el('span','mail-chip');
-      ch.appendChild(document.createTextNode(e));
-      if(editable){
-        const x = el('button', null, '×');
-        x.type = 'button'; x.dataset.act = 'chip-del'; x.dataset.list = kind; x.dataset.i = String(i);
-        x.setAttribute('aria-label','Quitar ' + e);
-        ch.appendChild(x);
-      }
-      wrap.appendChild(ch);
-    });
+  // nuevos DERIVADOS (contrato resolver v2): propuesta − confirmados en edición − bloqueados
+  function nuevosDerivados(){
+    const p = proposalEmails(_row);
+    return [...p.to, ...p.cc].filter(e => !_to.includes(e) && !_cc.includes(e) && !_blocked.includes(e));
+  }
+
+  function chip(email, variant, actions){
+    const ch = el('span','mail-chip' + (variant ? ' ' + variant : ''));
+    ch.appendChild(el('span','mail-chip-txt', email));
+    for(const a of (actions || [])){
+      const b = el('button', a.cls || null, a.label);
+      b.type = 'button'; b.dataset.act = a.act; b.dataset.mail = email;
+      if(a.list) b.dataset.list = a.list;
+      b.setAttribute('aria-label', a.aria + ' ' + email);
+      b.title = a.aria;
+      ch.appendChild(b);
+    }
+    return ch;
+  }
+  function chipRow(cls){ const w = el('div','mail-chips'); if(cls) w.classList.add(cls); return w; }
+  function fillChips(wrap, chips){
+    if(!chips.length) wrap.appendChild(el('span','mail-status-line','— ninguno —'));
+    else chips.forEach(ch => wrap.appendChild(ch));
     return wrap;
   }
 
   function cardDestinatarios(){
     const c = el('div','mail-card');
-    c.appendChild(el('h3', null, 'Destinatarios'));
+    c.appendChild(el('h3', null, 'Destinatarios — directorio del cliente'));
 
-    const prop = proposalEmails(_row);
     const status = el('p','mail-status-line');
     if(_contact && _contact.confirmed){
-      status.textContent = 'Directorio CONFIRMADO (' + (_contact.source || 'ba') + ') — actualizado ' + fmtTs(_contact.updated_at) + (_contact.updated_by ? ' por ' + _contact.updated_by : '') + '. Habilita envío real.';
-      status.style.color = 'var(--mail-ok)';
+      status.textContent = 'Directorio CONFIRMADO (' + (_contact.source || 'ba') + ') — actualizado ' + fmtTs(_contact.updated_at) + (_contact.updated_by ? ' por ' + _contact.updated_by : '') + '. Habilita envío real.' + (_dirty ? ' · CAMBIOS SIN GUARDAR' : '');
+      status.style.color = _dirty ? 'var(--mail-warn)' : 'var(--mail-ok)';
     } else {
-      status.textContent = 'Sin directorio confirmado: lo de abajo es la PROPUESTA extraída del Booking Advice. Hasta confirmar, todo envío sale en modo TEST (tercera red).';
+      status.textContent = 'Sin directorio confirmado para este cliente. Confirmá los extraídos (o cargá manuales) y guardá: hasta entonces todo envío sale en modo TEST (tercera red).' + (_dirty ? ' · CAMBIOS SIN GUARDAR' : '');
       status.style.color = 'var(--mail-warn)';
     }
     c.appendChild(status);
 
-    c.appendChild(el('span','mail-lbl','PARA (to)'));
-    c.appendChild(chipList(_to, 'to', true));
+    // ── CONFIRMADOS (enviables) ──
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — PARA (to)'));
+    c.appendChild(fillChips(chipRow(), _to.map(e => chip(e, null, [
+      { act:'chip-del', list:'to', label:'×', aria:'Quitar de PARA (vuelve a nuevo si es extraído)' }]))));
     const addTo = el('div','mail-addrow');
     const inTo = el('input'); inTo.id = 'mail-add-to'; inTo.type = 'email'; inTo.placeholder = 'agregar@email.com';
     const btTo = el('button','mail-btn','Agregar'); btTo.type = 'button'; btTo.dataset.act = 'add-email'; btTo.dataset.list = 'to';
     addTo.appendChild(inTo); addTo.appendChild(btTo);
     c.appendChild(addTo);
 
-    c.appendChild(el('span','mail-lbl','CC'));
-    c.appendChild(chipList(_cc, 'cc', true));
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — CC'));
+    c.appendChild(fillChips(chipRow(), _cc.map(e => chip(e, null, [
+      { act:'chip-del', list:'cc', label:'×', aria:'Quitar de CC' }]))));
     const addCc = el('div','mail-addrow');
     const inCc = el('input'); inCc.id = 'mail-add-cc'; inCc.type = 'email'; inCc.placeholder = 'agregar@email.com';
     const btCc = el('button','mail-btn','Agregar'); btCc.type = 'button'; btCc.dataset.act = 'add-email'; btCc.dataset.list = 'cc';
     addCc.appendChild(inCc); addCc.appendChild(btCc);
     c.appendChild(addCc);
 
-    const dropped = _extracted.filter(e => !_to.includes(e) && !_cc.includes(e));
-    if(dropped.length){
-      const p = el('p','mail-note','Extraídos que quedarán marcados "llegó por error" al guardar (no se re-proponen): ' + dropped.join(', '));
-      c.appendChild(p);
-    }
+    // ── NUEVOS (derivados: extraídos sin decidir — no enviables en real) ──
+    const nuevos = nuevosDerivados();
+    c.appendChild(el('span','mail-lbl','NUEVOS — extraídos del BA sin decidir (no van en real)'));
+    c.appendChild(fillChips(chipRow('nuevos'), nuevos.map(e => chip(e, 'nuevo', [
+      { act:'nuevo-to', label:'✓ Para', cls:'mail-mini', aria:'Confirmar en PARA' },
+      { act:'nuevo-cc', label:'CC', cls:'mail-mini', aria:'Confirmar en CC' },
+      { act:'nuevo-blq', label:'⊘', cls:'mail-mini blq', aria:'Bloquear (llegó por error)' }]))));
+
+    // ── BLOQUEADOS (exclusión dura persistente por cliente) ──
+    c.appendChild(el('span','mail-lbl','BLOQUEADOS — nunca se envían ni se re-proponen'));
+    c.appendChild(fillChips(chipRow('bloqueados'), _blocked.map(e => chip(e, 'blq', [
+      { act:'unblock', label:'Desbloquear', cls:'mail-mini', aria:'Desbloquear (vuelve a nuevo si es extraído)' }]))));
 
     const row = el('div','mail-btnrow');
-    const save = el('button','mail-btn pri', _busy === 'contacts' ? 'Guardando…' : 'Guardar y confirmar directorio');
+    const save = el('button','mail-btn pri', _busy === 'contacts' ? 'Guardando…' : 'Guardar directorio (confirma)');
     save.type = 'button'; save.dataset.act = 'save-contacts';
-    save.disabled = _busy != null || !_to.length;
+    save.disabled = _busy != null || !_to.length || !_dirty;
     row.appendChild(save);
-    if(prop.to.length || prop.cc.length){
-      const reset = el('button','mail-btn','Restaurar propuesta del BA');
-      reset.type = 'button'; reset.dataset.act = 'reset-proposal';
-      reset.disabled = _busy != null;
-      row.appendChild(reset);
-    }
+    const hint = el('span','mail-status-line',
+      !_to.length ? 'Para guardar necesitás al menos 1 confirmado en PARA (regla del workflow).'
+      : (_dirty ? '' : 'Sin cambios pendientes.'));
+    row.appendChild(hint);
     c.appendChild(row);
     return c;
   }
@@ -15488,6 +15533,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     c.appendChild(el('p','mail-status-line', (p.gmail_preview && p.gmail_preview.subject) || '—'));
     c.appendChild(el('span','mail-lbl','DESTINO DEL ENVÍO (según modo)'));
     c.appendChild(el('p','mail-status-line', 'To: ' + ((p.gmail_preview && p.gmail_preview.to) || '—') + (p.gmail_preview && p.gmail_preview.cc ? ' · CC: ' + p.gmail_preview.cc : '')));
+    if(p.recipients){
+      c.appendChild(el('p','mail-status-line', 'Estados: ' + (p.recipients.nuevos || []).length + ' nuevo(s) sin decidir · ' + (p.recipients.bloqueados_excluidos || []).length + ' bloqueado(s) excluido(s) — detalle en el card Envío.'));
+    }
 
     const frame = document.createElement('iframe');
     frame.className = 'mail-frame';
@@ -15528,6 +15576,25 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       : '⚠ ENVÍO REAL: el mail sale a ' + (_preview && _preview.recipients ? _preview.recipients.to.join(', ') : '—');
     modeBox.style.marginTop = '10px';
     c.appendChild(modeBox);
+
+    // ── Las 3 categorías del envío, SIEMPRE visibles con preview (test y real) ──
+    if(_preview && _preview.recipients){
+      const rcp = _preview.recipients;
+      const lists = el('div','mail-sendlists');
+      const rowL = (kcls, klbl, arr) => {
+        const d = el('div');
+        d.appendChild(el('span','k ' + kcls, klbl));
+        d.appendChild(el('span','v', (arr && arr.length) ? arr.join(', ') : '— ninguno —'));
+        lists.appendChild(d);
+      };
+      rowL('van', 'Enviables (van)', [...rcp.to, ...rcp.cc.map(e => e + ' (cc)')]);
+      rowL('nue', 'Nuevos sin decidir (NO van)', rcp.nuevos);
+      rowL('blq', 'Bloqueados excluidos (NO van)', rcp.bloqueados_excluidos);
+      c.appendChild(lists);
+      if(!tg.checked && rcp.nuevos && rcp.nuevos.length){
+        c.appendChild(el('div','mail-alert','⚠ Hay ' + rcp.nuevos.length + ' extraído(s) sin decidir que NO van en este envío real. Confirmalos o bloquealos en el directorio si corresponde.'));
+      }
+    }
 
     const row = el('div','mail-btnrow');
     const canSend = _preview && !_preview.send_blocked && _busy == null;
@@ -15588,13 +15655,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const box = detailBox(); box.textContent = ''; box.appendChild(el('div','mail-spinner'));
     _contact = await fetchContact(_row);
     _sends = await fetchSends(order);
-    if(_contact && Array.isArray(_contact.to_emails) && _contact.to_emails.length){
-      _to = _contact.to_emails.slice(); _cc = (_contact.cc_emails || []).slice();
-    } else {
-      const prop = proposalEmails(_row);
-      _to = prop.to.slice(); _cc = prop.cc.slice();
-    }
-    _extracted = (() => { const p = proposalEmails(_row); return [...p.to, ...p.cc]; })();
+    // 3 estados: confirmados y bloqueados vienen del directorio GUARDADO;
+    // los extraídos sin decidir se derivan en render (nuevosDerivados) — la UI
+    // NO pre-carga la propuesta en PARA: confirmar es una decisión explícita.
+    _to = (_contact && _contact.to_emails || []).slice();
+    _cc = (_contact && _contact.cc_emails || []).slice();
+    _blocked = (_contact && (_contact.blocked_emails || _contact.rejected_emails) || []).slice();
+    _dirty = false;
     renderDetail();
   }
 
@@ -15604,11 +15671,27 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const v = String(inp.value || '').trim().toLowerCase();
     if(!EMAIL_RE.test(v)){ inp.reportValidity ? inp.reportValidity() : alert('Email inválido'); return; }
     if(v === 'expoarpbb@ssbint.com'){ alert('expoarpbb es la casilla propia — no va como destinatario del cliente.'); return; }
+    if(_blocked.includes(v)){ alert(v + ' está BLOQUEADO para este cliente. Desbloquealo primero si corresponde.'); return; }
     const list = kind === 'to' ? _to : _cc;
     if(!list.includes(v)) list.push(v);
     const other = kind === 'to' ? _cc : _to;
     const idx = other.indexOf(v); if(idx >= 0) other.splice(idx, 1);
     inp.value = '';
+    _dirty = true;
+    renderDetail();
+  }
+
+  // mover un email entre categorías (los conjuntos quedan disjuntos; el resolver
+  // re-particiona igual server-side con blocked ganando — doble cinturón)
+  function moveEmail(email, dest){
+    for(const list of [_to, _cc, _blocked]){
+      const i = list.indexOf(email); if(i >= 0) list.splice(i, 1);
+    }
+    if(dest === 'to') _to.push(email);
+    else if(dest === 'cc') _cc.push(email);
+    else if(dest === 'blocked') _blocked.push(email);
+    // dest 'nuevo' = solo sacarlo de donde estaba (si es extraído reaparece derivado)
+    _dirty = true;
     renderDetail();
   }
 
@@ -15616,14 +15699,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!_row || !_to.length || _busy) return;
     _busy = 'contacts'; renderDetail();
     try {
-      const rejected = _extracted.filter(e => !_to.includes(e) && !_cc.includes(e));
-      const source = _extracted.length ? 'ba' : 'manual';
+      const p = proposalEmails(_row);
+      const source = (p.to.length + p.cc.length) ? 'ba' : 'manual';
       const resp = await apiMailing({
         order_number: _sel, action: 'save_contacts',
-        contacts: { to_emails: _to, cc_emails: _cc, rejected_emails: rejected, confirmed: true, source },
+        contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
       });
-      if(resp && resp.ok === false) throw new Error(resp.error || 'save_contacts rechazado');
+      if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
       _contact = (resp && resp.contact) || _contact;
+      _dirty = false;
       _preview = null; // el directorio cambió: el preview anterior ya no representa el envío
     } catch(e){ alert('No se pudo guardar el directorio: ' + e.message); }
     _busy = null; renderDetail();
@@ -15659,10 +15743,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!_row || !_preview || _preview.send_blocked || _busy) return;
     const tg = $('mail-test-toggle');
     const testMode = !tg || tg.checked;
-    const toReal = (_preview.recipients && _preview.recipients.to) || [];
+    // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
+    // puede confirmar sin ver qué va, qué quedó sin decidir y qué está excluido.
+    const rcp = _preview.recipients || { to:[], cc:[], nuevos:[], bloqueados_excluidos:[] };
+    const secc =
+      '── ENVIABLES (van): ' + (rcp.to.join(', ') || '—') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '') +
+      '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
+      '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—');
     const msg = testMode
-      ? 'Enviar en MODO TEST a expoarpbb@ssbint.com.\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : '')
-      : '⚠ ENVÍO REAL AL CLIENTE ⚠\n\nTo: ' + toReal.join(', ') + '\nCC: ' + ((_preview.recipients && _preview.recipients.cc) || []).join(', ') + '\n\n¿Confirmás?';
+      ? 'Enviar en MODO TEST a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : '')
+      : '⚠ ENVÍO REAL AL CLIENTE ⚠\n\n' + secc + '\n\n¿Confirmás?';
     if(!confirm(msg)) return;
     // Guard doble-click: reenviar tras un envío REAL exige decisión explícita (resend).
     const overrides = {};
@@ -15707,13 +15797,12 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!t || !panel.contains(t)) return;
       const act = t.dataset.act;
       if(act === 'sel') selectOrder(t.dataset.id);
-      else if(act === 'chip-del'){
-        const list = t.dataset.list === 'to' ? _to : _cc;
-        list.splice(parseInt(t.dataset.i, 10), 1);
-        renderDetail();
-      }
+      else if(act === 'chip-del') moveEmail(t.dataset.mail, 'nuevo');
+      else if(act === 'nuevo-to') moveEmail(t.dataset.mail, 'to');
+      else if(act === 'nuevo-cc') moveEmail(t.dataset.mail, 'cc');
+      else if(act === 'nuevo-blq') moveEmail(t.dataset.mail, 'blocked');
+      else if(act === 'unblock') moveEmail(t.dataset.mail, 'nuevo');
       else if(act === 'add-email') addEmail(t.dataset.list);
-      else if(act === 'reset-proposal'){ const p = proposalEmails(_row); _to = p.to.slice(); _cc = p.cc.slice(); renderDetail(); }
       else if(act === 'save-contacts') saveContacts();
       else if(act === 'preview') runPreview();
       else if(act === 'confirm-schedule') confirmSchedule();
