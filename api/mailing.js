@@ -40,6 +40,22 @@ export default async function handler(req, res) {
   }
   if (!user || !user.email) return res.status(401).json({ error: 'Sesión inválida' });
 
+  // ── Gate de empleado (mismo criterio server-side que el auth global de la app):
+  // un JWT válido NO alcanza — el email debe existir ACTIVO en vac_employees.
+  // Cierra el caso "signup ajeno con sesión válida" (PostgREST GET, no SQL).
+  try {
+    const eRes = await fetch(
+      `${supaUrl}/rest/v1/vac_employees?select=id&active=is.true&email=eq.${encodeURIComponent(user.email)}&limit=1`,
+      { headers: { apikey: supaKey, Authorization: `Bearer ${supaKey}` } }
+    );
+    const emp = eRes.ok ? await eRes.json() : [];
+    if (!Array.isArray(emp) || !emp.length)
+      return res.status(403).json({ error: 'Usuario sin acceso (no habilitado en vac_employees)' });
+  } catch (e) {
+    console.error('mailing employee-gate error:', e.message);
+    return res.status(502).json({ error: 'No se pudo validar el acceso' });
+  }
+
   // ── Saneo al contrato del webhook; triggered_by lo fija el server (no spoofeable) ──
   const b = (req.body && typeof req.body === 'object') ? req.body : {};
   const action = String(b.action || 'preview');
