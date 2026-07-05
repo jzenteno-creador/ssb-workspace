@@ -15228,6 +15228,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _sends = [];        // historial mailing_sends
   let _busy = null;       // 'preview' | 'send' | 'contacts' | 'confirm' | null
   let _lastResult = null; // resultado del último send {ok, ...}
+  let _gen = 0;           // token de generación: invalida awaits en vuelo al cambiar de orden
   const _filters = new Set();
   let _q = '';
   let _loaded = false;
@@ -15421,8 +15422,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     c.appendChild(status);
 
-    // ── CONFIRMADOS (enviables) ──
-    c.appendChild(el('span','mail-lbl','CONFIRMADOS — PARA (to)'));
+    // ── CONFIRMADOS (enviables) — si la fila existe pero confirmed=false (seed
+    // a medio curar vía API), el rótulo no debe mentir: se confirman al guardar ──
+    const lblConf = (_contact && _contact.confirmed === false && (_to.length || _cc.length)) ? ' (sin confirmar — guardar confirma)' : '';
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — PARA (to)' + lblConf));
     c.appendChild(fillChips(chipRow(), _to.map(e => chip(e, null, [
       { act:'chip-del', list:'to', label:'×', aria:'Quitar de PARA (vuelve a nuevo si es extraído)' }]))));
     const addTo = el('div','mail-addrow');
@@ -15431,7 +15434,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     addTo.appendChild(inTo); addTo.appendChild(btTo);
     c.appendChild(addTo);
 
-    c.appendChild(el('span','mail-lbl','CONFIRMADOS — CC'));
+    c.appendChild(el('span','mail-lbl','CONFIRMADOS — CC' + lblConf));
     c.appendChild(fillChips(chipRow(), _cc.map(e => chip(e, null, [
       { act:'chip-del', list:'cc', label:'×', aria:'Quitar de CC' }]))));
     const addCc = el('div','mail-addrow');
@@ -15581,13 +15584,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(_preview && _preview.recipients){
       const rcp = _preview.recipients;
       const lists = el('div','mail-sendlists');
-      const rowL = (kcls, klbl, arr) => {
+      const rowL = (kcls, klbl, arr, empty) => {
         const d = el('div');
         d.appendChild(el('span','k ' + kcls, klbl));
-        d.appendChild(el('span','v', (arr && arr.length) ? arr.join(', ') : '— ninguno —'));
+        d.appendChild(el('span','v', (arr && arr.length) ? arr.join(', ') : (empty || '— ninguno —')));
         lists.appendChild(d);
       };
-      rowL('van', 'Enviables (van)', [...rcp.to, ...rcp.cc.map(e => e + ' (cc)')]);
+      // Sin directorio confirmado NO hay enviables: la propuesta vive en NUEVOS
+      // (evita rotular el mismo email como "van" y "NO van" a la vez).
+      const sr = !!rcp.sendable_real;
+      rowL('van', 'Enviables (van)', sr ? [...rcp.to, ...rcp.cc.map(e => e + ' (cc)')] : [],
+           sr ? null : '— ninguno (directorio sin confirmar: solo TEST) —');
       rowL('nue', 'Nuevos sin decidir (NO van)', rcp.nuevos);
       rowL('blq', 'Bloqueados excluidos (NO van)', rcp.bloqueados_excluidos);
       c.appendChild(lists);
@@ -15597,7 +15604,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     const row = el('div','mail-btnrow');
-    const canSend = _preview && !_preview.send_blocked && _busy == null;
+    const canSend = _preview && !_preview.send_blocked && _busy == null && !_dirty;
     const bt = el('button','mail-btn ' + (tg.checked ? 'pri' : 'danger'), _busy === 'send' ? 'Enviando…' : (tg.checked ? 'Enviar TEST' : 'ENVIAR REAL'));
     bt.type = 'button'; bt.dataset.act = 'send'; bt.disabled = !canSend;
     row.appendChild(bt);
@@ -15605,6 +15612,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       row.appendChild(el('span','mail-status-line','Bloqueado: ' + (_preview.block_reasons || []).join(' · ')));
     } else if(!_preview){
       row.appendChild(el('span','mail-status-line','Requiere un Preview previo.'));
+    } else if(_dirty){
+      row.appendChild(el('span','mail-status-line','Guardá el directorio antes de enviar (cambios sin guardar).'));
     }
     c.appendChild(row);
 
@@ -15646,6 +15655,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   // ── acciones ──
   async function selectOrder(order){
+    const gen = ++_gen; // invalida cualquier carga/preview en vuelo de la orden anterior
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
     _preview = null; _lastResult = null; _candidates = [];
@@ -15653,8 +15663,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     renderMaster();
     if(!_row){ renderDetail(); return; }
     const box = detailBox(); box.textContent = ''; box.appendChild(el('div','mail-spinner'));
-    _contact = await fetchContact(_row);
+    const contact = await fetchContact(_row);
+    if(gen !== _gen) return; // el usuario ya seleccionó otra orden: descartar
+    _contact = contact;
     _sends = await fetchSends(order);
+    if(gen !== _gen) return;
     // 3 estados: confirmados y bloqueados vienen del directorio GUARDADO;
     // los extraídos sin decidir se derivan en render (nuevosDerivados) — la UI
     // NO pre-carga la propuesta en PARA: confirmar es una decisión explícita.
@@ -15697,6 +15710,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   async function saveContacts(){
     if(!_row || !_to.length || _busy) return;
+    const gen = _gen;
     _busy = 'contacts'; renderDetail();
     try {
       const p = proposalEmails(_row);
@@ -15705,19 +15719,32 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         order_number: _sel, action: 'save_contacts',
         contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
       });
+      if(gen !== _gen) return; // cambió la orden durante el await
       if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
       _contact = (resp && resp.contact) || _contact;
       _dirty = false;
-      _preview = null; // el directorio cambió: el preview anterior ya no representa el envío
-    } catch(e){ alert('No se pudo guardar el directorio: ' + e.message); }
+      _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
+      window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
+    } catch(e){ if(gen === _gen) alert('No se pudo guardar el directorio: ' + e.message); }
+    if(gen !== _gen) return;
     _busy = null; renderDetail();
   }
 
   async function runPreview(){
     if(!_row || _busy) return;
+    const gen = _gen, order = _sel;
     _busy = 'preview'; _lastResult = null; renderDetail();
-    try { _preview = await apiMailing({ order_number: _sel, action: 'preview' }); }
-    catch(e){ _preview = null; alert('Preview falló: ' + e.message); }
+    try {
+      const resp = await apiMailing({ order_number: order, action: 'preview' });
+      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
+      // validación de forma: un 2xx degenerado (sin recipients) NO habilita Enviar
+      if(!resp || typeof resp !== 'object' || !resp.recipients || !resp.gmail_preview)
+        throw new Error(resp && (resp.error || (resp.errors || []).join(' · ')) || 'respuesta de preview inválida (sin recipients)');
+      _preview = resp;
+    } catch(e){
+      if(gen !== _gen || order !== _sel) return;
+      _preview = null; alert('Preview falló: ' + e.message);
+    }
     _busy = null; renderDetail();
   }
 
@@ -15741,15 +15768,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   async function doSend(){
     if(!_row || !_preview || _preview.send_blocked || _busy) return;
+    if(_dirty){ alert('Tenés cambios de directorio sin guardar: guardalos (o descartalos re-seleccionando la orden) antes de enviar.'); return; }
     const tg = $('mail-test-toggle');
     const testMode = !tg || tg.checked;
     // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
     // puede confirmar sin ver qué va, qué quedó sin decidir y qué está excluido.
     const rcp = _preview.recipients || { to:[], cc:[], nuevos:[], bloqueados_excluidos:[] };
+    const sr = !!rcp.sendable_real;
     const secc =
-      '── ENVIABLES (van): ' + (rcp.to.join(', ') || '—') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '') +
+      '── ENVIABLES (van): ' + (sr ? (rcp.to.join(', ') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '')) : '— ninguno (directorio sin confirmar: solo TEST) —') +
       '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
-      '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—');
+      '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—') +
+      '\n(El envío se re-resuelve contra el directorio vigente al momento de enviar.)';
     const msg = testMode
       ? 'Enviar en MODO TEST a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : '')
       : '⚠ ENVÍO REAL AL CLIENTE ⚠\n\n' + secc + '\n\n¿Confirmás?';
@@ -15760,17 +15790,25 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!confirm('Esta orden YA tuvo un envío REAL al cliente.\n¿Reenviar igual?')) return;
       overrides.resend = true;
     }
+    const gen = _gen, order = _sel;
     _busy = 'send'; renderDetail();
     try {
-      const resp = await apiMailing({ order_number: _sel, action: 'send', test_mode: testMode, overrides });
+      const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides });
+      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
       _lastResult = resp;
       if(resp && resp.send_blocked){ _lastResult = { ok:false, error: (resp.block_reasons || []).join(' · ') }; }
-    } catch(e){ _lastResult = { ok:false, error: e.message }; }
+    } catch(e){
+      if(gen !== _gen || order !== _sel) return;
+      _lastResult = { ok:false, error: e.message };
+    }
     _busy = null;
     window.__mailTestOff = null;
-    _orders = await fetchOrders();
-    _row = _orders.find(r => r.order_number === _sel) || _row;
-    _sends = await fetchSends(_sel);
+    const orders = await fetchOrders();
+    if(gen !== _gen || order !== _sel) return;
+    _orders = orders;
+    _row = _orders.find(r => r.order_number === order) || _row;
+    _sends = await fetchSends(order);
+    if(gen !== _gen || order !== _sel) return;
     renderMaster(); renderDetail();
   }
 
