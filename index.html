@@ -2634,6 +2634,24 @@ body.light #panel-mailing{
 #panel-mailing .mail-spinner{width:26px;height:26px;border:3px solid var(--mail-line);border-top-color:var(--mail-accent);border-radius:50%;animation:mail-spin .7s linear infinite;margin:20px auto}
 @keyframes mail-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#panel-mailing .mail-spinner{animation:none}#panel-mailing .mail-toggle input,#panel-mailing .mail-toggle input::after{transition:none}}
+/* ── Confirmar zarpe (ATD) — paste-grid (A-c2) ── */
+#panel-mailing .mail-atd{background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);margin-bottom:14px}
+#panel-mailing .mail-atd summary{display:flex;align-items:center;gap:9px;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--mail-ink);list-style:none;user-select:none}
+#panel-mailing .mail-atd summary::-webkit-details-marker{display:none}
+#panel-mailing .mail-atd summary .ic{width:16px;height:16px;color:var(--mail-accent)}
+#panel-mailing .mail-atd summary .mail-atd-hint{font-weight:400;font-size:12px;color:var(--mail-ink-faint);margin-left:auto}
+#panel-mailing .mail-atd[open] summary{border-bottom:1px solid var(--mail-line)}
+#panel-mailing .mail-atd-body{padding:14px 16px}
+#panel-mailing .mail-atd-ta{width:100%;min-height:96px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6;color:var(--mail-ink);background:var(--mail-surface-2);border:1px solid var(--mail-line-strong);border-radius:9px;padding:10px 12px;outline:none}
+#panel-mailing .mail-atd-ta:focus{border-color:var(--mail-accent)}
+#panel-mailing .mail-atd-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+#panel-mailing .mail-atd-tbl th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mail-ink-faint);padding:6px 8px;border-bottom:1px solid var(--mail-line-strong)}
+#panel-mailing .mail-atd-tbl td{padding:6px 8px;border-bottom:1px solid var(--mail-line);color:var(--mail-ink)}
+#panel-mailing .mail-atd-st{font-weight:700}
+#panel-mailing .mail-atd-st.ok{color:var(--mail-ok)}
+#panel-mailing .mail-atd-st.warn{color:var(--mail-test)}
+#panel-mailing .mail-atd-st.err{color:var(--mail-warn)}
+#panel-mailing .mail-atd-st.mut{color:var(--mail-ink-faint)}
 @media (max-width:900px){
   #panel-mailing .mail-layout{grid-template-columns:1fr}
   #panel-mailing .mail-master{max-height:45vh}
@@ -3965,6 +3983,23 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
         </div>
       </div>
     </header>
+
+    <details class="mail-atd" id="mail-atd-panel">
+      <summary>
+        <svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg>
+        Confirmar zarpe (ATD)
+        <span class="mail-atd-hint">pegá orden + fecha desde Excel (DD/MM/AAAA) — arranca el reloj de mailing</span>
+      </summary>
+      <div class="mail-atd-body">
+        <textarea class="mail-atd-ta" id="mail-atd-ta" spellcheck="false" placeholder="118962688&#9;05/07/2026&#10;118959520&#9;04/07/2026"></textarea>
+        <div class="mail-btnrow">
+          <button class="mail-btn" type="button" data-act="atd-parse">Validar lote</button>
+          <button class="mail-btn pri" type="button" data-act="atd-confirm" id="mail-atd-confirm" disabled>Confirmar ATD</button>
+          <span class="mail-status-line" id="mail-atd-sum"></span>
+        </div>
+        <div id="mail-atd-report"></div>
+      </div>
+    </details>
 
     <div class="mail-filterbar" id="mail-filterbar">
       <span class="mail-flabel">Estado:</span>
@@ -15232,6 +15267,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const _filters = new Set();
   let _q = '';
   let _loaded = false;
+  // ── ATD-gate (A-c2): lote del paste-grid Confirmar zarpe ──
+  let _atdParsed = null;  // { listas, conflictos, errores, server? } del último "Validar lote"
+  let _atdBusy = false;
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -15240,6 +15278,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const fmtTs = ts => { if(!ts) return '—'; const d = new Date(ts); if(isNaN(d.getTime())) return '—'; const p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
   const fmtD = s => (s && /^\d{4}-\d{2}-\d{2}/.test(String(s))) ? `${String(s).slice(8,10)}/${String(s).slice(5,7)}/${String(s).slice(0,4)}` : '—';
+
+  // ── Fechas de negocio: SIEMPRE strings YYYY-MM-DD date-only, "hoy" en TZ
+  // Buenos Aires (mismo contrato que el resolver del workflow). Cero Date
+  // locales: la aritmética va por Date.UTC puro — inmune al huso del browser. ──
+  const hoyBA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+  // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null; round-trip real: 31/02 y 32/01 → null
+  function parseFechaAr(tok){
+    const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(String(tok || '').trim());
+    if(!m) return null;
+    const d = +m[1], mo = +m[2]; let y = +m[3];
+    if(m[3].length === 3) return null;
+    if(m[3].length === 2) y += 2000;
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
 
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
   function badge(status, testMode){
@@ -15812,6 +15867,128 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     renderMaster(); renderDetail();
   }
 
+  // ── Confirmar zarpe (ATD) — parser del paste-grid + lote a confirm_atd (A-c2) ──
+  // Formato confirmado por John: orden TAB fecha (una sola fecha por fila,
+  // DD/MM/AAAA). Defensas: fila con ≥2 tokens tipo-orden (ej. orden+shipment) o
+  // ≥2 fechas → error explícito, jamás adivinar. NUNCA drop silencioso.
+  function parseAtdGrid(text){
+    const porOrden = new Map(); // orden → Set<atd ISO>
+    const errores = [];
+    const maxAtd = isoPlus(hoyBA(), 1); // guarda anti-typo: futura > hoy+1 se rechaza
+    String(text || '').split(/\r?\n/).forEach((raw, i) => {
+      if(!raw.trim()) return; // filas vacías: se ignoran (no son error)
+      const nl = i + 1;
+      const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
+      const parts = toks.length >= 2 ? toks : raw.trim().split(/\s+/);
+      const ords = parts.filter(t => /^\d{7,12}$/.test(t));
+      const fechas = parts.filter(t => /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
+      if(!ords.length){ errores.push({ linea: nl, orden: null, motivo: 'sin número de orden (7-12 dígitos)' }); return; }
+      if(ords.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de un número tipo orden en la fila (¿orden + shipment?) — pegá solo orden + fecha' }); return; }
+      if(!fechas.length){ errores.push({ linea: nl, orden: ords[0], motivo: 'sin fecha DD/MM/AAAA' }); return; }
+      if(fechas.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de una fecha en la fila — ambigua, no se adivina' }); return; }
+      const iso = parseFechaAr(fechas[0]);
+      if(!iso){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha inválida: ' + fechas[0] }); return; }
+      if(iso > maxAtd){ errores.push({ linea: nl, orden: ords[0], motivo: 'ATD futura (' + fmtD(iso) + ' > hoy+1) — ¿typo?' }); return; }
+      if(iso < '2020-01-01'){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha fuera de rango: ' + fmtD(iso) }); return; }
+      if(!porOrden.has(ords[0])) porOrden.set(ords[0], new Set());
+      porOrden.get(ords[0]).add(iso); // dup misma orden+fecha colapsa solo (Set)
+    });
+    const listas = [], conflictos = [];
+    for(const [orden, fechas] of porOrden){
+      if(fechas.size > 1) conflictos.push({ orden, fechas: [...fechas].sort() });
+      else listas.push({ orden, atd: [...fechas][0] });
+    }
+    return { listas, conflictos, errores };
+  }
+
+  const ATD_SRV_LBL = {
+    actualizada:   ['ok',   'ATD confirmado'],
+    pisada:        ['warn', 'pisada (tenía otro ATD)'],
+    sin_cambio:    ['mut',  'sin cambio (ya tenía ese ATD)'],
+    no_encontrada: ['err',  'no asentada por el Control BL'],
+    conflicto:     ['err',  'fechas contradictorias'],
+    invalida:      ['err',  'rechazada por el server'],
+    error:         ['err',  'falló la escritura'],
+  };
+
+  function renderAtdReport(){
+    const box = $('mail-atd-report'), sum = $('mail-atd-sum'), btn = $('mail-atd-confirm');
+    if(!box) return;
+    box.textContent = '';
+    if(btn) btn.disabled = _atdBusy || !_atdParsed || !_atdParsed.listas.length || !!_atdParsed.server;
+    if(btn) btn.textContent = _atdBusy ? 'Confirmando…' : 'Confirmar ATD';
+    if(!_atdParsed){ if(sum) sum.textContent = ''; return; }
+    const p = _atdParsed;
+    const t = el('table','mail-atd-tbl');
+    const trh = el('tr');
+    for(const h of ['Orden','ATD','Estado']) trh.appendChild(el('th', null, h));
+    const th = el('thead'); th.appendChild(trh); t.appendChild(th);
+    const tb = el('tbody');
+    const rowT = (orden, atd, cls, txt) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', null, orden || '—'));
+      tr.appendChild(el('td', null, atd || '—'));
+      tr.appendChild(el('td','mail-atd-st ' + cls, txt));
+      tb.appendChild(tr);
+    };
+    if(p.server && !p.server.error){
+      // Reporte AUTORITATIVO del server, fila a fila
+      for(const r of (p.server.results || [])){
+        const [cls, lbl] = ATD_SRV_LBL[r.status] || ['err', r.status];
+        const extra = r.status === 'pisada' ? ' ' + fmtD(r.old_atd) + ' → ' + fmtD(r.atd)
+                    : r.detail ? ' — ' + r.detail : '';
+        rowT(r.order_number, fmtD(r.atd || null), cls, lbl + extra);
+      }
+      if(sum){
+        const s = p.server.summary || {};
+        sum.textContent = Object.entries(s).map(([k, v]) => v + ' ' + k.replace(/_/g, ' ')).join(' · ');
+      }
+    } else {
+      // Pre-check LOCAL (el server valida de nuevo al confirmar)
+      for(const r of p.listas){
+        const known = _orders.find(o => o.order_number === r.orden);
+        const estado = !known ? ['warn', 'no está en la lista cargada — el server decide']
+          : known.atd && known.atd !== r.atd ? ['warn', 'ya tiene ATD ' + fmtD(known.atd) + ' → se pisaría con ' + fmtD(r.atd)]
+          : known.atd === r.atd ? ['mut', 'ya tiene exactamente este ATD']
+          : ['ok', 'lista para confirmar'];
+        rowT(r.orden, fmtD(r.atd), estado[0], estado[1]);
+      }
+      for(const c of p.conflictos) rowT(c.orden, c.fechas.map(fmtD).join(' vs '), 'err', 'CONFLICTO en el pegado — se excluye del lote');
+      for(const e of p.errores) rowT(e.orden, null, 'err', 'línea ' + e.linea + ': ' + e.motivo);
+      if(sum) sum.textContent = p.listas.length + ' lista(s) para confirmar · ' + p.conflictos.length + ' conflicto(s) · ' + p.errores.length + ' error(es)';
+      if(p.server && p.server.error) box.appendChild(el('div','mail-alert','No se pudo confirmar el lote: ' + p.server.error));
+    }
+    box.appendChild(t);
+  }
+
+  function atdParse(){
+    const ta = $('mail-atd-ta'); if(!ta) return;
+    _atdParsed = ta.value.trim() ? parseAtdGrid(ta.value) : null;
+    renderAtdReport();
+  }
+
+  async function atdConfirm(){
+    if(!_atdParsed || !_atdParsed.listas.length || _atdBusy || _atdParsed.server) return;
+    const n = _atdParsed.listas.length;
+    const conNota = _atdParsed.conflictos.length || _atdParsed.errores.length
+      ? '\n(Conflictos y errores quedan AFUERA del lote — revisalos en la tabla.)' : '';
+    if(!confirm('Confirmar zarpe (ATD) para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota + '\n¿Continuar?')) return;
+    _atdBusy = true; renderAtdReport();
+    try {
+      const resp = await apiMailing({ action: 'confirm_atd', rows: _atdParsed.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
+      _atdParsed.server = resp;
+    } catch(e){ _atdParsed.server = { error: e.message }; }
+    _atdBusy = false;
+    // Refresh: la cola/detalle reflejan los ATD nuevos (el reporte queda visible)
+    _orders = await fetchOrders();
+    renderMaster();
+    if(_sel){ _row = _orders.find(r => r.order_number === _sel) || _row; renderDetail(); }
+    const s = (_atdParsed.server && _atdParsed.server.summary) || {};
+    const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
+    if(_atdParsed.server && !_atdParsed.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
+    renderAtdReport();
+  }
+
   // ── carga del tab ──
   let _loading = false;
   window.loadMailing = async function(){
@@ -15845,6 +16022,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       else if(act === 'preview') runPreview();
       else if(act === 'confirm-schedule') confirmSchedule();
       else if(act === 'send') doSend();
+      else if(act === 'atd-parse') atdParse();
+      else if(act === 'atd-confirm') atdConfirm();
     });
     panel.addEventListener('keydown', e => {
       if(e.key !== 'Enter') return;
