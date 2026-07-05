@@ -1,31 +1,37 @@
-# Handoff sesión SSB Workspace · 2026-07-04 (post-push 4 pendientes)
+# Handoff sesión SSB Workspace · 2026-07-05 (Certificado de Origen → PROD)
 
 ## Foco de la sesión
-Cierre de 4 pendientes en un ciclo (EXPLORE → PLAN → IMPLEMENT → VERIFY con crítica adversarial por pendiente) + push secuencial post-smoke de John. **TODO EN PROD.**
+Módulo **Certificado de Origen** completo en un ciclo largo: EXPLORE (schema XML COD real desde Drive) → PLAN → VERIFY-FIRST → IMPLEMENT → fix de errores legibles → **pivote SA-direct → n8n Drive Gateway** → merge a prod. Smoke de John aprobado en Preview; **EN PRODUCCIÓN**.
 
-## Estado: 4/4 MERGEADOS, PUSHEADOS Y VERIFICADOS EN PROD (deploys Vercel green + smoke headless contra ssb-workspace.vercel.app).
-- `master` = `origin/master` = **`f39fffc`**. Working tree limpio. Ramas de trabajo borradas (mergeadas con --no-ff, historia completa en los merge commits).
+## Estado: MERGEADO A PROD — merge commit `c82163d` (PR #2, merge commit sin squash, branch `feat/certificado-origen` conservado)
+- Prod verificado por curl: `POST /api/certificado-origen` sin token → 401 `{estado:error, error_code:AUTH}` (nuestro JSON) = ruta viva + **env vars del gateway presentes en Production** + sin Deployment Protection. Solapa presente en el HTML de prod.
+- Pendiente único de cierre: smoke de John EN PROD (orden `4010713061` / cert `AR004A18260002212100` → badge verde; actualiza in-place el PDF ya existente).
 
-## Lo pusheado (orden real, deploy verificado entre cada uno)
-1. `b20f2bc` — **B docs**: invariante `disponible` FUERA del mapRow del workflow `LI5dLhoYdM1jLXDo` (contrato de 2 condiciones: columna ausente + `Prefer: merge-duplicates`; `activo`=workflow vs `disponible`=UI; keying por mes con `on_conflict` 5-col). Verificado contra el activeVersion publicado vía n8n-cli read-only. + `schedule-realtime.md` documenta la baja manual y corrige `.limit(200)`→2000, 10→11 columnas.
-2. `a584383` — **D splash** (merge `fix/splash-sync-decouple`): liberación **985ms vs 13.483ms** (−92,7%). `syncSheet` libera estado tras Tarifas+EFA (Supabase, orden en serie preservado — dependencia real); getAll de Apps Script en `syncScheduleBackground()` fire-and-forget con abort de re-entrada (`_schedCtrl`; re-sync y upload de Excel descartan el fetch en vuelo), `applyFilter()` al resolver gated por `tarifasOk` + `bidRenderImpact()` si hay fila seleccionada, guard de focus en `splashReady`, failsafe 4s intacto (comentario "8s" stale corregido).
-3. `5c9da1f` — **C patrón + deadcode** (merge `chore/rt-onclick-and-deadcode`, encadenada sobre D): botones ⊘/viaje del RT a `data-id`/`data-action` + delegación única en `#sched-rt-list` (isBaja recomputado fresco de `_rtData`; handlers de-exportados de window; `esc()` local del IIFE escapa comillas — cerraba injection latente en data-tip). **−225 líneas de código muerto legacy** (impl+wrapper applySchedFilter, renderSchedModule, updateCascadeOpts, togSC, buildSchedCarrierBtns, buildSchedOpts, rama `s-` de opts(), selSC, displayOrigen) con inalcanzabilidad probada símbolo a símbolo; call-sites vivos editados (incl. `else applySchedFilter()` bomba de onAcIn/pickAc/clearAc); render directo post-fetch en loadScheduleRT (colapsa ventana stale de 250ms). CSS intacto (100% compartido). CLAUDE.md y spec 07-04 al día (la deuda "XSS renderSchedModule" era stale y murió con el borrado; quedan 2 copias de brand-map, no 3).
-4. `f39fffc` — **A Fase C mobile** (merge `feat/faseC-mobile-detention-adminbid`): Admin BID `#bid-table-wrap{overflow-x:auto}` ≤900 (patrón Fase B; tabla 1388px scrollea interna; tradeoff aceptado: thead sticky no ancla bajo el breakpoint, desktop intacto). Detention: clase `det-body` (1 línea de template) + 1 col ≤700 con `!important` sobre el inline; compresión de mini-tabla (celdas `min-width:0` + badges wrappeables) extendida a ≤900 por crítica (badges nowrap pineaban 387px y dejaban el mail en 150px @701). OJO comentario guardia en el CSS: la contención de página en 701-900 la da el `overflow:auto` INLINE de `.efa-content` (~2919) — no borrarlo.
+## Lo que quedó construido
+1. **`api/certificado-origen.js`** — gate JWT+vac_employees (patrón mailing), normalización de orden (regla de dominio: strip UN 0 de padding trade; STO intacta), búsqueda ZIP por nombre exacto, unzip+parse, validación `CertificateID===certificado`, pdf-lib, upload idempotente update-in-place (preserva fileId), upsert `certificados_origen` con 2 reintentos; DB-fail → `error_registro` ÁMBAR (nunca verde). Guard `SA_CONFIG_MISSING` AL INICIO (diagnosticable por curl sin token). `maxDuration: 30` (medido ~10s create vía gateway). Contrato de error: siempre `{estado, error_code, error, detail?}`.
+2. **`api/_lib/driveClient.js`** — variante **n8n-gateway** (SA-direct descartado: John no crea service accounts). Caveat clave: n8n responde **200 con cuerpo VACÍO** en ejecución fallida → body vacío/no-JSON/`ok!==true` = error.
+3. **Workflow n8n `CO Drive Gateway` (`L68kJ7uGWauFRANX`)** — creado vía harness `scripts/n8n-co-gateway/put_co_drive_gateway.py` (Iron Law: 24 nodos, 4 cadenas lineales find/download/upload/update, 6 cred-refs de la credential Drive EXISTENTE `Hdz3HCDRSA2GStDS`, activate + rollback). Token header + path secreto + allowlist de carpetas (download solo CO ZIP, update solo CO PDF). Secrets en `ssb-workspace/.env` (gitignored) y en Vercel env.
+4. **`api/_lib/certOrigen.js`** — parser COD family-aware (`FormA18` GoodsItemValue / `FormA35` GoodsItemFOB; NO hay total header en el XML) + template pdf-lib con sanitizer WinAnsi obligatorio + mapa países ISO→nombre. La orden SAP NO existe en el XML (verificado en 4 muestras) → input manual, auto-derive inviable.
+5. **Solapa `cert-origen`** — form {orden, certificado}, resultado 3 estados (verde/ámbar+Regenerar/rojo con mapa de taxonomía + línea técnica literal — nunca "Error desconocido"), historial últimos 20 con regenerar. Anti-XSS createElement/textContent.
+6. **Tabla `certificados_origen`** (migración `create_certificados_origen`) — RLS patrón mailing_*, unique(orden,certificado_numero), trigger updated_at.
+7. Docs: `docs/modules/certificado-origen.md` · CLAUDE.md proyecto a 12 módulos (fila mailing agregada de paso — drift).
 
 ## Verificación
-- Pre-push: 3 rondas de crítica adversarial (9 críticos, 0 blockers, todos los accionables aplicados y re-verificados) · D 5/5 escenarios (normal/lento/caído/Supabase-caído/doble-sync) · C 562 botones + RPC interceptado con payload exacto + 10/10 paneles + RT/tt-dow pixel-idénticos · A matriz 1440/900/780/720/701/700/390/360 cero h-scroll/overflow · node --check 11/11 por cada diff · security-review por diff (sin hallazgos; C reduce superficie).
-- Post-deploy (prod): splash 1.028ms con `releasedBeforeGetAll:true` y schedule poblado (1506) · 10/10 tabs sin errores · click baja→RPC interceptado OK · detention 1 col + BID scroll interno a 390 sin page h-scroll.
+- E2E local real (handler + sesión minteada vía admin API + gateway + Supabase): create 200 generado / re-run preserva fileId / 0-padding normaliza / cert inexistente 404 ZIP_NOT_FOUND. PDF real en CO PDF (`1L3lmhX34joR…`) + fila en DB.
+- Gateway smoke: download sha256 idéntico al ZIP original; token inválido y folder fuera de allowlist rechazados (fail-closed).
+- Front: 9/9 checks headless + 5/5 render de errores con stubs + 13/13 scripts inline node-checked.
+- Ancestry check pre-merge detectó cruft heredado `71ccac5` (mailing ATD-gate, 2 SQL de doc) → STOP → John eligió opción 1 (mergear tal cual).
 
-## Deuda nueva/documentada (residuos de crítica, decisión pendiente)
-- D: sin señal UI de "schedule en vuelo/no disponible" (el dot dice Actualizado con el schedule aún bajando — mismo contenido que antes, distinto timing); failsafe no cubre dot/btn-sync si Supabase cuelga eterno (pre-existente).
-- A: alternativa para recuperar sticky móvil de BID (`#bid-table-wrap{overflow:auto;max-height:...}`); edición táctil de BID fuera de alcance (interacción); opcional orden mini-tabla-antes-que-mail en 1 col; scroll-shadow affordance para los 3 scrollers Fase B+C.
-- C: aria-label en botones icon-only ⊘/↺ (pre-existente).
+## Deuda nueva / pendientes
+- **Fase mailing del CO:** lookup de `certificados_origen` por `order_number` en `kh6TORgRg9R1Shj1` para adjuntar ZIP+PDF juntos (por tabla, nunca escaneando la carpeta). NO arrancada.
+- Gateway: token inválido vs Drive caído indistinguibles para el front (ambos `DRIVE_GATEWAY_DOWN` + detail crudo) — limitación 200-vacío de n8n Cloud, documentada.
+- `SESSION_HANDOFF_template.md` referenciado en el protocolo global NO existe (`~/.claude/templates/` vacío) — este handoff usa el formato del anterior.
+- Multi-tenancy del CO (tenant_id + RLS) — backlog diferido.
 
 ## Carry-over intacto (sesiones previas)
-- 🔴 Seguridad F1+: auth Bearer + rate limiting en `/api/chat*`; F2 LIMIT server-side + unificar esc() (la local del RT ya escapa comillas — superset); F3 hooks + borrar `netlify/functions/`.
-- 🟠 deactivate-missing (444 filas rancias) · Fix D re-subidas mismo nombre · RLS `vac_requests`/`vac_employees` amplia · CSP incompleta · claude-processor OAuth · E2E Control BL pasos 2-3 · migrar validador-aduana a módulo.
-- 🟡 console.log ×2 en prod · WCAG light · saneo selC/selE (selSC ya no existe) · warns GoTrueClient multi-instancia (deuda multi-cliente conocida).
-- Fase 2 migración schedule→`schedules_master` + brandmap (spec `docs/superpowers/specs/2026-07-04-migracion-schedule-brandmap-design.md`, actualizada: el fetch ya corre en background, quedan 2 copias de brand-map).
+- 🔴 Seguridad F1+: auth Bearer + rate limiting en `/api/chat*`; F2 LIMIT server-side + unificar esc(); F3 hooks + borrar `netlify/functions/`.
+- 🟠 deactivate-missing (444 filas) · RLS `vac_requests`/`vac_employees` amplia · CSP incompleta · migrar validador-aduana a módulo.
+- Batch 0 mailing ATD-gate (`71ccac5`, mergeado con opción 1): migración documentada en `migrations/2026-07-05-mailing-atd-gate/` — continuar esa fase en su propio branch.
 
 ## Identifiers
-- `master`/`origin/master`: `f39fffc` · Prod: https://ssb-workspace.vercel.app · Supabase: `xkppkzfxgtfsmfooozsm` · Workflow schedule: `LI5dLhoYdM1jLXDo` (UI-only, candado).
+- master: `c82163d` · Prod: https://ssb-workspace.vercel.app · Supabase: `xkppkzfxgtfsmfooozsm` · Gateway n8n: `L68kJ7uGWauFRANX` (harness `scripts/n8n-co-gateway/`) · Clasificador Drive (cred de referencia): `pBN4Wd1lcTSHNkFg` · PR: #2 (merged).

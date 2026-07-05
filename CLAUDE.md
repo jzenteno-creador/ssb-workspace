@@ -174,6 +174,7 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
   - Grants MySQL `db_reader_jz_1` (`SHOW GRANTS` → solo SELECT, sin FILE/SUPER) — sin verificar aún; otra base/sistema (Metric), fuera de Supabase.
 - **Regla:** writes por CC o SQL editor de Supabase, **nunca desde el chat**. Seguridad = capa DB/infra; la capa prompt del LLM **NO** es guardrail.
 
+- **Cert. de Origen (2026-07-05, en prod):** fase mailing PENDIENTE — lookup de `certificados_origen` por `order_number` en el workflow `kh6TORgRg9R1Shj1` para adjuntar ZIP+PDF (por tabla, nunca escaneando CO PDF). Caveat gateway: n8n responde 200 con cuerpo VACÍO en ejecución fallida → driveClient trata vacío/no-JSON como error; token inválido y Drive caído son indistinguibles para el front (ambos `DRIVE_GATEWAY_DOWN` + detail crudo).
 - innerHTML sin escape en renderAdminBID() y otros renderers
 - Estado global mutable: rates, efaSheet, schedule, selC, selE
 - Archivo supera 5000 líneas — candidato a modularización futura
