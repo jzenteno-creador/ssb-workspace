@@ -287,7 +287,10 @@
           ]
         },
         "sold_to": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
             "name": {
               "type": [
@@ -301,14 +304,13 @@
                 "null"
               ]
             }
-          },
-          "required": [
-            "name",
-            "address_str"
-          ]
+          }
         },
         "document_recip": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
             "name": {
               "type": [
@@ -322,14 +324,13 @@
                 "null"
               ]
             }
-          },
-          "required": [
-            "name",
-            "email"
-          ]
+          }
         },
         "shipping_recip": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
             "name": {
               "type": [
@@ -343,14 +344,13 @@
                 "null"
               ]
             }
-          },
-          "required": [
-            "name",
-            "email"
-          ]
+          }
         },
         "partner_emails": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "type": "string"
           }
@@ -371,11 +371,7 @@
         "consignee",
         "notify",
         "equipos",
-        "dates",
-        "sold_to",
-        "document_recip",
-        "shipping_recip",
-        "partner_emails"
+        "dates"
       ]
     }
   },

@@ -3,7 +3,7 @@
 
 Cambios (aprobados en STOP 1a; PUT solo tras OK de John al GATE-A en STOP 1b):
   EDIT 1 — "Parser Booking (IA)": parameters.messages.messageValues[0].message
-           ← sdk/prompt_booking_v2.md (reglas 17/18; cirugía aditiva, baseline v1 en sdk/).
+           ← sdk/prompt_booking_v2_1.md (reglas 17/18; cirugía aditiva, baseline v1 en sdk/).
   EDIT 2 — "Booking Schema": parameters.inputSchema
            ← sdk/booking_schema_v2.json (+sold_to/document_recip/shipping_recip/partner_emails).
   ADD 1  — Code "Armar fila Mailing" (runOnceForEachItem, onError=continueRegularOutput)
@@ -54,12 +54,12 @@ ASENTAR_NAME = "Asentar Mailing"
 SUPA_CRED = {"id": "aQoShf0TVYyf2lrt", "name": "Supabase account ssb workspace"}  # service_role (la del Persistir)
 SUPA_URL  = "https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_orders?on_conflict=order_number"
 
-PROMPT_V2 = open(SDK + "prompt_booking_v2.md", encoding="utf-8").read()
+PROMPT_V2 = open(SDK + "prompt_booking_v2_1.md", encoding="utf-8").read()
 SCHEMA_V2 = open(SDK + "booking_schema_v2.json", encoding="utf-8").read()
 ARMAR_JS  = open(SDK + "code_armar_fila_mailing.js", encoding="utf-8").read()
 
 if not PROMPT_V2.startswith("="):
-    sys.exit("ABORT: prompt_booking_v2.md debe empezar con '=' (marcador de expresión n8n)")
+    sys.exit("ABORT: prompt_booking_v2_1.md debe empezar con '=' (marcador de expresión n8n)")
 
 DRY = "--dry-run" in sys.argv
 

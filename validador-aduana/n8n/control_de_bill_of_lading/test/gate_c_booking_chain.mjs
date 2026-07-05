@@ -115,5 +115,40 @@ const rowDia = runNodeCode(armarSrc, $dia, {}).json;
 ok(rowDia.ship_to_key === 'QUIMICA ACUCAR S A', `normKey diacríticos: "${rowDia.ship_to_key}"`);
 ok(rowDia.sold_to_key === 'DUR CIA LTDA', `normKey puntuación: "${rowDia.sold_to_key}"`);
 
+// ---- keys de mailing AUSENTES (undefined) — schema v2 las hizo optional; el Armar
+// debe emitir payload completo sin throw (candado STOP 1b: mailing nunca rompe control) ----
+const beAus = JSON.parse(JSON.stringify(
+  report.find((r) => r.order === CASES[0]).v2_out));
+for (const k of ['sold_to', 'document_recip', 'shipping_recip', 'partner_emails']) delete beAus[k];
+const cAus = {
+  booking_extract: beAus, order_number: '118959520',
+  login_extract: { vessel: 'WIELAND' }, factura_extract: {}, compare_summary: {}, header_resumen: {},
+};
+const $aus = () => ({ item: { json: cAus }, first: () => ({ json: cAus }) });
+let rowAus;
+try { rowAus = runNodeCode(armarSrc, $aus, {}).json; } catch (e) { fails.push(`keys AUSENTES: throw — ${e.message}`); }
+if (rowAus) {
+  ok(rowAus.order_number === '118959520', 'AUSENTES: order_number presente');
+  ok(rowAus.sold_to_key === '' && rowAus.sold_to_name === null, 'AUSENTES: sold_to → key vacía + name null');
+  const ceA = rowAus.contacts_extracted;
+  ok(ceA.document_recip.name === null && ceA.document_recip.email === null, 'AUSENTES: document_recip {null,null}');
+  ok(ceA.shipping_recip.name === null && ceA.shipping_recip.email === null, 'AUSENTES: shipping_recip {null,null}');
+  ok(Array.isArray(ceA.partner_emails) && ceA.partner_emails.length === 0, 'AUSENTES: partner_emails []');
+  ok(rowAus.ship_to_key !== '' && rowAus.ship_to_key !== null, 'AUSENTES: ship_to_key (consignee) intacta');
+}
+
+// ---- keys de mailing en null (schema v2 también lo permite) ----
+const beNull = JSON.parse(JSON.stringify(beAus));
+for (const k of ['sold_to', 'document_recip', 'shipping_recip', 'partner_emails']) beNull[k] = null;
+const cNull = { ...cAus, booking_extract: beNull };
+const $null = () => ({ item: { json: cNull }, first: () => ({ json: cNull }) });
+let rowNull;
+try { rowNull = runNodeCode(armarSrc, $null, {}).json; } catch (e) { fails.push(`keys null: throw — ${e.message}`); }
+if (rowNull) {
+  ok(rowNull.sold_to_key === '' && rowNull.contacts_extracted.partner_emails.length === 0
+     && rowNull.contacts_extracted.document_recip.email === null,
+     'NULL: payload completo sin throw (sold_to/recips/partners degradan a null/[])');
+}
+
 if (fails.length) { console.log('\nGATE-C: FAIL'); for (const f of fails) console.log(' -', f); process.exit(1); }
-console.log('\nGATE-C: PASS (passthrough vivo + payload idempotente + normKey)');
+console.log('\nGATE-C: PASS (passthrough vivo + payload idempotente + normKey + keys ausentes/null)');
