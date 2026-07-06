@@ -16,12 +16,18 @@
  *      sin-match (send bloqueado + candidates para el picker).
  *   3. TEST_MODE dos llaves + tercera red. En test: To=expoarpbb, CC vacío,
  *      subject "[TEST → real: …]".
- *   4. Adjuntos: reporta encontrados/faltantes POR TIPO sin romper el flujo.
- *   5. Compone subject/body (Fase 5: cliente, orden, buque+viaje, ETD/ETA;
- *      SIN producto/cantidad) y decide la ruta del Switch.
+ *   4. Adjuntos: reporta encontrados/faltantes POR TIPO sin romper el flujo;
+ *      attachments.found expone file_id (Batch B: chip-bar del front abre el PDF).
+ *   5. Compone subject/body (Batch B ATD-gate: ATD real de zarpe + ETA + tránsito
+ *      estimado en días corridos; ETD ya NO aparece; adjuntos con label humano;
+ *      SIN producto/cantidad) y decide la ruta del Switch. Degradación sin ATD:
+ *      subject sin segmento Zarpe, sin párrafo narrativo, tabla con "—" — nunca rompe.
  *   6. Guard best-effort anti doble-click: status ENVIADO real bloquea salvo
  *      overrides.resend=true (sin lock transaccional, asumido).
- * Fechas etd/eta: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
+ * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
+ * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
+ * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
+ * (snapshot atd_at_send en mailing_sends).
  */
 const req = $('Validar request').first().json;
 
@@ -80,6 +86,10 @@ const pol = pick(m.pol, bl && bl.pol);
 const pod = pick(m.pod, bl && bl.pod);
 const booking_no = pick(m.booking_no, bl && bl.booking_no);
 const bl_number = pick(m.bl_number, bl && bl.bl_number);
+// ATD (Batch B): fecha REAL de zarpe confirmada en mailing_orders.atd — null =
+// sin zarpe confirmado (el gate del front no deja enviar, pero este nodo degrada
+// elegante igual: el send puede llegar por vías no gateadas, ej. test directo).
+const atd = (m.atd && /^\d{4}-\d{2}-\d{2}/.test(String(m.atd))) ? String(m.atd).slice(0, 10) : null;
 
 // ---- schedule por tiers (schedRaw ya viene filtrado pod + activo + disponible) ----
 const rows = schedRaw.filter((r) => r && r.buque).map((r) => ({ ...r, B: norm(r.buque) }));
@@ -159,23 +169,36 @@ else if (req.request_test_mode) test_reasons.push('test_mode del request (llave 
 else if (!sendable_real) test_reasons.push('destinatarios no confirmados en mailing_contacts (tercera red)');
 else effective_test = false;
 
-// ---- subject + body (Fase 5 — sin producto/cantidad) ----
+// ---- subject + body (Batch B ATD-gate — template EXACTO aprobado en STOP 1;
+//      sin producto/cantidad; el SLA interno JAMÁS aparece en el mail) ----
 const buqueViaje = [vessel, voyage].filter(Boolean).join(' ');
-const subject_real = `Documentación de embarque — Orden ${order_number}`
-  + (buqueViaje ? ` | ${buqueViaje}` : '')
-  + (schedule.etd ? ` | ETD ${fmtD(schedule.etd)}` : '');
+// tránsito estimado = ETA − ATD en días CORRIDOS (date-only, Date.UTC puro);
+// solo si hay ambas fechas y ATD ≤ ETA — si no, la tabla muestra "—", nunca rompe.
+const dUTC = (s) => { const p = String(s).split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); };
+const transit_days = (atd && schedule.eta && atd <= String(schedule.eta))
+  ? Math.round((dUTC(schedule.eta) - dUTC(atd)) / 86400000) : null;
+// Segmentos faltantes se OMITEN del subject (sin ATD → sin "Zarpe")
+const subject_real = ['Documentación de embarque · Orden ' + order_number,
+  buqueViaje || null, atd ? 'Zarpe ' + fmtD(atd) : null].filter(Boolean).join(' · ');
 const trow = (k, v) => `<tr><td style="padding:5px 12px 5px 0;color:#666;font-size:13px;white-space:nowrap;">${esc(k)}</td><td style="padding:5px 0;font-size:13px;"><b>${esc(v || '—')}</b></td></tr>`;
-const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(f.name)}</li>`).join('');
+// Labels humanos de la documentación adjunta; tipo desconocido → filename fallback
+const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
+const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('');
 const testBanner = effective_test
   ? `<p style="background:#fff3cd;border:1px solid #e0c860;padding:8px 12px;font-size:12px;color:#7a5d00;">[MODO TEST] Envío real iría a: ${esc(to.join(', ') || 'SIN DESTINATARIOS CONFIRMADOS')}${cc.length ? ' — CC: ' + esc(cc.join(', ')) : ''}</p>` : '';
+// Párrafo narrativo SOLO con zarpe confirmado + buque (tono de servicio, no bot)
+const parrafoZarpe = (atd && vessel)
+  ? `<p>El buque <b>${esc(buqueViaje)}</b> zarpó${pol ? ' de ' + esc(pol) : ''} el <b>${fmtD(atd)}</b>${pod ? ' con destino a ' + esc(pod) : ''}.${schedule.eta ? ` Arribo estimado: <b>${fmtD(schedule.eta)}</b>${transit_days != null ? ` (tránsito estimado ${transit_days} días)` : ''}.` : ''}</p>\n`
+  : '';
 const body_html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#222;max-width:640px;">
 ${testBanner}<p>Estimados,</p>
-<p>Adjuntamos la documentación de embarque correspondiente a la orden <b>${esc(order_number)}</b>${cliente ? ' — ' + esc(cliente) : ''}.</p>
-<table style="border-collapse:collapse;margin:10px 0;">
-${trow('Cliente', cliente)}${trow('Orden', order_number)}${trow('Booking', booking_no)}${trow('BL', bl_number)}${trow('Buque / Viaje', buqueViaje)}${trow('POL → POD', [pol, pod].filter(Boolean).join(' → '))}${trow('ETD', schedule.etd ? fmtD(schedule.etd) : null)}${trow('ETA', schedule.eta ? fmtD(schedule.eta) : null)}
+<p>Les enviamos la documentación de embarque correspondiente a la orden <b>${esc(order_number)}</b>${cliente ? ' (' + esc(cliente) + ')' : ''}.</p>
+${parrafoZarpe}<p style="margin-bottom:4px;">Detalle de la orden:</p>
+<table style="border-collapse:collapse;margin:6px 0 10px;">
+${trow('Orden', order_number)}${trow('Booking', booking_no)}${trow('BL', bl_number)}${trow('Buque / Viaje', buqueViaje)}${trow('Ruta', [pol, pod].filter(Boolean).join(' → '))}${trow('Zarpe (ATD)', atd ? fmtD(atd) : null)}${trow('Arribo est.', schedule.eta ? fmtD(schedule.eta) : null)}${trow('Tránsito est.', transit_days != null ? transit_days + ' días' : null)}
 </table>
 ${adjLi ? `<p style="margin-bottom:4px;">Documentación adjunta:</p><ul style="margin-top:4px;">${adjLi}</ul>` : ''}
-<p>Ante cualquier consulta, quedamos a disposición.</p>
+<p>Quedamos a disposición ante cualquier consulta.</p>
 <p>Saludos cordiales,<br><b>SSB International</b> — Equipo de Exportaciones</p></div>`;
 
 const gmail = effective_test
@@ -238,7 +261,8 @@ const response = {
   recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },
   test_mode_efectivo: effective_test, test_reasons,
   send_blocked: block.length > 0, block_reasons: block,
-  attachments: { found: attachments_found.map(({ tipo, name }) => ({ tipo, name })), missing: attachments_missing },
+  // file_id expuesto (Batch B): el chip-bar del front abre el PDF embebido de Drive
+  attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing },
   gmail_preview: { to: gmail.to, cc: gmail.cc, subject: gmail.subject },
   errors: [...req.req_errors, ...action_errors],
   body_html,
@@ -248,6 +272,7 @@ return { json: {
   route, order_number, response, gmail,
   recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },
   schedule, attachments_found, attachments_missing,
+  atd, // Batch B: "Evaluar envío" lo snapshotea en mailing_sends.atd_at_send
   effective_test, triggered_by: req.triggered_by,
   sc_payload, cs_payload,
 } };

@@ -13,10 +13,12 @@ config({ path: join(__dirname, '.env') });
 // Importar functions (formato Vercel: export default)
 const chatModule = await import('./api/chat.js');
 const chatWorkspaceModule = await import('./api/chat-workspace.js');
+const mailingModule = await import('./api/mailing.js');
 
 const FUNCTIONS = {
   '/api/chat': chatModule.default,
   '/api/chat-workspace': chatWorkspaceModule.default,
+  '/api/mailing': mailingModule.default,
 };
 
 const MIME = {
@@ -24,18 +26,21 @@ const MIME = {
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon',
 };
 
-const PORT = 8888;
+const PORT = Number(process.env.PORT) || 8888; // PORT=8899 node dev-server.js → convive con otra instancia
 
 const server = createServer(async (nodeReq, nodeRes) => {
   const fn = FUNCTIONS[nodeReq.url];
-  if (fn && nodeReq.method === 'POST') {
-    // Adaptar Node http req/res al formato Vercel (req.body, res.status().json())
+  if (fn) {
+    // Adaptar Node http req/res al formato Vercel (req.body, req.headers,
+    // res.status().json()). Cualquier método llega al handler (405 lo da él,
+    // como en Vercel); headers necesarios para el Bearer de /api/mailing.
     let rawBody = '';
     for await (const chunk of nodeReq) rawBody += chunk;
 
     const req = {
       method: nodeReq.method,
-      body: JSON.parse(rawBody),
+      headers: nodeReq.headers,
+      body: rawBody ? JSON.parse(rawBody) : {},
     };
     const res = {
       status(code) { nodeRes.statusCode = code; return this; },

@@ -2634,6 +2634,66 @@ body.light #panel-mailing{
 #panel-mailing .mail-spinner{width:26px;height:26px;border:3px solid var(--mail-line);border-top-color:var(--mail-accent);border-radius:50%;animation:mail-spin .7s linear infinite;margin:20px auto}
 @keyframes mail-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#panel-mailing .mail-spinner{animation:none}#panel-mailing .mail-toggle input,#panel-mailing .mail-toggle input::after{transition:none}}
+/* ── Confirmar zarpe (ATD) — paste-grid (A-c2) ── */
+#panel-mailing .mail-atd{background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);margin-bottom:14px}
+#panel-mailing .mail-atd summary{display:flex;align-items:center;gap:9px;padding:12px 16px;cursor:pointer;font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--mail-ink);list-style:none;user-select:none}
+#panel-mailing .mail-atd summary::-webkit-details-marker{display:none}
+#panel-mailing .mail-atd summary .ic{width:16px;height:16px;color:var(--mail-accent)}
+#panel-mailing .mail-atd summary .mail-atd-hint{font-weight:400;font-size:12px;color:var(--mail-ink-faint);margin-left:auto}
+#panel-mailing .mail-atd[open] summary{border-bottom:1px solid var(--mail-line)}
+#panel-mailing .mail-atd-body{padding:14px 16px}
+#panel-mailing .mail-atd-ta{width:100%;min-height:96px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6;color:var(--mail-ink);background:var(--mail-surface-2);border:1px solid var(--mail-line-strong);border-radius:9px;padding:10px 12px;outline:none}
+#panel-mailing .mail-atd-ta:focus{border-color:var(--mail-accent)}
+#panel-mailing .mail-atd-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+#panel-mailing .mail-atd-tbl th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--mail-ink-faint);padding:6px 8px;border-bottom:1px solid var(--mail-line-strong)}
+#panel-mailing .mail-atd-tbl td{padding:6px 8px;border-bottom:1px solid var(--mail-line);color:var(--mail-ink)}
+#panel-mailing .mail-atd-st{font-weight:700}
+#panel-mailing .mail-atd-st.ok{color:var(--mail-ok)}
+#panel-mailing .mail-atd-st.warn{color:var(--mail-test)}
+#panel-mailing .mail-atd-st.err{color:var(--mail-warn)}
+#panel-mailing .mail-atd-st.mut{color:var(--mail-ink-faint)}
+/* ── KPI/SLA sticky + gate de cola (A-c3) ── */
+/* overflow:visible scoped: rompe el clip heredado de .tab-panel{overflow:hidden}
+   para que position:sticky ancle contra el scroller real (.main). Solo mailing. */
+#panel-mailing{overflow:visible}
+#panel-mailing .mail-kpibar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--mail-paper);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);padding:10px 14px;margin-bottom:14px}
+#panel-mailing .mail-kpi{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--mail-line-strong);background:var(--mail-surface);color:var(--mail-ink-soft);cursor:pointer}
+#panel-mailing .mail-kpi b{font-size:14px}
+#panel-mailing .mail-kpi .mail-dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+#panel-mailing .mail-kpi.total{cursor:default;color:var(--mail-ink)}
+#panel-mailing .mail-kpi.verde{color:var(--mail-ok)}
+#panel-mailing .mail-kpi.amar{color:var(--mail-test)}
+#panel-mailing .mail-kpi.rojo{color:var(--mail-warn)}
+#panel-mailing .mail-kpi.fut{color:var(--mail-accent)}
+#panel-mailing .mail-kpi.esp{color:var(--mail-ink-faint)}
+#panel-mailing .mail-kpi.on{outline:2px solid currentColor;outline-offset:-1px}
+#panel-mailing button,#panel-mailing input,#panel-mailing textarea,#panel-mailing summary{scroll-margin-top:76px} /* el focus por teclado no queda tapado por el KPI sticky */
+#panel-mailing .mail-sect{display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;background:var(--mail-surface-2);border:none;border-bottom:1px solid var(--mail-line);font-family:var(--font);font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mail-ink-faint);text-align:left}
+#panel-mailing button.mail-sect{cursor:pointer}
+#panel-mailing button.mail-sect:hover{background:var(--mail-accent-soft);color:var(--mail-accent)}
+#panel-mailing .mail-item--muted{opacity:.62}
+#panel-mailing .mail-sla{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+#panel-mailing .mail-sla.verde{color:var(--mail-ok);background:var(--mail-ok-bg)}
+#panel-mailing .mail-sla.amar{color:var(--mail-test);background:var(--mail-test-bg)}
+#panel-mailing .mail-sla.rojo{color:var(--mail-warn);background:var(--mail-warn-bg)}
+#panel-mailing .mail-sla.fut{color:var(--mail-accent);background:var(--mail-accent-soft)}
+/* ── Chip-bar de documentos + viewer Drive (A-c5) ── */
+#panel-mailing .mail-docbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#panel-mailing .mail-docchip{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--mail-line-strong);background:var(--mail-surface-2);color:var(--mail-ink);cursor:pointer;max-width:340px}
+#panel-mailing .mail-docchip .ic{width:14px;height:14px;color:var(--mail-accent);flex:none}
+#panel-mailing .mail-docchip-lbl{font-weight:800;color:var(--mail-accent);flex:none}
+#panel-mailing .mail-docchip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mail-ink-soft)}
+#panel-mailing .mail-docchip:hover{border-color:var(--mail-accent);background:var(--mail-accent-soft)}
+#panel-mailing .mail-docchip:disabled{cursor:default;opacity:.7}
+#panel-mailing .mail-docchip:disabled:hover{border-color:var(--mail-line-strong);background:var(--mail-surface-2)}
+#panel-mailing .mail-docchip.on{border-color:var(--mail-accent);background:var(--mail-accent-soft)}
+#panel-mailing .mail-docchip--miss{border-style:dashed;border-color:var(--mail-warn-bd);background:var(--mail-warn-bg);color:var(--mail-warn);cursor:default}
+#panel-mailing .mail-docchip--miss .ic{color:var(--mail-warn)}
+#panel-mailing .mail-docview{margin-top:10px;border:1px solid var(--mail-line);border-radius:10px;overflow:hidden}
+#panel-mailing .mail-docview-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--mail-surface-2);border-bottom:1px solid var(--mail-line);font-size:12px;font-weight:700;color:var(--mail-ink-soft)}
+#panel-mailing .mail-docview-head .ic{width:14px;height:14px;flex:none}
+#panel-mailing .mail-docview-head button{margin-left:auto}
+#panel-mailing .mail-docframe{width:100%;height:70vh;border:none;background:#fff;display:block}
 @media (max-width:900px){
   #panel-mailing .mail-layout{grid-template-columns:1fr}
   #panel-mailing .mail-master{max-height:45vh}
@@ -4011,6 +4071,25 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
         </div>
       </div>
     </header>
+
+    <div class="mail-kpibar" id="mail-kpibar" aria-label="SLA de mailing"></div>
+
+    <details class="mail-atd" id="mail-atd-panel">
+      <summary>
+        <svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg>
+        Confirmar zarpe (ATD)
+        <span class="mail-atd-hint">pegá orden + fecha desde Excel (DD/MM/AAAA) — arranca el reloj de mailing</span>
+      </summary>
+      <div class="mail-atd-body">
+        <textarea class="mail-atd-ta" id="mail-atd-ta" spellcheck="false" placeholder="118962688&#9;05/07/2026&#10;118959520&#9;04/07/2026"></textarea>
+        <div class="mail-btnrow">
+          <button class="mail-btn" type="button" data-act="atd-parse">Validar lote</button>
+          <button class="mail-btn pri" type="button" data-act="atd-confirm" id="mail-atd-confirm" disabled>Confirmar ATD</button>
+          <span class="mail-status-line" id="mail-atd-sum"></span>
+        </div>
+        <div id="mail-atd-report"></div>
+      </div>
+    </details>
 
     <div class="mail-filterbar" id="mail-filterbar">
       <span class="mail-flabel">Estado:</span>
@@ -15317,6 +15396,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const _filters = new Set();
   let _q = '';
   let _loaded = false;
+  // ── ATD-gate (A-c2): lote del paste-grid Confirmar zarpe ──
+  let _atdParsed = null;  // { listas, conflictos, errores, server? } del último "Validar lote"
+  let _atdBusy = false;
+  // ── ATD-gate (A-c3): filtro SLA del KPI + toggle de Enviadas ──
+  let _slaFilter = null;  // null | 'enfecha' | 'porvencer' | 'vencida' | 'futuro' | 'espera'
+  let _showSent = false;
+  // ── Auto-preview (A-c4): el preview se dispara solo — al seleccionar orden y
+  // tras save_contacts / confirm_schedule exitosos. runPreview NUNCA re-agenda
+  // (el preview es read-only, no muta sus propios triggers → sin loop posible);
+  // respuestas stale las descarta el token _gen + el guard order !== _sel. ──
+  let _previewError = null; // último fallo de preview (render en card + Reintentar)
+  let _pvTimer = null;
+  function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer = setTimeout(runPreview, 400); }
+  // ── Chip-bar de docs (A-c5): PDF abierto en el viewer embebido de Drive ──
+  let _docOpen = null; // { fid, label } | null
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -15326,7 +15420,60 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const fmtTs = ts => { if(!ts) return '—'; const d = new Date(ts); if(isNaN(d.getTime())) return '—'; const p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
   const fmtD = s => (s && /^\d{4}-\d{2}-\d{2}/.test(String(s))) ? `${String(s).slice(8,10)}/${String(s).slice(5,7)}/${String(s).slice(0,4)}` : '—';
 
+  // ── Fechas de negocio: SIEMPRE strings YYYY-MM-DD date-only, "hoy" en TZ
+  // Buenos Aires (mismo contrato que el resolver del workflow). Cero Date
+  // locales: la aritmética va por Date.UTC puro — inmune al huso del browser. ──
+  const hoyBA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+  // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null; round-trip real: 31/02 y 32/01 → null
+  function parseFechaAr(tok){
+    const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(String(tok || '').trim());
+    if(!m) return null;
+    const d = +m[1], mo = +m[2]; let y = +m[3];
+    if(m[3].length === 3) return null;
+    if(m[3].length === 2) y += 2000;
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
+
+  // ── SLA de mailing (A-c3): deadline = atd + SLA_DAYS corridos; amarillo cuando
+  // quedan ≤ SLA_WARN. Umbrales tunables (aprobados en STOP 1). Comparación
+  // date-only: diasDesde opera sobre strings YYYY-MM-DD vía Date.UTC — sin TZ. ──
+  const SLA_DAYS = 4, SLA_WARN = 1;
+  const diasDesde = iso => {
+    const [y1,m1,d1] = hoyBA().split('-').map(Number);
+    const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
+    return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
+  };
+  // Bucket de una fila NO enviada: espera (sin atd, fuera de la cola accionable) ·
+  // futuro (atd > hoy: "revisar", NUNCA verde — corrección STOP 1: un typo futuro
+  // no puede disfrazarse de en-fecha) · enfecha · porvencer · vencida.
+  function slaBucket(r){
+    if(r.status === 'ENVIADO') return null;
+    if(!r.atd) return 'espera';
+    const d = diasDesde(r.atd);
+    if(d < 0) return 'futuro';
+    if(d > SLA_DAYS) return 'vencida';
+    if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
+    return 'enfecha';
+  }
+  const SLA_CLS = { enfecha:'verde', porvencer:'amar', vencida:'rojo', futuro:'fut' };
+  function slaBadge(r){
+    const bk = slaBucket(r); if(!bk || bk === 'espera') return null;
+    const d = diasDesde(r.atd);
+    const txt = bk === 'futuro' ? 'ATD futuro · revisar'
+      : bk === 'vencida' ? 'vencida hace ' + (d - SLA_DAYS) + ' d'
+      : d === SLA_DAYS ? 'vence HOY'
+      : 'quedan ' + (SLA_DAYS - d) + ' d';
+    const b = el('span','mail-sla ' + SLA_CLS[bk], txt);
+    b.title = 'ATD ' + fmtD(r.atd) + ' · límite ' + fmtD(isoPlus(String(r.atd).slice(0,10), SLA_DAYS)) + ' (ATD+' + SLA_DAYS + ' corridos)';
+    return b;
+  }
+
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
+  // Labels humanos de documentos (chips; el copy largo del mail vive en el workflow)
+  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT' };
   function badge(status, testMode){
     const b = el('span', 'mail-badge ' + (BADGE_CLS[status] || 'pend'));
     b.appendChild(el('span','mail-dot'));
@@ -15390,13 +15537,45 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return { to: toC, cc: clean(cc).filter(e => !toC.includes(e)) };
   }
 
-  // ── master ──
+  // ── master — gate ATD: 3 secciones DERIVADAS de atd + status (cero estado en DB).
+  // En cola (con atd, no enviada, vencidas arriba) · Esperando zarpe (sin atd,
+  // muteada, sin reloj) · Enviadas (colapsable; el buscador la abre solo). ──
+  function renderKpis(){
+    const bar = $('mail-kpibar'); if(!bar) return;
+    bar.textContent = '';
+    const counts = { enfecha:0, porvencer:0, vencida:0, futuro:0, espera:0 };
+    for(const r of _orders){ const b = slaBucket(r); if(b) counts[b]++; }
+    const cola = counts.enfecha + counts.porvencer + counts.vencida + counts.futuro;
+    const tot = el('span','mail-kpi total');
+    tot.appendChild(el('b', null, String(cola)));
+    tot.appendChild(document.createTextNode(' pendiente(s) de mailing'));
+    bar.appendChild(tot);
+    const mk = (cls, key, label, n) => {
+      const c = el('button','mail-kpi ' + cls + (_slaFilter === key ? ' on' : ''));
+      c.type = 'button'; c.dataset.sla = key;
+      c.title = _slaFilter === key ? 'Quitar filtro' : 'Filtrar la lista';
+      c.appendChild(el('span','mail-dot'));
+      c.appendChild(el('b', null, String(n)));
+      c.appendChild(document.createTextNode(' ' + label));
+      bar.appendChild(c);
+    };
+    mk('verde', 'enfecha', 'en fecha', counts.enfecha);
+    mk('amar', 'porvencer', 'por vencer', counts.porvencer);
+    mk('rojo', 'vencida', 'vencida(s)', counts.vencida);
+    // FIX verify: si el filtro futuro está activo, el chip se muestra aunque el
+    // count llegue a 0 — sin esto quedaba un filtro fantasma sin salida visible
+    if(counts.futuro || _slaFilter === 'futuro') mk('fut', 'futuro', 'ATD futuro · revisar', counts.futuro);
+    mk('esp', 'espera', 'esperando zarpe', counts.espera);
+  }
+
   function renderMaster(){
+    renderKpis();
     const box = $('mail-master'); if(!box) return;
     box.textContent = '';
     const q = _q.trim().toLowerCase();
     const rows = _orders.filter(r => {
       if(_filters.size && !_filters.has(r.status)) return false;
+      if(_slaFilter && slaBucket(r) !== _slaFilter) return false; // enviadas → bucket null → nunca matchean un filtro SLA
       if(!q) return true;
       return [r.order_number, r.ship_to_name, r.sold_to_name, r.vessel, r.voyage, r.booking_no, r.bl_number, r.pod]
         .some(v => String(v || '').toLowerCase().includes(q));
@@ -15411,16 +15590,40 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       box.appendChild(st);
       return;
     }
-    for(const r of rows){
-      const it = el('button','mail-item' + (r.order_number === _sel ? ' sel' : ''));
+    const cola = rows.filter(r => r.status !== 'ENVIADO' && r.atd)
+      .sort((a, b) => diasDesde(b.atd) - diasDesde(a.atd)); // más vencida arriba; ATD futuro (negativo) al fondo
+    const espera = rows.filter(r => r.status !== 'ENVIADO' && !r.atd);
+    const enviadas = rows.filter(r => r.status === 'ENVIADO');
+    const item = (r, muted) => {
+      const it = el('button','mail-item' + (r.order_number === _sel ? ' sel' : '') + (muted ? ' mail-item--muted' : ''));
       it.type = 'button'; it.dataset.act = 'sel'; it.dataset.id = r.order_number;
       const top = el('div','mail-item-top');
       top.appendChild(el('span','mail-item-order', r.order_number));
-      top.appendChild(badge(r.status, r.sent_test_mode));
+      const right = el('span'); right.style.display = 'inline-flex'; right.style.gap = '6px'; right.style.alignItems = 'center';
+      const sb = slaBadge(r); if(sb) right.appendChild(sb);
+      right.appendChild(badge(r.status, r.sent_test_mode));
+      top.appendChild(right);
       it.appendChild(top);
       it.appendChild(el('div','mail-item-cli', r.ship_to_name || '—'));
-      it.appendChild(el('div','mail-item-meta', [ [r.vessel, r.voyage].filter(Boolean).join(' '), r.pod, fmtTs(r.updated_at) ].filter(Boolean).join(' · ')));
-      box.appendChild(it);
+      const meta = [ r.atd ? 'ATD ' + fmtD(r.atd) : 'sin zarpe confirmado',
+        [r.vessel, r.voyage].filter(Boolean).join(' '), r.pod, fmtTs(r.updated_at) ].filter(Boolean).join(' · ');
+      it.appendChild(el('div','mail-item-meta', meta));
+      return it;
+    };
+    if(cola.length){
+      box.appendChild(el('div','mail-sect','En cola de mailing (' + cola.length + ')'));
+      cola.forEach(r => box.appendChild(item(r, false)));
+    }
+    if(espera.length){
+      box.appendChild(el('div','mail-sect','Esperando zarpe (' + espera.length + ') — sin reloj'));
+      espera.forEach(r => box.appendChild(item(r, true)));
+    }
+    if(enviadas.length){
+      const abierta = _showSent || !!q; // el buscador abre Enviadas solo (busca sobre TODO)
+      const tg = el('button','mail-sect'); tg.type = 'button'; tg.dataset.act = 'sent-toggle';
+      tg.textContent = (abierta ? '▾ ' : '▸ ') + 'Enviadas (' + enviadas.length + ')';
+      box.appendChild(tg);
+      if(abierta) enviadas.forEach(r => box.appendChild(item(r, false)));
     }
   }
 
@@ -15461,8 +15664,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     item('Buque / Viaje', [_row.vessel, _row.voyage].filter(Boolean).join(' '));
     item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → '));
     item('Factura', _row.invoice_no);
+    item('Zarpe (ATD)', _row.atd ? fmtD(_row.atd) : '— sin confirmar');
     dl.style.marginTop = '12px';
     c.appendChild(dl);
+    if(_row.atd){
+      const sb = slaBadge(_row);
+      if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
+    }
     c.appendChild(el('p','mail-note','ETD/ETA no se persisten: los resuelve el Preview en vivo contra schedules_master (activo + disponible).'));
     return c;
   }
@@ -15568,14 +15776,19 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const c = el('div','mail-card');
     c.appendChild(el('h3', null, 'Schedule + Preview'));
 
-    const row = el('div','mail-btnrow');
-    const bt = el('button','mail-btn pri', _busy === 'preview' ? 'Generando…' : (_preview ? 'Re-generar preview' : 'Preview'));
-    bt.type = 'button'; bt.dataset.act = 'preview'; bt.disabled = _busy != null;
-    row.appendChild(bt);
-    c.appendChild(row);
-
-    if(_busy === 'preview'){ c.appendChild(el('div','mail-spinner')); return c; }
-    if(!_preview){ c.appendChild(el('p','mail-note','El preview arma el mail completo (destinatarios, schedule en vivo, adjuntos y cuerpo) sin enviar nada.')); return c; }
+    // A-c4: sin botón — el preview es automático (selección / guardar directorio /
+    // confirmar vela). Solo un fallo muestra "Reintentar".
+    if(_busy === 'preview'){ c.appendChild(el('div','mail-spinner')); c.appendChild(el('p','mail-note','Generando preview — destinatarios, schedule en vivo, adjuntos y cuerpo. No envía nada.')); return c; }
+    if(_previewError){
+      c.appendChild(el('div','mail-alert','Preview falló: ' + _previewError));
+      const row = el('div','mail-btnrow');
+      const bt = el('button','mail-btn pri','Reintentar preview');
+      bt.type = 'button'; bt.dataset.act = 'preview'; bt.disabled = _busy != null;
+      row.appendChild(bt);
+      c.appendChild(row);
+      return c;
+    }
+    if(!_preview){ c.appendChild(el('p','mail-note','Generando preview…')); return c; }
 
     const p = _preview;
     const schedRow = el('div','mail-btnrow');
@@ -15610,12 +15823,57 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
     }
 
+    // A-c5: chip-bar de documentos — el checklist visual de John: labels humanos +
+    // filenames reales, separado del cuerpo del mail. Con file_id (lo expone el
+    // workflow desde Batch B) el chip abre el PDF embebido de Drive; sin file_id
+    // queda no-clickeable — degradación que se activa sola al mergear B.
     const att = p.attachments || { found:[], missing:[] };
-    const attLine = el('p','mail-status-line');
-    attLine.textContent = 'Adjuntos: ' + (att.found.length ? att.found.map(f => f.name).join(' · ') : 'ninguno');
-    attLine.style.marginTop = '10px';
-    c.appendChild(attLine);
-    if(att.missing && att.missing.length) c.appendChild(el('div','mail-alert','Faltan en Drive: ' + att.missing.join(', ')));
+    const bar = el('div','mail-docbar');
+    for(const f of att.found){
+      const fid = (f.file_id && /^[\w-]+$/.test(String(f.file_id))) ? String(f.file_id) : null;
+      const ch = el('button','mail-docchip' + (fid && _docOpen && _docOpen.fid === fid ? ' on' : ''));
+      ch.type = 'button';
+      ch.appendChild(svgUse('#i-file-text'));
+      ch.appendChild(el('span','mail-docchip-lbl', DOC_LABELS[f.tipo] || f.tipo || 'DOC'));
+      ch.appendChild(el('span','mail-docchip-name', f.name || '—'));
+      if(fid){
+        ch.dataset.act = 'doc-open'; ch.dataset.fid = fid;
+        ch.dataset.dlabel = (DOC_LABELS[f.tipo] || f.tipo || 'Doc') + ' · ' + (f.name || '');
+        ch.title = 'Ver el PDF (Drive embebido)';
+      } else {
+        ch.disabled = true;
+        ch.title = 'Vista embebida disponible cuando el workflow exponga el file_id (Batch B)';
+      }
+      bar.appendChild(ch);
+    }
+    for(const mtipo of (att.missing || [])){
+      const ch = el('span','mail-docchip mail-docchip--miss');
+      ch.appendChild(svgUse('#i-alert'));
+      ch.appendChild(el('span','mail-docchip-lbl','Falta'));
+      ch.appendChild(el('span','mail-docchip-name', DOC_LABELS[mtipo] || mtipo));
+      ch.title = 'No está en Drive todavía';
+      bar.appendChild(ch);
+    }
+    if(!att.found.length && !(att.missing || []).length) bar.appendChild(el('span','mail-status-line','Adjuntos: ninguno'));
+    c.appendChild(bar);
+    if(_docOpen){
+      const dv = el('div','mail-docview');
+      const dh = el('div','mail-docview-head');
+      dh.appendChild(svgUse('#i-file-text'));
+      dh.appendChild(document.createTextNode(_docOpen.label + ' — embebido desde Google Drive (requiere sesión Google con acceso al Shared Drive).'));
+      const x = el('button','mail-btn','Cerrar'); x.type = 'button'; x.dataset.act = 'doc-close';
+      dh.appendChild(x);
+      dv.appendChild(dh);
+      const fr = document.createElement('iframe');
+      fr.className = 'mail-docframe';
+      // SIN sandbox: el preview de Drive necesita sus cookies/scripts (mismo
+      // criterio que el viewer del Control BL). fid validado /^[\w-]+$/.
+      fr.src = 'https://drive.google.com/file/d/' + encodeURIComponent(_docOpen.fid) + '/preview';
+      fr.setAttribute('allow', 'autoplay');
+      fr.title = _docOpen.label;
+      dv.appendChild(fr);
+      c.appendChild(dv);
+    }
 
     c.appendChild(el('span','mail-lbl','ASUNTO'));
     c.appendChild(el('p','mail-status-line', (p.gmail_preview && p.gmail_preview.subject) || '—'));
@@ -15741,9 +15999,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── acciones ──
   async function selectOrder(order){
     const gen = ++_gen; // invalida cualquier carga/preview en vuelo de la orden anterior
+    clearTimeout(_pvTimer); // y desarma un auto-preview agendado para la orden vieja
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
-    _preview = null; _lastResult = null; _candidates = [];
+    _preview = null; _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
     window.__mailTestOff = null;
     renderMaster();
     if(!_row){ renderDetail(); return; }
@@ -15761,6 +16020,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     _blocked = (_contact && (_contact.blocked_emails || _contact.rejected_emails) || []).slice();
     _dirty = false;
     renderDetail();
+    schedulePreview(); // A-c4: la orden ya tiene todo — el preview arranca solo
   }
 
   function addEmail(kind){
@@ -15795,42 +16055,60 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   async function saveContacts(){
     if(!_row || !_to.length || _busy) return;
-    const gen = _gen;
+    const gen = _gen, order = _sel;
     _busy = 'contacts'; renderDetail();
+    let errMsg = null;
     try {
       const p = proposalEmails(_row);
       const source = (p.to.length + p.cc.length) ? 'ba' : 'manual';
       const resp = await apiMailing({
-        order_number: _sel, action: 'save_contacts',
+        order_number: order, action: 'save_contacts',
         contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
       });
-      if(gen !== _gen) return; // cambió la orden durante el await
       if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
-      _contact = (resp && resp.contact) || _contact;
-      _dirty = false;
-      _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
-      window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
-    } catch(e){ if(gen === _gen) alert('No se pudo guardar el directorio: ' + e.message); }
-    if(gen !== _gen) return;
-    _busy = null; renderDetail();
+      if(gen === _gen && order === _sel){
+        _contact = (resp && resp.contact) || _contact;
+        _dirty = false;
+        _preview = null;               // el directorio cambió: el preview anterior ya no representa el envío
+        window.__mailTestOff = null;   // y desarma el modo REAL elegido contra el directorio viejo
+        schedulePreview();             // A-c4: re-preview reactivo contra el directorio recién guardado
+      }
+    } catch(e){ errMsg = e.message; }
+    _busy = null; // FIX verify (ALTA): SIEMPRE — un return stale no puede dejar el lock puesto
+    if(gen !== _gen || order !== _sel) return;
+    if(errMsg) alert('No se pudo guardar el directorio: ' + errMsg);
+    renderDetail();
   }
 
   async function runPreview(){
     if(!_row || _busy) return;
     const gen = _gen, order = _sel;
     _busy = 'preview'; _lastResult = null; renderDetail();
+    let resp = null, errMsg = null;
     try {
-      const resp = await apiMailing({ order_number: order, action: 'preview' });
-      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
+      resp = await apiMailing({ order_number: order, action: 'preview' });
       // validación de forma: un 2xx degenerado (sin recipients) NO habilita Enviar
       if(!resp || typeof resp !== 'object' || !resp.recipients || !resp.gmail_preview)
         throw new Error(resp && (resp.error || (resp.errors || []).join(' · ')) || 'respuesta de preview inválida (sin recipients)');
-      _preview = resp;
-    } catch(e){
-      if(gen !== _gen || order !== _sel) return;
-      _preview = null; alert('Preview falló: ' + e.message);
+    } catch(e){ errMsg = e.message; }
+    // FIX verify (ALTA): el lock se libera SIEMPRE — antes, el return stale
+    // dentro del try dejaba _busy='preview' para siempre y congelaba la isla.
+    // La respuesta stale solo pierde el derecho a tocar estado/render.
+    _busy = null;
+    if(gen !== _gen || order !== _sel){
+      // La orden actual pudo quedar sin preview (su timer no-opeó contra
+      // nuestro lock): re-agendar para ELLA. Sin loop: gen fresco, una vez.
+      if(_row && !_preview && !_previewError) schedulePreview();
+      return;
     }
-    _busy = null; renderDetail();
+    if(errMsg){
+      // A-c4: sin alert — el fallo se renderiza en el card con "Reintentar"
+      _preview = null; _previewError = errMsg;
+    } else {
+      _preview = resp; _previewError = null;
+      _docOpen = null; // preview nuevo → el viewer viejo puede apuntar a un fid stale
+    }
+    renderDetail();
   }
 
   async function confirmSchedule(){
@@ -15839,16 +16117,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!rd){ alert('Elegí una vela del picker.'); return; }
     const cand = _candidates[parseInt(rd.value, 10)];
     if(!cand) return;
+    const gen = _gen, order = _sel; // FIX verify: era la única acción sin captura de staleness
     _busy = 'confirm'; renderDetail();
+    let errMsg = null;
     try {
-      const resp = await apiMailing({ order_number: _sel, action: 'confirm_schedule',
+      const resp = await apiMailing({ order_number: order, action: 'confirm_schedule',
         overrides: { schedule: { naviera: cand.naviera, buque: cand.buque, puerto_origen: cand.puerto_origen, puerto_destino: cand.puerto_destino, mes_etd: cand.mes_etd } } });
       if(resp && resp.ok === false) throw new Error((resp.errors || [resp.error || 'rechazado']).join(' · '));
-      _busy = null;
-      await runPreview(); // re-resuelve con el override recién persistido
-      return;
-    } catch(e){ alert('No se pudo confirmar la vela: ' + e.message); }
-    _busy = null; renderDetail();
+    } catch(e){ errMsg = e.message; }
+    _busy = null; // SIEMPRE — antes un throw tardío con orden cambiada dejaba alert huérfano
+    if(gen !== _gen || order !== _sel) return; // stale: ni alert de otra orden ni preview no pedido
+    if(errMsg){ alert('No se pudo confirmar la vela: ' + errMsg); renderDetail(); return; }
+    await runPreview(); // re-resuelve con el override recién persistido (orden vigente)
   }
 
   async function doSend(){
@@ -15877,24 +16157,159 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     const gen = _gen, order = _sel;
     _busy = 'send'; renderDetail();
+    let result = null;
     try {
       const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides });
-      if(gen !== _gen || order !== _sel) return; // cambió la orden durante el await
-      _lastResult = resp;
-      if(resp && resp.send_blocked){ _lastResult = { ok:false, error: (resp.block_reasons || []).join(' · ') }; }
-    } catch(e){
-      if(gen !== _gen || order !== _sel) return;
-      _lastResult = { ok:false, error: e.message };
-    }
+      result = (resp && resp.send_blocked) ? { ok:false, error: (resp.block_reasons || []).join(' · ') } : resp;
+    } catch(e){ result = { ok:false, error: e.message }; }
+    // FIX verify (ALTA): lock SIEMPRE liberado; el refresh global de la cola vale
+    // aunque el usuario haya cambiado de orden (los writes ya ocurrieron) — solo
+    // el estado/render del DETALLE queda gateado por staleness.
     _busy = null;
     window.__mailTestOff = null;
-    const orders = await fetchOrders();
+    _orders = await fetchOrders();
+    renderMaster();
     if(gen !== _gen || order !== _sel) return;
-    _orders = orders;
+    _lastResult = result;
     _row = _orders.find(r => r.order_number === order) || _row;
     _sends = await fetchSends(order);
     if(gen !== _gen || order !== _sel) return;
-    renderMaster(); renderDetail();
+    renderDetail();
+  }
+
+  // ── Confirmar zarpe (ATD) — parser del paste-grid + lote a confirm_atd (A-c2) ──
+  // Formato confirmado por John: orden TAB fecha (una sola fecha por fila,
+  // DD/MM/AAAA). Defensas: fila con ≥2 tokens tipo-orden (ej. orden+shipment) o
+  // ≥2 fechas → error explícito, jamás adivinar. NUNCA drop silencioso.
+  function parseAtdGrid(text){
+    const porOrden = new Map(); // orden → Set<atd ISO>
+    const errores = [];
+    const maxAtd = isoPlus(hoyBA(), 1); // guarda anti-typo: futura > hoy+1 se rechaza
+    String(text || '').split(/\r?\n/).forEach((raw, i) => {
+      if(!raw.trim()) return; // filas vacías: se ignoran (no son error)
+      const nl = i + 1;
+      const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
+      // Orden con separador de miles (columna Excel formateada Número: 10.234.567 /
+      // 10,234,567) → se normaliza a dígitos. Las fechas no matchean este patrón
+      // (grupos de exactamente 3 dígitos), quedan intactas. [fix verify]
+      const normMiles = t => /^\d{1,3}([.,]\d{3})+$/.test(t) ? t.replace(/[.,]/g, '') : t;
+      const parts = (toks.length >= 2 ? toks : raw.trim().split(/\s+/)).map(normMiles);
+      const ords = parts.filter(t => /^\d{7,12}$/.test(t));
+      const fechas = parts.filter(t => /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
+      if(!ords.length){ errores.push({ linea: nl, orden: null, motivo: 'sin número de orden (7-12 dígitos)' }); return; }
+      if(ords.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de un número tipo orden en la fila (¿orden + shipment?) — pegá solo orden + fecha' }); return; }
+      if(!fechas.length){ errores.push({ linea: nl, orden: ords[0], motivo: 'sin fecha DD/MM/AAAA' }); return; }
+      if(fechas.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de una fecha en la fila — ambigua, no se adivina' }); return; }
+      const iso = parseFechaAr(fechas[0]);
+      if(!iso){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha inválida: ' + fechas[0] }); return; }
+      if(iso > maxAtd){ errores.push({ linea: nl, orden: ords[0], motivo: 'ATD futura (' + fmtD(iso) + ' > hoy+1) — ¿typo?' }); return; }
+      if(iso < '2020-01-01'){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha fuera de rango: ' + fmtD(iso) }); return; }
+      if(!porOrden.has(ords[0])) porOrden.set(ords[0], new Set());
+      porOrden.get(ords[0]).add(iso); // dup misma orden+fecha colapsa solo (Set)
+    });
+    const listas = [], conflictos = [];
+    for(const [orden, fechas] of porOrden){
+      if(fechas.size > 1) conflictos.push({ orden, fechas: [...fechas].sort() });
+      else listas.push({ orden, atd: [...fechas][0] });
+    }
+    return { listas, conflictos, errores };
+  }
+
+  const ATD_SRV_LBL = {
+    actualizada:   ['ok',   'ATD confirmado'],
+    pisada:        ['warn', 'pisada (tenía otro ATD)'],
+    sin_cambio:    ['mut',  'sin cambio (ya tenía ese ATD)'],
+    no_encontrada: ['err',  'no asentada por el Control BL'],
+    conflicto:     ['err',  'fechas contradictorias'],
+    invalida:      ['err',  'rechazada por el server'],
+    error:         ['err',  'falló la escritura'],
+  };
+
+  function renderAtdReport(){
+    const box = $('mail-atd-report'), sum = $('mail-atd-sum'), btn = $('mail-atd-confirm');
+    if(!box) return;
+    box.textContent = '';
+    if(btn) btn.disabled = _atdBusy || !_atdParsed || !_atdParsed.listas.length || !!_atdParsed.server;
+    if(btn) btn.textContent = _atdBusy ? 'Confirmando…' : 'Confirmar ATD';
+    if(!_atdParsed){ if(sum) sum.textContent = ''; return; }
+    const p = _atdParsed;
+    const t = el('table','mail-atd-tbl');
+    const trh = el('tr');
+    for(const h of ['Orden','ATD','Estado']) trh.appendChild(el('th', null, h));
+    const th = el('thead'); th.appendChild(trh); t.appendChild(th);
+    const tb = el('tbody');
+    const rowT = (orden, atd, cls, txt) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', null, orden || '—'));
+      tr.appendChild(el('td', null, atd || '—'));
+      tr.appendChild(el('td','mail-atd-st ' + cls, txt));
+      tb.appendChild(tr);
+    };
+    if(p.server && !p.server.error){
+      // Reporte AUTORITATIVO del server, fila a fila
+      for(const r of (p.server.results || [])){
+        const [cls, lbl] = ATD_SRV_LBL[r.status] || ['err', r.status];
+        const extra = r.status === 'pisada' ? ' ' + fmtD(r.old_atd) + ' → ' + fmtD(r.atd)
+                    : (r.detail && r.detail !== lbl) ? ' — ' + r.detail : ''; // detail == label → no duplicar
+        rowT(r.order_number, fmtD(r.atd || null), cls, lbl + extra);
+      }
+      if(sum){
+        const s = p.server.summary || {};
+        sum.textContent = Object.entries(s).map(([k, v]) => v + ' ' + k.replace(/_/g, ' ')).join(' · ');
+      }
+    } else {
+      // Pre-check LOCAL (el server valida de nuevo al confirmar)
+      for(const r of p.listas){
+        const known = _orders.find(o => o.order_number === r.orden);
+        const estado = !known ? ['warn', 'no está en la lista cargada — el server decide']
+          : known.atd && known.atd !== r.atd ? ['warn', 'ya tiene ATD ' + fmtD(known.atd) + ' → se pisaría con ' + fmtD(r.atd)]
+          : known.atd === r.atd ? ['mut', 'ya tiene exactamente este ATD']
+          : ['ok', 'lista para confirmar'];
+        rowT(r.orden, fmtD(r.atd), estado[0], estado[1]);
+      }
+      for(const c of p.conflictos) rowT(c.orden, c.fechas.map(fmtD).join(' vs '), 'err', 'CONFLICTO en el pegado — se excluye del lote');
+      for(const e of p.errores) rowT(e.orden, null, 'err', 'línea ' + e.linea + ': ' + e.motivo);
+      if(sum) sum.textContent = p.listas.length + ' lista(s) para confirmar · ' + p.conflictos.length + ' conflicto(s) · ' + p.errores.length + ' error(es)';
+      if(p.server && p.server.error) box.appendChild(el('div','mail-alert','No se pudo confirmar el lote: ' + p.server.error));
+    }
+    t.appendChild(tb);
+    box.appendChild(t);
+  }
+
+  function atdParse(){
+    if(_atdBusy) return; // FIX verify (ALTA): no reemplazar el lote con un confirm en vuelo
+    const ta = $('mail-atd-ta'); if(!ta) return;
+    _atdParsed = ta.value.trim() ? parseAtdGrid(ta.value) : null;
+    renderAtdReport();
+  }
+
+  async function atdConfirm(){
+    if(!_atdParsed || !_atdParsed.listas.length || _atdBusy || _atdParsed.server) return;
+    // FIX verify (ALTA): referencia LOCAL al lote — si _atdParsed cambiara durante
+    // el await (belt & suspenders del guard de atdParse), el reporte del server se
+    // cuelga de ESTE lote y jamás del nuevo; el textarea solo se limpia si el
+    // lote visible sigue siendo el confirmado.
+    const lote = _atdParsed;
+    const n = lote.listas.length;
+    const conNota = lote.conflictos.length || lote.errores.length
+      ? '\n(Conflictos y errores quedan AFUERA del lote — revisalos en la tabla.)' : '';
+    if(!confirm('Confirmar zarpe (ATD) para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota + '\n¿Continuar?')) return;
+    _atdBusy = true; renderAtdReport();
+    try {
+      const resp = await apiMailing({ action: 'confirm_atd', rows: lote.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
+      lote.server = resp;
+    } catch(e){ lote.server = { error: e.message }; }
+    _atdBusy = false;
+    // Refresh SIEMPRE: los writes ya ocurrieron — la cola/KPI/detalle los reflejan
+    _orders = await fetchOrders();
+    renderMaster();
+    if(_sel){ _row = _orders.find(r => r.order_number === _sel) || _row; renderDetail(); }
+    if(_atdParsed === lote){
+      const s = (lote.server && lote.server.summary) || {};
+      const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
+      if(lote.server && !lote.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
+    }
+    renderAtdReport();
   }
 
   // ── carga del tab ──
@@ -15930,6 +16345,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       else if(act === 'preview') runPreview();
       else if(act === 'confirm-schedule') confirmSchedule();
       else if(act === 'send') doSend();
+      else if(act === 'atd-parse') atdParse();
+      else if(act === 'atd-confirm') atdConfirm();
+      else if(act === 'sent-toggle'){ _showSent = !_showSent; renderMaster(); }
+      else if(act === 'doc-open'){ _docOpen = { fid: t.dataset.fid, label: t.dataset.dlabel || 'Documento' }; renderDetail(); }
+      else if(act === 'doc-close'){ _docOpen = null; renderDetail(); }
     });
     panel.addEventListener('keydown', e => {
       if(e.key !== 'Enter') return;
@@ -15946,6 +16366,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(q){
       let tmr = null;
       q.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(() => { _q = q.value; renderMaster(); }, 250); });
+    }
+    const kbar = $('mail-kpibar');
+    if(kbar){
+      kbar.addEventListener('click', e => {
+        const k = e.target.closest('[data-sla]');
+        if(!k || !kbar.contains(k)) return;
+        const v = k.dataset.sla;
+        _slaFilter = (_slaFilter === v) ? null : v; // toggle single-select
+        renderMaster();
+      });
     }
     const fbar = $('mail-filterbar');
     if(fbar){
