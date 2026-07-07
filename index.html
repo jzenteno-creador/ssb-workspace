@@ -11,6 +11,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
+  color-scheme:dark; /* form controls nativos (date picker, select) en paleta dark */
   /* Cockpit palette — dark-first (direction A) */
   --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
   --header-bg:#0b0f17; /* constante dark en ambos modos — mantiene "header cockpit" */
@@ -19,6 +20,8 @@
   --purple-tint:rgba(167,139,250,.05); /* tinte sutil para .gr-title y .gantt-row:hover */
   --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
   --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
+  --blue-bg:#141f38;--blue-bd:#2a4478; /* completa el trío de status (info-box EFA/Tarifas) */
+  --text-inverse:#fff; /* texto sobre superficies saturadas/cockpit — constante en ambos temas */
   --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
   --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
   --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
@@ -38,6 +41,7 @@
 /* ── LIGHT variant (toggle) ──
    Default es dark (via :root). Agregar clase `light` al body activa esta paleta. */
 body.light{
+  color-scheme:light;
   --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
   --header-bg:#0b0f17; /* constante dark: headers/topbar/badges siguen oscuros en light mode */
   --total-bg:#0b0f17; /* total-cell stays dark en light mode (cockpit pop) */
@@ -45,6 +49,7 @@ body.light{
   --purple-tint:rgba(109,40,217,.05); /* tinte sutil light-mode */
   --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
   --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
+  --blue-bg:#e8f0fe;--blue-bd:#c3d7f8;
   --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
   --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
   --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
@@ -272,6 +277,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
 /* Estado select */
 .estado-sel{padding:8px 26px 8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--text);background:var(--faint) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7a99' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 8px center;appearance:none;cursor:pointer;width:145px;transition:border-color .15s}
 .estado-sel:focus{outline:none;border-color:var(--blue);background-color:var(--surface);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+/* Chevron por modo: var() no penetra el data-URI → duplicado con el muted de light */
+body.light .estado-sel{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%235b6478' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")}
 
 /* Autocomplete */
 .ac-wrap{position:relative}
@@ -1143,6 +1150,7 @@ body.light .tt-mode-btn--active{box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px r
 /* Selects en celdas editables (4 de 6 columnas en modo Edición → Tarifas) —
    coherentes con .tt-cell-edit pero con ícono dropdown nativo del browser. */
 select.tt-cell-edit{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5l3 3 3-3' stroke='%238b94a8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 8px center;background-size:12px;padding-right:24px;cursor:pointer}
+body.light select.tt-cell-edit{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5l3 3 3-3' stroke='%235b6478' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>")}
 select.tt-cell-edit option[value="__NEW__"]{font-style:italic;color:var(--blue)}
 select.tt-cell-edit option[disabled]{color:var(--muted);font-style:italic}
 
@@ -1202,9 +1210,6 @@ body.light .vac-tab-badge{color:#fff}
   background:var(--surface);color:var(--text);
   box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.04);
 }
-body.dark .vac-subtab.vac-subtab--active{
-  box-shadow:0 1px 2px rgba(0,0,0,.4),0 0 0 1px var(--border);
-}
 
 /* Disclaimer naranja: período oct→sep */
 .vac-disclaimer{
@@ -1216,11 +1221,6 @@ body.dark .vac-subtab.vac-subtab--active{
   line-height:1.5;
 }
 .vac-disclaimer strong{color:var(--text);font-weight:700}
-body.dark .vac-disclaimer{
-  background:rgba(91,155,245,.08);
-  color:var(--text);
-  border-bottom-color:var(--border);
-}
 .vac-disclaimer-ico{
   width:18px;height:18px;flex-shrink:0;border-radius:50%;
   background:var(--blue);color:#fff;
@@ -1251,8 +1251,6 @@ body.dark .vac-disclaimer{
 }
 .vac-approval-text{flex:1}
 .vac-approval-text strong{color:var(--text);font-weight:700}
-body.dark .vac-approval-banner{color:var(--amber)}
-body.dark .vac-approval-text strong{color:var(--amber)}
 .vac-btn-primary{
   padding:7px 14px;border:none;border-radius:7px;
   background:var(--blue);color:#fff;
@@ -1581,7 +1579,6 @@ body.dark .vac-approval-text strong{color:var(--amber)}
   background:var(--red-bg);border-left:3px solid var(--red);
   padding:9px 14px;border-radius:4px;font-size:var(--fs-sm);color:var(--red);margin:10px 0;
 }
-body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
 #panel-vacaciones .vac-form-warning{
   background:var(--amber-bg);border-left:3px solid var(--amber);
   padding:9px 14px;border-radius:4px;font-size:var(--fs-sm);color:var(--amber);margin:10px 0;line-height:1.5;
@@ -1696,7 +1693,6 @@ body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
   border-radius:5px;pointer-events:none;
   transition:left .12s ease,width .12s ease;
 }
-body.dark #panel-vacaciones .vac-mini-tl-viewport{background:rgba(91,155,245,.12)}
 #panel-vacaciones .vac-mini-tl-today{
   position:absolute;top:0;bottom:0;width:1px;
   background:var(--orange);pointer-events:none;
@@ -1760,13 +1756,11 @@ body.dark #panel-vacaciones .vac-mini-tl-viewport{background:rgba(91,155,245,.12
   border-right:1px solid var(--border);z-index:2;
   box-shadow:4px 0 6px -3px rgba(0,0,0,.08);
 }
-body.dark #panel-vacaciones .vac-gantt-col-names{box-shadow:4px 0 8px -3px rgba(0,0,0,.4)}
 #panel-vacaciones .vac-gantt-col-status{
   width:var(--vac-gantt-status-w);background:var(--surface);
   border-left:1px solid var(--border);z-index:2;
   box-shadow:-4px 0 6px -3px rgba(0,0,0,.08);
 }
-body.dark #panel-vacaciones .vac-gantt-col-status{box-shadow:-4px 0 8px -3px rgba(0,0,0,.4)}
 
 #panel-vacaciones .vac-gantt-scroller{
   flex:1 1 auto;position:relative;
@@ -1838,31 +1832,30 @@ body.dark #panel-vacaciones .vac-gantt-col-status{box-shadow:-4px 0 8px -3px rgb
 #panel-vacaciones .vac-gantt-row-days.vac-is-self{background:var(--purple-bg)}
 #panel-vacaciones .vac-gantt-row-bg{
   position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(to right,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px);
+  /* dark default: gridlines blancas (la variante negra vivía en una regla body.dark muerta) */
+  background-image:linear-gradient(to right,rgba(255,255,255,.05) 0,rgba(255,255,255,.05) 1px,transparent 1px);
   background-size:var(--vac-gantt-day-w) 100%;
 }
-body.dark #panel-vacaciones .vac-gantt-row-bg{
-  background-image:linear-gradient(to right,rgba(255,255,255,.05) 0,rgba(255,255,255,.05) 1px,transparent 1px);
+body.light #panel-vacaciones .vac-gantt-row-bg{
+  background-image:linear-gradient(to right,rgba(0,0,0,.05) 0,rgba(0,0,0,.05) 1px,transparent 1px);
 }
 
 #panel-vacaciones .vac-gantt-bands{position:absolute;left:0;right:0;pointer-events:none}
 #panel-vacaciones .vac-gantt-weekend-band{
   position:absolute;top:0;bottom:0;
-  background:rgba(0,0,0,.025);pointer-events:none;
+  background:rgba(255,255,255,.025);pointer-events:none;   /* dark default */
 }
-body.dark #panel-vacaciones .vac-gantt-weekend-band{background:rgba(255,255,255,.025)}
+body.light #panel-vacaciones .vac-gantt-weekend-band{background:rgba(0,0,0,.025)}
 #panel-vacaciones .vac-gantt-holiday-band{
   position:absolute;top:0;bottom:0;
   background:var(--red-bg);pointer-events:auto;cursor:help;
 }
-body.dark #panel-vacaciones .vac-gantt-holiday-band{background:rgba(239,100,97,.10)}
 
 #panel-vacaciones .vac-gantt-today-line{
   position:absolute;top:0;bottom:0;width:1px;
   background:var(--orange);pointer-events:none;z-index:3;
   box-shadow:0 0 6px rgba(209,77,0,.6);
 }
-body.dark #panel-vacaciones .vac-gantt-today-line{box-shadow:0 0 8px rgba(251,146,60,.7)}
 #panel-vacaciones .vac-gantt-today-line::before{
   content:'HOY';position:absolute;top:0;left:50%;transform:translateX(-50%);
   background:var(--orange);color:#fff;font-family:var(--mono);font-size:8px;
@@ -1883,7 +1876,6 @@ body.dark #panel-vacaciones .vac-gantt-today-line{box-shadow:0 0 8px rgba(251,14
   background:repeating-linear-gradient(45deg,var(--purple),var(--purple) 6px,var(--purple-bd) 6px,var(--purple-bd) 12px);
 }
 #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{background:var(--amber);color:#0b0f17}
-body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
 
 #panel-vacaciones .vac-gantt-row-status{
   height:var(--vac-gantt-row-h);padding:0 14px;
@@ -2163,7 +2155,6 @@ body.dark #panel-vacaciones .vac-gantt-bar.vac-bar-pendiente{color:#0b0f17}
   margin-left:auto;font-family:var(--mono);font-size:var(--fs-2xs);color:var(--muted);
 }
 #panel-vacaciones .vac-backup-select-option.is-selected{background:var(--blue-lt,rgba(37,99,235,.08))}
-body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgba(91,155,245,.15)}
 #panel-vacaciones .vac-backup-select-empty{
   padding:12px;text-align:center;color:var(--muted);font-size:var(--fs-xs);
 }
@@ -2314,7 +2305,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .agent-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-family:var(--font);font-size:var(--fs-base);color:var(--text);resize:none;max-height:140px;line-height:var(--lh-base);transition:border-color .15s}
 .agent-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(91,155,245,.15)}
 .agent-input::placeholder{color:var(--muted)}
-.agent-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.agent-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--blue);color:var(--text-inverse);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .agent-send-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
 .agent-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 /* ═══════════════════════════════ FIN AGENTE IA ═══════════════════════════════ */
@@ -2331,7 +2322,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 }
 .wia-sidebar{background:var(--faint);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow-y:auto}
 .wia-sidebar-title{font-size:var(--fs-sm);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 0 4px}
-.wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
+.wia-new-btn{display:flex;align-items:center;gap:8px;background:var(--wia-accent);color:var(--text-inverse);border:none;border-radius:10px;padding:10px 14px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all .15s;width:100%}
 .wia-new-btn:hover{background:var(--wia-accent-hover)}
 .wia-new-btn .ic{width:16px;height:16px}
 .wia-info-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:var(--fs-xs);color:var(--muted);line-height:var(--lh-loose)}
@@ -2354,10 +2345,10 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .wia-msg--user{flex-direction:row-reverse}
 .wia-msg--assistant{flex-direction:row}
 .wia-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:var(--fs-xs);font-weight:700}
-.wia-msg--user .wia-avatar{background:var(--wia-accent);color:#fff}
+.wia-msg--user .wia-avatar{background:var(--wia-accent);color:var(--text-inverse)}
 .wia-msg--assistant .wia-avatar{background:var(--wia-accent-bg);border:1px solid var(--wia-accent-bd);color:var(--wia-accent)}
 .wia-bubble{border-radius:16px;padding:12px 18px;font-size:var(--fs-base);line-height:var(--lh-loose);word-break:break-word;max-width:80%}
-.wia-msg--user .wia-bubble{background:var(--wia-accent);color:#fff;border-top-right-radius:4px}
+.wia-msg--user .wia-bubble{background:var(--wia-accent);color:var(--text-inverse);border-top-right-radius:4px}
 .wia-msg--assistant .wia-bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-top-left-radius:4px}
 .wia-msg--assistant .wia-bubble strong{color:var(--wia-accent);font-weight:700}
 .wia-msg--assistant .wia-bubble em{color:var(--teal);font-style:italic}
@@ -2373,7 +2364,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .wia-msg--assistant .wia-bubble h1:first-child,.wia-msg--assistant .wia-bubble h2:first-child,.wia-msg--assistant .wia-bubble h3:first-child{margin-top:0}
 .wia-msg--assistant .wia-bubble hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 .wia-msg--assistant .wia-bubble table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);margin:8px 0}
-.wia-msg--assistant .wia-bubble th{background:var(--wia-accent);color:#fff;padding:6px 10px;text-align:left;font-weight:600;font-size:var(--fs-xs);letter-spacing:.03em}
+.wia-msg--assistant .wia-bubble th{background:var(--wia-accent);color:var(--text-inverse);padding:6px 10px;text-align:left;font-weight:600;font-size:var(--fs-xs);letter-spacing:.03em}
 .wia-msg--assistant .wia-bubble td{padding:5px 10px;border-bottom:1px solid var(--border)}
 .wia-msg--assistant .wia-bubble tr:nth-child(even) td{background:var(--faint)}
 .wia-msg--assistant .wia-bubble blockquote{border-left:3px solid var(--wia-accent);padding:4px 12px;margin:8px 0;color:var(--muted);font-style:italic}
@@ -2387,7 +2378,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 .wia-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-family:var(--font);font-size:var(--fs-base);color:var(--text);resize:none;max-height:140px;line-height:var(--lh-base);transition:border-color .15s}
 .wia-input:focus{outline:none;border-color:var(--wia-accent);box-shadow:0 0 0 3px rgba(139,92,246,.15)}
 .wia-input::placeholder{color:var(--muted)}
-.wia-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--wia-accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.wia-send-btn{width:44px;height:44px;border-radius:12px;border:none;background:var(--wia-accent);color:var(--text-inverse);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .wia-send-btn:hover{background:var(--wia-accent-hover);transform:translateY(-1px)}
 .wia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 /* ═══════════════════════════════ FIN WORKSPACE IA ═══════════════════════════════ */
@@ -2411,6 +2402,18 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 /* Todo bajo #panel-control-bl, clases cbl-*. Tokens del mockup como vars LOCALES del panel
    (NO en :root → no filtran al resto de la app dark). Fuentes reusadas de la app (--font/--mono). */
 #panel-control-bl{
+  /* Dark-first (molde #panel-mailing): la isla sigue el tema. Autorizado por John. */
+  --cbl-paper:var(--bg); --cbl-surface:#1e293b; --cbl-surface-2:#161e2b;
+  --cbl-ink:var(--text); --cbl-ink-soft:var(--muted); --cbl-ink-faint:#6b7488;
+  --cbl-line:rgba(255,255,255,.08); --cbl-line-strong:rgba(255,255,255,.16);
+  --cbl-accent:var(--blue); --cbl-accent-soft:var(--blue-lt);
+  --cbl-ok:var(--green); --cbl-ok-bg:var(--green-bg); --cbl-ok-bd:var(--green-bd);
+  --cbl-rev:var(--orange); --cbl-rev-bg:var(--orange-bg); --cbl-rev-bd:var(--orange-bd);
+  --cbl-miss:var(--muted); --cbl-miss-bg:#141925; --cbl-miss-dot:#6b7488; --cbl-miss-spine:rgba(255,255,255,.16);
+  --cbl-shadow:var(--shadow);
+}
+body.light #panel-control-bl{
+  /* Paper (valores originales de la isla clara) */
   --cbl-paper:#F7F6F2; --cbl-surface:#FFFFFF; --cbl-surface-2:#FBFAF7;
   --cbl-ink:#1C1B19; --cbl-ink-soft:#6B6863; --cbl-ink-faint:#9C988F;
   --cbl-line:#E7E4DD; --cbl-line-strong:#D9D5CC;
@@ -2420,7 +2423,7 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
   --cbl-miss:#8a897f; --cbl-miss-bg:#f0eee8; --cbl-miss-dot:#b0afa4; --cbl-miss-spine:#cfccc4;
   --cbl-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
 }
-/* Isla clara contenida dentro del panel dark */
+/* Isla que sigue el tema (dark default / paper en light) */
 #panel-control-bl .cbl-root{background:var(--cbl-paper);color:var(--cbl-ink);font-family:var(--font);font-size:14px;line-height:1.5;border:1px solid var(--cbl-line);border-radius:14px;padding:20px 22px 28px;-webkit-font-smoothing:antialiased}
 #panel-control-bl .cbl-root *{box-sizing:border-box}
 
@@ -2433,8 +2436,8 @@ body.dark #panel-vacaciones .vac-backup-select-option.is-selected{background:rgb
 #panel-control-bl .cbl-search-field .ic{width:16px;height:16px;color:var(--cbl-ink-faint)}
 #panel-control-bl .cbl-search-input{flex:1;border:none;background:none;outline:none;font-family:var(--font);font-size:13.5px;color:var(--cbl-ink);padding:10px 0}
 #panel-control-bl .cbl-search-input::placeholder{color:var(--cbl-ink-faint)}
-#panel-control-bl .cbl-search-btn{font-family:var(--font);font-size:13.5px;font-weight:600;color:#fff;background:var(--cbl-accent);border:1px solid var(--cbl-accent);border-radius:0 11px 11px 0;padding:0 18px;cursor:pointer}
-#panel-control-bl .cbl-search-btn:hover{background:#1a528f}
+#panel-control-bl .cbl-search-btn{font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text-inverse);background:var(--cbl-accent);border:1px solid var(--cbl-accent);border-radius:0 11px 11px 0;padding:0 18px;cursor:pointer;transition:filter .12s}
+#panel-control-bl .cbl-search-btn:hover{filter:brightness(1.1)}
 
 /* ── Toolbar (lote + filtros + summary) ── */
 #panel-control-bl .cbl-toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -5909,7 +5912,7 @@ function bulkRenderRows(){
   if(!rows.length){wrap.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Sin rutas para este carrier'+(eq?'+equipo':'')+'</div>';bulkRowsState=[];bulkUpdateSelCount();return;}
   bulkRowsState=rows.map(r=>({key:r.key,e:r.e,sel:false,monto:r.e.monto??'',desde:r.e.desde||'',hasta:r.e.hasta||''}));
   let html=`<table style="width:100%;font-size:11px;border-collapse:collapse">
-    <thead><tr style="background:#f3f4f6;position:sticky;top:0">
+    <thead><tr style="background:var(--surface-hv);position:sticky;top:0">
       <th style="padding:6px 4px;width:28px"></th>
       <th style="padding:6px 8px;text-align:left">Ruta · Equipo</th>
       <th style="padding:6px 8px;text-align:right">Actual</th>
@@ -5917,21 +5920,21 @@ function bulkRenderRows(){
       <th style="padding:6px 8px">Nueva vigencia desde</th>
       <th style="padding:6px 8px">Nueva vigencia hasta</th>
     </tr>
-    <tr style="background:#eef2ff;position:sticky;top:28px">
+    <tr style="background:var(--blue-lt);position:sticky;top:28px">
       <th></th>
-      <th style="padding:6px 8px;text-align:right;color:#3730a3;font-size:10px;font-weight:700">APLICAR A SELECCIONADAS →</th>
+      <th style="padding:6px 8px;text-align:right;color:var(--blue);font-size:10px;font-weight:700">APLICAR A SELECCIONADAS →</th>
       <th></th>
-      <th style="padding:6px 8px"><input id="bulk-global-monto" type="number" step="0.01" placeholder="Monto" style="width:90px;padding:4px 6px;border:1px solid #c7d2fe;border-radius:4px"></th>
-      <th style="padding:6px 8px"><input id="bulk-global-desde" type="date" style="padding:4px 6px;border:1px solid #c7d2fe;border-radius:4px"></th>
+      <th style="padding:6px 8px"><input id="bulk-global-monto" type="number" step="0.01" placeholder="Monto" style="width:90px;padding:4px 6px;border:1px solid var(--blue-bd);border-radius:4px"></th>
+      <th style="padding:6px 8px"><input id="bulk-global-desde" type="date" style="padding:4px 6px;border:1px solid var(--blue-bd);border-radius:4px"></th>
       <th style="padding:6px 8px;display:flex;gap:4px;align-items:center">
-        <input id="bulk-global-hasta" type="date" style="padding:4px 6px;border:1px solid #c7d2fe;border-radius:4px">
-        <button onclick="bulkApplyGlobal()" style="padding:4px 8px;border-radius:4px;background:#4f46e5;color:#fff;border:none;font-size:10px;font-weight:700;cursor:pointer">Aplicar</button>
+        <input id="bulk-global-hasta" type="date" style="padding:4px 6px;border:1px solid var(--blue-bd);border-radius:4px">
+        <button onclick="bulkApplyGlobal()" style="padding:4px 8px;border-radius:4px;background:var(--blue);color:var(--text-inverse);border:none;font-size:10px;font-weight:700;cursor:pointer">Aplicar</button>
       </th>
     </tr>
     </thead><tbody>`;
   bulkRowsState.forEach((r,i)=>{
     const actual = (r.e.monto!=null?usd(r.e.monto):'—')+'<br><span style="font-family:monospace;font-size:10px;color:var(--muted)">'+(r.e.desde?fDate(r.e.desde):'?')+'→'+(r.e.hasta?fDate(r.e.hasta):'∞')+'</span>';
-    html+=`<tr style="border-bottom:1px solid #eee">
+    html+=`<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:6px 4px;text-align:center"><input type="checkbox" id="bulk-cb-${i}" onchange="bulkRowToggle(${i},this.checked)"></td>
       <td style="padding:6px 8px"><b>${r.e.origen}</b> → <b>${r.e.destino}</b> <span style="color:var(--muted);font-size:10px">${r.e.equipo||''}</span></td>
       <td style="padding:6px 8px;text-align:right">${actual}</td>
@@ -6103,7 +6106,7 @@ async function loadLogData(){
     logRows=(data||[]).flatMap(_mmExpandLogEntry);
     renderLogTable();
   }catch(e){
-    body.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626">Error al cargar historial: '+esc(e.message)+'</div>';
+    body.innerHTML='<div style="padding:40px;text-align:center;color:var(--red)">Error al cargar historial: '+esc(e.message)+'</div>';
   }
 }
 function renderLogTable(){
@@ -6136,8 +6139,8 @@ function renderLogTable(){
      tokens globalmente — fuera de scope commit 5. Revisar en commit cleanup. */
   const tipoBadge=t=>{
     const tt=(t||'').toLowerCase();
-    const src=tt.startsWith('bid')?'<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">BID</span>':'<span style="background:var(--purple-bg);color:var(--purple);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">EFA</span>';
-    if(tt.includes('add'))return src+'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">+ ALTA</span>';
+    const src=tt.startsWith('bid')?'<span style="background:var(--amber-bg);color:var(--amber);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">BID</span>':'<span style="background:var(--purple-bg);color:var(--purple);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">EFA</span>';
+    if(tt.includes('add'))return src+'<span style="background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">+ ALTA</span>';
     if(tt.includes('update'))return src+'<span style="background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">✎ EDICIÓN</span>';
     if(tt.includes('delete'))return src+'<span style="background:var(--red-bg);color:var(--red);padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">🗑 BAJA</span>';
     return t||'—';
@@ -6158,8 +6161,8 @@ function renderLogTable(){
     <td style="padding:6px 8px">${r.origen||''} → ${r.destino||''}</td>
     <td style="padding:6px 8px">${r.equipo||'—'}</td>
     <td style="padding:6px 8px;color:var(--muted)">${r.campo||'—'}</td>
-    <td style="padding:6px 8px;color:#991b1b">${(r.old||'').toString().slice(0,80)||'—'}</td>
-    <td style="padding:6px 8px;color:#166534;font-weight:600">${(r.new||'').toString().slice(0,80)||'—'}</td>
+    <td style="padding:6px 8px;color:var(--red)">${(r.old||'').toString().slice(0,80)||'—'}</td>
+    <td style="padding:6px 8px;color:var(--green);font-weight:600">${(r.new||'').toString().slice(0,80)||'—'}</td>
   </tr>`).join('')}</tbody></table>`;
 }
 function loadSheetJS(){
@@ -6279,25 +6282,25 @@ function parseImport(){
   document.getElementById('import-prev-count').textContent=`(${valid.length}/${importParsed.length} válidos · ${nNew} nuevos · ${nFill} llenan vacías · ${nCont} continuaciones · ${nConf} conflictos)`;
   document.getElementById('import-confirm-btn').disabled=valid.length===0;
   const stBadge=r=>{
-    if(r._err)return `<span style="color:#c00">⚠ ${r._err}</span>`;
-    if(r._status==='nuevo')return '<span style="color:#0a0;font-weight:700">✓ nuevo</span>';
-    if(r._status==='fill')return '<span style="color:#0277bd;font-weight:700">⊕ llena vacía</span>';
-    if(r._status==='continuation')return `<span style="color:#6a1b9a;font-weight:700" title="Cierra anterior con fin=${r._autoCloseHasta} (era ${usd(r._existingMonto||0)} desde ${r._existingDesde||''}, sin fin)">🔗 cierra anterior</span>`;
-    if(r._status==='conflict')return `<span style="color:#e65100;font-weight:700" title="Existe: ${usd(r._existingMonto||0)} ${r._existingDesde||''}→${r._existingHasta||'∞'}">⚠ duplicado</span>`;
+    if(r._err)return `<span style="color:var(--red)">⚠ ${r._err}</span>`;
+    if(r._status==='nuevo')return '<span style="color:var(--green);font-weight:700">✓ nuevo</span>';
+    if(r._status==='fill')return '<span style="color:var(--blue);font-weight:700">⊕ llena vacía</span>';
+    if(r._status==='continuation')return `<span style="color:var(--purple);font-weight:700" title="Cierra anterior con fin=${r._autoCloseHasta} (era ${usd(r._existingMonto||0)} desde ${r._existingDesde||''}, sin fin)">🔗 cierra anterior</span>`;
+    if(r._status==='conflict')return `<span style="color:var(--orange);font-weight:700" title="Existe: ${usd(r._existingMonto||0)} ${r._existingDesde||''}→${r._existingHasta||'∞'}">⚠ duplicado</span>`;
     return '';
   };
-  const rowBg=r=>r._err?'background:#fee':(r._status==='conflict'?'background:#fff3e0':(r._status==='fill'?'background:#e3f2fd':(r._status==='continuation'?'background:#f3e5f5':'')));
-  document.getElementById('import-prev-body').innerHTML=`<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px">#</th><th style="padding:4px;text-align:left">Carrier</th><th style="padding:4px;text-align:left">Ruta</th><th style="padding:4px">Eq.</th><th style="padding:4px;text-align:right">Monto</th><th style="padding:4px">Vigencia</th><th style="padding:4px">Estado</th></tr></thead><tbody>${importParsed.map((r,i)=>`<tr style="border-bottom:1px solid #eee;${rowBg(r)}"><td style="padding:3px 5px;text-align:center">${i+1}</td><td style="padding:3px 5px">${r.carrier}</td><td style="padding:3px 5px">${r.origen}→${r.destino}</td><td style="padding:3px 5px;text-align:center">${r.equipo}</td><td style="padding:3px 5px;text-align:right">${isNaN(r.monto)?'—':usd(r.monto)}</td><td style="padding:3px 5px;text-align:center;font-family:monospace;font-size:10px">${r.desde||'?'}→${r.hasta||'∞'}</td><td style="padding:3px 5px;text-align:center">${stBadge(r)}</td></tr>`).join('')}</tbody></table>`;
+  const rowBg=r=>r._err?'background:var(--red-bg)':(r._status==='conflict'?'background:var(--orange-bg)':(r._status==='fill'?'background:var(--blue-bg)':(r._status==='continuation'?'background:var(--purple-bg)':'')));
+  document.getElementById('import-prev-body').innerHTML=`<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:var(--surface-hv)"><th style="padding:4px">#</th><th style="padding:4px;text-align:left">Carrier</th><th style="padding:4px;text-align:left">Ruta</th><th style="padding:4px">Eq.</th><th style="padding:4px;text-align:right">Monto</th><th style="padding:4px">Vigencia</th><th style="padding:4px">Estado</th></tr></thead><tbody>${importParsed.map((r,i)=>`<tr style="border-bottom:1px solid #eee;${rowBg(r)}"><td style="padding:3px 5px;text-align:center">${i+1}</td><td style="padding:3px 5px">${r.carrier}</td><td style="padding:3px 5px">${r.origen}→${r.destino}</td><td style="padding:3px 5px;text-align:center">${r.equipo}</td><td style="padding:3px 5px;text-align:right">${isNaN(r.monto)?'—':usd(r.monto)}</td><td style="padding:3px 5px;text-align:center;font-family:monospace;font-size:10px">${r.desde||'?'}→${r.hasta||'∞'}</td><td style="padding:3px 5px;text-align:center">${stBadge(r)}</td></tr>`).join('')}</tbody></table>`;
 }
 function renderImportError(msg){
-  document.getElementById('import-prev-body').innerHTML=`<div style="padding:14px;text-align:center;color:#c00;font-size:12px">⚠ ${msg}</div>`;
+  document.getElementById('import-prev-body').innerHTML=`<div style="padding:14px;text-align:center;color:var(--red);font-size:12px">⚠ ${msg}</div>`;
   document.getElementById('import-prev-count').textContent='';
   document.getElementById('import-confirm-btn').disabled=true;
 }
 async function confirmImport(){
   const valid=importParsed.filter(r=>!r._err);
   const body=document.getElementById('import-prev-body');
-  if(!valid.length){body.innerHTML='<div style="padding:18px;text-align:center;color:#c00;font-size:13px">⚠ No hay filas válidas para importar</div>';return;}
+  if(!valid.length){body.innerHTML='<div style="padding:18px;text-align:center;color:var(--red);font-size:13px">⚠ No hay filas válidas para importar</div>';return;}
   const nNew=valid.filter(r=>r._status==='nuevo').length;
   const nFill=valid.filter(r=>r._status==='fill').length;
   const nCont=valid.filter(r=>r._status==='continuation').length;
@@ -6314,7 +6317,7 @@ async function confirmImport(){
     if(!conflictMode)return;
   } else {
     const proceed=await new Promise(resolve=>{
-      body.innerHTML=`<div style="padding:24px;text-align:center"><div style="font-size:32px;margin-bottom:8px">❓</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">¿Importar ${valid.length} EFA?</div><div style="font-size:11px;color:var(--muted);margin-bottom:14px">${nNew} nuevos · ${nFill} llenan filas vacías${nCont?` · <b style="color:#6a1b9a">${nCont} continuaciones</b> (cierran períodos anteriores automáticamente)`:''}</div><div style="display:flex;gap:8px;justify-content:center"><button class="efa-mod-btn" id="imp-cancel-yn">Cancelar</button><button class="efa-mod-btn primary" id="imp-ok-yn">✓ Sí, importar</button></div></div>`;
+      body.innerHTML=`<div style="padding:24px;text-align:center"><div style="font-size:32px;margin-bottom:8px">❓</div><div style="font-size:14px;font-weight:600;margin-bottom:6px">¿Importar ${valid.length} EFA?</div><div style="font-size:11px;color:var(--muted);margin-bottom:14px">${nNew} nuevos · ${nFill} llenan filas vacías${nCont?` · <b style="color:var(--purple)">${nCont} continuaciones</b> (cierran períodos anteriores automáticamente)`:''}</div><div style="display:flex;gap:8px;justify-content:center"><button class="efa-mod-btn" id="imp-cancel-yn">Cancelar</button><button class="efa-mod-btn primary" id="imp-ok-yn">✓ Sí, importar</button></div></div>`;
       document.getElementById('imp-cancel-yn').onclick=()=>{parseImport();resolve(false);};
       document.getElementById('imp-ok-yn').onclick=()=>resolve(true);
     });
@@ -6367,10 +6370,10 @@ async function confirmImport(){
   }
   btn.textContent='✓ Importar';
   if(fail===0){
-    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:#0a7d34;margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
+    body.innerHTML=`<div style="padding:28px;text-align:center"><div style="font-size:48px;margin-bottom:6px">✅</div><div style="font-size:16px;font-weight:700;color:var(--green);margin-bottom:6px">Importación exitosa</div><div style="font-size:13px;color:var(--muted);margin-bottom:18px">${done} EFA agregados</div><button class="efa-mod-btn primary" onclick="location.reload()" style="font-size:13px;padding:8px 18px">🔄 Recargar página</button><div style="font-size:10px;color:var(--muted);margin-top:8px">(necesario para ver los cambios reflejados)</div></div>`;
     btn.style.display='none';
   } else {
-    body.innerHTML=`<div style="padding:14px;font-size:12px"><div style="font-weight:700;color:#c00;margin-bottom:8px">⚠ Importación parcial: ${done} OK · ${fail} errores</div><div style="max-height:160px;overflow:auto;background:#fee;border:1px solid #fcc;border-radius:4px;padding:8px;font-family:monospace;font-size:10px;white-space:pre-wrap;margin-bottom:10px">${errors.join('\n')}</div>${done>0?`<div style="text-align:center"><button class="efa-mod-btn primary" onclick="location.reload()">🔄 Recargar página</button></div>`:''}</div>`;
+    body.innerHTML=`<div style="padding:14px;font-size:12px"><div style="font-weight:700;color:var(--red);margin-bottom:8px">⚠ Importación parcial: ${done} OK · ${fail} errores</div><div style="max-height:160px;overflow:auto;background:var(--red-bg);border:1px solid var(--red-bd);border-radius:4px;padding:8px;font-family:monospace;font-size:10px;white-space:pre-wrap;margin-bottom:10px">${errors.join('\n')}</div>${done>0?`<div style="text-align:center"><button class="efa-mod-btn primary" onclick="location.reload()">🔄 Recargar página</button></div>`:''}</div>`;
     btn.disabled=false;
   }
 }
@@ -6507,9 +6510,9 @@ function _mmConfirmNewCatalog(kind, name){
       <div style="font-size:15px;font-weight:700;margin-bottom:6px">${isPort?'Puerto':'Naviera'} no está en el catálogo</div>
       <div style="font-size:13px;color:var(--muted,#94a3b8);margin-bottom:12px">Vas a <b>agregar al catálogo canónico</b> ${isPort?'el puerto':'la naviera'}:</div>
       <div style="font-size:16px;font-weight:700;padding:8px 12px;background:var(--faint,rgba(255,255,255,.06));border-radius:6px;margin-bottom:14px;word-break:break-word">${esc(name)}</div>
-      ${isPort?`<label style="display:block;font-size:12px;font-weight:600;color:var(--muted,#94a3b8);margin-bottom:4px">País <span style="color:#ef4444">*</span></label>
+      ${isPort?`<label style="display:block;font-size:12px;font-weight:600;color:var(--muted,#94a3b8);margin-bottom:4px">País <span style="color:var(--red)">*</span></label>
       <input id="_mm-newcat-pais" type="text" placeholder="Ej: Brasil" autocomplete="off" style="width:100%;padding:8px 10px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:6px;background:var(--bg,#0f172a);color:var(--text,#e2e8f0);box-sizing:border-box">
-      <div id="_mm-newcat-err" style="font-size:11px;color:#ef4444;min-height:15px;margin:4px 0 8px"></div>`:'<div style="height:8px"></div>'}
+      <div id="_mm-newcat-err" style="font-size:11px;color:var(--red);min-height:15px;margin:4px 0 8px"></div>`:'<div style="height:8px"></div>'}
       <div style="font-size:11px;color:var(--muted,#94a3b8);margin-bottom:16px">Revisá que no sea un error de tipeo: si confirmás queda en el catálogo permanente.</div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button type="button" id="_mm-newcat-cancel" style="padding:8px 14px;border-radius:6px;border:1px solid var(--border,rgba(255,255,255,.15));background:transparent;color:var(--text,#e2e8f0);cursor:pointer;font-size:13px">Cancelar</button>
@@ -7373,7 +7376,7 @@ function updateSchedIndicator() {
     const ageEl = document.getElementById('sched-ind-age');
     if(days>7){
       ageEl.textContent = '⚠ '+days+'d';
-      ageEl.style.color='#f4a723';
+      ageEl.style.color='var(--amber)';
       ind.style.borderColor='rgba(244,167,35,.3)';
     } else {
       ageEl.textContent = days===0?'hoy':days+'d atrás';
@@ -7649,7 +7652,7 @@ function exportTarifasExcel(){
       <button class="efa-mod-x" onclick="closeBulkModal()" title="Cerrar">×</button>
     </div>
     <div class="efa-mod-bd">
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#1e3a8a">
+      <div style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue)">
         Elegí un carrier para listar todas sus rutas. Para cada fila podés <b>editar</b> el período actual (cambia monto/vigencia in-place) o <b>crear un período nuevo</b> (cierra el actual con FIN y crea uno nuevo desde la fecha indicada). Tildá las filas que querés aplicar y presioná Guardar.
       </div>
       <div class="efa-mod-grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -7719,7 +7722,7 @@ function exportTarifasExcel(){
       <button class="efa-mod-x" onclick="closeImportModal()" title="Cerrar">×</button>
     </div>
     <div class="efa-mod-bd">
-      <div style="background:#cfe2ff;border:1px solid #0d6efd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#052c65;line-height:1.5">
+      <div style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--blue);line-height:1.5">
         <div style="font-weight:700;margin-bottom:6px">📌 Cómo importar correctamente</div>
         1. En Excel, copiá las filas (Ctrl+C) <b>incluyendo el encabezado</b>.<br>
         2. Pegalas en el cuadro de abajo (Ctrl+V).<br>
@@ -7737,7 +7740,7 @@ function exportTarifasExcel(){
         ⚠ El orden de las columnas no importa, pero los nombres deben coincidir exactamente.
       </div>
       <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted)">Pegar datos aquí</label>
-      <textarea id="import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px" placeholder="carrier	origen	destino	equipo	monto	desde	hasta	comentario&#10;HAPAG	B.BLANCA	SHANGHAI	20'STD	150	01/04/2026	30/04/2026	" oninput="parseImport()"></textarea>
+      <textarea id="import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid var(--border);border-radius:4px" placeholder="carrier	origen	destino	equipo	monto	desde	hasta	comentario&#10;HAPAG	B.BLANCA	SHANGHAI	20'STD	150	01/04/2026	30/04/2026	" oninput="parseImport()"></textarea>
       <div class="efa-mod-prev" style="margin-top:12px">
         <div class="efa-mod-prev-hdr">👀 Preview <span id="import-prev-count"></span></div>
         <div id="import-prev-body" style="max-height:240px;overflow:auto"><div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div></div>
@@ -7785,7 +7788,7 @@ function exportTarifasExcel(){
       <div id="bid-m-impact" style="margin-top:14px;padding:10px;background:var(--purple-bg);border-left:3px solid var(--purple);border-radius:4px;font-size:11px;display:none"></div>
     </div>
     <div class="efa-mod-ft">
-      <div class="efa-mod-ft-l"><button class="efa-mod-btn" id="bid-m-del" onclick="deleteBidFromModal()" style="display:none;background:#fee2e2;color:#991b1b">🗑 Eliminar</button></div>
+      <div class="efa-mod-ft-l"><button class="efa-mod-btn" id="bid-m-del" onclick="deleteBidFromModal()" style="display:none;background:var(--red-bg);color:var(--red)">🗑 Eliminar</button></div>
       <div class="efa-mod-ft-r">
         <button class="efa-mod-btn" onclick="closeBidModalGuarded()">Cancelar</button>
         <button class="efa-mod-btn primary" id="bid-m-save" onclick="saveBidFromModal()">✓ Guardar</button>
@@ -7826,10 +7829,10 @@ function exportTarifasExcel(){
   <div class="efa-mod">
     <div class="efa-mod-hdr"><h3>📥 Importar tarifas BID</h3><button class="efa-mod-x" onclick="closeBidImportModal()">×</button></div>
     <div class="efa-mod-bd">
-      <div style="background:#cfe2ff;border:1px solid #0d6efd;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#052c65">
+      <div style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--blue)">
         Pegá filas desde Excel <b>incluyendo el encabezado</b>. Columnas esperadas: <b>carrier, origen, destino, equipo, tarifa, contrato, desde, hasta, estado, comentario, quarter</b>. El sistema detecta filas existentes (mismo carrier+origen+destino+equipo+vigencia) y las actualiza en lugar de duplicar (smart-merge).
       </div>
-      <textarea id="bid-import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px" oninput="parseBidImport()"></textarea>
+      <textarea id="bid-import-ta" rows="8" style="width:100%;font-family:monospace;font-size:11px;padding:8px;border:1px solid var(--border);border-radius:4px" oninput="parseBidImport()"></textarea>
       <div class="efa-mod-prev" style="margin-top:12px"><div class="efa-mod-prev-hdr">👀 Preview <span id="bid-import-prev-count"></span></div><div id="bid-import-prev-body" style="max-height:240px;overflow:auto"><div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Pegá los datos para ver el preview</div></div></div>
       <div id="bid-import-progress-wrap" style="display:none;margin-top:14px"><div class="progress-status" id="bid-import-progress-status">Procesando…</div><div class="progress-container"><div class="progress-bar" id="bid-import-progress-bar"></div><div class="progress-text" id="bid-import-progress-text">0%</div></div></div>
     </div>
@@ -8216,7 +8219,7 @@ function bidBulkPreview(){
   const list=bidBulkMatch();
   document.getElementById('bidbulk-prev-count').textContent=list.length?`(${list.length})`:'';
   if(!list.length){document.getElementById('bidbulk-prev-body').innerHTML='<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">Sin coincidencias</div>';return;}
-  document.getElementById('bidbulk-prev-body').innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px 6px;text-align:left">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="padding:4px 6px;text-align:right">Tarifa actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>'+list.map(r=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px">${r.origen}→${r.destino}</td><td style="padding:4px 6px;text-align:center">${r.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${r.tarifa!=null?usd(r.tarifa):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(r.desde)}→${r.hasta?fDate(r.hasta):'∞'}</td></tr>`).join('')+'</tbody></table>';
+  document.getElementById('bidbulk-prev-body').innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:var(--surface-hv)"><th style="padding:4px 6px;text-align:left">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="padding:4px 6px;text-align:right">Tarifa actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>'+list.map(r=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 6px">${r.origen}→${r.destino}</td><td style="padding:4px 6px;text-align:center">${r.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${r.tarifa!=null?usd(r.tarifa):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(r.desde)}→${r.hasta?fDate(r.hasta):'∞'}</td></tr>`).join('')+'</tbody></table>';
 }
 async function applyBidBulkUpdate(){
   const list=bidBulkMatch();if(!list.length){ssbToast('Sin coincidencias', 'info');return;}
@@ -8275,9 +8278,9 @@ function parseBidImport(){
   });
   const body=document.getElementById('bid-import-prev-body');
   document.getElementById('bid-import-prev-count').textContent=`(${bidImportParsed.length})`;
-  body.innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px;text-align:left">Acción</th><th style="padding:4px">Carrier</th><th style="padding:4px">Ruta</th><th style="padding:4px">Equipo</th><th style="padding:4px;text-align:right">Tarifa</th></tr></thead><tbody>'+bidImportParsed.map(p=>{
-    const tag=p._existing?'<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:9px">UPDATE</span>':'<span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:3px;font-size:9px">NEW</span>';
-    return `<tr style="border-bottom:1px solid #eee"><td style="padding:4px">${tag}</td><td style="padding:4px">${p.carrier}</td><td style="padding:4px">${p.origen}→${p.destino}</td><td style="padding:4px;text-align:center">${p.equipo}</td><td style="padding:4px;text-align:right">${p.tarifa?usd(p.tarifa):'—'}</td></tr>`;
+  body.innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:var(--surface-hv)"><th style="padding:4px;text-align:left">Acción</th><th style="padding:4px">Carrier</th><th style="padding:4px">Ruta</th><th style="padding:4px">Equipo</th><th style="padding:4px;text-align:right">Tarifa</th></tr></thead><tbody>'+bidImportParsed.map(p=>{
+    const tag=p._existing?'<span style="background:var(--blue-bg);color:var(--blue);padding:1px 6px;border-radius:3px;font-size:9px">UPDATE</span>':'<span style="background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:3px;font-size:9px">NEW</span>';
+    return `<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px">${tag}</td><td style="padding:4px">${p.carrier}</td><td style="padding:4px">${p.origen}→${p.destino}</td><td style="padding:4px;text-align:center">${p.equipo}</td><td style="padding:4px;text-align:right">${p.tarifa?usd(p.tarifa):'—'}</td></tr>`;
   }).join('')+'</tbody></table>';
   document.getElementById('bid-import-confirm-btn').disabled=bidImportParsed.length===0;
 }
