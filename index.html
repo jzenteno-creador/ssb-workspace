@@ -17090,6 +17090,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     try { await loadCyLib(); }
     catch(e){ if(gen === _gGen) renderGraphState(e.message, () => renderGraph()); return; }
     if(gen !== _gGen || _view !== 'grafo' || !_data) return; // superado por otro render o cambio de vista
+    // solapa oculta (switchTab con el CDN en vuelo): la caja mide 0x0 y el layout
+    // revienta — diferir; loadSchema() rearma al volver a la solapa
+    if(!box.clientWidth){ renderGraphState('El grafo se arma al volver a la solapa.', null); return; }
     box.textContent = '';
     try {
       _cy = window.cytoscape({
@@ -17169,7 +17172,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(_view === 'grafo') renderGraph();
   }
 
-  window.loadSchema = function(){ if(_data || _loading) return; refresh(false); };
+  window.loadSchema = function(){
+    if(_loading) return;
+    if(!_data){ refresh(false); return; }
+    // re-entrada con la vista grafo sin instancia (render diferido por solapa
+    // oculta, o error previo): rearmar ahora que la caja tiene tamaño real
+    if(_view === 'grafo' && !_cy) renderGraph();
+  };
 
   (function wire(){
     $('sch-refresh')?.addEventListener('click', () => refresh(true));
