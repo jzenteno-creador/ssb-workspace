@@ -2744,6 +2744,60 @@ body.light #panel-mailing{
   #panel-cert-origen .co-input,#panel-cert-origen .co-input--cert{width:100%}
   #panel-cert-origen .co-kv{grid-template-columns:1fr}
 }
+
+/* ═══════════ ESTRUCTURA DB — solapa ═══════════ */
+#panel-schema .sch-root{max-width:980px;margin:0 auto;width:100%;min-width:0}
+#panel-schema .sch-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+#panel-schema .sch-title{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+#panel-schema .sch-sub{font-size:var(--fs-md);color:var(--muted);margin:4px 0 0;line-height:1.5}
+#panel-schema .sch-sub code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-sm);background:var(--faint);padding:1px 5px;border-radius:4px}
+#panel-schema .sch-head-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+#panel-schema .sch-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+#panel-schema .sch-filter{flex:1;font-family:var(--font);font-size:var(--fs-base);color:var(--text);background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+#panel-schema .sch-filter::placeholder{color:var(--muted);opacity:.6}
+#panel-schema .sch-refresh{display:inline-flex;align-items:center;gap:8px;font-family:var(--font);font-size:var(--fs-md);font-weight:600;color:var(--muted);background:none;border:1px solid var(--border);border-radius:9px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+#panel-schema .sch-refresh:hover{color:var(--text);border-color:var(--muted)}
+#panel-schema .sch-refresh .ic{width:16px;height:16px}
+#panel-schema .sch-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+#panel-schema .sch-card-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:left;font-family:var(--font);font-size:var(--fs-base);color:var(--text);appearance:none}
+#panel-schema .sch-chevron{display:inline-flex;align-items:center;justify-content:center;width:14px;flex-shrink:0;color:var(--muted);font-size:11px;line-height:1;transition:transform .15s ease}
+#panel-schema .sch-card-head[aria-expanded="true"] .sch-chevron{transform:rotate(90deg)}
+#panel-schema .sch-tname{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:var(--fs-base)}
+#panel-schema .sch-tmeta{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+#panel-schema .sch-tcount{font-size:var(--fs-sm);color:var(--muted);white-space:nowrap}
+#panel-schema .sch-tcomment{font-size:var(--fs-md);color:var(--muted);padding:0 16px 12px 38px;margin:0;line-height:1.5}
+#panel-schema .sch-tcomment--clip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-schema .sch-card-body{padding:0 16px 14px}
+#panel-schema .sch-state-body{padding:14px 16px}
+#panel-schema .sch-section-title{font-size:var(--fs-md);font-weight:700;padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text)}
+#panel-schema .sch-cols-wrap{overflow-x:auto}
+#panel-schema .sch-cols{width:100%;border-collapse:collapse;font-size:var(--fs-md);min-width:520px}
+#panel-schema .sch-cols th{text-align:left;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+#panel-schema .sch-cols td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+#panel-schema .sch-cols tr:last-child td{border-bottom:none}
+#panel-schema .sch-col-name{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;white-space:nowrap}
+#panel-schema .sch-col-type{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);white-space:nowrap}
+#panel-schema .sch-col-null{font-size:var(--fs-xs);color:var(--muted)}
+#panel-schema .sch-col-null--req{color:var(--text);font-weight:600}
+#panel-schema .sch-col-comment{font-size:var(--fs-xs);color:var(--muted);margin-top:2px;line-height:1.4}
+#panel-schema .sch-rel-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-md);padding:8px 16px;border-bottom:1px solid var(--border)}
+#panel-schema .sch-rel-row:last-child{border-bottom:none}
+#panel-schema .sch-rel-btn{background:none;border:none;padding:0;font:inherit;color:var(--blue);cursor:pointer;text-decoration:none;appearance:none}
+#panel-schema .sch-rel-btn:hover{text-decoration:underline}
+#panel-schema .sch-fk-link{cursor:pointer;font:inherit;appearance:none}
+#panel-schema .sch-empty{font-size:var(--fs-md);color:var(--muted);padding:14px 4px}
+#panel-schema .sch-empty + .sch-refresh{margin:0 4px 14px}
+@keyframes sch-flash{0%{box-shadow:0 0 0 2px var(--teal)}100%{box-shadow:0 0 0 2px transparent}}
+#panel-schema .sch-flash{animation:sch-flash 1.2s ease-out}
+@media (prefers-reduced-motion:reduce){
+  #panel-schema .sch-chevron{transition:none}
+  #panel-schema .sch-flash{animation:none}
+}
+@media (max-width:700px){
+  #panel-schema .sch-toolbar{flex-direction:column;align-items:stretch}
+  #panel-schema .sch-refresh{justify-content:center}
+  #panel-schema .sch-head{flex-direction:column}
+}
 </style>
 </head>
 <body>
@@ -2790,6 +2844,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
     <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
   </defs>
 </svg>
 
@@ -2953,6 +3008,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
   <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
   <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
   <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+  <button class="tab-btn" id="tab-schema" onclick="switchTab('schema')" aria-label="Estructura DB"><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
   <div class="rail-spacer" aria-hidden="true"></div>
   <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
 </nav>
@@ -4153,6 +4209,25 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
 </div>
 <!-- ═══════════ FIN TAB: CERTIFICADO DE ORIGEN ═══════════ -->
 
+<!-- ═══════════ TAB: ESTRUCTURA DB ═══════════ -->
+<div class="tab-panel" id="panel-schema">
+  <div class="sch-root">
+    <header class="sch-head">
+      <div>
+        <h1 class="sch-title">Estructura de la DB</h1>
+        <p class="sch-sub">Vista read-only del schema <code>public</code> — tablas, columnas, tipos y relaciones. Solo metadata, nunca datos.</p>
+      </div>
+      <div class="sch-head-meta" id="sch-counts"></div>
+    </header>
+    <div class="sch-toolbar">
+      <input type="text" class="sch-filter" id="sch-filter" placeholder="Filtrar tablas o columnas…" autocomplete="off">
+      <button type="button" class="sch-refresh" id="sch-refresh"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-refresh"/></svg> Actualizar</button>
+    </div>
+    <div id="sch-body"></div>
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: ESTRUCTURA DB ═══════════ -->
+
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -4276,7 +4351,7 @@ function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing','cert-origen'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing','cert-origen','schema'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -4294,6 +4369,7 @@ function switchTab(name) {
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
   if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
   if(name==='cert-origen' && window.loadCertOrigen){ window.loadCertOrigen(); }
+  if(name==='schema' && window.loadSchema){ window.loadSchema(); }
 }
 
 // ── RAIL: pin (expandir/colapsar) + drawer móvil ──
@@ -16594,6 +16670,273 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     $('co-refresh')?.addEventListener('click', loadHist);
     for(const id of ['co-orden','co-cert'])
       $(id)?.addEventListener('keydown', e => { if(e.key === 'Enter') generar(); });
+  })();
+})();
+
+// ── ESTRUCTURA DB — solapa (read-only, POST /api/schema sin input) ──
+(function(){
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
+
+  let _data = null;        // cache por sesión
+  let _loading = false;
+  const _open = new Set(); // tablas expandidas (sobrevive re-render del filtro)
+
+  function debounceLocal(fn, ms){
+    let t;
+    return function(...args){
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  async function apiSchema(){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) return { status: 0, data: { error: 'Sesión no disponible — recargá e ingresá de nuevo.' } };
+    let res;
+    try { res = await fetch('/api/schema', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body:'{}' }); }
+    catch(e){ return { status: 0, data: { error: 'Sin conexión con el servidor.' } }; }
+    let data = null;
+    try { data = await res.json(); } catch(_){}
+    if(!data || typeof data !== 'object') data = { error: 'Respuesta inválida del servidor.' };
+    return { status: res.status, data };
+  }
+
+  function skelCard(){
+    const card = el('div','skel-card');
+    const lineClasses = ['skel skel-line skel-line--lg','skel skel-line skel-line--xl','skel skel-line','skel skel-line skel-line--sm','skel skel-line','skel skel-line skel-line--xl'];
+    for(const c of lineClasses) card.appendChild(el('span', c));
+    return card;
+  }
+
+  function renderLoading(){
+    const box = $('sch-body');
+    if(box){
+      box.textContent = '';
+      for(let i = 0; i < 3; i++) box.appendChild(skelCard());
+    }
+    const counts = $('sch-counts');
+    if(counts) counts.textContent = '';
+  }
+
+  function renderError(msg){
+    const box = $('sch-body'); if(!box) return;
+    box.textContent = '';
+    const card = el('div','sch-card');
+    const body = el('div','sch-state-body');
+    body.appendChild(el('p','sch-empty', msg));
+    const retry = el('button','sch-refresh','Reintentar');
+    retry.type = 'button';
+    retry.onclick = () => refresh(true);
+    body.appendChild(retry);
+    card.appendChild(body);
+    box.appendChild(card);
+    const counts = $('sch-counts'); if(counts) counts.textContent = '';
+  }
+
+  function renderCounts(){
+    const box = $('sch-counts'); if(!box) return;
+    box.textContent = '';
+    if(!_data || !_data.counts) return;
+    const c = _data.counts;
+    const pairs = [[c.tables,'tablas'],[c.views,'vistas'],[c.columns,'columnas'],[c.relations,'FKs']];
+    for(const [n, lbl] of pairs){
+      if(n == null) continue;
+      box.appendChild(el('span','badge badge--pill badge--neutral', n + ' ' + lbl));
+    }
+  }
+
+  function matchesFilter(t, needle){
+    if(!needle) return true;
+    if(String(t.name || '').toLowerCase().includes(needle)) return true;
+    return (t.columns || []).some(c => String(c.name || '').toLowerCase().includes(needle));
+  }
+
+  function emptyState(msg){
+    const card = el('div','sch-card');
+    const body = el('div','sch-state-body');
+    body.appendChild(el('p','sch-empty', msg));
+    card.appendChild(body);
+    return card;
+  }
+
+  function colRow(col){
+    const tr = el('tr');
+
+    const tdName = el('td');
+    tdName.appendChild(el('span','sch-col-name', col.name));
+    if(col.comment){
+      tdName.appendChild(document.createElement('br'));
+      tdName.appendChild(el('span','sch-col-comment', col.comment));
+    }
+    tr.appendChild(tdName);
+
+    tr.appendChild(el('td','sch-col-type', col.type));
+
+    const tdNull = el('td');
+    tdNull.appendChild(el('span', col.nullable ? 'sch-col-null' : 'sch-col-null sch-col-null--req', col.nullable ? 'null' : 'NOT NULL'));
+    tr.appendChild(tdNull);
+
+    const tdBadges = el('td');
+    if(col.isPk) tdBadges.appendChild(el('span','badge badge--warning','PK'));
+    if(col.fk && col.fk.table){
+      const fkBtn = el('button','badge badge--equipo sch-fk-link', '→ ' + col.fk.table + '.' + col.fk.column);
+      fkBtn.type = 'button';
+      fkBtn.onclick = () => navigateToTable(col.fk.table);
+      tdBadges.appendChild(fkBtn);
+    }
+    tr.appendChild(tdBadges);
+
+    return tr;
+  }
+
+  function colsTable(t){
+    const wrap = el('div','sch-cols-wrap');
+    const table = el('table','sch-cols');
+    const thead = el('thead'); const trh = el('tr');
+    for(const h of ['Columna','Tipo','Nullability','']) trh.appendChild(el('th', null, h));
+    thead.appendChild(trh); table.appendChild(thead);
+    const tbody = el('tbody');
+    for(const col of (t.columns || [])) tbody.appendChild(colRow(col));
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function tableCard(t){
+    const card = el('div','sch-card');
+    card.dataset.table = t.name;
+    const isOpen = _open.has(t.name);
+
+    const head = el('button','sch-card-head');
+    head.type = 'button';
+    head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    const chevron = el('span','sch-chevron','▸');
+    chevron.setAttribute('aria-hidden','true');
+    head.appendChild(chevron);
+    head.appendChild(el('span','sch-tname', t.name));
+
+    const meta = el('div','sch-tmeta');
+    if(t.kind === 'view'){
+      meta.appendChild(el('span','badge badge--purple','vista'));
+    } else if(t.rls){
+      meta.appendChild(el('span','badge badge--success','RLS'));
+    } else {
+      meta.appendChild(el('span','badge badge--danger','SIN RLS'));
+    }
+    const nCols = (t.columns || []).length;
+    meta.appendChild(el('span','sch-tcount', nCols + (nCols === 1 ? ' columna' : ' columnas')));
+    head.appendChild(meta);
+    card.appendChild(head);
+
+    let commentP = null;
+    if(t.comment){
+      commentP = el('p','sch-tcomment', t.comment);
+      commentP.classList.toggle('sch-tcomment--clip', !isOpen);
+      card.appendChild(commentP);
+    }
+
+    const body = el('div','sch-card-body');
+    body.hidden = !isOpen;
+    body.appendChild(colsTable(t));
+    card.appendChild(body);
+
+    head.onclick = () => {
+      const nowOpen = !_open.has(t.name);
+      if(nowOpen) _open.add(t.name); else _open.delete(t.name);
+      head.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+      body.hidden = !nowOpen;
+      if(commentP) commentP.classList.toggle('sch-tcomment--clip', !nowOpen);
+    };
+
+    return card;
+  }
+
+  function relationsCard(){
+    const rels = (_data && _data.relations) || [];
+    const card = el('div','sch-card');
+    card.appendChild(el('div','sch-section-title', 'Relaciones (' + rels.length + ')'));
+    if(!rels.length){
+      const body = el('div','sch-state-body');
+      body.appendChild(el('p','sch-empty','No hay relaciones (FKs) para mostrar.'));
+      card.appendChild(body);
+      return card;
+    }
+    for(const r of rels){
+      const row = el('div','sch-rel-row');
+      const fromBtn = el('button','sch-rel-btn', r.from.table + '.' + r.from.column);
+      fromBtn.type = 'button';
+      fromBtn.onclick = () => navigateToTable(r.from.table);
+      row.appendChild(fromBtn);
+      row.appendChild(el('span', null, '→'));
+      const toBtn = el('button','sch-rel-btn', r.to.table + '.' + r.to.column);
+      toBtn.type = 'button';
+      toBtn.onclick = () => navigateToTable(r.to.table);
+      row.appendChild(toBtn);
+      card.appendChild(row);
+    }
+    return card;
+  }
+
+  function renderTables(filterTextRaw){
+    const box = $('sch-body'); if(!box) return;
+    box.textContent = '';
+    if(!_data) return;
+    const q = (filterTextRaw || '').trim();
+    const needle = q.toLowerCase();
+    const tables = (_data.tables || []).filter(t => matchesFilter(t, needle));
+    if(!tables.length){
+      box.appendChild(emptyState(q ? ('No encontré tablas ni columnas que coincidan con «' + q + '».') : 'No hay tablas para mostrar.'));
+    } else {
+      for(const t of tables) box.appendChild(tableCard(t));
+    }
+    box.appendChild(relationsCard());
+  }
+
+  function navigateToTable(name){
+    const filterInput = $('sch-filter');
+    if(filterInput && filterInput.value) filterInput.value = '';
+    _open.add(name);
+    renderTables('');
+    requestAnimationFrame(() => {
+      let card = null;
+      try { card = document.querySelector('#panel-schema .sch-card[data-table="' + CSS.escape(name) + '"]'); }
+      catch(_){ card = null; }
+      if(!card) return;
+      card.scrollIntoView({ behavior:'smooth', block:'center' });
+      card.classList.add('sch-flash');
+      setTimeout(() => card.classList.remove('sch-flash'), 1300);
+    });
+  }
+
+  async function refresh(force){
+    if(_loading) return;
+    if(force) _data = null;
+    _loading = true;
+    renderLoading();
+    const { status, data } = await apiSchema();
+    _loading = false;
+    if(!data || data.ok !== true){
+      const msg = (data && data.error) ? data.error : ('No se pudo cargar el schema (HTTP ' + (status || '?') + ').');
+      renderError(msg);
+      return;
+    }
+    _data = data;
+    renderCounts();
+    const filterInput = $('sch-filter');
+    renderTables(filterInput ? filterInput.value : '');
+  }
+
+  window.loadSchema = function(){ if(_data || _loading) return; refresh(false); };
+
+  (function wire(){
+    $('sch-refresh')?.addEventListener('click', () => refresh(true));
+    const filterInput = $('sch-filter');
+    if(filterInput){
+      filterInput.addEventListener('input', debounceLocal(() => {
+        if(_data) renderTables(filterInput.value);
+      }, 250));
+    }
   })();
 })();
 </script>

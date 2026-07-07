@@ -14,11 +14,13 @@ config({ path: join(__dirname, '.env') });
 const chatModule = await import('./api/chat.js');
 const chatWorkspaceModule = await import('./api/chat-workspace.js');
 const mailingModule = await import('./api/mailing.js');
+const schemaModule = await import('./api/schema.js');
 
 const FUNCTIONS = {
   '/api/chat': chatModule.default,
   '/api/chat-workspace': chatWorkspaceModule.default,
   '/api/mailing': mailingModule.default,
+  '/api/schema': schemaModule.default,
 };
 
 const MIME = {
