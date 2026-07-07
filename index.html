@@ -4762,7 +4762,20 @@ function splashReady(kind,msg){
 setTimeout(()=>{const b=document.getElementById('splash-btn');if(b&&b.disabled)splashReady('err','⚠ Sincronización lenta — podés ingresar igual');},4000);
 
 // ── SYNC TARIFAS ──
+// Señales de estado del sync compartidas por los renderers de Admin BID y EFA
+// (error ≠ vacío: sin datos + error ⇒ card de error con retry, no empty falso).
+window._syncInFlight = false;
+window._syncError = false;
+function skelCardsHtml(label){
+  const card = '<div class="skel-card"><span class="skel skel-line skel-line--lg"></span><span class="skel skel-line skel-line--xl"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--sm"></span><span class="skel skel-line"></span><span class="skel skel-line skel-line--xl"></span></div>';
+  return `<div class="skel-group" aria-busy="true" aria-label="${label}">${card}${card}${card}</div>`;
+}
+function syncErrorHtml(titulo){
+  return `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="ttl">${titulo}</div><div class="sub">Revisá tu conexión y reintentá.</div><button type="button" class="vac-btn-primary" onclick="syncSheet()">Reintentar</button></div>`;
+}
+
 async function syncSheet() {
+  window._syncInFlight = true;
   setDot('spin','Sincronizando...');
   document.getElementById('btn-sync').disabled = true;
 
@@ -4780,6 +4793,8 @@ async function syncSheet() {
 
   // ── Estado + splash: se liberan con Tarifas+EFA (Supabase, sub-segundo).
   //    El schedule (Apps Script, lento) baja en background y no gatea la entrada. ──
+  window._syncInFlight = false;
+  window._syncError = !tarifasOk;
   if (tarifasOk) {
     const t = new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
     setDot('ok','Actualizado '+t);
@@ -4789,6 +4804,9 @@ async function syncSheet() {
     document.getElementById('list').innerHTML=`<div class="empty"><div class="empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alert"/></svg></div><div class="empty-ttl">No se pudo conectar con el servidor</div><div class="empty-sub">Revisá tu conexión y presioná <b>Sincronizar</b> para reintentar.</div></div>`;
     splashReady('err','⚠ Error de conexión — podés ingresar igual');
   }
+  // Refrescar la vista donde el usuario esté parado (loadTarifas solo repinta #list)
+  if(document.getElementById('panel-admin-bid')?.classList.contains('active')) renderAdminBID();
+  if(document.getElementById('panel-efa')?.classList.contains('active')) renderEFATab();
   document.getElementById('btn-sync').disabled = false;
 
   syncScheduleBackground(tarifasOk); // fire-and-forget: maneja sus errores adentro
@@ -5228,7 +5246,11 @@ function collapseEquipos(equiposMap,equipoKeys){
 function renderEfaGantt(){
   const cont=document.getElementById('efa-view-gantt');
   if(!cont)return;
-  if(!efaSheet.length){cont.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con <b>+ Nuevo EFA</b>.</div></div>';return;}
+  if(!efaSheet.length){
+    if(window._syncInFlight){cont.innerHTML=skelCardsHtml('Cargando EFAs');return;}
+    if(window._syncError){cont.innerHTML=syncErrorHtml('No se pudieron cargar los EFAs');return;}
+    cont.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con <b>+ Nuevo EFA</b>.</div></div>';return;
+  }
   const fC=document.getElementById('efa-f-carrier').value;
   const fE=document.getElementById('efa-f-equipo').value;
   const fS=(document.getElementById('efa-f-search').value||'').toUpperCase();
@@ -5371,6 +5393,8 @@ function efaPeriodStatus(e, todayISO){
 function renderEFAResumen(){
   const cont = document.getElementById('efa-view-resumen');
   if(!efaSheet.length){
+    if(window._syncInFlight){cont.innerHTML=skelCardsHtml('Cargando EFAs');return;}
+    if(window._syncError){cont.innerHTML=syncErrorHtml('No se pudieron cargar los EFAs');return;}
     cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
@@ -5493,6 +5517,8 @@ function renderEFAResumen(){
 function renderEFAResumenByEquipo(){
   const cont = document.getElementById('efa-view-resumen');
   if(!efaSheet.length){
+    if(window._syncInFlight){cont.innerHTML=skelCardsHtml('Cargando EFAs');return;}
+    if(window._syncError){cont.innerHTML=syncErrorHtml('No se pudieron cargar los EFAs');return;}
     cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
@@ -5579,6 +5605,8 @@ function renderEFAResumenByEquipo(){
 function renderEFAPlanilla(){
   const cont = document.getElementById('efa-view-planilla');
   if(!efaSheet.length){
+    if(window._syncInFlight){cont.innerHTML=skelCardsHtml('Cargando EFAs');return;}
+    if(window._syncError){cont.innerHTML=syncErrorHtml('No se pudieron cargar los EFAs');return;}
     cont.innerHTML = `<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-zap"/></svg></div><div class="ttl">Todavía no hay EFAs cargados</div><div class="sub">Agregá el primero con el botón <b>+ Nuevo EFA</b>, o importá uno desde Excel.</div></div>`;
     return;
   }
@@ -7867,7 +7895,12 @@ function _renderAdminBIDImpl(){
   document.getElementById('bid-count').textContent=`${rates.length} tarifas`;
   buildBidFilterOptions();
   const wrap=document.getElementById('bid-table-wrap');
-  if(!rates.length){wrap.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-clipboard"/></svg></div><div class="ttl">No hay tarifas cargadas</div><div class="sub">Sincronizá desde el servidor o agregá una nueva con <b>+ Nueva tarifa</b>.</div></div>';return;}
+  if(!rates.length){
+    // error ≠ vacío: loading → skeleton; sync fallido → error+retry; recién ahí empty real
+    if(window._syncInFlight){wrap.innerHTML=skelCardsHtml('Cargando tarifas BID');return;}
+    if(window._syncError){wrap.innerHTML=syncErrorHtml('No se pudieron cargar las tarifas');return;}
+    wrap.innerHTML='<div class="efa-empty"><div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-clipboard"/></svg></div><div class="ttl">No hay tarifas cargadas</div><div class="sub">Sincronizá desde el servidor o agregá una nueva con <b>+ Nueva tarifa</b>.</div></div>';return;
+  }
   const list=getBidFiltered();
   document.getElementById('bid-filter-info').textContent=`Mostrando ${list.length} de ${rates.length}`;
   const fmtD=v=>{if(!v)return '';const iso=toISO(v);if(!iso)return v;const [y,m,d]=iso.split('-');return `${d}/${m}/${y.slice(2)}`;};
@@ -11945,8 +11978,44 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   // ── Carga de datos: balance + mis solicitudes + feriados + solicitudes de back-ups ──
-  async function loadMyData(){
-    if(!window.__vacAuth) return;
+  // ── Error de carga ≠ vacío ──
+  // Si alguna query volvió con error (o la red rechazó el Promise.all), el
+  // subtab muestra banner de error con Reintentar en vez de "no hay datos"
+  // falso. Los loaders devuelven true/false y pintan el banner ellos mismos.
+  const _VAC_RETRY = {
+    mi:     () => { _miState.initialized = false; onEnterMi(); },
+    equipo: () => { window.__vac.team.initialized = false; onEnterEquipo(); },
+    admin:  () => { window.__vac.admin.initialized = false; onEnterAdmin(); },
+    cargar: () => { onEnterCargar(); },
+  };
+  function vacLoadError(sub, msg){
+    const sec = document.querySelector(`#panel-vacaciones .vac-section[data-section="${sub}"]`);
+    if(!sec) return;
+    let b = sec.querySelector('.vac-load-err');
+    if(!b){
+      b = document.createElement('div');
+      b.className = 'vac-load-err';
+      const txt = document.createElement('span');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'vac-btn-primary';
+      btn.textContent = 'Reintentar';
+      btn.addEventListener('click', () => { b.remove(); _VAC_RETRY[sub]?.(); });
+      b.appendChild(txt); b.appendChild(btn);
+      sec.prepend(b);
+    }
+    b.querySelector('span').textContent = 'No se pudieron cargar los datos: ' + (msg || 'falla de red');
+  }
+  function vacClearLoadError(sub){
+    document.querySelector(`#panel-vacaciones .vac-section[data-section="${sub}"] .vac-load-err`)?.remove();
+  }
+  function _vacFirstErr(results){
+    for(const r of results){ if(r && r.error) return r.error.message || String(r.error); }
+    return null;
+  }
+
+  async function loadMyData(errSub){
+    if(!window.__vacAuth) return false;
     const empId = window.__vacAuth.employee.id;
     const periodYear = getCurrentPeriodYear();
     const { startIso, endIso } = getCurrentPeriodRange();
@@ -11978,7 +12047,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         .eq('active', true)
         .order('full_name', { ascending: true })
     ];
-    const [bRes, rRes, hRes, bkRes, aRes, eRes] = await Promise.all(queries);
+    let bRes, rRes, hRes, bkRes, aRes, eRes;
+    try {
+      [bRes, rRes, hRes, bkRes, aRes, eRes] = await Promise.all(queries);
+    } catch(e){ vacLoadError(errSub || 'mi', e.message); return false; }
+    const _err = _vacFirstErr([bRes, rRes, hRes, bkRes, aRes, eRes]);
+    if(_err){ vacLoadError(errSub || 'mi', _err); return false; }
+    vacClearLoadError(errSub || 'mi');
 
     window.__vac.balance        = bRes?.data || null;
     window.__vac.requests       = rRes?.data || [];
@@ -11986,6 +12061,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     window.__vac.backupRequests = bkRes?.data || [];
     window.__vac.adjustments    = aRes?.data || [];
     window.__vac.allEmployees   = eRes?.data || [];
+    return true;
   }
 
   // Helper: días anuales efectivos (annual_days + extra_days). Lo lee de la view
@@ -12583,7 +12659,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   // ── Refetch + re-render combinado ──
   async function refreshAndRender(){
-    await loadMyData();
+    if(!(await loadMyData('mi'))) return;   // banner de error ya pintado — no renderizar vacío falso
     await renderBackupNames();
     renderStatsStrip();
     renderMonthGrid();
@@ -12605,7 +12681,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
   async function onEnterCargar(){
     if(!window.__vacAuth) return;
-    if(!window.__vac.balance) await loadMyData();
+    if(!window.__vac.balance) await loadMyData('cargar');
     if(!window.__vac.editingId){
       const fromEl = $('vac-form-from'), toEl = $('vac-form-to');
       if(fromEl && !fromEl.value){
@@ -12668,7 +12744,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         .order('date', { ascending: true }),
       supa.from('vac_balance_view').select('*')
     ];
-    const [eRes, rRes, hRes, bRes] = await Promise.all(queries);
+    let eRes, rRes, hRes, bRes;
+    try {
+      [eRes, rRes, hRes, bRes] = await Promise.all(queries);
+    } catch(e){ vacLoadError('equipo', e.message); return false; }
+    const _err = _vacFirstErr([eRes, rRes, hRes, bRes]);
+    if(_err){ vacLoadError('equipo', _err); return false; }
+    vacClearLoadError('equipo');
 
     window.__vac.team.employees = eRes?.data || [];
     window.__vac.team.requests  = rRes?.data || [];
@@ -12676,6 +12758,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const balMap = new Map();
     for(const b of (bRes?.data || [])) balMap.set(b.employee_id, b);
     window.__vac.team.balances = balMap;
+    return true;
   }
 
   function buildMonthBoundaries(startIso, totalDays){
@@ -13281,7 +13364,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   async function onEnterEquipo(){
     if(!window.__vacAuth) return;
     if(!window.__vac.team.initialized){
-      await loadTeamData();
+      if(!(await loadTeamData())) return;   // banner de error ya pintado
       window.__vac.team.initialized = true;
     }
     renderTeamGantt();
@@ -13422,13 +13505,20 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         .eq('period_year', periodYear)
         .order('created_at', { ascending: false })
     ];
-    const [pRes, eRes, hRes, brRes, balRes, adjRes] = await Promise.all(queries);
+    let pRes, eRes, hRes, brRes, balRes, adjRes;
+    try {
+      [pRes, eRes, hRes, brRes, balRes, adjRes] = await Promise.all(queries);
+    } catch(e){ vacLoadError('admin', e.message); return false; }
+    const _err = _vacFirstErr([pRes, eRes, hRes, brRes, balRes, adjRes]);
+    if(_err){ vacLoadError('admin', _err); return false; }
+    vacClearLoadError('admin');
     window.__vac.admin.pendientes      = pRes?.data  || [];
     window.__vac.admin.employees       = eRes?.data  || [];
     window.__vac.admin.holidays        = hRes?.data  || [];
     window.__vac.admin.backupRequests  = brRes?.data || [];
     window.__vac.admin.balances        = balRes?.data || [];
     window.__vac.admin.adjustments     = adjRes?.data || [];
+    return true;
   }
 
   function clearAdminData(){
@@ -13729,12 +13819,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       }
 
       closeModal();
-      await loadAdminData();
-      renderTeamSummary();
+      if(await loadAdminData()) renderTeamSummary();
       // Si el admin se ajustó a sí mismo, refrescar Mi calendario
       if(window.__vacAuth?.employee?.id === employee.id){
-        await loadMyData();
-        renderStatsStrip();
+        if(await loadMyData('mi')) renderStatsStrip();
       }
     };
 
@@ -14022,9 +14110,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       .eq('id', id);
     if(error){ ssbToast('No se pudo aprobar: ' + error.message, 'error'); return; }
     showToast('Solicitud aprobada');
-    await loadAdminData();
-    renderPendientes();
-    renderTeamSummary();
+    if(await loadAdminData()){
+      renderPendientes();
+      renderTeamSummary();
+    }
     updatePendingBadge();
     // Las stats personales del solicitante quedan obsoletas; si vuelve a "Mi calendario"
     // se refrescará al entrar (initialized=true pero hooks re-pegan render). Para que
@@ -14079,9 +14168,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       .eq('id', id);
     if(error){ ssbToast('No se pudo rechazar: ' + error.message, 'error'); return false; }
     showToast('Solicitud rechazada');
-    await loadAdminData();
-    renderPendientes();
-    renderTeamSummary();
+    if(await loadAdminData()){
+      renderPendientes();
+      renderTeamSummary();
+    }
     updatePendingBadge();
     _miState.initialized = false;
     return true;
@@ -14356,9 +14446,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return false;
     }
     showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
-    await loadAdminData();
-    renderEmpleados();
-    renderTeamSummary();
+    if(await loadAdminData()){
+      renderEmpleados();
+      renderTeamSummary();
+    }
     // Refrescar caches dependientes: banner de cumpleaños + team
     await loadGlobalEmployees();
     renderBirthdayLine();
@@ -14383,9 +14474,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const { error } = await supa.from('vac_employees').update({ active: makeActive }).eq('id', empId);
     if(error){ ssbToast('No se pudo ' + verb + ': ' + error.message, 'error'); return; }
     showToast(`Empleado ${makeActive ? 'reactivado' : 'desactivado'}`);
-    await loadAdminData();
-    renderEmpleados();
-    renderTeamSummary();
+    if(await loadAdminData()){
+      renderEmpleados();
+      renderTeamSummary();
+    }
   }
 
   // ── Modal: feriado (nuevo / editar) ──
@@ -14449,8 +14541,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     if(res.error){ ssbToast('No se pudo guardar: ' + res.error.message, 'error'); return false; }
     showToast('Feriado guardado');
-    await loadAdminData();
-    renderFeriados();
+    if(await loadAdminData()) renderFeriados();
     return true;
   }
 
@@ -14462,8 +14553,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const { error } = await supa.from('vac_holidays').delete().eq('id', holId);
     if(error){ ssbToast('No se pudo eliminar: ' + error.message, 'error'); return; }
     showToast('Feriado eliminado');
-    await loadAdminData();
-    renderFeriados();
+    if(await loadAdminData()) renderFeriados();
   }
 
   // ── Modal: carga masiva de feriados ──
@@ -14564,8 +14654,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const { error } = await supa.from('vac_holidays').upsert(lastRows, { onConflict: 'date' });
       if(error){ ssbToast('No se pudo importar: ' + error.message, 'error'); importBtn.disabled = false; importBtn.textContent = 'Importar'; return; }
       showToast(`Importados ${lastRows.length} feriados`);
-      await loadAdminData();
-      renderFeriados();
+      if(await loadAdminData()) renderFeriados();
       closeModal();
     };
 
@@ -14693,9 +14782,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         return;
       }
       showToast(`Importadas ${lastRows.length} solicitudes`);
-      await loadAdminData();
-      renderPendientes();
-      renderTeamSummary();
+      if(await loadAdminData()){
+        renderPendientes();
+        renderTeamSummary();
+      }
       updatePendingBadge();
       closeModal();
     };
@@ -14723,7 +14813,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!window.__vacAuth?.isAdmin) return;
     wireAdminButtons();
     if(!window.__vac.admin.initialized){
-      await loadAdminData();
+      if(!(await loadAdminData())) return;   // banner de error ya pintado
       window.__vac.admin.initialized = true;
     }
     renderPendientes();
@@ -14968,7 +15058,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const data = await res.json();
       _agentMessages.push({ role: 'assistant', content: data.response });
     }catch(e){
-      _agentMessages.push({ role: 'assistant', content: 'Error: ' + e.message });
+      _agentMessages.push({ role: 'assistant', content: '⚠ No pude responder: ' + e.message + '. Reintentá en unos segundos; si persiste, revisá tu conexión.' });
     }finally{
       _agentLoading = false;
       stopThinking();
@@ -15117,7 +15207,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       var data = await res.json();
       _wiaMessages.push({ role: 'assistant', content: data.response });
     }catch(e){
-      _wiaMessages.push({ role: 'assistant', content: 'Error: ' + e.message });
+      _wiaMessages.push({ role: 'assistant', content: '⚠ No pude responder: ' + e.message + '. Reintentá en unos segundos; si persiste, revisá tu conexión.' });
     }finally{
       _wiaLoading = false;
       stopThinking();
@@ -16969,14 +17059,28 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(_histLoading) return;
     _histLoading = true;
     const box = $('co-hist');
+    // Error con causa + retry (patrón schema browser)
+    const showErr = (msg) => {
+      box.textContent = '';
+      box.appendChild(el('p','co-empty','No pude leer el historial: ' + msg));
+      const re = el('button','co-btn co-btn--ghost','Reintentar');
+      re.type = 'button';
+      re.onclick = () => loadHist();
+      box.appendChild(re);
+    };
     try {
       const s = supa();
       if(!s){ box.textContent = ''; box.appendChild(el('p','co-empty','Cliente Supabase no inicializado.')); return; }
-      const { data, error } = await s.from('certificados_origen')
-        .select('orden,certificado_numero,agreement_acronym,valor_mercaderia,factura_numero,estado,error_detalle,pdf_drive_url,zip_drive_url,updated_at')
-        .order('updated_at', { ascending:false }).limit(20);
+      // Loading visible mientras baja la query (antes quedaba el contenido viejo o nada)
+      box.innerHTML = '<div class="skel-group" aria-busy="true" aria-label="Cargando historial"><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div><div class="skel-row"><span class="skel skel-line"></span><span class="skel skel-line"></span><span class="skel skel-line"></span></div></div>';
+      let data, error;
+      try {
+        ({ data, error } = await s.from('certificados_origen')
+          .select('orden,certificado_numero,agreement_acronym,valor_mercaderia,factura_numero,estado,error_detalle,pdf_drive_url,zip_drive_url,updated_at')
+          .order('updated_at', { ascending:false }).limit(20));
+      } catch(e){ showErr(e.message); return; }
       box.textContent = '';
-      if(error){ box.appendChild(el('p','co-empty','No pude leer el historial: ' + error.message)); return; }
+      if(error){ showErr(error.message); return; }
       if(!data || !data.length){ box.appendChild(el('p','co-empty','Todavía no se generó ningún certificado desde acá.')); return; }
 
       const table = el('table','co-table');
