@@ -4354,7 +4354,8 @@ function ssbToast(msg, kind){
 //   ssbConfirm({..., reason:true})                  → Promise<{ok, reason}>
 // opts: title, body (texto plano, respeta \n), bodyHtml (HTML — el caller
 // escapa), confirmText, cancelText, danger (focus inicial en Cancelar +
-// botón rojo), reason (true | {label, placeholder} → motivo obligatorio).
+// botón rojo), reason (true | {label, placeholder} → motivo obligatorio),
+// alert (true → sin botón Cancelar; Escape también resuelve true).
 // Teclado: Escape=cancela, Enter=confirma (fuera del textarea), Tab atrapado.
 let _ssbConfirmChain = Promise.resolve();
 function ssbConfirm(opts){
@@ -4364,6 +4365,11 @@ function ssbConfirm(opts){
   return p;
 }
 window.ssbConfirm = ssbConfirm;
+// Alert modal (un solo botón) para mensajes ricos que no entran en un toast.
+function ssbAlert(opts){
+  return ssbConfirm({ confirmText: 'Entendido', ...(typeof opts === 'string' ? { body: opts } : (opts || {})), alert: true });
+}
+window.ssbAlert = ssbAlert;
 
 function _ssbConfirmBuild(){
   let ov = document.getElementById('ssb-confirm-overlay');
@@ -4401,6 +4407,7 @@ function _ssbConfirmShow(opts){
     const okBtn    = document.getElementById('ssb-confirm-ok');
     const cancelBtn= document.getElementById('ssb-confirm-cancel');
     const wantsReason = !!opts.reason;
+    const isAlert     = !!opts.alert;
     const reasonOpts  = (opts.reason && typeof opts.reason === 'object') ? opts.reason : {};
     const prevFocus   = document.activeElement;
 
@@ -4415,17 +4422,19 @@ function _ssbConfirmShow(opts){
     rWrap.querySelector('label').textContent = reasonOpts.label || 'Motivo';
     okBtn.textContent = opts.confirmText || 'Confirmar';
     cancelBtn.textContent = opts.cancelText || 'Cancelar';
+    cancelBtn.hidden = isAlert;
     okBtn.classList.toggle('ssb-confirm-ok--danger', !!opts.danger);
 
     function close(result){
       ov.hidden = true;
-      ov.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey, true);
       ov.removeEventListener('mousedown', onBackdrop);
       okBtn.onclick = cancelBtn.onclick = null;
       try{ if(prevFocus && prevFocus.focus) prevFocus.focus(); }catch(_){}
       resolve(result);
     }
-    const cancelVal  = wantsReason ? { ok: false } : false;
+    // En modo alert no hay "cancelar": cualquier salida (Escape, backdrop) resuelve true.
+    const cancelVal  = isAlert ? true : (wantsReason ? { ok: false } : false);
     function confirmAction(){
       if(wantsReason){
         const reason = rInput.value.trim();
@@ -4436,28 +4445,34 @@ function _ssbConfirmShow(opts){
       }
     }
     function onKey(e){
-      if(e.key === 'Escape'){ e.preventDefault(); close(cancelVal); }
-      else if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){ e.preventDefault(); confirmAction(); }
+      // stopPropagation: mientras el confirm está abierto, Escape/Enter son
+      // suyos — sin esto los handlers document-level (p.ej. _bidEscHandler)
+      // reaccionan al mismo evento y duplican la acción.
+      if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(cancelVal); }
+      else if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){ e.preventDefault(); e.stopPropagation(); confirmAction(); }
       else if(e.key === 'Tab'){
         // Trap simple: ciclo entre los focusables del modal
-        const foci = [cancelBtn, okBtn, ...(wantsReason ? [rInput] : [])]
+        const foci = [...(isAlert ? [] : [cancelBtn]), okBtn, ...(wantsReason ? [rInput] : [])]
           .sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
         const idx = foci.indexOf(document.activeElement);
         if(e.shiftKey && (idx === 0 || idx === -1)){ e.preventDefault(); foci[foci.length - 1].focus(); }
-        else if(!e.shiftKey && idx === foci.length - 1){ e.preventDefault(); foci[0].focus(); }
+        else if(!e.shiftKey && (idx === foci.length - 1 || idx === -1)){ e.preventDefault(); foci[0].focus(); }
       }
     }
     function onBackdrop(e){ if(e.target === ov) close(cancelVal); }
 
     okBtn.onclick = confirmAction;
     cancelBtn.onclick = () => close(cancelVal);
-    ov.addEventListener('keydown', onKey);
+    // En document con CAPTURE: cubre las ventanas donde el foco está fuera del
+    // overlay (pre-focus de 30ms, click en texto no-focusable → body) y le gana
+    // a los handlers document-level en bubble (p.ej. _bidEscHandler).
+    document.addEventListener('keydown', onKey, true);
     ov.addEventListener('mousedown', onBackdrop);
     ov.hidden = false;
     // Focus inicial: motivo → textarea; destructiva → Cancelar; resto → Confirmar
     setTimeout(() => {
       if(wantsReason) rInput.focus();
-      else if(opts.danger) cancelBtn.focus();
+      else if(opts.danger && !isAlert) cancelBtn.focus();
       else okBtn.focus();
     }, 30);
   });
@@ -4566,11 +4581,14 @@ function initClockAR(){
 }
 
 // ── TABS ──
-function switchTab(name) {
+// async SOLO por el guard de cambios sin guardar: el camino común no toca
+// ningún await → corre síncrono completo antes de retornar (callers inline
+// onclick y window.switchTab('x') no dependen del valor de retorno).
+async function switchTab(name) {
   // FIX (auditoría Tanda 1): avisar al salir de Tarifas Terrestres con cambios sin guardar.
   const leavingTT = document.getElementById('panel-tt-dow')?.classList.contains('active') && name!=='tt-dow';
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
-    if(!confirm('Tenés cambios sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
+    if(!(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés cambios sin guardar en Tarifas Terrestres. Si salís los vas a perder.', confirmText:'Salir igual', danger:true}))) return;
   }
   ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing','cert-origen','schema'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
@@ -4578,6 +4596,9 @@ function switchTab(name) {
     if(btn) btn.classList.toggle('active', t===name);
     if(pan) pan.classList.toggle('active', t===name);
   });
+  // Drawer móvil: cerrarlo acá (post-toggle) — un check síncrono en el listener
+  // del rail veía estado stale cuando el guard async de TT-Dow estaba en juego.
+  if(window.__ssbDrawerClose) window.__ssbDrawerClose();
   if(name==='efa'){ if(!window._efaFiltersRestored){restoreEfaFilters();window._efaFiltersRestored=true;} setEfaView('resumen'); renderEFATab(); }
   if(name==='admin-bid'){ renderAdminBID(); }
   if(name==='schedule-rt'){ loadScheduleRT(); setupScheduleRT(); }
@@ -4654,6 +4675,10 @@ function switchTab(name) {
   }
   // Focus-trap real: Tab/Shift+Tab ciclan primer↔último foco dentro del drawer; ESC cierra.
   function onDrawerKey(e){
+    // Un ssbConfirm abierto (p.ej. guard de TT-Dow) está POR ENCIMA del drawer:
+    // el teclado es suyo — sin esto, este capture:true le robaba Escape/Tab.
+    const _conf = document.getElementById('ssb-confirm-overlay');
+    if(_conf && !_conf.hidden) return;
     if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeDrawer(); return; }
     if(e.key !== 'Tab') return;
     const items = [...rail.querySelectorAll('button')].filter(b => !b.disabled && b.offsetParent !== null);
@@ -4666,14 +4691,11 @@ function switchTab(name) {
   }
   burger.addEventListener('click', () => drawerOpen() ? closeDrawer() : openDrawer());
   backdrop.addEventListener('click', closeDrawer);
-  // Cierre al navegar — en bubbling, DESPUÉS del onclick inline: si el usuario canceló el
-  // confirm de TT-Dow, el tab no cambió y el drawer queda abierto (no hay "tap muerto").
-  rail.addEventListener('click', e => {
-    if(!mqMobile.matches || !drawerOpen()) return;
-    const btn = e.target.closest('.tab-btn'); if(!btn) return;
-    const name = btn.id.replace(/^tab-/, '');
-    if(document.getElementById('panel-' + name)?.classList.contains('active')) closeDrawer();
-  });
+  // Cierre al navegar: lo hace switchTab vía este hook DESPUÉS de togglear los
+  // paneles (con switchTab async, un check síncrono acá veía estado stale cuando
+  // el guard de TT-Dow estaba en juego). Si el usuario cancela el confirm,
+  // switchTab retorna antes de llamar al hook y el drawer queda abierto.
+  window.__ssbDrawerClose = closeDrawer;
   // Si el viewport sale del tier móvil con el drawer abierto → cerrarlo.
   const onMq = m => { if(!m.matches) closeDrawer(); };
   mqMobile.addEventListener ? mqMobile.addEventListener('change', onMq) : mqMobile.addListener(onMq);
@@ -4819,12 +4841,12 @@ function handleTarifasUpload(input) {
       ) || wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(ws, {raw:false, dateNF:'YYYY-MM-DD'});
-      if(!data.length){ alert('No se encontraron datos en el archivo.'); return; }
+      if(!data.length){ ssbToast('No se encontraron datos en el archivo.', 'warning'); return; }
       loadTarifas(data);
       setDot('ok', `Tarifas: ${data.length} registros · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
       input.value = '';
     } catch(err) {
-      alert('Error al leer el archivo de tarifas: ' + err.message);
+      ssbToast('Error al leer el archivo de tarifas: ' + err.message, 'error');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -5721,7 +5743,7 @@ async function saveEfaModal(){
     closeEfaModal();
     await reloadEfaFromSheet();
   }catch(e){
-    alert('Error al guardar: '+e.message);
+    ssbToast('Error al guardar: '+e.message, 'error');
   }finally{
     btn.disabled=false;btn.textContent=orig;
   }
@@ -5729,12 +5751,12 @@ async function saveEfaModal(){
 
 async function deleteEfaFromModal(){
   if(efaModalState.mode!=='edit'||efaModalState.rowIndex==null)return;
-  if(!confirm('¿Eliminar este EFA? Esta acción no se puede deshacer.'))return;
+  if(!(await ssbConfirm({title:'¿Eliminar este EFA?', body:'Esta acción no se puede deshacer.', confirmText:'Eliminar', danger:true})))return;
   try{
     await postEfaAction({action:'deleteEFA', rowIndex:efaModalState.rowIndex});
     closeEfaModal();
     await reloadEfaFromSheet();
-  }catch(e){alert('Error al eliminar: '+e.message);}
+  }catch(e){ssbToast('Error al eliminar: '+e.message, 'error');}
 }
 
 // Inline edit (dblclick) en planilla
@@ -5769,18 +5791,18 @@ function efaInlineEdit(td, rowIndex, field){
       };
       await postEfaAction({action:'updateEFA',rowIndex,data});
       await reloadEfaFromSheet();
-    }catch(e){alert('Error: '+e.message);td.innerHTML=orig;}
+    }catch(e){ssbToast('Error: '+e.message, 'error');td.innerHTML=orig;}
   };
   inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')save();else if(ev.key==='Escape')cancel();});
   inp.addEventListener('blur',save);
 }
 
 async function deleteEfaRow(rowIndex){
-  if(!confirm('¿Eliminar este EFA?'))return;
+  if(!(await ssbConfirm({title:'¿Eliminar este EFA?', confirmText:'Eliminar', danger:true})))return;
   try{
     await postEfaAction({action:'deleteEFA', rowIndex});
     await reloadEfaFromSheet();
-  }catch(e){alert('Error al eliminar: '+e.message);}
+  }catch(e){ssbToast('Error al eliminar: '+e.message, 'error');}
 }
 
 function duplicateAsContinuation(rowIndex){
@@ -5899,9 +5921,9 @@ function bulkApplyGlobal(){
   const gd=document.getElementById('bulk-global-desde');
   const gh=document.getElementById('bulk-global-hasta');
   const vm=gm?gm.value:'', vd=gd?gd.value:'', vh=gh?gh.value:'';
-  if(vm===''&&vd===''&&vh===''){alert('Ingresá al menos un valor global (monto, desde o hasta).');return;}
+  if(vm===''&&vd===''&&vh===''){ssbToast('Ingresá al menos un valor global (monto, desde o hasta).', 'warning');return;}
   const sel=bulkRowsState.filter(r=>r.sel);
-  if(!sel.length){alert('Tildá al menos una fila destino.');return;}
+  if(!sel.length){ssbToast('Tildá al menos una fila destino.', 'warning');return;}
   bulkRowsState.forEach((r,i)=>{
     if(!r.sel)return;
     if(vm!==''){r.monto=vm;const el=document.getElementById('bulk-monto-'+i);if(el)el.value=vm;}
@@ -5916,15 +5938,15 @@ function bulkUpdateSelCount(){const n=bulkRowsState.filter(r=>r.sel).length;cons
 
 async function applyBulkUpdate(){
   const sel=bulkRowsState.filter(r=>r.sel);
-  if(!sel.length){alert('Tildá al menos una fila para aplicar.');return;}
+  if(!sel.length){ssbToast('Tildá al menos una fila para aplicar.', 'warning');return;}
   const mode=document.getElementById('bulk-mode').value; // 'edit' | 'new'
   // Validación
   for(const r of sel){
-    if(r.monto===''||isNaN(Number(r.monto))){alert(`Monto inválido en ${r.e.origen}→${r.e.destino}`);return;}
-    if(!r.desde){alert(`Fecha de inicio obligatoria en ${r.e.origen}→${r.e.destino}`);return;}
+    if(r.monto===''||isNaN(Number(r.monto))){ssbToast(`Monto inválido en ${r.e.origen}→${r.e.destino}`, 'warning');return;}
+    if(!r.desde){ssbToast(`Fecha de inicio obligatoria en ${r.e.origen}→${r.e.destino}`, 'warning');return;}
   }
   const verbo = mode==='new'?'crear nuevo período':'editar período actual';
-  if(!confirm(`Vas a ${verbo} en ${sel.length} ruta${sel.length!==1?'s':''}. ¿Confirmar?`))return;
+  if(!(await ssbConfirm({title:'Actualización masiva EFA', body:`Vas a ${verbo} en ${sel.length} ruta${sel.length!==1?'s':''}.`, confirmText:'Confirmar'})))return;
   let ok=0,fail=0;
   for(const r of sel){
     try{
@@ -5965,7 +5987,7 @@ async function applyBulkUpdate(){
   }
   closeBulkModal();
   await reloadEfaFromSheet();
-  alert(`Actualizados: ${ok}${fail?` · Errores: ${fail}`:''}`);
+  ssbToast(`Actualizados: ${ok}${fail?` · Errores: ${fail}`:''}`, fail?'warning':'success');
 }
 
 // ── IMPORT EXCEL (C4) ──
@@ -6143,7 +6165,7 @@ async function loadImportFile(inp){
       parseImport();
     }
   }catch(e){
-    alert('Error leyendo archivo: '+e.message+'\n\nAlternativa: copiá las celdas en Excel y pegalas directamente en el cuadro.');
+    ssbAlert({title:'Error leyendo archivo', body:e.message+'\n\nAlternativa: copiá las celdas en Excel y pegalas directamente en el cuadro.'});
   }
   inp.value='';
 }
@@ -7247,7 +7269,7 @@ function handleFileUpload(input){
 
       input.value='';
     } catch(err) {
-      alert('Error al leer el archivo: '+err.message);
+      ssbToast('Error al leer el archivo: '+err.message, 'error');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -7385,7 +7407,7 @@ function getActiveFiltersLabel(){
 // ── EXPORT TARIFAS PDF ──
 function exportTarifasPDF(){
   const cards = document.querySelectorAll('#list .card');
-  if(!cards.length){ alert('No hay tarifas para exportar.'); return; }
+  if(!cards.length){ ssbToast('No hay tarifas para exportar.', 'info'); return; }
   const fecha = new Date().toLocaleDateString('es-AR');
   const filtros = getActiveFiltersLabel();
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -7480,7 +7502,7 @@ function exportTarifasExcel(){
   });
   datos.sort((a,b)=>sortOrder(a)-sortOrder(b));
 
-  if(!datos.length){ alert('No hay tarifas para exportar.'); return; }
+  if(!datos.length){ ssbToast('No hay tarifas para exportar.', 'info'); return; }
 
   const rows=[['ORIGEN','DESTINO','CARRIER','EQUIPO','TARIFA ALL IN (USD)','CONTRATO','INICIO VIGENCIA','FIN VIGENCIA','QUARTER','ESTADO','EFA MONTO (USD)','INICIO EFA','FIN EFA','EFA ESTADO','COMENTARIO']];
   datos.forEach(r=>{
@@ -7908,14 +7930,14 @@ async function bidBulkAction(action){
   if(!bidSelected.size)return;
   const ris=[...bidSelected];
   if(action==='delete'){
-    if(!confirm(`¿Eliminar ${ris.length} tarifas? No se puede deshacer.`))return;
-    for(const ri of ris){try{await postEfaAction({action:'deleteTarifa',rowIndex:ri});}catch(e){alert('Error fila '+ri+': '+e.message);return;}}
+    if(!(await ssbConfirm({title:`¿Eliminar ${ris.length} tarifas?`, body:'No se puede deshacer.', confirmText:'Eliminar', danger:true})))return;
+    for(const ri of ris){try{await postEfaAction({action:'deleteTarifa',rowIndex:ri});}catch(e){ssbToast('Error fila '+ri+': '+e.message, 'error');return;}}
     bidSelected.clear();await reloadTarifasFromSheet();return;
   }
   if(action==='estado'){
     const v=prompt('Nuevo estado (CONFIRMADA / PENDIENTE / NO DISPONIBLE):','CONFIRMADA');
     if(!v)return;
-    for(const ri of ris){const src=rates.find(r=>r._rowIndex===ri);if(!src)continue;try{await postEfaAction({action:'updateTarifa',rowIndex:ri,data:bidPayloadFrom({...src,estado:v})});}catch(e){alert('Error '+ri+': '+e.message);return;}}
+    for(const ri of ris){const src=rates.find(r=>r._rowIndex===ri);if(!src)continue;try{await postEfaAction({action:'updateTarifa',rowIndex:ri,data:bidPayloadFrom({...src,estado:v})});}catch(e){ssbToast('Error '+ri+': '+e.message, 'error');return;}}
     bidSelected.clear();await reloadTarifasFromSheet();
   }
 }
@@ -8044,11 +8066,14 @@ function bidModalIsDirty(){ return _bidModalSerialize()!==_bidModalSnapshot; }
 const _bidEscHandler=(e)=>{
   if(e.key!=='Escape')return;
   if(document.getElementById('_mm-newcat-ok'))return;                              // el confirm de catálogo está arriba → no interferir
+  const _conf=document.getElementById('ssb-confirm-overlay');
+  if(_conf && !_conf.hidden)return;                                                // el ssbConfirm está arriba → no interferir (defensa en profundidad)
   if(!document.getElementById('bid-modal').classList.contains('open'))return;
   closeBidModalGuarded();
 };
-function closeBidModalGuarded(){
-  if(bidModalIsDirty() && !confirm('Tenés cambios sin guardar en esta tarifa. ¿Descartar y cerrar?')) return;
+// async SOLO por el guard de dirty: modal limpio cierra síncrono.
+async function closeBidModalGuarded(){
+  if(bidModalIsDirty() && !(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés cambios sin guardar en esta tarifa.', confirmText:'Descartar y cerrar', danger:true}))) return;
   closeBidModal();
 }
 
@@ -8118,14 +8143,14 @@ async function saveBidFromModal(){
 }
 async function deleteBidFromModal(){
   if(bidModalState.mode!=='edit'||bidModalState.rowIndex==null)return;
-  if(!confirm('¿Eliminar esta tarifa? No se puede deshacer.'))return;
+  if(!(await ssbConfirm({title:'¿Eliminar esta tarifa?', body:'No se puede deshacer.', confirmText:'Eliminar', danger:true})))return;
   try{await postEfaAction({action:'deleteTarifa',rowIndex:bidModalState.rowIndex});closeBidModal();await reloadTarifasFromSheet();ssbToast('Tarifa eliminada','success');}
   catch(e){ssbToast('No se pudo eliminar: '+e.message,'error');}
 }
 async function deleteBidRow(ri){
-  if(!confirm('¿Eliminar esta tarifa?'))return;
+  if(!(await ssbConfirm({title:'¿Eliminar esta tarifa?', confirmText:'Eliminar', danger:true})))return;
   try{await postEfaAction({action:'deleteTarifa',rowIndex:ri});await reloadTarifasFromSheet();}
-  catch(e){alert('Error: '+e.message);}
+  catch(e){ssbToast('Error: '+e.message, 'error');}
 }
 
 async function reloadTarifasFromSheet(){
@@ -8161,11 +8186,11 @@ function bidBulkPreview(){
   document.getElementById('bidbulk-prev-body').innerHTML='<table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:#f3f4f6"><th style="padding:4px 6px;text-align:left">Origen→Destino</th><th style="padding:4px 6px">Equipo</th><th style="padding:4px 6px;text-align:right">Tarifa actual</th><th style="padding:4px 6px">Vigencia</th></tr></thead><tbody>'+list.map(r=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px">${r.origen}→${r.destino}</td><td style="padding:4px 6px;text-align:center">${r.equipo||'—'}</td><td style="padding:4px 6px;text-align:right">${r.tarifa!=null?usd(r.tarifa):'—'}</td><td style="padding:4px 6px;text-align:center;font-family:monospace;font-size:10px">${fDate(r.desde)}→${r.hasta?fDate(r.hasta):'∞'}</td></tr>`).join('')+'</tbody></table>';
 }
 async function applyBidBulkUpdate(){
-  const list=bidBulkMatch();if(!list.length){alert('Sin coincidencias');return;}
+  const list=bidBulkMatch();if(!list.length){ssbToast('Sin coincidencias', 'info');return;}
   const tipo=document.getElementById('bidbulk-tipo').value;
   const valor=document.getElementById('bidbulk-valor').value;
-  if(tipo!=='delete'&&!valor){alert('Indicá el nuevo valor');return;}
-  if(!confirm(`Aplicar "${tipo}" a ${list.length} tarifas?`))return;
+  if(tipo!=='delete'&&!valor){ssbToast('Indicá el nuevo valor', 'warning');return;}
+  if(!(await ssbConfirm({title:'Cambio masivo BID', body:`Aplicar "${tipo}" a ${list.length} tarifas.`, confirmText:'Aplicar', danger: tipo==='delete'})))return;
   for(const r of list){
     try{
       if(tipo==='delete'){await postEfaAction({action:'deleteTarifa',rowIndex:r._rowIndex});}
@@ -8177,7 +8202,7 @@ async function applyBidBulkUpdate(){
         else if(tipo==='hasta')upd.hasta=valor;
         await postEfaAction({action:'updateTarifa',rowIndex:r._rowIndex,data:bidPayloadFrom(upd)});
       }
-    }catch(e){alert('Error en fila '+r._rowIndex+': '+e.message);return;}
+    }catch(e){ssbToast('Error en fila '+r._rowIndex+': '+e.message, 'error');return;}
   }
   closeBidBulkModal();
   await reloadTarifasFromSheet();
@@ -8225,7 +8250,7 @@ function parseBidImport(){
 }
 async function confirmBidImport(){
   if(!bidImportParsed.length)return;
-  if(!confirm(`Importar ${bidImportParsed.length} tarifas?`))return;
+  if(!(await ssbConfirm({title:'Importar tarifas', body:`Se van a importar ${bidImportParsed.length} tarifas.`, confirmText:'Importar'})))return;
   const total=bidImportParsed.length;
   const wrap=document.getElementById('bid-import-progress-wrap');
   const bar=document.getElementById('bid-import-progress-bar');
@@ -8336,23 +8361,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // Locales del IIFE: el único caller es la delegación de abajo (antes onclick inline → window.*).
   const rtToggleDisp = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
-    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    if(!gsupa){ ssbToast('Sesión no disponible. Reingresá.', 'error'); return; }
     try{
       const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_id: id });
       if(error) throw error;
       if(window.loadScheduleRT) window.loadScheduleRT();
-    }catch(e){ alert('No se pudo actualizar la disponibilidad: ' + (e.message||e)); }
+    }catch(e){ ssbToast('No se pudo actualizar la disponibilidad: ' + (e.message||e), 'error'); }
   };
   const rtBajaViaje = async function(id, isBaja){
     const gsupa = window.__ssb && window.__ssb.supa;
-    if(!gsupa){ alert('Sesión no disponible. Reingresá.'); return; }
+    if(!gsupa){ ssbToast('Sesión no disponible. Reingresá.', 'error'); return; }
     const r = _rtData.find(x => x.id === id);
-    if(!r || !r.buque){ alert('No encontré el viaje.'); return; }
+    if(!r || !r.buque){ ssbToast('No encontré el viaje.', 'error'); return; }
     try{
       const { error } = await gsupa.rpc('set_schedule_disponible', { p_disponible: isBaja, p_buque: r.buque });
       if(error) throw error;
       if(window.loadScheduleRT) window.loadScheduleRT();
-    }catch(e){ alert('No se pudo actualizar el viaje: ' + (e.message||e)); }
+    }catch(e){ ssbToast('No se pudo actualizar el viaje: ' + (e.message||e), 'error'); }
   };
 
   // Delegación única en el container estático (#sched-rt-list, nunca reemplazado):
@@ -8364,7 +8389,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!btn) return;
     const id = btn.dataset.id;
     const r = _rtData.find(x => x.id === id);
-    if(!r){ alert('No encontré la fila. Refrescá el tab.'); return; }
+    if(!r){ ssbToast('No encontré la fila. Refrescá el tab.', 'error'); return; }
     const isBaja = r.disponible === false; // true = está de baja → el click reactiva
     if(btn.dataset.action === 'viaje') rtBajaViaje(id, isBaja);
     else rtToggleDisp(id, isBaja);
@@ -9088,7 +9113,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(fnameUp.includes('DESTINATION'))      tipo = 'DESTINATION';
     else if(fnameUp.includes('ORIGIN'))      tipo = 'ORIGIN';
     else {
-      alert('El nombre del archivo debe contener "Origin" o "Destination" para identificar el tipo. Cargá el archivo original sin renombrar.');
+      ssbAlert({title:'Archivo no reconocido', body:'El nombre del archivo debe contener "Origin" o "Destination" para identificar el tipo. Cargá el archivo original sin renombrar.'});
       input.value = '';
       return;
     }
@@ -9116,7 +9141,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
       if(!('Supplier' in data[0])) {
         const cols = Object.keys(data[0]).join(', ');
-        alert('Columna crítica "Supplier" no encontrada.\nColumnas disponibles: ' + cols);
+        ssbAlert({title:'Columna crítica "Supplier" no encontrada', body:'Columnas disponibles: ' + cols});
         setDetStatus('err', '❌ Falta columna "Supplier"');
         input.value = '';
         return;
@@ -9584,7 +9609,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       multiline: false,
       onConfirm: (val) => {
         const trimmed = String(val||'').trim();
-        if(!trimmed){ alert('El nombre es obligatorio.'); return false; }
+        if(!trimmed){ ssbToast('El nombre es obligatorio.', 'warning'); return false; }
         _saveEditor(trimmed);
         if(callback) callback();
         return true;
@@ -9603,7 +9628,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       multiline: false,
       onConfirm: (val) => {
         const t = String(val||'').trim();
-        if(!t){ alert('El nombre es obligatorio.'); return false; }
+        if(!t){ ssbToast('El nombre es obligatorio.', 'warning'); return false; }
         _saveEditor(t);
         return true;
       }
@@ -9791,11 +9816,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       confirmText: 'Agregar',
       onConfirm: (val) => {
         const v = String(val || '').trim().toUpperCase().slice(0, 50);
-        if(!v){ alert('No puede estar vacío.'); return false; }
+        if(!v){ ssbToast('No puede estar vacío.', 'warning'); return false; }
         const existing = _buildOptionsForField(field);
         const dup = existing.find(x => String(x).toLowerCase() === v.toLowerCase());
         if(dup){
-          alert(dup + ' ya existe en la lista. Seleccionalo del dropdown.');
+          ssbToast(dup + ' ya existe en la lista. Seleccionalo del dropdown.', 'warning');
           return false;
         }
         _applyFieldValue(field, idOrTemp, isTemp, v);
@@ -9830,17 +9855,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const activo = !!document.getElementById('tt-carrier-modal-activo').checked;
     const motivo = String(document.getElementById('tt-carrier-modal-motivo').value || '').trim();
 
-    if(!nombre){ alert('El nombre es obligatorio.'); return; }
-    if(!motivo){ alert('El motivo es obligatorio.'); return; }
+    if(!nombre){ ssbToast('El nombre es obligatorio.', 'warning'); return; }
+    if(!motivo){ ssbToast('El motivo es obligatorio.', 'warning'); return; }
     const seguro_pct = _seguroDisplayToDec(seguroDisp);
     if(seguro_pct === null || seguro_pct < 0 || seguro_pct > 1){
-      alert('% seguro inválido. Debe ser un número entre 0 y 100.');
+      ssbToast('% seguro inválido. Debe ser un número entre 0 y 100.', 'warning');
       return;
     }
     // Unique case-insensitive (cliente; la UNIQUE de DB es exact-match — espejamos en cliente).
     const nLower = nombre.toLowerCase();
     if((_ttCarriers || []).some(c => String(c.nombre || '').toLowerCase() === nLower)){
-      alert('Ya existe un carrier con ese nombre. El nombre del carrier es case-insensitive único.');
+      ssbToast('Ya existe un carrier con ese nombre. El nombre del carrier es case-insensitive único.', 'warning');
       return;
     }
     const nowIso = new Date().toISOString();
@@ -9856,7 +9881,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const msg = error.code === '23505'
         ? 'Ya existe un carrier con ese nombre exacto en la DB.'
         : 'Error al crear el carrier: ' + error.message;
-      alert(msg);
+      ssbToast(msg, 'error');
       return;
     }
     _closeCarrierModal();
@@ -10121,7 +10146,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         confirmText: 'Confirmar borrado',
         onConfirm: async (motivo) => {
           const m = String(motivo||'').trim();
-          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          if(!m){ ssbToast('El motivo es obligatorio.', 'warning'); return false; }
           const { error } = await supa
             .from('tarifas_terrestres')
             .update({
@@ -10131,7 +10156,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               update_reason: m
             })
             .eq('id', id);
-          if(error){ alert('Error al borrar: ' + error.message); return false; }
+          if(error){ ssbToast('Error al borrar: ' + error.message, 'error'); return false; }
           _ttData = null; _ttLastFetch = 0;
           await loadTT();
           switchTTMode('edicion');
@@ -10161,7 +10186,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         if(_isDuplicate(r, null, r._tempId)) errs.push('• Nueva ' + (r.departure||'?') + '→' + (r.destination||'?') + ': duplicado de otra tarifa');
       }
       if(errs.length){
-        alert('No se puede guardar — corregí estos problemas:\n\n' + errs.join('\n'));
+        ssbAlert({title:'No se puede guardar', body:'Corregí estos problemas:\n\n' + errs.join('\n')});
         return;
       }
       const total = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
@@ -10174,7 +10199,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         confirmText: 'Guardar',
         onConfirm: async (motivo) => {
           const m = String(motivo||'').trim();
-          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          if(!m){ ssbToast('El motivo es obligatorio.', 'warning'); return false; }
           const nowIso = new Date().toISOString();
           const updates = [];
           const inserts = [];
@@ -10215,7 +10240,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
           // UPDATEs uno por uno (el trigger del log captura cada uno con sus datos).
           for(const u of updates){
             const { error } = await supa.from('tarifas_terrestres').update(u.payload).eq('id', u.id);
-            if(error){ alert('Error al actualizar id=' + u.id + ': ' + error.message); return false; }
+            if(error){ ssbToast('Error al actualizar id=' + u.id + ': ' + error.message, 'error'); return false; }
           }
           // INSERTs en batch.
           if(inserts.length){
@@ -10224,7 +10249,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               const msg = (error.code === '23505')
                 ? 'Hay una tarifa duplicada en la DB que no estaba en cliente. Recargá la página y reintentá.'
                 : ('Error al insertar: ' + error.message);
-              alert(msg); return false;
+              ssbToast(msg, 'error'); return false;
             }
           }
           // Limpiar pending y recargar desde DB.
@@ -10431,7 +10456,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // porque acá hacemos soft delete).
     const tarifasActivas = (_ttData||[]).filter(t => t.carrier_id === id);
     if(tarifasActivas.length > 0){
-      alert('No se puede desactivar este carrier — tiene ' + tarifasActivas.length + ' tarifa(s) activa(s).\n\nBorrá primero las tarifas asociadas (sub-tab "Tarifas") o desactivalas, y volvé acá.');
+      ssbAlert({title:'No se puede desactivar este carrier', body:'Tiene ' + tarifasActivas.length + ' tarifa(s) activa(s).\n\nBorrá primero las tarifas asociadas (sub-tab "Tarifas") o desactivalas, y volvé acá.'});
       return;
     }
     _ensureEditor(() => {
@@ -10444,7 +10469,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         confirmText: 'Confirmar',
         onConfirm: async (motivo) => {
           const m = String(motivo||'').trim();
-          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          if(!m){ ssbToast('El motivo es obligatorio.', 'warning'); return false; }
           const { error } = await supa
             .from('tarifas_terrestres_carriers')
             .update({
@@ -10454,7 +10479,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               update_reason: m
             })
             .eq('id', id);
-          if(error){ alert('Error: ' + error.message); return false; }
+          if(error){ ssbToast('Error: ' + error.message, 'error'); return false; }
           // Recargar.
           _ttData = null; _ttLastFetch = 0;
           await loadTT();
@@ -10485,7 +10510,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         if(_carrierNameDuplicate(c.nombre, null, c._tempId)) errs.push('• Nuevo "' + (c.nombre||'?') + '": nombre duplicado');
       }
       if(errs.length){
-        alert('No se puede guardar — corregí estos problemas:\n\n' + errs.join('\n'));
+        ssbAlert({title:'No se puede guardar', body:'Corregí estos problemas:\n\n' + errs.join('\n')});
         return;
       }
       const total = Object.keys(_ttPendingCarrierChanges).length + _ttPendingCarrierNew.length;
@@ -10498,7 +10523,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         confirmText: 'Guardar',
         onConfirm: async (motivo) => {
           const m = String(motivo||'').trim();
-          if(!m){ alert('El motivo es obligatorio.'); return false; }
+          if(!m){ ssbToast('El motivo es obligatorio.', 'warning'); return false; }
           const nowIso = new Date().toISOString();
           // UPDATEs
           for(const id of Object.keys(_ttPendingCarrierChanges)){
@@ -10520,7 +10545,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               const msg = (error.code === '23505')
                 ? 'Hay un carrier con ese nombre ya en la DB.'
                 : ('Error UPDATE carrier id=' + id + ': ' + error.message);
-              alert(msg); return false;
+              ssbToast(msg, 'error'); return false;
             }
           }
           // INSERTs
@@ -10540,7 +10565,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
               const msg = (error.code === '23505')
                 ? 'Hay un carrier nuevo con nombre duplicado.'
                 : ('Error INSERT carriers: ' + error.message);
-              alert(msg); return false;
+              ssbToast(msg, 'error'); return false;
             }
           }
           _ttPendingCarrierChanges = {};
@@ -11022,13 +11047,15 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   // ── Modos (segmented controls) ──
-  window.switchTTMode = function(mode){
+  // async SOLO por el guard de cambios sin guardar: el camino común (incluidos
+  // los callers internos que entran A edición) no toca await → corre síncrono.
+  window.switchTTMode = async function(mode){
     if(!['consulta','edicion','historial'].includes(mode)) return;
     // FIX (auditoría Tanda 1): avisar al salir del modo edición con cambios sin guardar.
     const curMode = document.querySelector('#panel-tt-dow .tt-mode-section.active')?.dataset?.mode;
     if(curMode==='edicion' && mode!=='edicion' && _hasPendingChanges()){
       const n = Object.keys(_ttPendingChanges).length + _ttPendingNew.length;
-      if(!confirm('Tenés '+n+' cambio(s) sin guardar en Tarifas Terrestres. Si recargás la página los vas a perder. ¿Salir igual?')) return;
+      if(!(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés '+n+' cambio(s) sin guardar en Tarifas Terrestres. Si salís del modo edición los vas a perder.', confirmText:'Salir igual', danger:true}))) return;
     }
     // Solo aplico la clase activa a los botones del segmented control de modos
     // (que están directamente en .tt-mode-bar), no a TODOS los .tt-mode-btn
@@ -11511,8 +11538,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const logoutBtn = $('btn-logout');
     if(logoutBtn && !logoutBtn._wired){
       logoutBtn._wired = true;
-      logoutBtn.addEventListener('click', () => {
-        if(confirm('¿Cerrar sesión?')) doLogout();
+      logoutBtn.addEventListener('click', async () => {
+        if(await ssbConfirm({title:'¿Cerrar sesión?', confirmText:'Cerrar sesión'})) doLogout();
       });
     }
   }
@@ -12348,9 +12375,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   async function deleteRequest(id){
     const r = (window.__vac.requests || []).find(x => x.id === id);
     if(!r) return;
-    if(!confirm(`¿Borrar la solicitud del ${formatDmy(r.start_date)} al ${formatDmy(r.end_date)}?`)) return;
+    if(!(await ssbConfirm({title:'¿Borrar la solicitud?', body:`Del ${formatDmy(r.start_date)} al ${formatDmy(r.end_date)}.`, confirmText:'Borrar', danger:true}))) return;
     const { error } = await supa.from('vac_requests').delete().eq('id', id);
-    if(error){ alert('No se pudo borrar: ' + error.message); return; }
+    if(error){ ssbToast('No se pudo borrar: ' + error.message, 'error'); return; }
     showToast('Solicitud borrada');
     await refreshAndRender();
     if(window.__vacAuth?.isAdmin) updatePendingBadge();
@@ -12469,11 +12496,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     let plannedDays = 0;
     try { plannedDays = countBusinessDays(fromIso, toIso); }
     catch(ex){
-      if(ex && ex.code === 'NO_HOLIDAYS_FOR_YEAR'){ alert(ex.message); return; }
+      if(ex && ex.code === 'NO_HOLIDAYS_FOR_YEAR'){ ssbToast(ex.message, 'warning'); return; }
       throw ex;
     }
     if(plannedDays <= 0){
-      alert('La selección no contiene días hábiles (sólo fines de semana o feriados).');
+      ssbToast('La selección no contiene días hábiles (sólo fines de semana o feriados).', 'warning');
       return;
     }
 
@@ -12499,7 +12526,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     if(err){
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = window.__vac.editingId ? 'Guardar cambios' : 'Enviar solicitud'; }
-      alert('No se pudo guardar: ' + err.message);
+      ssbToast('No se pudo guardar: ' + err.message, 'error');
       return;
     }
 
@@ -13677,7 +13704,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         // (códigos como 23505, mensajes con nombres de constraints, etc.).
         // No los exponemos al usuario; van a console para debug del admin.
         console.error('vac:adjustment:save', error);
-        alert('No se pudo guardar el ajuste. Revisá los datos y volvé a intentar; si persiste, mirá la consola del navegador.');
+        ssbToast('No se pudo guardar el ajuste. Revisá los datos y volvé a intentar; si persiste, mirá la consola del navegador.', 'error');
         return;
       }
 
@@ -13964,7 +13991,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
           const st = STATUS_LABEL[c.status] || c.status;
           return `• ${c.backupName} (${st} del ${formatDmy(c.start_date)} al ${formatDmy(c.end_date)})`;
         }).join('\n');
-        const ok = confirm(`⚠ Solapa con back-up(s) del solicitante:\n\n${lines}\n\n¿Aprobar igual?`);
+        const ok = await ssbConfirm({title:'⚠ Solapa con back-up(s) del solicitante', body:lines, confirmText:'Aprobar igual', danger:true});
         if(!ok) return;
       }
     }
@@ -13973,7 +14000,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const { error } = await supa.from('vac_requests')
       .update({ status: 'aprobada', approved_by: adminId, approved_at: new Date().toISOString(), rejection_reason: null })
       .eq('id', id);
-    if(error){ alert('No se pudo aprobar: ' + error.message); return; }
+    if(error){ ssbToast('No se pudo aprobar: ' + error.message, 'error'); return; }
     showToast('Solicitud aprobada');
     await loadAdminData();
     renderPendientes();
@@ -14030,7 +14057,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const { error } = await supa.from('vac_requests')
       .update({ status: 'rechazada', rejection_reason: reason, approved_by: adminId, approved_at: new Date().toISOString() })
       .eq('id', id);
-    if(error){ alert('No se pudo rechazar: ' + error.message); return false; }
+    if(error){ ssbToast('No se pudo rechazar: ' + error.message, 'error'); return false; }
     showToast('Solicitud rechazada');
     await loadAdminData();
     renderPendientes();
@@ -14265,10 +14292,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const extraDaysRaw = parseInt(wrap.querySelector('#vac-emp-extra-days').value, 10);
       const extraDays = (Number.isFinite(extraDaysRaw) && extraDaysRaw >= 0) ? extraDaysRaw : 0;
       const backupIds = getSelectedBackupIds();
-      if(!name || !email){ alert('Nombre y email son obligatorios.'); return; }
+      if(!name || !email){ ssbToast('Nombre y email son obligatorios.', 'warning'); return; }
       // birthday: ambos o ninguno (constraint vac_birthday_paired lo respalda)
       if((bdayDay && !bdayMonth) || (bdayMonth && !bdayDay)){
-        alert('Día y mes de cumpleaños deben estar ambos completos o ambos vacíos.');
+        ssbToast('Día y mes de cumpleaños deben estar ambos completos o ambos vacíos.', 'warning');
         return;
       }
       save.disabled = true; save.textContent = 'Guardando…';
@@ -14305,7 +14332,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       res = await supa.from('vac_employees').insert(data);
     }
     if(res.error){
-      alert('No se pudo guardar: ' + res.error.message);
+      ssbToast('No se pudo guardar: ' + res.error.message, 'error');
       return false;
     }
     showToast(empId ? 'Empleado actualizado' : 'Empleado creado');
@@ -14332,9 +14359,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const emp = window.__vac.admin.employees.find(e => e.id === empId);
     if(!emp) return;
     const verb = makeActive ? 'reactivar' : 'desactivar';
-    if(!confirm(`¿${verb[0].toUpperCase()+verb.slice(1)} a ${emp.full_name}?`)) return;
+    if(!(await ssbConfirm({title:`¿${verb[0].toUpperCase()+verb.slice(1)} a ${emp.full_name}?`, confirmText: verb[0].toUpperCase()+verb.slice(1), danger: !makeActive}))) return;
     const { error } = await supa.from('vac_employees').update({ active: makeActive }).eq('id', empId);
-    if(error){ alert('No se pudo ' + verb + ': ' + error.message); return; }
+    if(error){ ssbToast('No se pudo ' + verb + ': ' + error.message, 'error'); return; }
     showToast(`Empleado ${makeActive ? 'reactivado' : 'desactivado'}`);
     await loadAdminData();
     renderEmpleados();
@@ -14378,7 +14405,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const date = wrap.querySelector('#vac-hol-date').value;
       const name = wrap.querySelector('#vac-hol-name').value.trim();
       const type = wrap.querySelector('#vac-hol-type').value;
-      if(!date || !name){ alert('Fecha y nombre son obligatorios.'); return; }
+      if(!date || !name){ ssbToast('Fecha y nombre son obligatorios.', 'warning'); return; }
       save.disabled = true; save.textContent = 'Guardando…';
       const ok = await saveHoliday(holId, { date, name, type });
       if(ok) closeModal();
@@ -14396,7 +14423,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     } else {
       res = await supa.from('vac_holidays').upsert(data, { onConflict: 'date' });
     }
-    if(res.error){ alert('No se pudo guardar: ' + res.error.message); return false; }
+    if(res.error){ ssbToast('No se pudo guardar: ' + res.error.message, 'error'); return false; }
     showToast('Feriado guardado');
     await loadAdminData();
     renderFeriados();
@@ -14407,9 +14434,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!window.__vacAuth?.isAdmin) return;
     const h = window.__vac.admin.holidays.find(x => x.id === holId);
     if(!h) return;
-    if(!confirm(`¿Eliminar el feriado "${h.name}" del ${formatDmy(h.date)}?`)) return;
+    if(!(await ssbConfirm({title:'¿Eliminar el feriado?', body:`"${h.name}" del ${formatDmy(h.date)}.`, confirmText:'Eliminar', danger:true}))) return;
     const { error } = await supa.from('vac_holidays').delete().eq('id', holId);
-    if(error){ alert('No se pudo eliminar: ' + error.message); return; }
+    if(error){ ssbToast('No se pudo eliminar: ' + error.message, 'error'); return; }
     showToast('Feriado eliminado');
     await loadAdminData();
     renderFeriados();
@@ -14501,7 +14528,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!lastRows.length){ doPreview(); if(!lastRows.length) return; }
       importBtn.disabled = true; importBtn.textContent = 'Importando…';
       const { error } = await supa.from('vac_holidays').upsert(lastRows, { onConflict: 'date' });
-      if(error){ alert('No se pudo importar: ' + error.message); importBtn.disabled = false; importBtn.textContent = 'Importar'; return; }
+      if(error){ ssbToast('No se pudo importar: ' + error.message, 'error'); importBtn.disabled = false; importBtn.textContent = 'Importar'; return; }
       showToast(`Importados ${lastRows.length} feriados`);
       await loadAdminData();
       renderFeriados();
@@ -14627,7 +14654,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       // El trigger SQL setea days_count y period_year en cada row.
       const { error } = await supa.from('vac_requests').insert(payload);
       if(error){
-        alert('No se pudo importar: ' + error.message);
+        ssbToast('No se pudo importar: ' + error.message, 'error');
         importBtn.disabled = false; importBtn.textContent = 'Importar';
         return;
       }
@@ -16374,9 +16401,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const inp = $(kind === 'to' ? 'mail-add-to' : 'mail-add-cc');
     if(!inp) return;
     const v = String(inp.value || '').trim().toLowerCase();
-    if(!EMAIL_RE.test(v)){ inp.reportValidity ? inp.reportValidity() : alert('Email inválido'); return; }
-    if(v === 'expoarpbb@ssbint.com'){ alert('expoarpbb es la casilla propia — no va como destinatario del cliente.'); return; }
-    if(_blocked.includes(v)){ alert(v + ' está BLOQUEADO para este cliente. Desbloquealo primero si corresponde.'); return; }
+    if(!EMAIL_RE.test(v)){ inp.reportValidity ? inp.reportValidity() : ssbToast('Email inválido', 'warning'); return; }
+    if(v === 'expoarpbb@ssbint.com'){ ssbToast('expoarpbb es la casilla propia — no va como destinatario del cliente.', 'warning'); return; }
+    if(_blocked.includes(v)){ ssbToast(v + ' está BLOQUEADO para este cliente. Desbloquealo primero si corresponde.', 'warning'); return; }
     const list = kind === 'to' ? _to : _cc;
     if(!list.includes(v)) list.push(v);
     const other = kind === 'to' ? _cc : _to;
@@ -16423,7 +16450,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     } catch(e){ errMsg = e.message; }
     _busy = null; // FIX verify (ALTA): SIEMPRE — un return stale no puede dejar el lock puesto
     if(gen !== _gen || order !== _sel) return;
-    if(errMsg) alert('No se pudo guardar el directorio: ' + errMsg);
+    if(errMsg) ssbToast('No se pudo guardar el directorio: ' + errMsg, 'error');
     renderDetail();
   }
 
@@ -16461,7 +16488,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   async function confirmSchedule(){
     if(!_row || _busy) return;
     const rd = document.querySelector('#panel-mailing input[name="mail-pick"]:checked');
-    if(!rd){ alert('Elegí una vela del picker.'); return; }
+    if(!rd){ ssbToast('Elegí una vela del picker.', 'warning'); return; }
     const cand = _candidates[parseInt(rd.value, 10)];
     if(!cand) return;
     const gen = _gen, order = _sel; // FIX verify: era la única acción sin captura de staleness
@@ -16474,13 +16501,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     } catch(e){ errMsg = e.message; }
     _busy = null; // SIEMPRE — antes un throw tardío con orden cambiada dejaba alert huérfano
     if(gen !== _gen || order !== _sel) return; // stale: ni alert de otra orden ni preview no pedido
-    if(errMsg){ alert('No se pudo confirmar la vela: ' + errMsg); renderDetail(); return; }
+    if(errMsg){ ssbToast('No se pudo confirmar la vela: ' + errMsg, 'error'); renderDetail(); return; }
     await runPreview(); // re-resuelve con el override recién persistido (orden vigente)
   }
 
   async function doSend(){
     if(!_row || !_preview || _preview.send_blocked || _busy) return;
-    if(_dirty){ alert('Tenés cambios de directorio sin guardar: guardalos (o descartalos re-seleccionando la orden) antes de enviar.'); return; }
+    if(_dirty){ ssbToast('Tenés cambios de directorio sin guardar: guardalos (o descartalos re-seleccionando la orden) antes de enviar.', 'warning'); return; }
     const tg = $('mail-test-toggle');
     const testMode = !tg || tg.checked;
     // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
@@ -16492,14 +16519,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
       '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—') +
       '\n(El envío se re-resuelve contra el directorio vigente al momento de enviar.)';
-    const msg = testMode
-      ? 'Enviar en MODO TEST a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : '')
-      : '⚠ ENVÍO REAL AL CLIENTE ⚠\n\n' + secc + '\n\n¿Confirmás?';
-    if(!confirm(msg)) return;
+    // Pre-lock ANTES del confirm: ssbConfirm no bloquea el hilo como confirm()
+    // nativo — sin esto, una segunda invocación (Enter con autorepeat / doble
+    // click) pasaba el guard de entrada y encolaba un segundo envío.
+    _busy = 'confirm'; renderDetail();
+    const sendOk = await ssbConfirm(testMode
+      ? { title:'Enviar en MODO TEST', body:'Va a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : ''), confirmText:'Enviar TEST' }
+      : { title:'⚠ ENVÍO REAL AL CLIENTE ⚠', body: secc, confirmText:'Enviar al cliente', danger:true });
+    if(!sendOk){ _busy = null; renderDetail(); return; }
     // Guard doble-click: reenviar tras un envío REAL exige decisión explícita (resend).
     const overrides = {};
     if(_row.status === 'ENVIADO' && _row.sent_test_mode === false){
-      if(!confirm('Esta orden YA tuvo un envío REAL al cliente.\n¿Reenviar igual?')) return;
+      if(!(await ssbConfirm({title:'Reenvío', body:'Esta orden YA tuvo un envío REAL al cliente.', confirmText:'Reenviar igual', danger:true}))){ _busy = null; renderDetail(); return; }
       overrides.resend = true;
     }
     const gen = _gen, order = _sel;
@@ -16640,8 +16671,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     const n = lote.listas.length;
     const conNota = lote.conflictos.length || lote.errores.length
       ? '\n(Conflictos y errores quedan AFUERA del lote — revisalos en la tabla.)' : '';
-    if(!confirm('Confirmar zarpe (ATD) para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota + '\n¿Continuar?')) return;
+    // Pre-lock ANTES del confirm (ssbConfirm no bloquea el hilo): sin esto una
+    // segunda invocación pasaba el guard y encolaba un segundo lote confirm_atd.
     _atdBusy = true; renderAtdReport();
+    if(!(await ssbConfirm({title:'Confirmar zarpe (ATD)', body:'Para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota, confirmText:'Confirmar zarpe'}))){ _atdBusy = false; renderAtdReport(); return; }
     try {
       const resp = await apiMailing({ action: 'confirm_atd', rows: lote.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
       lote.server = resp;
