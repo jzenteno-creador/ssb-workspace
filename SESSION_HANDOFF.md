@@ -1,37 +1,34 @@
-# Handoff sesión SSB Workspace · 2026-07-05 (Certificado de Origen → PROD)
+# Handoff sesión SSB Workspace · 2026-07-07 (F1/F2 CO+PE a PROD + schema viewer/grafo)
 
 ## Foco de la sesión
-Módulo **Certificado de Origen** completo en un ciclo largo: EXPLORE (schema XML COD real desde Drive) → PLAN → VERIFY-FIRST → IMPLEMENT → fix de errores legibles → **pivote SA-direct → n8n Drive Gateway** → merge a prod. Smoke de John aprobado en Preview; **EN PRODUCCIÓN**.
+Multi-feature: merge fase ATD (`731a20c`) → solapa **Estructura DB** (F3, 13º módulo) → **vista Grafo ER** (Cytoscape lazy CDN+SRI) + fix hidden-tab → **F1/F2 adjuntos CO+PE en mailing** (PUT LIVE +3 nodos + front). Dos sesiones de CC en paralelo sobre el mismo checkout — estabilizado con worktree dedicada (ya removida) y cruce verificado sin conflicto.
 
-## Estado: MERGEADO A PROD — merge commit `c82163d` (PR #2, merge commit sin squash, branch `feat/certificado-origen` conservado)
-- Prod verificado por curl: `POST /api/certificado-origen` sin token → 401 `{estado:error, error_code:AUTH}` (nuestro JSON) = ruta viva + **env vars del gateway presentes en Production** + sin Deployment Protection. Solapa presente en el HTML de prod.
-- Pendiente único de cierre: smoke de John EN PROD (orden `4010713061` / cert `AR004A18260002212100` → badge verde; actualiza in-place el PDF ya existente).
+## 1. mailing-docs (F1/F2) — EN PROD
+- **master `01c1ff9` == origin**; Vercel sirviendo front F1/F2: chips CO ZIP / CO PDF / PE (data-driven), badge Trade/STO/Tipo?, línea de completitud "Documentos: N de M" en la card de envío.
+- **Workflow LIVE `kh6TORgRg9R1Shj1`: versionId `bc45ff7b-83ed-4079-a691-cc2c6ab3301a`** (PIN para futuros PUTs), 28 nodos (+3: `GET certificados_origen`, `Buscar CO PDF`, `Buscar PE` — cadena PL→GETcert→COPDF→PE→Resolver), 16 cred-refs, **TEST_MODE ON**, Gmail ssbintn8n intacto. Espejo `sdk/code_mailing_resolver.js` == jsCode LIVE **byte-idéntico** (sha256 verificado).
+- Diseño: CO **híbrido** (fila de `certificados_origen` GANA — zip+pdf por file_id directo — ?? búsqueda Drive por orden para el PDF manual; ZIP solo por tabla, irresoluble por nombre). **PE solo trade** (`order_kind` por formato: `^4` 10díg=STO / `^1` 9díg=trade / desconocido=conservador sin PE), gateado en el Resolver — punto único de enforcement.
+- **Smoke LIVE 18/18**: trade `118959520` (co_zip+co_pdf por tabla + PE real adjunto) · STO `4010713063` (**PE existente en Drive IGNORADO — peor-bug probado contra el caso hostil** — y co_pdf por búsqueda, sin fila en tabla) · idempotencia de re-preview. Fila test `ZZTEST-F1F2-SMOKE` insertada y borrada. Gate local 63 asserts PASS.
+- Cruce de las 2 sesiones (CRM git + mejora verify) verificado sin conflicto.
 
-## Lo que quedó construido
-1. **`api/certificado-origen.js`** — gate JWT+vac_employees (patrón mailing), normalización de orden (regla de dominio: strip UN 0 de padding trade; STO intacta), búsqueda ZIP por nombre exacto, unzip+parse, validación `CertificateID===certificado`, pdf-lib, upload idempotente update-in-place (preserva fileId), upsert `certificados_origen` con 2 reintentos; DB-fail → `error_registro` ÁMBAR (nunca verde). Guard `SA_CONFIG_MISSING` AL INICIO (diagnosticable por curl sin token). `maxDuration: 30` (medido ~10s create vía gateway). Contrato de error: siempre `{estado, error_code, error, detail?}`.
-2. **`api/_lib/driveClient.js`** — variante **n8n-gateway** (SA-direct descartado: John no crea service accounts). Caveat clave: n8n responde **200 con cuerpo VACÍO** en ejecución fallida → body vacío/no-JSON/`ok!==true` = error.
-3. **Workflow n8n `CO Drive Gateway` (`L68kJ7uGWauFRANX`)** — creado vía harness `scripts/n8n-co-gateway/put_co_drive_gateway.py` (Iron Law: 24 nodos, 4 cadenas lineales find/download/upload/update, 6 cred-refs de la credential Drive EXISTENTE `Hdz3HCDRSA2GStDS`, activate + rollback). Token header + path secreto + allowlist de carpetas (download solo CO ZIP, update solo CO PDF). Secrets en `ssb-workspace/.env` (gitignored) y en Vercel env.
-4. **`api/_lib/certOrigen.js`** — parser COD family-aware (`FormA18` GoodsItemValue / `FormA35` GoodsItemFOB; NO hay total header en el XML) + template pdf-lib con sanitizer WinAnsi obligatorio + mapa países ISO→nombre. La orden SAP NO existe en el XML (verificado en 4 muestras) → input manual, auto-derive inviable.
-5. **Solapa `cert-origen`** — form {orden, certificado}, resultado 3 estados (verde/ámbar+Regenerar/rojo con mapa de taxonomía + línea técnica literal — nunca "Error desconocido"), historial últimos 20 con regenerar. Anti-XSS createElement/textContent.
-6. **Tabla `certificados_origen`** (migración `create_certificados_origen`) — RLS patrón mailing_*, unique(orden,certificado_numero), trigger updated_at.
-7. Docs: `docs/modules/certificado-origen.md` · CLAUDE.md proyecto a 12 módulos (fila mailing agregada de paso — drift).
+## 2. PENDIENTE — PUT-fix1 (NO urgente: latente, hoy NO disparable — verificado contra prod)
+- **ALTA**: nodo `GET certificados_origen` **sin filtro `estado=eq.generado`** (`put_mailing_docs.py:51`) → una fila `error` de un Regenerar fallido (más nueva por `created_at`) pisa a la `generado` válida → el CO se pierde en silencio, indistinguible de "nunca se generó". **Fix = 1 parámetro** (`&estado=eq.generado` en la URL).
+- **MEDIA**: el harness no verifica el status del PUT de rollback ni reintenta el `activate` (fire-and-forget) → hardening del script.
+- **(aparte)** `order_number` sin normalizar en URL/queryStrings de los nodos nuevos — hoy inalcanzable (el padding muere antes en `GET mailing_orders`); si alguna vez aparece padding en la práctica, el fix correcto es **sistémico en `Validar request`**, no parche por nodo.
+- **Plan**: fix ALTA+MEDIA en harness chico, **pin `bc45ff7b`**. **Lección**: el gate local mockea los nodos — NO ve bugs en los **PARÁMETROS (URLs)** de nodos nuevos; al agregar nodos, el gate debe cubrir también sus queries, no solo el jsCode del Resolver.
 
-## Verificación
-- E2E local real (handler + sesión minteada vía admin API + gateway + Supabase): create 200 generado / re-run preserva fileId / 0-padding normaliza / cert inexistente 404 ZIP_NOT_FOUND. PDF real en CO PDF (`1L3lmhX34joR…`) + fila en DB.
-- Gateway smoke: download sha256 idéntico al ZIP original; token inválido y folder fuera de allowlist rechazados (fail-closed).
-- Front: 9/9 checks headless + 5/5 render de errores con stubs + 13/13 scripts inline node-checked.
-- Ancestry check pre-merge detectó cruft heredado `71ccac5` (mailing ATD-gate, 2 SQL de doc) → STOP → John eligió opción 1 (mergear tal cual).
+## 3. PENDIENTE John — send TEST en prod bajo TEST_MODE
+Trade `118959520` (verás PE real adjunto; co_zip figurará "Falta" salvo que generes su CO por la solapa antes) + STO `4010713063` de contraste (CO PDF sí, PE jamás). Todo va a expoarpbb.
 
-## Deuda nueva / pendientes
-- **Fase mailing del CO:** lookup de `certificados_origen` por `order_number` en `kh6TORgRg9R1Shj1` para adjuntar ZIP+PDF juntos (por tabla, nunca escaneando la carpeta). NO arrancada.
-- Gateway: token inválido vs Drive caído indistinguibles para el front (ambos `DRIVE_GATEWAY_DOWN` + detail crudo) — limitación 200-vacío de n8n Cloud, documentada.
-- `SESSION_HANDOFF_template.md` referenciado en el protocolo global NO existe (`~/.claude/templates/` vacío) — este handoff usa el formato del anterior.
-- Multi-tenancy del CO (tenant_id + RLS) — backlog diferido.
+## 4. GOTCHA creds — API n8n
+La API pública valida acceso a credenciales **solo al adjuntarlas a nodos NUEVOS**, y exige acceso **PERSONAL** del usuario de la key (los roles de proyecto NO cuentan). Resuelto: John compartió `aQoShf0TVYyf2lrt` (Supabase, era del proyecto "export proyect") y `Hdz3HCDRSA2GStDS` (Drive, era del usuario ssbintn8n) con el usuario de la key. **Regla nueva**: el probe de adjuntabilidad va ANTES del primer PUT que agregue nodos, y con autorización explícita de John (el clasificador de permisos frena el patrón "probar múltiples credenciales" — correctamente).
 
-## Carry-over intacto (sesiones previas)
-- 🔴 Seguridad F1+: auth Bearer + rate limiting en `/api/chat*`; F2 LIMIT server-side + unificar esc(); F3 hooks + borrar `netlify/functions/`.
-- 🟠 deactivate-missing (444 filas) · RLS `vac_requests`/`vac_employees` amplia · CSP incompleta · migrar validador-aduana a módulo.
-- Batch 0 mailing ATD-gate (`71ccac5`, mergeado con opción 1): migración documentada en `migrations/2026-07-05-mailing-atd-gate/` — continuar esa fase en su propio branch.
+## 5. RIESGO operativo — sesiones paralelas
+Múltiples sesiones de CC sobre ssb-workspace en paralelo: **verificar repo/branch (`git status` + `git rev-parse`) antes de ejecutar CUALQUIER git**; ante trabajo simultáneo, worktree propia por sesión. Esta sesión ya sufrió (y resolvió) un cruce de HEAD; el caso previo generó el commit huérfano `71ccac5`.
+
+## También cerrado en esta sesión
+- **F3 Estructura DB** (13º módulo): `api/schema.js` read-only sin input del usuario (queries fijas vía RPC F0), solapa con 25 tablas + 5 vistas + 411 columnas + 16 FKs navegables. En prod.
+- **Vista Grafo ER**: Cytoscape 3.30.2 lazy por CDN con SRI, layout compuesto determinístico (cose + grilla de 14 aislados), elegida con render real contra vis-network y Mermaid. + fix hidden-tab (`2497503`). En prod.
+- Fase ATD mergeada (`731a20c`) y asimetría prod (workflow Batch B vs front) cerrada.
 
 ## Identifiers
-- master: `c82163d` · Prod: https://ssb-workspace.vercel.app · Supabase: `xkppkzfxgtfsmfooozsm` · Gateway n8n: `L68kJ7uGWauFRANX` (harness `scripts/n8n-co-gateway/`) · Clasificador Drive (cred de referencia): `pBN4Wd1lcTSHNkFg` · PR: #2 (merged).
+master `01c1ff9` · prod https://ssb-workspace.vercel.app · Supabase `xkppkzfxgtfsmfooozsm` · workflow mailing `kh6TORgRg9R1Shj1` **pin `bc45ff7b-83ed-4079-a691-cc2c6ab3301a`** · harness `validador-aduana/n8n/control_de_bill_of_lading/sdk/put_mailing_docs.py` · ramas conservadas: `feat/mailing-docs` (255a1bb), `feat/schema-viewer`, `feat/schema-graph`, `fix/schema-graph-hidden-tab`
