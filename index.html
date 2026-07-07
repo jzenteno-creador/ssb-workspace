@@ -2954,6 +2954,9 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
         <button type="submit" class="auth-btn primary" id="auth-newpw-btn">Guardar y entrar</button>
         <div class="auth-status" id="auth-newpw-status" role="status" aria-live="polite"></div>
       </form>
+      <div class="auth-altrow">
+        <button type="button" class="auth-link" id="auth-newpw-back">← Volver al login</button>
+      </div>
     </div>
 
     <!-- Estado: confirmación pendiente (signup OK, esperando click en mail) -->
@@ -10994,6 +10997,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   window.__ssb = { supa, ready: false };
   window.__ssbAuth = null;          // populated after applySession success
+  // Modo recovery sticky: mientras esté en true, ningún evento de auth tardío
+  // (INITIAL_SESSION / SIGNED_IN del canje del token) puede auto-loguear ni
+  // tapar el form newpw. Solo salen de este modo doUpdatePassword (éxito)
+  // o el botón "Volver al login" del estado newpw.
+  let isRecovery = false;
 
   const $ = id => document.getElementById(id);
   const gate = () => $('auth-gate');
@@ -11127,13 +11135,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       return;
     }
     setStatus('auth-newpw-status', 'ok', 'Contraseña actualizada. Entrando…');
-    // limpiar query param de recovery sin recargar
+    isRecovery = false;
+    // limpiar query params de recovery sin recargar
     try{
       const url = new URL(window.location.href);
       url.searchParams.delete('reset');
+      url.searchParams.delete('code');
       window.history.replaceState({}, '', url);
     }catch(_){}
-    // Sesión queda activa → applySession por onAuthStateChange.
+    // USER_UPDATED puede haber disparado applySession con isRecovery aún en
+    // true (quedó en newpw) → aplicar la sesión explícitamente ahora que el
+    // flag está limpio. applySession es idempotente.
+    try{
+      const { data: { session } } = await supa.auth.getSession();
+      await applySession(session);
+    }catch(_){}
   }
 
   async function doLogout(){
@@ -11144,10 +11160,30 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
   window.ssbLogout = doLogout;
 
+  // Escape del estado newpw (link vencido, PKCE cross-device, arrepentimiento).
+  // Limpia la URL ANTES del signOut para que un reload no re-entre a recovery,
+  // y mata la media-sesión de recovery para que un TOKEN_REFRESHED posterior
+  // no auto-loguee desde el login.
+  async function exitRecovery(){
+    isRecovery = false;
+    try{
+      const url = new URL(window.location.href);
+      url.searchParams.delete('reset');
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url);
+    }catch(_){}
+    try{ await supa.auth.signOut(); }catch(_){}
+    setStatus('auth-newpw-status', '', '');
+    showState('login');
+  }
+
   // ── Aplicar sesión ──
   async function applySession(session, event){
-    // PASSWORD_RECOVERY: el user vino del mail de reset → mostrar form newpw.
-    if(event === 'PASSWORD_RECOVERY'){
+    // PASSWORD_RECOVERY: el user vino del mail de reset → activa modo recovery.
+    if(event === 'PASSWORD_RECOVERY') isRecovery = true;
+    // Guard sticky: el form newpw gana siempre sobre cualquier evento tardío.
+    if(isRecovery){
+      document.body.classList.remove('is-authed');
       showState('newpw');
       return;
     }
@@ -11178,6 +11214,14 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(lookup.inactive){
       setStatus('auth-login-status', 'err', 'Tu cuenta está desactivada. Contactá al admin.');
       try{ await supa.auth.signOut(); }catch(_){}
+      return;
+    }
+    // Re-check post-await: un PASSWORD_RECOVERY pudo activar el modo recovery
+    // mientras corría lookupEmployee (pasa cuando el redirect pierde ?reset=1
+    // y SIGNED_IN llega antes que PASSWORD_RECOVERY).
+    if(isRecovery){
+      document.body.classList.remove('is-authed');
+      showState('newpw');
       return;
     }
     // OK → autorizado.
@@ -11281,6 +11325,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         doUpdatePassword(pw);
       });
     }
+    // Escape de newpw — no usa [data-goto]: además de navegar tiene que
+    // limpiar el modo recovery y la media-sesión (ver exitRecovery).
+    const newpwBack = $('auth-newpw-back');
+    if(newpwBack && !newpwBack._wired){
+      newpwBack._wired = true;
+      newpwBack.addEventListener('click', () => { exitRecovery(); });
+    }
     // Logout button (en topbar)
     const logoutBtn = $('btn-logout');
     if(logoutBtn && !logoutBtn._wired){
@@ -11297,6 +11348,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Si la URL trae ?reset=1 (volvió del mail), forzar estado newpw.
     const params = new URLSearchParams(window.location.search);
     const isReset = params.get('reset') === '1';
+    // El flag se setea ANTES de suscribir el listener: si no, un
+    // INITIAL_SESSION entregado durante el await de getSession() arranca
+    // la validación con el flag todavía apagado y tapa el newpw.
+    if(isReset) isRecovery = true;
 
     supa.auth.onAuthStateChange((event, session) => {
       applySession(session, event);
@@ -11307,6 +11362,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       // Recovery flow: mostrar gate en estado newpw aunque haya sesión.
       document.body.classList.remove('is-authed');
       showState('newpw');
+      // Link vencido/ya usado: GoTrue vuelve con #error=...&error_code=otp_expired
+      // (a veces en query). Avisar en vez de dejar el form ciego.
+      try{
+        const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+        const errCode = hashParams.get('error_code') || params.get('error_code') || '';
+        const errDesc = hashParams.get('error_description') || params.get('error_description') || '';
+        if(hashParams.get('error') || params.get('error')){
+          setStatus('auth-newpw-status', 'err', /expired|invalid/i.test(errCode + ' ' + errDesc)
+            ? 'El link expiró o ya fue usado. Volvé al login y pedí uno nuevo.'
+            : 'No se pudo validar el link. Volvé al login y pedí uno nuevo.');
+        }
+      }catch(_){}
       // Y ocultar el splash decorativo — el user vino del mail, queremos que vea la pantalla de password.
       const sp = document.getElementById('splash');
       if(sp){ sp.classList.add('hide'); setTimeout(()=>sp?.remove(), 500); }
