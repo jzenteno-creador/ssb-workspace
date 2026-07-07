@@ -1613,6 +1613,41 @@ body.dark #panel-vacaciones .vac-form-error{color:#fca5a5}
 }
 .vac-toast.vac-toast--show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ── SSB UI PRIMITIVES: toasts apilables + confirm modal (dark-aware por tokens) ── */
+:root{--toast-success:#15803d;--toast-error:#b91c1c;--toast-warning:#92400e}
+#ssb-toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10050;pointer-events:none;max-width:min(560px,calc(100vw - 32px))}
+.ssb-toast{
+  background:var(--text);color:var(--bg);
+  padding:10px 18px;border-radius:8px;
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  opacity:0;transform:translateY(14px);transition:opacity .18s,transform .18s;
+  max-width:100%;overflow-wrap:break-word;
+}
+.ssb-toast--show{opacity:1;transform:translateY(0)}
+/* Colores de estado constantes en ambos temas: blanco sobre saturado garantiza contraste */
+.ssb-toast--success{background:var(--toast-success);color:#fff}
+.ssb-toast--error{background:var(--toast-error);color:#fff}
+.ssb-toast--warning{background:var(--toast-warning);color:#fff}
+
+.ssb-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10040;padding:20px}
+.ssb-confirm-overlay[hidden]{display:none}
+.ssb-confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 26px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.45),0 4px 14px rgba(0,0,0,.25);max-height:80vh;overflow:auto}
+.ssb-confirm-box h3{margin:0 0 6px;font-size:var(--fs-lg);font-weight:600;color:var(--text);letter-spacing:-.01em}
+.ssb-confirm-body{margin:0 0 4px;font-size:var(--fs-md);color:var(--muted);line-height:1.55;white-space:pre-wrap;overflow-wrap:break-word}
+.ssb-confirm-reason{margin-top:12px}
+.ssb-confirm-reason label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;font-weight:700}
+.ssb-confirm-reason textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--faint);color:var(--text);font:inherit;font-size:13px;box-sizing:border-box;resize:vertical;min-height:72px}
+.ssb-confirm-reason textarea:focus{border-color:var(--blue);background:var(--surface);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent)}
+.ssb-confirm-reason-err{color:var(--red);font-size:var(--fs-sm);margin-top:6px;font-weight:600}
+.ssb-confirm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.ssb-confirm-btn{padding:9px 16px;border-radius:8px;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--text);transition:filter .12s,background .12s}
+.ssb-confirm-btn:hover{background:var(--surface-hv)}
+.ssb-confirm-ok{background:var(--blue);border-color:var(--blue);color:#fff}
+.ssb-confirm-ok:hover{background:var(--blue);filter:brightness(1.08)}
+.ssb-confirm-ok--danger{background:var(--red);border-color:var(--red)}
+.ssb-confirm-ok--danger:hover{background:var(--red)}
+
 /* ── Vista Equipo: mini-timeline + Gantt anual ── */
 #panel-vacaciones .vac-section[data-section="equipo"]{padding:18px 2rem 40px}
 #panel-vacaciones .vac-section[data-section="equipo"].vac-section--active{display:flex;flex-direction:column;gap:12px}
@@ -4283,6 +4318,151 @@ function nfAR(v, dec){
   return Number(v).toLocaleString('es-AR', dec == null ? undefined : { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 /* === FIN SSB CORE HELPERS === */
+
+/* === SSB UI PRIMITIVES ===
+   Feedback y confirmación únicos de toda la app. Los módulos NO deben crear
+   toasts ni confirms propios — usar estas dos primitivas. */
+
+// Toast no bloqueante, apilable, auto-dismiss.
+// kind: 'success' | 'error' | 'warning' | 'info' (default: neutro invertido).
+function ssbToast(msg, kind){
+  let wrap = document.getElementById('ssb-toasts');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'ssb-toasts';
+    document.body.appendChild(wrap);
+  }
+  const el = document.createElement('div');
+  el.className = 'ssb-toast' + (kind === 'success' || kind === 'error' || kind === 'warning' ? ' ssb-toast--' + kind : '');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-live', 'polite');
+  el.textContent = msg;
+  wrap.appendChild(el);
+  // Máximo 4 apilados: el más viejo se va
+  while(wrap.children.length > 4) wrap.firstChild.remove();
+  requestAnimationFrame(() => el.classList.add('ssb-toast--show'));
+  const ttl = kind === 'error' ? 4200 : 2600;   // errores se leen más despacio
+  setTimeout(() => {
+    el.classList.remove('ssb-toast--show');
+    setTimeout(() => el.remove(), 220);
+  }, ttl);
+}
+
+// Confirm modal accesible → Promise. Reemplaza confirm() nativo.
+//   ssbConfirm('¿Seguro?')                          → Promise<boolean>
+//   ssbConfirm({title, body, danger:true})          → Promise<boolean>
+//   ssbConfirm({..., reason:true})                  → Promise<{ok, reason}>
+// opts: title, body (texto plano, respeta \n), bodyHtml (HTML — el caller
+// escapa), confirmText, cancelText, danger (focus inicial en Cancelar +
+// botón rojo), reason (true | {label, placeholder} → motivo obligatorio).
+// Teclado: Escape=cancela, Enter=confirma (fuera del textarea), Tab atrapado.
+let _ssbConfirmChain = Promise.resolve();
+function ssbConfirm(opts){
+  const run = () => _ssbConfirmShow(typeof opts === 'string' ? { body: opts } : (opts || {}));
+  const p = _ssbConfirmChain.then(run, run);
+  _ssbConfirmChain = p.then(() => {}, () => {});
+  return p;
+}
+window.ssbConfirm = ssbConfirm;
+
+function _ssbConfirmBuild(){
+  let ov = document.getElementById('ssb-confirm-overlay');
+  if(ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'ssb-confirm-overlay';
+  ov.className = 'ssb-confirm-overlay';
+  ov.hidden = true;
+  ov.innerHTML = `
+    <div class="ssb-confirm-box" role="dialog" aria-modal="true" aria-labelledby="ssb-confirm-title">
+      <h3 id="ssb-confirm-title"></h3>
+      <p class="ssb-confirm-body" id="ssb-confirm-body"></p>
+      <div class="ssb-confirm-reason" id="ssb-confirm-reason-wrap" hidden>
+        <label for="ssb-confirm-reason">Motivo</label>
+        <textarea id="ssb-confirm-reason" rows="3"></textarea>
+        <div class="ssb-confirm-reason-err" id="ssb-confirm-reason-err" hidden>El motivo es obligatorio.</div>
+      </div>
+      <div class="ssb-confirm-actions">
+        <button type="button" class="ssb-confirm-btn" id="ssb-confirm-cancel">Cancelar</button>
+        <button type="button" class="ssb-confirm-btn ssb-confirm-ok" id="ssb-confirm-ok">Confirmar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  return ov;
+}
+
+function _ssbConfirmShow(opts){
+  return new Promise(resolve => {
+    const ov       = _ssbConfirmBuild();
+    const titleEl  = document.getElementById('ssb-confirm-title');
+    const bodyEl   = document.getElementById('ssb-confirm-body');
+    const rWrap    = document.getElementById('ssb-confirm-reason-wrap');
+    const rInput   = document.getElementById('ssb-confirm-reason');
+    const rErr     = document.getElementById('ssb-confirm-reason-err');
+    const okBtn    = document.getElementById('ssb-confirm-ok');
+    const cancelBtn= document.getElementById('ssb-confirm-cancel');
+    const wantsReason = !!opts.reason;
+    const reasonOpts  = (opts.reason && typeof opts.reason === 'object') ? opts.reason : {};
+    const prevFocus   = document.activeElement;
+
+    titleEl.textContent = opts.title || 'Confirmar';
+    if(opts.bodyHtml != null){ bodyEl.innerHTML = opts.bodyHtml; }
+    else { bodyEl.textContent = opts.body || ''; }
+    bodyEl.style.display = (opts.body || opts.bodyHtml) ? '' : 'none';
+    rWrap.hidden = !wantsReason;
+    rErr.hidden = true;
+    rInput.value = '';
+    rInput.placeholder = reasonOpts.placeholder || '';
+    rWrap.querySelector('label').textContent = reasonOpts.label || 'Motivo';
+    okBtn.textContent = opts.confirmText || 'Confirmar';
+    cancelBtn.textContent = opts.cancelText || 'Cancelar';
+    okBtn.classList.toggle('ssb-confirm-ok--danger', !!opts.danger);
+
+    function close(result){
+      ov.hidden = true;
+      ov.removeEventListener('keydown', onKey);
+      ov.removeEventListener('mousedown', onBackdrop);
+      okBtn.onclick = cancelBtn.onclick = null;
+      try{ if(prevFocus && prevFocus.focus) prevFocus.focus(); }catch(_){}
+      resolve(result);
+    }
+    const cancelVal  = wantsReason ? { ok: false } : false;
+    function confirmAction(){
+      if(wantsReason){
+        const reason = rInput.value.trim();
+        if(!reason){ rErr.hidden = false; rInput.focus(); return; }
+        close({ ok: true, reason });
+      } else {
+        close(true);
+      }
+    }
+    function onKey(e){
+      if(e.key === 'Escape'){ e.preventDefault(); close(cancelVal); }
+      else if(e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){ e.preventDefault(); confirmAction(); }
+      else if(e.key === 'Tab'){
+        // Trap simple: ciclo entre los focusables del modal
+        const foci = [cancelBtn, okBtn, ...(wantsReason ? [rInput] : [])]
+          .sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+        const idx = foci.indexOf(document.activeElement);
+        if(e.shiftKey && (idx === 0 || idx === -1)){ e.preventDefault(); foci[foci.length - 1].focus(); }
+        else if(!e.shiftKey && idx === foci.length - 1){ e.preventDefault(); foci[0].focus(); }
+      }
+    }
+    function onBackdrop(e){ if(e.target === ov) close(cancelVal); }
+
+    okBtn.onclick = confirmAction;
+    cancelBtn.onclick = () => close(cancelVal);
+    ov.addEventListener('keydown', onKey);
+    ov.addEventListener('mousedown', onBackdrop);
+    ov.hidden = false;
+    // Focus inicial: motivo → textarea; destructiva → Cancelar; resto → Confirmar
+    setTimeout(() => {
+      if(wantsReason) rInput.focus();
+      else if(opts.danger) cancelBtn.focus();
+      else okBtn.focus();
+    }, 30);
+  });
+}
+/* === FIN SSB UI PRIMITIVES === */
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi3VyU-KiobStqXJ6T9iNkGN2vXISb-6OGZYqMd3mXbzvjfhhHWORnfYlipKGRjdQi/exec';
 const CHANGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -7842,20 +8022,7 @@ function bidPayloadFrom(r){
 
 // ── Modal ADD/EDIT ──
 let bidModalState={mode:'add',rowIndex:null};
-// Toast in-app no bloqueante (reusa el estilo .vac-toast global; reemplaza alert() nativos del alta)
-function ssbToast(msg, kind){
-  let el=document.getElementById('ssb-toast');
-  if(!el){ el=document.createElement('div'); el.id='ssb-toast'; el.className='vac-toast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
-  el.textContent=msg;
-  // success/error → fondo oscuro + texto blanco; info/neutral → limpio ambos y uso el
-  // contraste del CSS .vac-toast (var(--text)/var(--bg)), correcto en dark y light.
-  const darkBg = kind==='error' ? '#b91c1c' : (kind==='success' ? '#15803d' : '');
-  el.style.background = darkBg;
-  el.style.color = darkBg ? '#fff' : '';
-  el.classList.add('vac-toast--show');
-  clearTimeout(el._tid);
-  el._tid=setTimeout(()=>el.classList.remove('vac-toast--show'), 2600);
-}
+// ssbToast(): usa la global de SSB UI PRIMITIVES (apilable, + kind 'warning').
 function _bidFillDatalist(dlId, values){
   const dl=document.getElementById(dlId); if(!dl)return;
   dl.innerHTML=(values||[]).map(v=>`<option value="${esc(v)}"></option>`).join('');
@@ -12363,21 +12530,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
 
   // ── Toast simple ──
-  function showToast(msg){
-    let el = document.getElementById('vac-toast');
-    if(!el){
-      el = document.createElement('div');
-      el.id = 'vac-toast';
-      el.className = 'vac-toast';
-      el.setAttribute('role','status');
-      el.setAttribute('aria-live','polite');
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.classList.add('vac-toast--show');
-    clearTimeout(el._tid);
-    el._tid = setTimeout(() => { el.classList.remove('vac-toast--show'); }, 2200);
-  }
+  // Absorbido por ssbToast (SSB UI PRIMITIVES). Los 10 usos internos son
+  // confirmaciones de éxito → kind 'success'.
+  const showToast = msg => ssbToast(msg, 'success');
 
   // ── Refetch + re-render combinado ──
   async function refreshAndRender(){
