@@ -8,6 +8,10 @@
  * Batch B (ATD-gate): template ATD+ETA+tránsito sin ETD, degradación sin ATD,
  * ATD>ETA, labels humanos de adjuntos, file_id expuesto, y el 2º nodo target
  * "Evaluar envío" (snapshot atd_at_send NULL-safe) — mismo harness, mismo gate.
+ * F1/F2 CO+PE (2026-07-07): order_kind por formato de orden, CO híbrido
+ * (tabla certificados_origen GANA ?? búsqueda Drive para el PDF; ZIP solo por
+ * tabla), GATE trade/STO del PE (una STO JAMÁS adjunta PE — peor bug), las 4
+ * combinaciones fila×archivo, y degradación con nodos caídos.
  * Uso: node test/gate_t2_resolver.mjs
  */
 import { readFileSync } from 'node:fs';
@@ -73,15 +77,15 @@ const base = (over = {}) => ({
     request_test_mode: true, overrides: {}, contacts: null, triggered_by: 'test@ssbint.com', req_errors: [] },
   'GET mailing_orders': MO_MAERSK, 'GET control BL (latest)': {}, 'GET mailing_contacts': {},
   'Agg schedules': SCHED_CALLAO, 'Buscar BL Draft': FILE_BL, 'Buscar Factura': FILE_FC,
-  'Buscar Packing List': {}, ...over,
+  'Buscar Packing List': {}, 'GET certificados_origen': {}, 'Buscar CO PDF': {}, 'Buscar PE': {}, ...over,
 });
 
 // ---- 1. T1 MAERSK ok ----
 let r = run(base());
 ok(r.schedule.matched_by === 'T1' && r.schedule.etd === '2026-07-06' && r.schedule.eta === '2026-08-07',
    `T1 exacto WIELAND 627N→CALLAO (etd ${r.schedule.etd}) pese a "\\n"+doble espacio en buque`);
-ok(r.response.attachments.found.length === 2 && r.response.attachments.missing.join(',') === 'packing_list',
-   'adjuntos: 2 found + packing_list reportado faltante');
+ok(r.response.attachments.found.length === 2 && r.response.attachments.missing.join(',') === 'packing_list,co_zip,co_pdf,pe',
+   'adjuntos: 2 found + faltantes packing_list,co_zip,co_pdf,pe (trade sin CO/PE mockeados)');
 ok(r.recipients.source === 'propuesta-ba' && r.recipients.sendable_real === false, 'contactos: propuesta-ba no enviable');
 ok(r.effective_test === true && r.gmail.to === 'expoarpbb@ssbint.com' && r.gmail.cc === '',
    'TEST: To=expoarpbb, CC vacío');
@@ -252,6 +256,78 @@ r = run(base({ 'GET mailing_orders': { ...MO_MAERSK, atd: '2026-09-01' } }));
 ok(r.gmail.body_html.includes('zarpó') && !r.gmail.body_html.includes('tránsito estimado')
    && /Tránsito est\.<\/td><td[^>]*><b>—<\/b>/.test(r.gmail.body_html),
    'ATD > ETA: párrafo sin tránsito + tabla "—" (jamás días negativos)');
+
+// ═══════ F1/F2 — CO híbrido (tabla ?? búsqueda) + PE gateado trade/STO ═══════
+const CO_ROW = { certificado_numero: 'AR004A18260002195600', zip_drive_id: 'Z1', pdf_drive_id: 'P1',
+  pdf_nombre: '118959520_AR004A18260002195600_CO.pdf', estado: 'generado' };
+const FILE_CO_PDF = { id: 'P2', name: '118959520_CO.pdf', mimeType: 'application/pdf' };
+const FILE_PE = { id: 'PE1', name: '26003EC03001697P_118959520_PE.pdf', mimeType: 'application/pdf' };
+const tiposDe = (rr) => rr.response.attachments.found.map((f) => f.tipo);
+const fidDe = (rr, tipo) => (rr.response.attachments.found.find((f) => f.tipo === tipo) || {}).file_id;
+
+// ---- 22. trade completo: fila en tabla + PE en Drive → zip+pdf de TABLA + pe ----
+r = run(base({ 'GET certificados_origen': CO_ROW, 'Buscar CO PDF': FILE_CO_PDF, 'Buscar PE': FILE_PE }));
+ok(r.response.order_kind === 'trade', 'order_kind=trade (118959520, 9 dígitos ^1)');
+ok(tiposDe(r).includes('co_zip') && tiposDe(r).includes('co_pdf') && tiposDe(r).includes('pe'),
+   'trade completo: co_zip + co_pdf + pe en found');
+ok(fidDe(r, 'co_zip') === 'Z1' && fidDe(r, 'co_pdf') === 'P1',
+   'la TABLA gana: pdf P1 (fila), NO P2 (búsqueda Drive)');
+ok(fidDe(r, 'pe') === 'PE1' && r.response.attachments.missing.length === 1
+   && r.response.attachments.missing[0] === 'packing_list', 'pe con file_id; solo falta packing_list');
+ok(r.gmail.body_html.includes('Certificado de Origen — digital (ZIP)')
+   && r.gmail.body_html.includes('Certificado de Origen (PDF)')
+   && r.gmail.body_html.includes('Permiso de Exportación (PE)'),
+   'mail lista los 3 adjuntos nuevos con label humano');
+
+// ---- 23. trade SIN fila en tabla: búsqueda cubre el PDF, el ZIP queda faltante ----
+r = run(base({ 'Buscar CO PDF': FILE_CO_PDF }));
+ok(fidDe(r, 'co_pdf') === 'P2' && !tiposDe(r).includes('co_zip'),
+   'sin fila: co_pdf por búsqueda Drive (manual {orden}_CO.pdf), co_zip irresoluble');
+ok(r.response.attachments.missing.includes('co_zip') && r.response.attachments.missing.includes('pe'),
+   'faltantes: co_zip + pe (trade sin PE en Drive)');
+ok(!r.gmail.body_html.includes('Permiso de Exportación') && !r.gmail.body_html.includes('ZIP'),
+   'el mail lista SOLO lo adjuntado — sin anunciar faltantes al cliente');
+
+// ---- 24. GATE trade/STO (peor bug): una STO JAMÁS adjunta PE, ni con archivo presente ----
+r = run(base({ 'Validar request': { ...base()['Validar request'], order_number: '4010713063' },
+  'GET mailing_orders': MO_LOGIN, 'Agg schedules': SCHED_SANTOS,
+  'GET certificados_origen': { ...CO_ROW, pdf_nombre: '4010713063_CO.pdf' },
+  'Buscar PE': FILE_PE }));
+ok(r.response.order_kind === 'sto', 'order_kind=sto (4010713063, 10 dígitos ^4)');
+ok(!tiposDe(r).includes('pe') && !r.response.attachments.missing.includes('pe'),
+   'GATE: STO con PE presente en Drive → pe NI en found NI en missing (no aplica)');
+ok(!r.gmail.body_html.includes('Permiso de Exportación'), 'GATE: el mail de una STO jamás menciona PE');
+ok(tiposDe(r).includes('co_zip') && tiposDe(r).includes('co_pdf'),
+   'el CO SÍ aplica a STO (zip+pdf de tabla)');
+
+// ---- 25. trade con 0 de padding sigue siendo trade ----
+r = run(base({ 'Validar request': { ...base()['Validar request'], order_number: '0118959520' },
+  'Buscar PE': FILE_PE }));
+ok(r.response.order_kind === 'trade' && tiposDe(r).includes('pe'),
+   'padding 0118959520 → normaliza → trade con PE');
+
+// ---- 26. formato desconocido → conservador: sin PE (ni found ni missing) ----
+r = run(base({ 'Validar request': { ...base()['Validar request'], order_number: '77777' },
+  'Buscar PE': FILE_PE }));
+ok(r.response.order_kind === 'desconocido' && !tiposDe(r).includes('pe')
+   && !r.response.attachments.missing.includes('pe'),
+   'formato desconocido: PE nunca se adjunta (conservador) y no se lista faltante');
+
+// ---- 27. degradación dura: los 3 nodos nuevos NO ejecutados ($() tira) → nunca rompe ----
+{
+  const m27 = base();
+  delete m27['GET certificados_origen']; delete m27['Buscar CO PDF']; delete m27['Buscar PE'];
+  r = run(m27);
+  ok(r.response.attachments.missing.includes('co_zip') && r.response.attachments.missing.includes('co_pdf')
+     && r.response.attachments.missing.includes('pe') && r.route === 'respond',
+     'nodos CO/PE caídos/no ejecutados → faltantes reportados, flujo intacto (jamás throw)');
+}
+
+// ---- 28. fila de tabla incompleta (sin ids) degrada campo a campo ----
+r = run(base({ 'GET certificados_origen': { certificado_numero: 'AR004X', zip_drive_id: null, pdf_drive_id: null },
+  'Buscar CO PDF': FILE_CO_PDF }));
+ok(fidDe(r, 'co_pdf') === 'P2' && r.response.attachments.missing.includes('co_zip'),
+   'fila sin ids: pdf cae a búsqueda, zip faltante — null-safe campo a campo');
 
 // ═══════ 21. GATE del 2º nodo target — "Evaluar envío": snapshot atd_at_send ═══════
 const SRC_EV = readFileSync(join(__dirname, '../sdk/code_mailing_evaluar_envio.js'), 'utf8');
