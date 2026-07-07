@@ -9198,6 +9198,26 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
         return;
       }
 
+      // Guard destructivo: el upsert pisa el freetime vigente del tipo en PROD
+      // (todo supplier+country que matchee). Confirmar con el conteo real.
+      let vigentes = null;
+      try {
+        const { count } = await supa.from('detention_freetime').select('*', { count: 'exact', head: true }).eq('tipo', tipo);
+        vigentes = count;
+      } catch(_){}
+      const okReplace = await ssbConfirm({
+        title: 'Reemplazar dataset ' + tipo,
+        body: 'Vas a cargar ' + rows.length + ' filas de "' + file.name + '" sobre las ' + (vigentes == null ? '(?)' : vigentes) + ' vigentes del tipo ' + tipo + ' en producción. Las filas que coincidan por supplier+país se PISAN.'
+          + (descartadas ? '\n\n(' + descartadas + ' filas del archivo descartadas por Supplier/país vacíos.)' : ''),
+        confirmText: 'Reemplazar',
+        danger: true
+      });
+      if(!okReplace){
+        setDetStatus('', '');
+        input.value = '';
+        return;
+      }
+
       setDetStatus('spin', 'Cargando ' + rows.length + ' registros …');
 
       const { error } = await supa
@@ -14421,6 +14441,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(holId){
       res = await supa.from('vac_holidays').update(data).eq('id', holId);
     } else {
+      // Guard: el upsert onConflict(date) PISA un feriado existente en esa
+      // fecha sin avisar — confirmar el reemplazo con contexto.
+      const existing = (window.__vac.admin?.holidays || []).find(x => x.date === data.date);
+      if(existing && !(await ssbConfirm({title:'Ya hay un feriado en esa fecha', body:`El ${formatDmy(data.date)} ya es "${existing.name}". Guardar lo reemplaza.`, confirmText:'Reemplazar', danger:true}))) return false;
       res = await supa.from('vac_holidays').upsert(data, { onConflict: 'date' });
     }
     if(res.error){ ssbToast('No se pudo guardar: ' + res.error.message, 'error'); return false; }
@@ -14526,6 +14550,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     importBtn.onclick = async () => {
       if(!lastRows.length){ doPreview(); if(!lastRows.length) return; }
+      // Guard: el upsert onConflict(date) pisa los feriados existentes en las
+      // mismas fechas — confirmar con el conteo de colisiones.
+      const _fechas = new Set((window.__vac.admin?.holidays || []).map(h => h.date));
+      const pisados = lastRows.filter(r => _fechas.has(r.date)).length;
+      if(!(await ssbConfirm({
+        title: 'Importar feriados',
+        body: `Vas a importar ${lastRows.length} feriado(s).` + (pisados ? `\n${pisados} ya existe(n) en esa fecha y se PISAN.` : ''),
+        confirmText: 'Importar',
+        danger: pisados > 0
+      }))) return;
       importBtn.disabled = true; importBtn.textContent = 'Importando…';
       const { error } = await supa.from('vac_holidays').upsert(lastRows, { onConflict: 'date' });
       if(error){ ssbToast('No se pudo importar: ' + error.message, 'error'); importBtn.disabled = false; importBtn.textContent = 'Importar'; return; }
@@ -16430,6 +16464,20 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   async function saveContacts(){
     if(!_row || !_to.length || _busy) return;
     const gen = _gen, order = _sel;
+    // Guard destructivo: 1 click pisa el directorio persistido de la orden (sin
+    // undo). Pre-lock _busy durante el confirm (mismo patrón anti-doble de doSend).
+    _busy = 'confirm'; renderDetail();
+    const hadDir = !!(_contact && _contact.confirmed);
+    const okDir = await ssbConfirm({
+      title: hadDir ? 'Pisar directorio confirmado' : 'Confirmar directorio',
+      body: 'Orden ' + order + '\nTO: ' + _to.join(', ')
+        + (_cc.length ? '\nCC: ' + _cc.join(', ') : '')
+        + (_blocked.length ? '\nBloqueados: ' + _blocked.join(', ') : '')
+        + (hadDir ? '\n\nReemplaza el directorio ya confirmado de esta orden (sin undo).' : ''),
+      confirmText: hadDir ? 'Pisar directorio' : 'Confirmar',
+      danger: hadDir
+    });
+    if(!okDir || gen !== _gen || order !== _sel){ _busy = null; renderDetail(); return; }
     _busy = 'contacts'; renderDetail();
     let errMsg = null;
     try {
