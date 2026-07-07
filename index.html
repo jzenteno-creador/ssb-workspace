@@ -1610,6 +1610,11 @@ body.light .vac-tab-badge{color:#fff}
 }
 .vac-toast.vac-toast--show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* RBAC de UI (paralelo global de .vac-admin-only): oculta controles a
+   no-admin. ES UX, NO SEGURIDAD — la defensa real de escritura es RLS/
+   servidor (pendiente aparte). body.is-admin lo setea applySession. */
+body:not(.is-admin) .ssb-admin-only{display:none !important}
+
 /* ── SSB UI PRIMITIVES: toasts apilables + confirm modal (dark-aware por tokens) ── */
 :root{--toast-success:#15803d;--toast-error:#b91c1c;--toast-warning:#92400e}
 #ssb-toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10050;pointer-events:none;max-width:min(560px,calc(100vw - 32px))}
@@ -3411,7 +3416,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <div class="results-bar" style="display:flex;align-items:center;gap:12px">
       <span class="results-title">Detention / Free Time</span>
       <span class="results-ct" id="det-ct"></span>
-      <label class="btn-clear" style="margin-left:auto;cursor:pointer;border-color:rgba(0,201,167,.5);color:var(--teal,#00c9a7)" title="Subir Excel de free time (.xlsx)">
+      <label class="btn-clear ssb-admin-only" style="margin-left:auto;cursor:pointer;border-color:rgba(0,201,167,.5);color:var(--teal,#00c9a7)" title="Subir Excel de free time (.xlsx)">
         <svg class="ic ic-sm" aria-hidden="true"><use href="#i-upload"/></svg> Subir Excel
         <input type="file" id="det-file-input" accept=".xlsx" style="display:none" onchange="handleDetentionUpload(this)">
       </label>
@@ -11448,6 +11453,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     if(!session || !session.user || !session.user.email){
       window.__ssbAuth = null;
       document.body.classList.remove('is-authed');
+      document.body.classList.remove('is-admin');
       // Limpiar query param eventual de reset
       try{
         const url = new URL(window.location.href);
@@ -11482,12 +11488,29 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       showState('newpw');
       return;
     }
+    // RBAC de UI: elevar rol al objeto global reusando el mecanismo de
+    // vacaciones (vac_employees.role === 'admin'; su RLS permite SELECT a
+    // authenticated). ES UX, NO SEGURIDAD: solo oculta controles — la defensa
+    // real de escritura es RLS/servidor. Si la query falla, cae a no-admin
+    // (fail-safe cosmético, no bloquea el login).
+    let isAdmin = false, employeeId = null;
+    try {
+      const { data: emp } = await supa.from('vac_employees').select('id,role').eq('email', email).maybeSingle();
+      isAdmin = emp?.role === 'admin';
+      employeeId = emp?.id || null;
+    } catch(_){}
+    // Mismo re-check sticky: este await también puede solaparse con recovery.
+    if(isRecovery){
+      document.body.classList.remove('is-authed');
+      showState('newpw');
+      return;
+    }
     // OK → autorizado.
-    // Nota: el id del empleado lo carga el módulo Vacaciones via su propia
-    // query enriquecida (loadEmployeeForEmail). El gate global solo necesita
-    // saber que el mail está autorizado.
-    window.__ssbAuth = { user: session.user, email, session };
+    // Nota: el objeto empleado enriquecido lo sigue cargando Vacaciones via
+    // loadEmployeeForEmail; acá solo se exponen rol e id para gating de UI.
+    window.__ssbAuth = { user: session.user, email, session, isAdmin, employeeId };
     document.body.classList.add('is-authed');
+    document.body.classList.toggle('is-admin', isAdmin);
     hideGate();
     // Notificar al módulo de Vacaciones (si está cargado) para que refresque su estado.
     if(typeof window.vacApplySsbSession === 'function'){
@@ -16391,7 +16414,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     c.appendChild(el('h3', null, 'Envío'));
 
     const lock = testLockState();
-    const tgWrap = el('label','mail-toggle');
+    // ssb-admin-only: no-admin no ve el toggle → queda clavado en TEST
+    // (tg.checked default true); solo un admin puede armar el envío REAL.
+    const tgWrap = el('label','mail-toggle ssb-admin-only');
     const tg = el('input'); tg.type = 'checkbox'; tg.id = 'mail-test-toggle';
     tg.checked = true;
     if(window.__mailTestOff === _sel && lock.offOk) tg.checked = false;
