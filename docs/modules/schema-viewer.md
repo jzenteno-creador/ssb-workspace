@@ -44,6 +44,34 @@
   - Navegación FK: click en badge/relación → expande target, `scrollIntoView` +
     flash (`CSS.escape` en el selector; respeta `prefers-reduced-motion`).
 - **`dev-server.js`** registra `/api/schema` para `npm run dev`.
+- **Vista GRAFO (2026-07-07, `feat/schema-graph`)** — diagrama ER dentro de la
+  misma solapa, toggle Lista ⇄ Grafo en la toolbar. Consume el MISMO `_data`
+  (cero backend nuevo). La lista de F3 queda intacta; el filtro aplica a la
+  lista (en modo grafo se oculta y vuelve intacto).
+  - **Cytoscape.js 3.30.2** por CDN cdnjs, **lazy** (se inyecta al primer toggle
+    a Grafo) con **SRI sha512 pineado** + `crossOrigin` — CDN comprometido ⇒
+    onerror ⇒ mensaje + Reintentar, jamás código sin verificar. Elegida contra
+    vis-network (aislados entreverados, layout no-determinístico) y Mermaid
+    (3.34MB, sin zoom/pan, overflow 45%) con render real del schema.
+  - **Layout compuesto determinístico**: `cose` (arranque fijo en círculo
+    alfabético, `randomize:false`, params tuneados: repulsion 2M / ideal 150 /
+    2500 iter) sobre el componente conectado + grilla alfabética para las
+    tablas sin FKs (14 hoy). Angosto <700px: grilla DEBAJO (apilado). Post-cose
+    corre `resolveOverlaps()` — cose modela puntos y los labels anchos se
+    pisan; la pasada empuja pares por el eje de menor penetración (aislados =
+    obstáculos fijos), determinística, cap 80 pasadas.
+  - Nodos: tabla borde teal / vista borde violeta punteado (colores desde
+    tokens + probe de `.badge--purple` — nada hardcodeado; `MutationObserver`
+    de `body.light` re-estiliza al cambiar tema). Aristas dirigidas
+    origen→destino (flecha hacia la tabla referenciada).
+  - Interacción: zoom+pan nativos, **sin drag de nodos** (`autoungrabify`);
+    hover resalta vecindario transitorio, tap fija/desfija, tap en fondo
+    limpia. `window.__schGraph()` = hook de test/debug (devuelve la instancia
+    cy; lectura por convención).
+  - Smoke propio: patrón `smoke_schema_graph.cjs` (16 asserts: montaje 30/16,
+    sentido de aristas, 0 solapamientos 1440 y 390, highlight, tema, toggle
+    round-trip con filtro intacto, apilado narrow). El smoke de F3 (23) debe
+    seguir verde — correr AMBOS.
 
 ## Caveats
 
