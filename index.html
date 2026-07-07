@@ -4245,11 +4245,47 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
 <!-- Hidden file input for xlsx -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+/* === SSB CORE HELPERS ===
+   Definición canónica ÚNICA de cada helper cross-módulo. Los <script> de los
+   módulos (schedule-rt, detention, tt-dow, vacaciones, schema, …) resuelven
+   estos nombres por scope global — NO redefinir copias locales. */
+
+// Escapa texto para interpolar en HTML — superset: & < > " '.
+// Seguro también dentro de atributos con comilla simple o doble.
+// esc(0)='0', esc(null)=esc(undefined)=''.
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+// Normaliza equipo para comparación: mayúsculas, sin apóstrofes (rectos Y
+// curly U+2018/U+2019 — autocorrect de Excel), sin backtick/acute, sin espacios.
+function normEquipo(s){return String(s==null?'':s).toUpperCase().replace(/['‘’`´]/g,'').replace(/\s+/g,'')}
+
+// Fecha → "DD/MM/YYYY". Date-only (YYYY-MM-DD) se parsea como LOCAL para no
+// correrse un día en UTC-3; timestamps completos siguen convirtiéndose a local.
+function fmtDate(s){
+  if(!s) return '—';
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const d = m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(s);
+  if(isNaN(d.getTime())) return '—';
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+// Debounce reusable (ex A8).
+function debounce(fn, ms){
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+// Número formato es-AR. dec=null → default del locale (sin forzar decimales).
+function nfAR(v, dec){
+  return Number(v).toLocaleString('es-AR', dec == null ? undefined : { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+/* === FIN SSB CORE HELPERS === */
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxi3VyU-KiobStqXJ6T9iNkGN2vXISb-6OGZYqMd3mXbzvjfhhHWORnfYlipKGRjdQi/exec';
 const CHANGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-// Escapa texto para interpolar en HTML. No cubre `'` en atributos con comilla simple.
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 // Formatea una fecha ISO/YYYY-MM-DD como "Mmm YYYY" (p.ej. "Abr 2026").
 // Reemplaza 2 duplicaciones locales: el fMesEtd+MESES_CORTOS del IIFE Schedule Realtime
@@ -4271,15 +4307,6 @@ let scheduleFileName = '';
 let scheduleFileDate = '';
 let selC = new Set(), selE = new Set();
 const acs = {};
-
-// ── A8: Debounce utility (reusable) ──
-function debounce(fn, ms){
-  let t;
-  return function(...args){
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(this, args), ms);
-  };
-}
 
 // ── INIT ──
 document.addEventListener('click', e => {
@@ -5065,13 +5092,13 @@ function renderEfaGantt(){
       const equipoKeys=Object.keys(ruta.equipos).sort();
       const rowsToRender=collapseEquipos(ruta.equipos,equipoKeys);
       rowsToRender.forEach(row=>{
-        const E=(row.equipoLabel||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+        const E=normEquipo(row.equipoLabel);
         const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
           const sn=(s.NAVIERA||'').toUpperCase();
           if(!sn.includes(C)&&!C.includes(sn))return false;
           if(normalizeOrigen(s.ORIGEN)!==O)return false;
           if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
-          const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+          const se=normEquipo(s.EQUIPO||s.CONTAINER);
           if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
           const etd=toISO(s.ETD);if(!etd)return false;
           const d=new Date(etd+'T00:00:00');
@@ -5610,7 +5637,7 @@ function bulkLatestByRoute(c,eqFilter){
   // Normalización idéntica a la del impact panel (línea ~3941) para evitar mismatches
   const normCarrier=s=>(s||'').toUpperCase().trim();
   const normDest=s=>(s||'').toUpperCase().trim();
-  const normEq=s=>(s||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+  const normEq=normEquipo;
   const routeKeyOf=(orig,dest,eq)=>`${normalizeOrigen(orig)}|${normDest(dest)}|${normEq(eq)}`;
   const confirmedRoutes=new Set();
   (rates||[]).forEach(t=>{
@@ -6463,7 +6490,7 @@ function pickAc(f,v){const i=document.getElementById('f-'+f);i.value=v;i.classLi
 function clearAc(f){const i=document.getElementById('f-'+f);if(!i)return;i.value='';i.classList.remove('sel');document.getElementById('x-'+f).classList.remove('show');closeDrop(f);if(f.startsWith('t-'))applyFilter();else if(f.startsWith('bid-'))renderAdminBID();else if(f.startsWith('rt-'))applyRtFilter();}
 
 // ── HELPERS ──
-const usd = v=>'USD '+(Number(v)||0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const usd = v=>'USD '+nfAR(Number(v)||0, 2);
 const isNum = v=>typeof v==='number';
 const tr = (s,n=24)=>s&&s.length>n?s.slice(0,n)+'…':(s||'');
 function fDate(d){
@@ -7729,12 +7756,12 @@ function bidRenderImpact(){
   const C=(r.carrier||'').toUpperCase();
   const O=normalizeOrigen(r.origen);
   const D=(r.destino||'').toUpperCase();
-  const E=(r.equipo||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+  const E=normEquipo(r.equipo);
   const ships=(Array.isArray(schedule)?schedule:[]).filter(s=>{
     const sn=(s.NAVIERA||'').toUpperCase();if(!sn.includes(C)&&!C.includes(sn))return false;
     if(normalizeOrigen(s.ORIGEN)!==O)return false;
     if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
-    const se=((s.EQUIPO||s.CONTAINER||'')+'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'');
+    const se=normEquipo(s.EQUIPO||s.CONTAINER);
     if(E&&se&&!se.includes(E)&&!E.includes(se))return false;
     const etd=toISO(s.ETD);if(!etd)return false;
     const desde=toISO(r.desde);const hasta=toISO(r.hasta);
@@ -8072,12 +8099,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _rtChannel = null;
   let _rtFilterTimer = null;
 
-  function esc(s) {
-    // Escapa también comillas: este render interpola datos de la DB dentro de
-    // atributos (data-tip="...", data-id="..."), donde una comilla sin escapar
-    // rompe el atributo (injection). Superset de la esc() global (suma comilla simple).
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
+  // esc(): usa la global de SSB CORE HELPERS (superset & < > " ').
+  // Delta consciente: la vieja local hacía s||'' (esc(0)=''); la global hace
+  // s==null?'' (esc(0)='0') — mejor para data-id numéricos.
 
   function brandOf(n) {
     const u = (n||'').toUpperCase();
@@ -8367,18 +8391,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _detData = null;
   let _detLastFetch = 0;
 
-  function esc(s) {
-    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function fmtDate(s) {
-    if(!s) return '—';
-    const d = new Date(s);
-    if(isNaN(d.getTime())) return '—';
-    const dd = String(d.getDate()).padStart(2,'0');
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    return `${dd}/${mm}/${d.getFullYear()}`;
-  }
+  // esc() y fmtDate(): usan las globales de SSB CORE HELPERS.
+  // fmtDate global arregla el bug de TZ: '2026-07-07' ya no se corre a 06/07
+  // en UTC-3 (date-only se parsea como local).
 
   function fmtFreeTime(r) {
     if(r.combined_days != null) return r.combined_days + 'd';
@@ -9107,24 +9122,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   };
 
   // ── Helpers locales ──
-  // esc local cubre comilla simple (a diferencia del esc global), defensivo
-  // si en el futuro se usa en atributos con apostrofe.
-  function esc(s){
-    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
+  // esc(): usa la global de SSB CORE HELPERS (mismo superset & < > " ').
   function fmtUSD(v){
     if(v == null || isNaN(Number(v))) return '—';
-    return 'USD ' + Number(v).toLocaleString('es-AR');
+    return 'USD ' + nfAR(v);
   }
   function fmtPctFromDecimal(v){
     if(!v || Number(v) === 0) return '—';
     const pct = Number(v) * 100;
     return pct.toLocaleString('es-AR', { maximumFractionDigits: 2 }) + '% s/FOB/FCA';
   }
-  function debounce(fn, ms){
-    let t;
-    return function(...a){ clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); };
-  }
+  // debounce(): usa la global de SSB CORE HELPERS.
 
   // País → ISO 3166-1 alpha-2 para flagcdn (Latam relevantes a Dow).
   const TT_COUNTRY_ISO = {
@@ -11416,7 +11424,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   const POLL_MS = 60_000;
 
   const $ = id => document.getElementById(id);
-  const escHtml = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Alias del esc global (SSB CORE HELPERS). La vieja def solo escapaba
+  // & < > — dejaba " sin escapar dentro de title="/value=" (attribute
+  // injection latente con datos de vac_employees). El superset lo cierra.
+  const escHtml = esc;
 
   // Estado del módulo
   window.__vac = window.__vac || {};
@@ -15312,7 +15323,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.title = 'Análisis del control ' + orderNumber;
     v.appendChild(frame);
-    frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (no atributo: esc() no escapa comillas)
+    frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (html es un documento completo — no se escapa)
   }
 
   // Cambio de doc-tab por event delegation: UN listener sobre #cbl-detail (no uno por tab)
@@ -16590,7 +16601,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _busy = false;
   let _histLoading = false;
 
-  const fmtMoney = v => (v == null || v === '') ? '—' : '$' + Number(v).toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  const fmtMoney = v => (v == null || v === '') ? '—' : '$' + nfAR(v, 2);
   const fmtTs = ts => { if(!ts) return '—'; const d = new Date(ts); if(isNaN(d.getTime())) return '—'; const p = n => String(n).padStart(2,'0'); return `${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 
   // Badge de estado: verde=generado, ámbar=registro pendiente, rojo=error
@@ -16787,13 +16798,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _loading = false;
   const _open = new Set(); // tablas expandidas (sobrevive re-render del filtro)
 
-  function debounceLocal(fn, ms){
-    let t;
-    return function(...args){
-      clearTimeout(t);
-      t = setTimeout(() => fn.apply(this, args), ms);
-    };
-  }
+  // debounce: usa la global de SSB CORE HELPERS (ex debounceLocal idéntica).
 
   async function apiSchema(){
     const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
@@ -17283,7 +17288,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       .observe(document.body, { attributes: true, attributeFilter: ['class'] });
     const filterInput = $('sch-filter');
     if(filterInput){
-      filterInput.addEventListener('input', debounceLocal(() => {
+      filterInput.addEventListener('input', debounce(() => {
         if(_data) renderTables(filterInput.value);
       }, 250));
     }
