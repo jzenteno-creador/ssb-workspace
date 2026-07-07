@@ -15560,7 +15560,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
   // Labels humanos de documentos (chips; el copy largo del mail vive en el workflow)
-  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT' };
+  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT', co_zip:'CO ZIP', co_pdf:'CO PDF', pe:'PE' };
   function badge(status, testMode){
     const b = el('span', 'mail-badge ' + (BADGE_CLS[status] || 'pend'));
     b.appendChild(el('span','mail-dot'));
@@ -15742,6 +15742,18 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     h.style.margin = '0';
     head.appendChild(h);
     head.appendChild(badge(_row.status, _row.sent_test_mode));
+    // Trade/STO — derivado del preview (workflow); pre-PUT viene undefined y no renderiza nada.
+    if(_preview && _preview.order_kind){
+      const kind = _preview.order_kind;
+      let kb = null;
+      if(kind === 'trade') kb = el('span','badge badge--equipo','Trade');
+      else if(kind === 'sto') kb = el('span','badge badge--neutral','STO');
+      else if(kind === 'desconocido'){
+        kb = el('span','badge badge--warning','Tipo ?');
+        kb.title = 'Formato de orden no reconocido — PE no se adjunta.';
+      }
+      if(kb) head.appendChild(kb);
+    }
     c.appendChild(head);
     const dl = el('dl','mail-meta-grid');
     const item = (k, v) => { const w = el('div'); w.appendChild(el('dt', null, k)); w.appendChild(el('dd', null, v || '—')); dl.appendChild(w); };
@@ -16031,6 +16043,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       if(!tg.checked && rcp.nuevos && rcp.nuevos.length){
         c.appendChild(el('div','mail-alert','⚠ Hay ' + rcp.nuevos.length + ' extraído(s) sin decidir que NO van en este envío real. Confirmalos o bloquealos en el directorio si corresponde.'));
       }
+    }
+
+    // ── Completitud documental (pre-send): found/missing ya vienen del preview —
+    // sin tipos nuevos del workflow, este conteo es el mismo de siempre. ──
+    if(_preview && _preview.attachments){
+      const att = _preview.attachments;
+      const foundN = (att.found || []).length;
+      const missN = (att.missing || []).length;
+      const docLine = el('p','mail-status-line', 'Documentos: ' + foundN + ' de ' + (foundN + missN) + (missN ? '' : ' ✓'));
+      if(missN){
+        const miss = el('span', null, ' — faltan: ' + (att.missing || []).map(m => DOC_LABELS[m] || m).join(', '));
+        miss.style.color = 'var(--mail-warn)';
+        docLine.appendChild(miss);
+      }
+      c.appendChild(docLine);
     }
 
     const row = el('div','mail-btnrow');

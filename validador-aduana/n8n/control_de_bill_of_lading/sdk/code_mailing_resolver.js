@@ -5,7 +5,8 @@
  * Entradas (todas por $('Nodo'), la cadena upstream es lineal):
  *   Validar request | GET mailing_orders | GET control BL (latest) |
  *   GET mailing_contacts | Agg schedules | Buscar BL Draft | Buscar Factura |
- *   Buscar Packing List | Config (TEST_MODE)
+ *   Buscar Packing List | GET certificados_origen | Buscar CO PDF | Buscar PE |
+ *   Config (TEST_MODE)
  *
  * Responsabilidades (composición ÚNICA preview/send):
  *   1. Destinatarios: override request → mailing_contacts confirmado →
@@ -50,9 +51,35 @@ const foundFile = (nodeName, tipo) => {
 const afBL = foundFile('Buscar BL Draft', 'bl_draft');
 const afFC = foundFile('Buscar Factura', 'factura');
 const afPL = foundFile('Buscar Packing List', 'packing_list');
-const attachments_found = [afBL, afFC, afPL].filter(Boolean);
-const attachments_missing = [['bl_draft', afBL], ['factura', afFC], ['packing_list', afPL]]
-  .filter(([, f]) => !f).map(([t]) => t);
+
+// ---- F1/F2 (2026-07-07): CO híbrido tabla??búsqueda + PE gateado por tipo ----
+// order_kind por formato de orden (regla de dominio de cert-origen, cero
+// contraejemplos en repo+fixtures): STO = ^4, 10 dígitos · trade = ^1, 9 dígitos
+// (a veces con UN 0 de padding). Formato desconocido = conservador: SIN PE —
+// adjuntar un PE a una STO es el peor bug de negocio; omitirlo se ve en la UI.
+const ordNorm = String(req.order_number || '').trim().replace(/^0(?=\d)/, '');
+const order_kind = /^4\d{9}$/.test(ordNorm) ? 'sto' : (/^1\d{8}$/.test(ordNorm) ? 'trade' : 'desconocido');
+
+// CO (aplica a trade Y STO, ZIP+PDF juntos cuando se puede):
+//   la fila de certificados_origen GANA (file_ids directos, determinístico);
+//   el PDF degrada a la búsqueda Drive por orden (cubre los convertidos a mano
+//   {orden}_CO.pdf que no están en la tabla); el ZIP se llama {certificado}.zip
+//   (la orden NO está en el nombre ni en el XML) → SOLO resoluble por tabla.
+const co = row('GET certificados_origen');
+const afCoZip = (co && co.zip_drive_id)
+  ? { tipo: 'co_zip', file_id: co.zip_drive_id, name: co.certificado_numero ? co.certificado_numero + '.zip' : null, mime: 'application/zip' }
+  : null;
+const afCoPdf = (co && co.pdf_drive_id)
+  ? { tipo: 'co_pdf', file_id: co.pdf_drive_id, name: co.pdf_nombre || null, mime: 'application/pdf' }
+  : foundFile('Buscar CO PDF', 'co_pdf');
+// PE: SOLO trade. Una STO JAMÁS adjunta PE — para STO (y desconocido) el tipo
+// ni se busca ni se lista como faltante (no aplica).
+const afPE = order_kind === 'trade' ? foundFile('Buscar PE', 'pe') : null;
+
+const attachments_found = [afBL, afFC, afPL, afCoZip, afCoPdf, afPE].filter(Boolean);
+const expectedDocs = [['bl_draft', afBL], ['factura', afFC], ['packing_list', afPL], ['co_zip', afCoZip], ['co_pdf', afCoPdf]];
+if (order_kind === 'trade') expectedDocs.push(['pe', afPE]);
+const attachments_missing = expectedDocs.filter(([, f]) => !f).map(([t]) => t);
 
 // ---- helpers ----
 const pick = (...xs) => { for (const x of xs) { if (x !== undefined && x !== null && String(x).trim() !== '') return x; } return null; };
@@ -182,7 +209,7 @@ const subject_real = ['Documentación de embarque · Orden ' + order_number,
   buqueViaje || null, atd ? 'Zarpe ' + fmtD(atd) : null].filter(Boolean).join(' · ');
 const trow = (k, v) => `<tr><td style="padding:5px 12px 5px 0;color:#666;font-size:13px;white-space:nowrap;">${esc(k)}</td><td style="padding:5px 0;font-size:13px;"><b>${esc(v || '—')}</b></td></tr>`;
 // Labels humanos de la documentación adjunta; tipo desconocido → filename fallback
-const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
+const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', co_zip: 'Certificado de Origen — digital (ZIP)', co_pdf: 'Certificado de Origen (PDF)', pe: 'Permiso de Exportación (PE)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
 const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('');
 const testBanner = effective_test
   ? `<p style="background:#fff3cd;border:1px solid #e0c860;padding:8px 12px;font-size:12px;color:#7a5d00;">[MODO TEST] Envío real iría a: ${esc(to.join(', ') || 'SIN DESTINATARIOS CONFIRMADOS')}${cc.length ? ' — CC: ' + esc(cc.join(', ')) : ''}</p>` : '';
@@ -255,6 +282,7 @@ if (!req.req_errors.length && !action_errors.length) {
 const response = {
   ok: !req.req_errors.length && !action_errors.length,
   action: req.action, order_number, encontrada: !!mo,
+  order_kind, // trade | sto | desconocido — el front NO re-deriva (badge + checklist PE)
   cliente, carrier: pick(m.carrier), vessel, voyage, pol, pod, booking_no, bl_number,
   invoice_no: pick(m.invoice_no), status_actual: mo ? m.status : null,
   schedule,
