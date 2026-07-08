@@ -14,3 +14,5 @@
 - Scopear selectores de modal: `.efa-mod-x` matchea 7 modales → usar `#bid-modal .efa-mod-x` (o el id del modal puntual).
 - Datos de prueba en Supabase: nombres `ZZ*` identificables + limpiar (tarifa + log por `registro_id` + puerto; el trigger de delete re-loguea → borrar el log después).
 - **Control BL:** Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node` `require()` (CommonJS; el MCP Playwright falla, busca chrome en `/opt/google/chrome`). El query **anon funciona headless** → data layers verificables sin login; el iframe de Drive embebe igual (id falso → "archivo no existe" de Drive, no es bug).
+- **MCP Playwright roto en este WSL** (busca `chrome` en `/opt/google/chrome`). Alternativa usada 2026-07-07: `npm i playwright-core` en scratchpad + `chromium.launch({ executablePath: '~/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome' })`. `require('playwright-core')` (CommonJS).
+- Server: `python3 -m http.server 8899 --bind 127.0.0.1` (el bind a `0.0.0.0` lo bloquea el clasificador de sandbox).

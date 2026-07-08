@@ -1,11 +1,11 @@
-# Handoff sesión SSB Workspace · 2026-07-07 (tanda masiva UX/correctness — 8 branches, SIN PUSH)
+# Handoff sesión SSB Workspace · 2026-07-07 (tanda masiva UX/correctness — 8 branches, EN PROD)
 
 ## Estado
 
-- **`master` local @ 17 commits SIN PUSHEAR** sobre `origin/master` (`84cf7b4`). **El push lo autoriza John** tras revisar este handoff — un solo push despliega todo a Vercel.
+- **EN PRODUCCIÓN.** `master` pusheado a `origin/master` (`84cf7b4..ae21e93`, 18 commits) tras smoke local aprobado por John → Vercel desplegó. `master == origin/master`, working tree limpio.
 - **DB Supabase: CERO cambios** (solo lecturas de verificación). No hay migraciones ni triggers nuevos, no hay rollback pendiente.
 - **n8n: intocado.**
-- Smoke integral final: **35/35 PASS** (13 solapas × dark/light + 1 flujo por módulo + cero diálogos nativos + cero pageerrors). Base de smoke: Playwright-core por script (el MCP no anda en este WSL — busca canal `chrome`); chromium cacheado `~/.cache/ms-playwright/chromium-1228` + `python3 -m http.server`.
+- Smoke integral final: **35/35 PASS** (13 solapas × dark/light + 1 flujo por módulo + cero diálogos nativos + cero pageerrors) + smoke local de John aprobado. Base de smoke: Playwright-core por script (el MCP no anda en este WSL — busca canal `chrome`); chromium cacheado `~/.cache/ms-playwright/chromium-1228` + `python3 -m http.server`.
 
 ## Los 8 branches mergeados (--no-ff, en orden)
 

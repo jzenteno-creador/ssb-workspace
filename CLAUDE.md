@@ -118,7 +118,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - Normalización de equipo: usar siempre `(s||'').toUpperCase().replace(/['']/g,'').replace(/\s/g,'')` (igual al impact panel)
 - Filtros de texto en autocomplete: substring match con `.includes()`, no igualdad estricta
 - HTML inline en interpolación de strings con datos del Sheet → riesgo XSS, escapar siempre
-- **CRÍTICO**: `esc()` solo escapa `&`, `<`, `>` — NO escapa comillas simples `'`. Nunca usar `esc()` dentro de atributos onclick/href con comillas simples. Usar `createElement` + `.onclick = () => fn(val)` en su lugar.
+- **`esc()` es superset único** (`& < > " '`, def en sección `/* === SSB CORE HELPERS === */`) desde 2026-07-07 — seguro en atributos con comilla simple o doble. NO redefinir copias locales. Aun así, para `onclick` con datos preferir `createElement` + `.onclick = () => fn(val)` (evita depender del escaping). 2 sitios pre-existentes sin escapar: carrier crudo en onclick y VESSEL con escape a medias (buscar por contenido).
 - Supabase Realtime: siempre trackear el canal (`let _rtChannel = null`) y llamar `supa.removeChannel()` al salir del tab. Sin cleanup acumula suscripciones.
 - Filtros con `oninput`/`onchange` → agregar debounce de 250–300ms para evitar re-renders continuos
 - **`git cherry-pick -n A B C` se DETIENE en el primer conflicto** y no aplica el resto. Si commiteás en vez de `git cherry-pick --continue`, los commits siguientes se pierden sin aviso. Verificar siempre con `git rev-list --count <base>..HEAD` que entraron todos. (Si ya commiteaste: `git cherry-pick --quit` + re-aplicar los faltantes.)
@@ -135,6 +135,10 @@ Cross-cutting a toda UI de `index.html`:
 - **Empty states:** `.empty-ico` / `.efa-empty .ico` usan SVG 60-64px via `<use href="#i-*">`. Copy humanizado ("No encontré X que coincidan")
 - **Dark cards:** `#1e293b` (slate-900) + borders `rgba(255,255,255,.08)` — NO `#3d4f6e`
 - **Debounce filtros:** `window.X = debounce(_XImpl, 250)` pattern (no `const X` — rompe inline handlers). Aplicado a applyFilter/renderAdminBID/applyRtFilter
+- **Helpers canónicos** (`/* === SSB CORE HELPERS === */`, inicio del script principal): `esc` (superset), `normEquipo` (curly apostrophes), `fmtDate` (date-only parsea LOCAL, no UTC), `debounce`, `nfAR`. **1 sola def cada uno — los módulos resuelven por scope global, no crear copias.**
+- **Primitivas de UI** (`/* === SSB UI PRIMITIVES === */`): `ssbToast(msg,kind)` apilable (`success/error/warning/info`) · `window.ssbConfirm(opts)`→Promise (accesible; variante `reason`→`{ok,reason}`; `danger` foco en Cancelar) · `ssbAlert(opts)` 1-botón. **CERO `alert()`/`confirm()` nativos** (queda 1 `prompt()` en bidBulkAction, BAJA). Convertir a async cuidando el patrón sync-hasta-el-primer-await.
+- **RBAC UI (cosmético, no seguridad):** `body.is-admin` (lo setea `applySession` leyendo `vac_employees.role`) + `.ssb-admin-only`. `__ssbAuth.{isAdmin,employeeId}`.
+- **Estados error≠vacío:** loaders devuelven bool + pintan error con retry; señales `_syncInFlight`/`_syncError` (admin-bid/EFA), banner `.vac-load-err` (vacaciones), hook `__ssbDrawerClose` (drawer móvil desde switchTab async).
 - **prefers-reduced-motion:** respetado globalmente — al agregar animation/transition nueva, verificar que no rompa el guard en `@media (prefers-reduced-motion: reduce)`
 
 ## Auth global (2026-05-05)
@@ -171,7 +175,7 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
   - **Verificado:** 21 tablas del whitelist devuelven datos, write single-statement (función volátil) bloqueada por read-only, multi-statement y blocklist rechazan, endpoint Workspace IA en vivo 200/con datos.
 - **PENDIENTE (F1 en adelante):**
   - **F1** — **auth Bearer** (JWT de sesión Supabase) en `/api/chat` y `/api/chat-workspace` + **rate limiting** + `chat-workspace` migrar a rol read-only con RLS activa (dejar de usar service_role). Hoy los endpoints siguen **sin auth**.
-  - **F2** — LIMIT forzado server-side (no por regex) + **unificar las 5 defs divergentes de `esc()`/`escHtml`**.
+  - **F2** — LIMIT forzado server-side (no por regex). ~~unificar las 5 defs de `esc()`/`escHtml`~~ ✅ HECHO 2026-07-07 (superset único).
   - **F3** — hooks de regresión (SQL/secrets + XSS) + subagent `security-reviewer` + **borrar `netlify/functions/`** (gemelas muertas sin auth).
   - Grants MySQL `db_reader_jz_1` (`SHOW GRANTS` → solo SELECT, sin FILE/SUPER) — sin verificar aún; otra base/sistema (Metric), fuera de Supabase.
 - **Regla:** writes por CC o SQL editor de Supabase, **nunca desde el chat**. Seguridad = capa DB/infra; la capa prompt del LLM **NO** es guardrail.
