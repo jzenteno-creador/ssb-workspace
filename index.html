@@ -6082,6 +6082,25 @@ function renderEFAPlanilla(){
 // ── EFA MODAL (C2) ──
 let efaModalState = {mode:'new', rowIndex:null};
 
+let _efaModalSnapshot='';
+function _efaModalSerialize(){
+  return ['carrier','equipo','origen','destino','monto','desde','hasta','coment']
+    .map(f=>{const el=document.getElementById('efm-'+f); return el?el.value:'';}).join('');
+}
+function efaModalIsDirty(){ return _efaModalSerialize()!==_efaModalSnapshot; }
+const _efaEscHandler=(e)=>{
+  if(e.key!=='Escape')return;
+  if(document.getElementById('_mm-newcat-ok'))return;                              // confirm de catálogo arriba → no interferir
+  const _conf=document.getElementById('ssb-confirm-overlay');
+  if(_conf && !_conf.hidden)return;                                                // ssbConfirm arriba → no interferir (defensa en profundidad)
+  if(!document.getElementById('efa-modal').classList.contains('open'))return;
+  closeEfaModalGuarded();
+};
+// async SOLO por el guard de dirty: modal limpio cierra síncrono.
+async function closeEfaModalGuarded(){
+  if(efaModalIsDirty() && !(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés cambios sin guardar en este EFA.', confirmText:'Descartar y cerrar', danger:true}))) return;
+  closeEfaModal();
+}
 function openEfaModal(rowIndex, prefill){
   const isEdit = rowIndex!=null;
   efaModalState = {mode: isEdit?'edit':'new', rowIndex: isEdit?rowIndex:null};
@@ -6111,10 +6130,13 @@ function openEfaModal(rowIndex, prefill){
   ['efm-carrier','efm-origen','efm-destino','efm-equipo','efm-monto','efm-desde'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('input-error','input-success');});
   document.getElementById('efa-modal').classList.add('open');
   efaModalPreview();
+  _efaModalSnapshot=_efaModalSerialize();                                          // baseline dirty-guard (post-set)
+  document.addEventListener('keydown', _efaEscHandler);
 }
 
 function closeEfaModal(){
   document.getElementById('efa-modal').classList.remove('open');
+  document.removeEventListener('keydown', _efaEscHandler);
 }
 
 function buildMultiRouteList(){
@@ -8004,11 +8026,11 @@ function exportTarifasExcel(){
 </script>
 
 <!-- ═══════════ EFA MODAL (C2) ═══════════ -->
-<div class="efa-mod-bk" id="efa-modal" onclick="if(event.target===this)closeEfaModal()">
+<div class="efa-mod-bk" id="efa-modal" onclick="if(event.target===this)closeEfaModalGuarded()">
   <div class="efa-mod">
     <div class="efa-mod-hdr">
       <h3 id="efa-mod-title">⚡ Nuevo EFA</h3>
-      <button class="efa-mod-x" onclick="closeEfaModal()" title="Cerrar (sin guardar)">×</button>
+      <button class="efa-mod-x" onclick="closeEfaModalGuarded()" title="Cerrar (sin guardar)">×</button>
     </div>
     <div class="efa-mod-bd">
       <div class="efa-mod-grid">
@@ -8070,7 +8092,7 @@ function exportTarifasExcel(){
         <button class="efa-mod-btn danger" id="efm-del-btn" onclick="deleteEfaFromModal()" style="display:none" title="Eliminar este EFA permanentemente">🗑 Eliminar</button>
       </div>
       <div class="efa-mod-ft-r">
-        <button class="efa-mod-btn" onclick="closeEfaModal()" title="Cerrar sin guardar cambios">Cancelar</button>
+        <button class="efa-mod-btn" onclick="closeEfaModalGuarded()" title="Cerrar sin guardar cambios">Cancelar</button>
         <button class="efa-mod-btn primary" id="efm-save-btn" onclick="saveEfaModal()" title="Guardar este EFA en la planilla">💾 Guardar</button>
       </div>
     </div>
