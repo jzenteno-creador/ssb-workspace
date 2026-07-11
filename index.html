@@ -268,6 +268,50 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
   .logo-txt{display:none}
 }
 
+/* ── RAIL: grupo Documentación (WP2) ──
+   Un solo set de botones (los ids son únicos, switchTab togglea por id) presentado
+   como FLYOUT flotante en rail colapsado (64px, incl. tier 701-1100) o como ÁRBOL
+   inline en pinned (≥1101 con pin) y drawer (≤700). La animación de transition en
+   .rail-chev ya queda cubierta por el guard global de prefers-reduced-motion (A9). */
+.rail-group{position:relative;display:flex;flex-direction:column;gap:4px;width:100%;flex-shrink:0}
+.rail-doc-btn .rail-chev{width:14px;height:14px;margin-left:auto;opacity:0;transition:transform .18s}
+.rail-group.open .rail-chev{transform:rotate(90deg)}
+@media (min-width:1101px){ html.rail-pinned .rail-doc-btn .rail-chev{opacity:.6} }
+@media (max-width:700px){ .rail-doc-btn .rail-chev{opacity:.6} }
+/* Cabecera del flyout (título) — visible solo en modo flyout, ver override en árbol abajo */
+.rail-doc-hd{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:6px 10px 5px}
+/* MODO FLYOUT (base, rail colapsado): card flotante a la derecha del grupo */
+.rail-doc-sub{position:absolute;left:calc(100% + 10px);top:-4px;min-width:200px;background:#0b0f17;border:1px solid rgba(255,255,255,.14);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.55);padding:6px;display:none;z-index:260}
+.rail-group.open .rail-doc-sub{display:block}
+.rail-doc-sub .tab-btn{width:100%}
+.rail-doc-sub .tab-lbl{width:auto;padding-left:10px;opacity:1}
+.rail-doc-sub .tab-btn:hover::after,.rail-doc-sub .tab-btn:focus-visible::after{display:none}
+.rail-doc-sub .vac-tab-badge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+/* "sub activa adentro" — el ítem "Documentación" hereda el resaltado cuando el
+   grupo está cerrado/colapsado (mismo molde que .tab-btn.active) */
+.rail-group.has-active>.rail-doc-btn{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+.rail-group.has-active>.rail-doc-btn::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+/* MODO ÁRBOL — pinned (≥1101 con pin) y drawer (≤700): la sub vuelve a flujo normal,
+   indentada con línea de rama. Sin animación de altura (el rail vivo tampoco anima listas). */
+@media (min-width:1101px){
+  html.rail-pinned .rail-doc-hd{display:none}
+  /* reset left/top del flyout: position:relative SÍ respeta left/top heredados
+     de la regla base — sin este reset el árbol se dispara fuera del rail */
+  html.rail-pinned .rail-doc-sub{position:static;left:auto;top:auto;background:none;border:none;box-shadow:none;padding:0;min-width:0}
+  html.rail-pinned .rail-group.open .rail-doc-sub{display:flex;flex-direction:column;gap:3px;position:relative;padding:2px 0 0}
+  html.rail-pinned .rail-group.open .rail-doc-sub::before{content:'';position:absolute;left:19px;top:2px;bottom:6px;width:1px;background:rgba(255,255,255,.10)}
+  html.rail-pinned .rail-doc-sub .tab-btn{margin-left:22px;width:calc(100% - 22px);height:36px;font-size:12.5px}
+  html.rail-pinned .rail-group.open #seg-group-badge{display:none !important}
+}
+@media (max-width:700px){
+  .rail-doc-hd{display:none}
+  .rail-doc-sub{position:static;left:auto;top:auto;background:none;border:none;box-shadow:none;padding:0;min-width:0}
+  .rail-group.open .rail-doc-sub{display:flex;flex-direction:column;gap:3px;position:relative;padding:2px 0 0}
+  .rail-group.open .rail-doc-sub::before{content:'';position:absolute;left:19px;top:2px;bottom:6px;width:1px;background:rgba(255,255,255,.10)}
+  .rail-doc-sub .tab-btn{margin-left:22px;width:calc(100% - 22px);height:36px;font-size:12.5px}
+  .rail-group.open #seg-group-badge{display:none !important}
+}
+
 /* ── FILTER BAR ── */
 .filter-bar{background:var(--header-bg);border-bottom:1px solid var(--border);padding:.85rem 2rem;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
 .filter-row{display:flex;align-items:flex-end;gap:12px;flex-wrap:nowrap}
@@ -2788,6 +2832,173 @@ body.light #panel-mailing{
   #panel-cert-origen .co-kv{grid-template-columns:1fr}
 }
 
+/* ═══════════ SEGUIMIENTO — solapa (WP3) ═══════════ */
+/* Namespace seg-* (lección crm-detention: nunca clases genéricas — el .bdg del
+   mockup se renombra acá a .seg-bdg para no colisionar con un futuro `.badge`
+   global). Fuente visual: docs/mockups/mockup_seguimiento.html (maqueta 0.c v2,
+   aprobada) — CSS portado, la sección 3 "Mapa alerta→copy→acción" y el gate de
+   decisiones eran solo material de revisión, no se llevan a producción. */
+#panel-seguimiento{
+  --seg-paper:var(--bg); --seg-surface:#1e293b; --seg-surface-2:#161e2b;
+  --seg-ink:var(--text); --seg-ink-soft:var(--muted); --seg-ink-faint:#6b7488;
+  --seg-line:rgba(255,255,255,.08); --seg-line-strong:rgba(255,255,255,.16);
+  --seg-accent:var(--blue); --seg-shadow:var(--shadow);
+}
+body.light #panel-seguimiento{
+  --seg-paper:#F7F6F2; --seg-surface:#FFFFFF; --seg-surface-2:#FBFAF7;
+  --seg-ink:#1C1B19; --seg-ink-soft:#6B6863; --seg-ink-faint:#9C988F;
+  --seg-line:#E7E4DD; --seg-line-strong:#D9D5CC;
+  --seg-accent:#1F5FAE; --seg-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+}
+#panel-seguimiento .seg-root{max-width:1760px}
+#panel-seguimiento .seg-root *{box-sizing:border-box}
+
+#panel-seguimiento .seg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+#panel-seguimiento .seg-title{font-size:25px;font-weight:800;letter-spacing:-.025em;color:var(--seg-ink);margin:0}
+#panel-seguimiento .seg-sub{font-size:var(--fs-md);color:var(--seg-ink-soft);margin-top:4px;max-width:640px;line-height:1.5}
+#panel-seguimiento .seg-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#panel-seguimiento .seg-btn{font-family:var(--font);font-size:13.5px;font-weight:600;border-radius:10px;padding:9px 16px;cursor:pointer;border:1px solid var(--seg-line-strong);background:var(--seg-surface);color:var(--seg-ink);display:inline-flex;align-items:center;gap:7px}
+#panel-seguimiento .seg-btn:hover{background:var(--seg-surface-2)}
+#panel-seguimiento .seg-btn:disabled{opacity:.55;cursor:progress}
+#panel-seguimiento .seg-btn .ic{width:15px;height:15px}
+#panel-seguimiento .seg-btn--primary{background:var(--seg-accent);border-color:var(--seg-accent);color:var(--text-inverse)}
+#panel-seguimiento .seg-btn--primary:hover{filter:brightness(1.08)}
+#panel-seguimiento .seg-toggle{font-size:var(--fs-sm);color:var(--seg-ink-soft);display:inline-flex;gap:6px;align-items:center;cursor:pointer;user-select:none}
+
+/* ── Triage en dos ejes ── */
+#panel-seguimiento .seg-triage{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:stretch}
+#panel-seguimiento .seg-tgroup{border:1px solid var(--seg-line);border-radius:14px;background:var(--seg-surface-2);padding:8px 10px 10px}
+#panel-seguimiento .seg-tgroup>.g{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--seg-ink-faint);margin:0 4px 6px}
+#panel-seguimiento .seg-tgroup .row{display:flex;gap:8px;flex-wrap:wrap}
+#panel-seguimiento .seg-chip{border-radius:11px;border:1px solid var(--seg-line);background:var(--seg-surface);padding:8px 14px 7px;cursor:pointer;display:flex;flex-direction:column;gap:0;min-width:118px;text-align:left;font-family:var(--font);transition:transform .1s,border-color .1s}
+#panel-seguimiento .seg-chip:hover{transform:translateY(-1px)}
+#panel-seguimiento .seg-chip.on{outline:2px solid var(--blue);outline-offset:1px}
+#panel-seguimiento .seg-chip .n{font-size:20px;font-weight:800;line-height:1.15;color:var(--seg-ink)}
+#panel-seguimiento .seg-chip .l{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft)}
+#panel-seguimiento .seg-chip .a{font-size:var(--fs-2xs);color:var(--seg-ink-faint);margin-top:1px}
+#panel-seguimiento .seg-chip--red .n{color:var(--red)}
+#panel-seguimiento .seg-chip--red{border-color:var(--red-bd);background:var(--red-bg)}
+#panel-seguimiento .seg-chip--amber .n{color:var(--amber)}
+#panel-seguimiento .seg-chip--amber{border-color:var(--amber-bd)}
+#panel-seguimiento .seg-chip--blue .n{color:var(--blue)}
+#panel-seguimiento .seg-chip--gray .n{color:var(--seg-ink-soft)}
+#panel-seguimiento .seg-chip--purple .n{color:var(--purple)}
+#panel-seguimiento .seg-clean{display:none;align-items:center;gap:10px;border:1px solid var(--green-bd);background:var(--green-bg);color:var(--green);border-radius:12px;padding:10px 16px;font-size:var(--fs-md);font-weight:600;margin-bottom:14px;flex-wrap:wrap}
+#panel-seguimiento .seg-clean .ic{width:18px;height:18px;flex-shrink:0}
+#panel-seguimiento .seg-clean small{font-weight:400;color:var(--seg-ink-soft)}
+
+/* ── Filtros ── */
+#panel-seguimiento .seg-filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;border:1px solid var(--seg-line);border-radius:14px;background:var(--seg-surface);padding:12px 14px;margin-bottom:12px}
+#panel-seguimiento .seg-f{display:flex;flex-direction:column;gap:4px}
+#panel-seguimiento .seg-f label{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint)}
+#panel-seguimiento .seg-f select{font-family:var(--font);font-size:var(--fs-md);color:var(--seg-ink);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:9px;padding:7px 9px;outline:none;min-width:130px}
+#panel-seguimiento .seg-fstate{margin-left:auto;display:flex;align-items:center;gap:10px}
+#panel-seguimiento .seg-count{font-size:var(--fs-md);font-weight:700;color:var(--seg-ink)}
+#panel-seguimiento .seg-count b{color:var(--blue)}
+#panel-seguimiento .seg-clear{font-family:var(--font);font-size:var(--fs-xs);font-weight:600;background:none;border:1px solid var(--seg-line-strong);color:var(--seg-ink-soft);border-radius:8px;padding:6px 10px;cursor:pointer;display:none}
+#panel-seguimiento .seg-clear.vis{display:inline-block}
+
+/* ── Tabla semáforo ── */
+#panel-seguimiento .seg-tablewrap{overflow-x:auto;border:1px solid var(--seg-line);border-radius:14px;background:var(--seg-surface);box-shadow:var(--seg-shadow)}
+#panel-seguimiento table.seg-table{border-collapse:collapse;width:100%;min-width:1120px;font-size:var(--fs-md)}
+#panel-seguimiento .seg-table th{font-size:var(--fs-2xs);letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint);text-align:left;padding:10px 8px;border-bottom:1px solid var(--seg-line-strong);background:var(--seg-surface-2);white-space:nowrap}
+#panel-seguimiento .seg-table th.sort{cursor:pointer;user-select:none}
+#panel-seguimiento .seg-table th.sort:hover{color:var(--seg-ink-soft)}
+#panel-seguimiento .seg-table th.sort .arr{opacity:.45;font-size:9px;padding-left:3px}
+#panel-seguimiento .seg-table th.sort.active{color:var(--blue)}
+#panel-seguimiento .seg-table th.sort.active .arr{opacity:1}
+#panel-seguimiento .seg-table td{padding:10px 8px;border-bottom:1px solid var(--seg-line);vertical-align:top;white-space:nowrap}
+#panel-seguimiento .seg-table tr:last-child td{border-bottom:none}
+#panel-seguimiento .seg-table tbody tr:hover td{background:rgba(91,155,245,.04)}
+#panel-seguimiento .seg-orden{font-family:var(--mono);font-weight:700;font-size:var(--fs-md);color:var(--seg-ink)}
+#panel-seguimiento .seg-kind{font-size:var(--fs-2xs);color:var(--seg-ink-faint);letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
+#panel-seguimiento .seg-cliente{max-width:150px;overflow:hidden;text-overflow:ellipsis;color:var(--seg-ink)}
+#panel-seguimiento .seg-soft{color:var(--seg-ink-soft)}
+#panel-seguimiento .seg-faint{color:var(--seg-ink-faint)}
+#panel-seguimiento .seg-table td .seg-faint{font-size:var(--fs-xs)}
+
+#panel-seguimiento .seg-bdg{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-xs);font-weight:700;letter-spacing:.03em;border:1px solid transparent;border-radius:6px;padding:3px 8px;white-space:nowrap}
+#panel-seguimiento .seg-bdg--ok{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+#panel-seguimiento .seg-bdg--rev{background:var(--orange-bg);color:var(--orange);border-color:var(--orange-bd)}
+#panel-seguimiento .seg-bdg--warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+#panel-seguimiento .seg-bdg--bad{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+#panel-seguimiento .seg-bdg--mut{background:var(--faint);color:var(--muted);border-color:var(--border)}
+#panel-seguimiento .seg-bdg--info{background:var(--blue-lt);color:var(--blue)}
+#panel-seguimiento .seg-bdg[title]{cursor:help}
+
+#panel-seguimiento .seg-docs{display:inline-flex;gap:3px;flex-wrap:wrap}
+#panel-seguimiento .seg-doc{height:20px;min-width:24px;padding:0 5px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.03em;border:1px solid var(--seg-line);cursor:help}
+#panel-seguimiento .seg-doc.on{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+#panel-seguimiento .seg-doc.off{background:var(--faint);color:var(--seg-ink-faint);border-style:dashed}
+#panel-seguimiento .seg-doc.q{background:var(--faint);color:var(--seg-ink-soft);border-style:dashed;border-color:var(--seg-line-strong)}
+#panel-seguimiento .seg-doc.fut{background:none;color:var(--seg-ink-faint);border-style:dotted;opacity:.75;font-style:italic}
+#panel-seguimiento .seg-doclegend{font-size:var(--fs-2xs);color:var(--seg-ink-faint);padding:10px 2px 0;line-height:1.7}
+#panel-seguimiento .seg-doclegend b{color:var(--seg-ink-soft);font-weight:700}
+
+#panel-seguimiento .seg-alerts{display:flex;flex-direction:column;gap:4px;white-space:normal;min-width:180px}
+#panel-seguimiento .seg-alert{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-xs);font-weight:600;border-radius:7px;padding:3px 9px;border:1px solid;width:max-content;max-width:100%}
+#panel-seguimiento .seg-alert .ic{width:12px;height:12px;flex-shrink:0}
+#panel-seguimiento .seg-alert--act{background:var(--blue-lt);color:var(--blue);border-color:transparent}
+#panel-seguimiento .seg-alert--warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+#panel-seguimiento .seg-alert--bad{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+#panel-seguimiento .seg-alert--info{background:var(--faint);color:var(--muted);border-color:var(--border)}
+#panel-seguimiento .seg-alert--conf{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+#panel-seguimiento .seg-none{font-size:var(--fs-xs);color:var(--green);font-weight:600}
+
+#panel-seguimiento .seg-links{display:inline-flex;gap:4px}
+#panel-seguimiento .seg-link{width:26px;height:26px;border-radius:7px;border:1px solid var(--seg-line);background:var(--seg-surface-2);color:var(--seg-ink-soft);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+#panel-seguimiento .seg-link:hover{color:var(--blue);border-color:var(--blue)}
+#panel-seguimiento .seg-link .ic{width:13px;height:13px}
+#panel-seguimiento .seg-link.dis{opacity:.3;cursor:default;pointer-events:none}
+#panel-seguimiento tr.seg-arch td{opacity:.45}
+#panel-seguimiento tr.seg-arch .seg-orden{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--seg-ink-faint)}
+#panel-seguimiento .seg-dl{font-family:var(--mono);font-size:var(--fs-sm);color:var(--seg-ink)}
+#panel-seguimiento .seg-dl .arr{color:var(--seg-ink-faint);padding:0 3px}
+
+/* ── Estados de carga / error (molde stateMsg de Control BL) ── */
+#panel-seguimiento .seg-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 30px;min-height:260px;background:var(--seg-surface);border:1px solid var(--seg-line);border-radius:14px}
+#panel-seguimiento .seg-state .ic{width:32px;height:32px;color:var(--seg-line-strong);margin-bottom:12px}
+#panel-seguimiento .seg-state h3{margin:0 0 6px;font-size:15px;font-weight:700;color:var(--seg-ink)}
+#panel-seguimiento .seg-state p{margin:0 0 14px;color:var(--seg-ink-soft);max-width:360px;font-size:13px;line-height:1.55}
+
+/* ── Modal Good Issue (molde propio seg-mod-*, NO clon de .efa-mod-*) ── */
+#panel-seguimiento .seg-mod-backdrop{position:fixed;inset:0;background:rgba(4,7,12,.66);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:400;backdrop-filter:blur(2px);overflow-y:auto}
+#panel-seguimiento .seg-mod-backdrop.open{display:flex}
+#panel-seguimiento .seg-mod{background:var(--seg-surface);border:1px solid var(--seg-line-strong);border-radius:16px;box-shadow:var(--seg-shadow);width:640px;max-width:100%;overflow:hidden}
+#panel-seguimiento .seg-mod-head{padding:18px 22px 0}
+#panel-seguimiento .seg-mod-title{font-size:var(--fs-xl);font-weight:800;display:flex;justify-content:space-between;align-items:center;color:var(--seg-ink)}
+#panel-seguimiento .seg-mod-title button{background:none;border:none;color:var(--seg-ink-faint);cursor:pointer;font-size:18px;line-height:1}
+#panel-seguimiento .seg-mod-title button:hover{color:var(--seg-ink)}
+#panel-seguimiento .seg-mod-warn{margin-top:10px;border:1px solid var(--amber-bd);background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:9px 12px;font-size:var(--fs-sm);font-weight:600}
+#panel-seguimiento .seg-mod-tabs{display:flex;gap:2px;margin-top:14px;border-bottom:1px solid var(--seg-line)}
+#panel-seguimiento .seg-mod-tab{font-family:var(--font);font-size:var(--fs-md);font-weight:600;padding:8px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--seg-ink-soft);cursor:pointer}
+#panel-seguimiento .seg-mod-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+#panel-seguimiento .seg-mod-body{padding:18px 22px 22px}
+#panel-seguimiento .seg-field{margin-bottom:13px}
+#panel-seguimiento .seg-field label{display:block;font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft);margin-bottom:5px}
+#panel-seguimiento .seg-field input,#panel-seguimiento .seg-field select,#panel-seguimiento .seg-field textarea{width:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--seg-ink);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:9px;padding:9px 11px;outline:none}
+#panel-seguimiento .seg-field input:focus-visible,#panel-seguimiento .seg-field select:focus-visible,#panel-seguimiento .seg-field textarea:focus-visible{border-color:var(--blue)}
+#panel-seguimiento .seg-field .hint{font-size:var(--fs-2xs);color:var(--seg-ink-faint);margin-top:4px}
+#panel-seguimiento .seg-field .seg-field-err{font-size:var(--fs-2xs);color:var(--red);margin-top:4px;font-weight:600}
+#panel-seguimiento .seg-2col{display:flex;gap:12px}
+#panel-seguimiento .seg-2col>.seg-field{flex:1}
+#panel-seguimiento .seg-mod-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 22px 20px}
+#panel-seguimiento .seg-grid-prev{border:1px solid var(--seg-line);border-radius:10px;overflow:hidden;margin-top:4px;max-height:220px;overflow-y:auto}
+#panel-seguimiento .seg-grid-prev table{border-collapse:collapse;width:100%;font-size:var(--fs-sm)}
+#panel-seguimiento .seg-grid-prev th{font-size:var(--fs-2xs);text-transform:uppercase;letter-spacing:.06em;color:var(--seg-ink-faint);background:var(--seg-surface-2);text-align:left;padding:6px 10px;position:sticky;top:0}
+#panel-seguimiento .seg-grid-prev td{padding:6px 10px;border-top:1px solid var(--seg-line);font-family:var(--mono);color:var(--seg-ink)}
+#panel-seguimiento .seg-grid-prev td.st{font-family:var(--font)}
+#panel-seguimiento .seg-applyrow{display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:var(--fs-sm);color:var(--seg-ink-soft);flex-wrap:wrap}
+#panel-seguimiento .seg-applyrow input[type=date]{width:auto;font-family:var(--font);font-size:var(--fs-sm);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:8px;padding:5px 8px;color:var(--seg-ink)}
+#panel-seguimiento .seg-applyrow button{font-family:var(--font);font-size:var(--fs-xs);font-weight:600;border:1px solid var(--blue);color:var(--blue);background:var(--blue-lt);border-radius:7px;padding:5px 10px;cursor:pointer}
+
+@media (max-width:900px){
+  #panel-seguimiento .seg-fstate{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){
+  #panel-seguimiento .seg-chip{transition:none}
+}
+
 /* ═══════════ ESTRUCTURA DB — solapa ═══════════ */
 #panel-schema .sch-root{max-width:980px;margin:0 auto;width:100%;min-width:0}
 #panel-schema .sch-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -2894,6 +3105,7 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
     <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
     <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   </defs>
 </svg>
 
@@ -3057,9 +3269,16 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
   <button class="tab-btn" id="tab-vacaciones" onclick="switchTab('vacaciones')" aria-label="Vacaciones"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span><span class="vac-tab-badge" id="vac-tab-badge" style="display:none">0</span></button>
   <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')" aria-label="SSB Copilot"><svg class="ic" aria-hidden="true"><use href="#i-bot"/></svg><span class="tab-lbl">SSB Copilot</span></button>
   <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
-  <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
-  <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
-  <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+  <div class="rail-group" id="rail-doc">
+    <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="vac-tab-badge" id="seg-group-badge" style="display:none">0</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <div class="rail-doc-sub" id="rail-doc-sub">
+      <div class="rail-doc-hd" aria-hidden="true">Documentación</div>
+      <button class="tab-btn" id="tab-seguimiento" onclick="switchTab('seguimiento')" aria-label="Seguimiento"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento</span><span class="vac-tab-badge" id="seg-tab-badge" style="display:none">0</span></button>
+      <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+      <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+      <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+    </div>
+  </div>
   <button class="tab-btn" id="tab-schema" onclick="switchTab('schema')" aria-label="Estructura DB"><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
   <div class="rail-spacer" aria-hidden="true"></div>
   <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
@@ -4261,6 +4480,122 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
 </div>
 <!-- ═══════════ FIN TAB: CERTIFICADO DE ORIGEN ═══════════ -->
 
+<!-- ═══════════ TAB: SEGUIMIENTO — panel (WP3) ═══════════ -->
+<div class="tab-panel" id="panel-seguimiento">
+  <div class="seg-root">
+
+    <header class="seg-head">
+      <div>
+        <h1 class="seg-title">Seguimiento</h1>
+        <p class="seg-sub">Torre de control por orden — del Good Issue (despacho de planta) al envío confirmado de la documentación.</p>
+      </div>
+      <div class="seg-actions">
+        <label class="seg-toggle"><input type="checkbox" id="seg-arch-toggle"> ver archivadas</label>
+        <button class="seg-btn" type="button" id="seg-refresh-btn"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg> Actualizar</button>
+        <button class="seg-btn seg-btn--primary" type="button" id="seg-gi-open-btn"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Good Issue</button>
+      </div>
+    </header>
+
+    <div id="seg-triage" class="seg-triage" aria-live="polite"></div>
+    <div id="seg-clean" class="seg-clean"></div>
+
+    <div class="seg-filters" id="seg-filters">
+      <div class="seg-f"><label for="seg-f-urgencia">Urgencia / alerta</label>
+        <select id="seg-f-urgencia">
+          <option value="">todas</option>
+          <option value="vencidas">vencidas</option>
+          <option value="porvencer">por vencer</option>
+          <option value="pendenvio">pendientes de envío</option>
+          <option value="gi">Good Issue pendiente</option>
+          <option value="co">definir CO</option>
+          <option value="alertas">con alertas</option>
+          <option value="limpias">limpias</option>
+        </select>
+      </div>
+      <div class="seg-f"><label for="seg-f-mot">Transporte</label>
+        <select id="seg-f-mot"><option value="">todos</option><option value="maritimo">marítimo</option><option value="terrestre">terrestre</option></select>
+      </div>
+      <div class="seg-f"><label for="seg-f-kind">Tipo</label>
+        <select id="seg-f-kind"><option value="">todos</option><option value="trade">TRADE</option><option value="sto">STO</option><option value="otro">Otro</option></select>
+      </div>
+      <div class="seg-f"><label for="seg-f-co">Cert. Origen</label>
+        <select id="seg-f-co"><option value="">todos</option><option value="requerido">requerido</option><option value="no_requerido">no requerido</option><option value="sin_definir">sin definir</option></select>
+      </div>
+      <div class="seg-f"><label for="seg-f-cliente">Cliente</label>
+        <select id="seg-f-cliente"><option value="">todos</option></select>
+      </div>
+      <div class="seg-fstate">
+        <span class="seg-count" id="seg-count"></span>
+        <button class="seg-clear" id="seg-clear" type="button">✕ limpiar filtros</button>
+      </div>
+    </div>
+
+    <div class="seg-tablewrap" id="seg-tablewrap"></div>
+    <div class="seg-doclegend" id="seg-legend"><b>Docs:</b> FC Factura · PL Packing List · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · CRT doc. de exportación terrestre · COA futuro (ppal. trade) — <span style="font-style:italic">punteado = aún sin dato en el sistema</span> · rayado = falta · <b style="color:var(--green)">verde</b> = presente</div>
+
+    <!-- ═ Modal Good Issue — despacho de planta (molde propio seg-mod-*, NO clon de .efa-mod-*) ═ -->
+    <div class="seg-mod-backdrop" id="seg-modal">
+      <div class="seg-mod" role="dialog" aria-modal="true" aria-labelledby="seg-mod-title-txt">
+        <div class="seg-mod-head">
+          <div class="seg-mod-title"><span id="seg-mod-title-txt">Good Issue — despacho de planta</span><button type="button" id="seg-mod-close" aria-label="Cerrar">✕</button></div>
+          <div class="seg-mod-warn">Fecha de <b>Good Issue</b> = salida física de planta — <u>no</u> es la fecha de zarpe. El zarpe (ATD) se confirma en Mailing → Confirmar zarpe.</div>
+          <div class="seg-mod-tabs">
+            <button type="button" class="seg-mod-tab active" id="seg-mod-tab-single" data-target="seg-mod-body-single">Individual</button>
+            <button type="button" class="seg-mod-tab" id="seg-mod-tab-batch" data-target="seg-mod-body-batch">Lote (pegar desde Excel)</button>
+          </div>
+        </div>
+
+        <div class="seg-mod-body" id="seg-mod-body-single">
+          <div class="seg-2col">
+            <div class="seg-field">
+              <label for="seg-gi-orden">Número de orden</label>
+              <input id="seg-gi-orden" style="font-family:var(--mono)" autocomplete="off" inputmode="numeric">
+              <div class="hint">7–12 dígitos · el 0 inicial se quita solo (0118… → 118…)</div>
+              <div class="seg-field-err" id="seg-gi-orden-err" hidden></div>
+            </div>
+            <div class="seg-field">
+              <label for="seg-gi-fecha">Fecha de Good Issue</label>
+              <input type="date" id="seg-gi-fecha">
+              <div class="hint">prefill: hoy · no puede ser &gt; mañana</div>
+            </div>
+          </div>
+          <div class="seg-2col">
+            <div class="seg-field">
+              <label for="seg-gi-mot">Transporte</label>
+              <select id="seg-gi-mot"><option value="maritimo" selected>Marítimo</option><option value="terrestre">Terrestre</option></select>
+            </div>
+            <div class="seg-field">
+              <label for="seg-gi-modo">Cómo salió (opcional)</label>
+              <input id="seg-gi-modo" placeholder="ej: camión ×2 contenedores" autocomplete="off">
+            </div>
+          </div>
+          <div class="seg-field">
+            <label for="seg-gi-notas">Nota (opcional)</label>
+            <input id="seg-gi-notas" placeholder="lo que el próximo que mire la orden tiene que saber" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="seg-mod-body" id="seg-mod-body-batch" style="display:none">
+          <div class="seg-field">
+            <label for="seg-gi-ta">Pegá filas: orden [TAB] fecha</label>
+            <textarea id="seg-gi-ta" rows="4" style="font-family:var(--mono);font-size:var(--fs-sm)" spellcheck="false"></textarea>
+          </div>
+          <div class="seg-applyrow">Aplicar <input type="date" id="seg-gi-applydate"> a todas las filas <b>sin fecha</b> <button type="button" id="seg-gi-applybtn">Aplicar</button></div>
+          <div class="seg-grid-prev" id="seg-gi-prev"></div>
+          <div class="seg-field" style="margin-top:10px"><div class="hint">Duplicados <b>idénticos</b> se colapsan con aviso · duplicados con <b>fechas distintas</b> = conflicto por orden (esa orden no se escribe, el resto del lote sigue).</div></div>
+        </div>
+
+        <div class="seg-mod-foot">
+          <button class="seg-btn" type="button" id="seg-mod-cancel">Cancelar</button>
+          <button class="seg-btn seg-btn--primary" type="button" id="seg-mod-submit">Registrar Good Issue</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: SEGUIMIENTO ═══════════ -->
+
 <!-- ═══════════ TAB: ESTRUCTURA DB ═══════════ -->
 <div class="tab-panel" id="panel-schema">
   <div class="sch-root">
@@ -4324,6 +4659,30 @@ function debounce(fn, ms){
 // Número formato es-AR. dec=null → default del locale (sin forzar decimales).
 function nfAR(v, dec){
   return Number(v).toLocaleString('es-AR', dec == null ? undefined : { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+// "Hoy" date-only (YYYY-MM-DD) en TZ America/Argentina/Buenos_Aires (ex mailing).
+function hoyBA(){ return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }); }
+
+// Días corridos entre iso (YYYY-MM-DD) y hoyBA(), vía Date.UTC — sin TZ (ex mailing).
+function diasDesde(iso){
+  const [y1,m1,d1] = hoyBA().split('-').map(Number);
+  const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
+  return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
+}
+
+// Umbrales KPI zarpe→envío del SLA de mailing (aprobados STOP 1): deadline = ATD+SLA_DAYS, amarillo con ≤SLA_WARN restantes.
+const SLA_DAYS = 4, SLA_WARN = 1;
+
+// Bucket SLA a partir de primitivas: atdIso string|null, sentIso truthy = ya enviada (ex slaBucket() de mailing).
+function ssbSlaBucket(atdIso, sentIso){
+  if(sentIso) return null;
+  if(!atdIso) return 'espera';
+  const d = diasDesde(atdIso);
+  if(d < 0) return 'futuro';
+  if(d > SLA_DAYS) return 'vencida';
+  if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
+  return 'enfecha';
 }
 /* === FIN SSB CORE HELPERS === */
 
@@ -4598,12 +4957,13 @@ async function switchTab(name) {
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés cambios sin guardar en Tarifas Terrestres. Si salís los vas a perder.', confirmText:'Salir igual', danger:true}))) return;
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','control-bl','mailing','cert-origen','schema'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','control-bl','mailing','cert-origen','schema'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
     if(pan) pan.classList.toggle('active', t===name);
   });
+  if(window.__railDocOnNav) window.__railDocOnNav(name);
   // Drawer móvil: cerrarlo acá (post-toggle) — un check síncrono en el listener
   // del rail veía estado stale cuando el guard async de TT-Dow estaba en juego.
   if(window.__ssbDrawerClose) window.__ssbDrawerClose();
@@ -4616,6 +4976,7 @@ async function switchTab(name) {
   if(name==='vacaciones' && window.vacOnEnterTab){ window.vacOnEnterTab(); }
   else if(window.vacOnLeaveTab){ window.vacOnLeaveTab(); }
   if(name==='agente' && window.agentUpdateStats){ window.agentUpdateStats(); }
+  if(name==='seguimiento' && window.loadSeguimiento){ window.loadSeguimiento(); }
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
   if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
   if(name==='cert-origen' && window.loadCertOrigen){ window.loadCertOrigen(); }
@@ -4707,6 +5068,36 @@ async function switchTab(name) {
   // Si el viewport sale del tier móvil con el drawer abierto → cerrarlo.
   const onMq = m => { if(!m.matches) closeDrawer(); };
   mqMobile.addEventListener ? mqMobile.addEventListener('change', onMq) : mqMobile.addListener(onMq);
+})();
+
+// ── RAIL: grupo Documentación (WP2) ──
+(function(){
+  const grp = document.getElementById('rail-doc');
+  const btn = document.getElementById('rail-doc-btn');
+  const sub = document.getElementById('rail-doc-sub');
+  if(!grp || !btn || !sub) return;
+  const mqTree = () => window.matchMedia('(max-width:700px)').matches ||
+    (window.matchMedia('(min-width:1101px)').matches && document.documentElement.classList.contains('rail-pinned'));
+  function applyAria(){ btn.setAttribute('aria-expanded', grp.classList.contains('open') ? 'true' : 'false'); }
+  // estado inicial del árbol: persistido; y si la solapa activa vive adentro, abierto
+  try{ if(localStorage.getItem('ssb-rail-doc-open') === '1') grp.classList.add('open'); }catch(_){}
+  if(sub.querySelector('.tab-btn.active')) grp.classList.add('open','has-active');
+  applyAria();
+  btn.addEventListener('click', () => {
+    grp.classList.toggle('open');
+    if(mqTree()){ try{ localStorage.setItem('ssb-rail-doc-open', grp.classList.contains('open') ? '1' : '0'); }catch(_){} }
+    applyAria();
+  });
+  // flyout: cerrar con click afuera / Escape / al navegar (solo cuando NO es árbol)
+  document.addEventListener('click', e => { if(!mqTree() && grp.classList.contains('open') && !grp.contains(e.target)){ grp.classList.remove('open'); applyAria(); } });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && !mqTree() && grp.classList.contains('open')){ grp.classList.remove('open'); applyAria(); } });
+  sub.addEventListener('click', e => { if(e.target.closest('.tab-btn') && !mqTree()){ grp.classList.remove('open'); applyAria(); } });
+  // hook para switchTab: resaltar el grupo + auto-expand en árbol
+  window.__railDocOnNav = name => {
+    const inside = ['seguimiento','control-bl','mailing','cert-origen'].includes(name);
+    grp.classList.toggle('has-active', inside);
+    if(inside && mqTree() && !grp.classList.contains('open')){ grp.classList.add('open'); applyAria(); }
+  };
 })();
 
 // ── BELL ──
@@ -15375,28 +15766,41 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     // Entrar a la solapa resetea la búsqueda (no los filtros) y recarga el master de 7 días
     _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null;
     const q = $('cbl-q'); if(q) q.value = '';
-    if(!supa){ setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
-    setDetail(stateLoading());
+    try {
+      if(!supa){ setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+      setDetail(stateLoading());
 
-    const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-    const { data, error } = await supa
-      .from('v_bl_controls_latest')
-      .select(CBL_COLS)
-      .gte('created_at', since)
-      .order('created_at', { ascending: false });
+      const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+      const { data, error } = await supa
+        .from('v_bl_controls_latest')
+        .select(CBL_COLS)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false });
 
-    if(error){
-      console.error('control-bl:load', error);
-      setDetail(stateMsg('#i-alert', 'No se pudo cargar', error.message || 'Error de consulta a la base.'));
-      return;
+      if(error){
+        console.error('control-bl:load', error);
+        setDetail(stateMsg('#i-alert', 'No se pudo cargar', error.message || 'Error de consulta a la base.'));
+        return;
+      }
+      _cblData = data || [];
+      if(!_cblData.length){
+        cblRenderLote(); cblRenderSummary();
+        setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
+        return;
+      }
+      cblAfterDataChange();
+    } finally {
+      // WP2: deep-link desde Seguimiento — se consume SIEMPRE (aunque el fetch de
+      // arriba haya fallado o vuelto vacío), entrando por el camino de BÚSQUEDA
+      // (sin gate de 7 días) porque la orden pedida puede no estar en el master reciente.
+      const _po = window.__segPendingOrder;
+      window.__segPendingOrder = null;
+      if(supa && typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+        const qi = $('cbl-q');
+        if(qi) qi.value = _po;
+        cblSearch();
+      }
     }
-    _cblData = data || [];
-    if(!_cblData.length){
-      cblRenderLote(); cblRenderSummary();
-      setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
-      return;
-    }
-    cblAfterDataChange();
   };
 
   // ── Lista (master) ──
@@ -15920,7 +16324,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Fechas de negocio: SIEMPRE strings YYYY-MM-DD date-only, "hoy" en TZ
   // Buenos Aires (mismo contrato que el resolver del workflow). Cero Date
   // locales: la aritmética va por Date.UTC puro — inmune al huso del browser. ──
-  const hoyBA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+  // hoyBA/diasDesde: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
   // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null; round-trip real: 31/02 y 32/01 → null
   function parseFechaAr(tok){
@@ -15934,27 +16338,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
 
-  // ── SLA de mailing (A-c3): deadline = atd + SLA_DAYS corridos; amarillo cuando
-  // quedan ≤ SLA_WARN. Umbrales tunables (aprobados en STOP 1). Comparación
-  // date-only: diasDesde opera sobre strings YYYY-MM-DD vía Date.UTC — sin TZ. ──
-  const SLA_DAYS = 4, SLA_WARN = 1;
-  const diasDesde = iso => {
-    const [y1,m1,d1] = hoyBA().split('-').map(Number);
-    const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
-    return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
-  };
-  // Bucket de una fila NO enviada: espera (sin atd, fuera de la cola accionable) ·
-  // futuro (atd > hoy: "revisar", NUNCA verde — corrección STOP 1: un typo futuro
-  // no puede disfrazarse de en-fecha) · enfecha · porvencer · vencida.
-  function slaBucket(r){
-    if(r.status === 'ENVIADO') return null;
-    if(!r.atd) return 'espera';
-    const d = diasDesde(r.atd);
-    if(d < 0) return 'futuro';
-    if(d > SLA_DAYS) return 'vencida';
-    if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
-    return 'enfecha';
-  }
+  // SLA_DAYS/SLA_WARN/diasDesde: usan las globales de SSB CORE HELPERS.
+  // wrapper local → helper canónico ssbSlaBucket (CORE HELPERS)
+  const slaBucket = r => ssbSlaBucket(r.atd, r.status === 'ENVIADO' ? '1' : null);
   const SLA_CLS = { enfecha:'verde', porvencer:'amar', vencida:'rojo', futuro:'fut' };
   function slaBadge(r){
     const bk = slaBucket(r); if(!bk || bk === 'espera') return null;
@@ -16861,6 +17247,11 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── carga del tab ──
   let _loading = false;
   window.loadMailing = async function(){
+    // WP2: leer+null el flag ACÁ (antes del guard de _loading) — si loadMailing ya
+    // está en vuelo, el early return de abajo nunca llegaría al finally y el flag
+    // quedaría pegado colándose en la próxima navegación a otro módulo.
+    const _po = window.__segPendingOrder;
+    window.__segPendingOrder = null;
     if(_loading) return;
     _loading = true;
     try {
@@ -16870,6 +17261,10 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       _loaded = true;
       renderMaster();
       if(_sel){ _row = _orders.find(r => r.order_number === _sel) || null; renderDetail(); }
+      // deep-link desde Seguimiento — solo actúa si la orden está en el dataset ya cargado.
+      if(typeof _po === 'string' && /^\d{7,12}$/.test(_po) && _orders.some(r => r.order_number === _po)){
+        selectOrder(_po);
+      }
     } finally { _loading = false; }
   };
 
@@ -17146,7 +17541,17 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     } finally { _histLoading = false; }
   }
 
-  window.loadCertOrigen = function(){ loadHist(); };
+  window.loadCertOrigen = function(){
+    // WP2: deep-link desde Seguimiento — jamás tocar loadHist (co-refresh le pasa el
+    // click Event como 1er arg); se resuelve acá, en el wrapper.
+    const _po = window.__segPendingOrder;
+    window.__segPendingOrder = null;
+    if(typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+      const oi = $('co-orden');
+      if(oi) oi.value = _po;
+    }
+    loadHist();
+  };
 
   (function wire(){
     const btn = $('co-generar'); if(!btn) return;
@@ -17156,7 +17561,772 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       $(id)?.addEventListener('keydown', e => { if(e.key === 'Enter') generar(); });
   })();
 })();
+</script>
 
+<!-- ═══════════ TAB: SEGUIMIENTO — lógica ═══════════ -->
+<script>
+/* ═══════════ Seguimiento — solapa (WP3) ═══════════ */
+/* Lecturas: window.__ssb.supa sobre v_operacion_estado (RLS SELECT authenticated,
+   view read-only). Escritura: SOLO vía /api/seguimiento (Bearer JWT + gate
+   vac_employees server-side) — acción alta_despacho. Render 100% XSS-safe:
+   createElement + textContent en todo dato dinámico (cero innerHTML con datos;
+   skelCardsHtml() es la única excepción — label estático, mismo molde que los
+   otros 5 usos en la app). Fuente visual: docs/mockups/mockup_seguimiento.html. */
+(function(){
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
+  const svgUse = (href, cls) => { const NS='http://www.w3.org/2000/svg'; const s=document.createElementNS(NS,'svg'); s.setAttribute('class',cls||'ic'); s.setAttribute('aria-hidden','true'); const u=document.createElementNS(NS,'use'); u.setAttribute('href',href); s.appendChild(u); return s; };
+  const supa = () => (window.__ssb && window.__ssb.supa) || null;
+
+  // ── Estado ──
+  let _rows = [];
+  let _loading = false;
+  let _loaded = false;
+  let _sortK = 'dl', _sortDir = 1;
+  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'' };
+  let _showArch = false;
+
+  // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
+  const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+  function fmtDM(iso){
+    if(!iso) return '—';
+    const m = String(iso).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? (m[3] + '/' + m[2]) : '—';
+  }
+  // normalizeOrden: ESPEJO de api/seguimiento.js (strip de UN 0 inicial) — molde certOrigen.js.
+  function normalizeOrdenLocal(raw){ return String(raw || '').trim().replace(/^0(?=\d)/, ''); }
+  const ORDEN_RE = /^[1-9]\d{6,11}$/;
+  // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null — molde parseFechaAr de mailing.
+  function parseFechaArLocal(tok){
+    const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(String(tok || '').trim());
+    if(!m) return null;
+    const d = +m[1], mo = +m[2]; let y = +m[3];
+    if(m[3].length === 3) return null;
+    if(m[3].length === 2) y += 2000;
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
+  function mkBadge(variant, txt){ return el('span', 'seg-bdg seg-bdg--' + variant, txt); }
+
+  // Molde stateMsg de Control BL — card de ERROR con botón Reintentar (≠ vacío silencioso).
+  function stateMsg(icon, title, body, retry){
+    const wrap = el('div','seg-state');
+    wrap.appendChild(svgUse(icon));
+    wrap.appendChild(el('h3', null, title));
+    if(body) wrap.appendChild(el('p', null, body));
+    if(retry){
+      const btn = el('button','seg-btn','Reintentar');
+      btn.type = 'button';
+      btn.onclick = retry;
+      wrap.appendChild(btn);
+    }
+    return wrap;
+  }
+
+  // ── Derivados por fila (SIEMPRE en el front, nunca ::date server) ──
+  function computeRow(r){
+    return {
+      archived: !!r.archivada_at,
+      bucket: ssbSlaBucket(r.atd, r.first_real_send_at),
+      alerts: Array.isArray(r.alertas) ? r.alertas : [],
+    };
+  }
+  function computeAll(){ return _rows.map(r => ({ r, c: computeRow(r) })); }
+
+  // ═══ Carga ═══
+  window.loadSeguimiento = async function(){
+    if(_loading) return;
+    _loading = true;
+    try {
+      const s = supa();
+      const wrap = $('seg-tablewrap');
+      if(!s){
+        if(wrap){ wrap.textContent = ''; wrap.appendChild(stateMsg('#i-alert','Sin conexión','El cliente Supabase no está inicializado.', () => window.loadSeguimiento())); }
+        return;
+      }
+      if(wrap && !_loaded) wrap.innerHTML = skelCardsHtml('Cargando seguimiento');
+      const { data, error } = await s.from('v_operacion_estado').select('*');
+      if(error){
+        console.error('seguimiento:load', error);
+        if(wrap){ wrap.textContent = ''; wrap.appendChild(stateMsg('#i-alert','No se pudo cargar', error.message || 'Error de consulta a la base.', () => window.loadSeguimiento())); }
+        return;
+      }
+      _rows = data || [];
+      _loaded = true;
+      populateClienteFilter();
+      renderAll();
+    } finally {
+      _loading = false;
+    }
+  };
+
+  function populateClienteFilter(){
+    const sel = $('seg-f-cliente'); if(!sel) return;
+    const cur = sel.value;
+    while(sel.firstChild) sel.removeChild(sel.firstChild);
+    const optAll = el('option', null, 'todos'); optAll.value = '';
+    sel.appendChild(optAll);
+    const names = [...new Set(_rows.map(r => r.ship_to_name).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    for(const n of names){ const o = el('option', null, n); o.value = n; sel.appendChild(o); }
+    sel.value = names.includes(cur) ? cur : '';
+    if(sel.value !== cur) _filters.cliente = sel.value; // el cliente filtrado desapareció del dataset
+  }
+
+  // ═══ Render ═══
+  function renderAll(){
+    renderTriage();
+    renderClean();
+    renderTable();
+    updateBadge();
+  }
+
+  function renderTriage(){
+    const box = $('seg-triage'); if(!box) return;
+    const active = computeAll().filter(x => !x.c.archived);
+    const nVencidas  = active.filter(x => x.c.bucket === 'vencida').length;
+    const nPorVencer = active.filter(x => x.c.bucket === 'porvencer').length;
+    const nPendEnvio = active.filter(x => x.r.mot === 'maritimo' && !x.r.first_real_send_at).length;
+    const nGi        = active.filter(x => x.c.alerts.includes('despacho_pendiente')).length;
+    const nCo        = active.filter(x => x.c.alerts.includes('co_sin_definir')).length;
+    const nAlertas   = active.filter(x => x.c.alerts.length > 0).length;
+
+    while(box.firstChild) box.removeChild(box.firstChild);
+    const mkChip = (key, n, label, sub, variant) => {
+      const b = el('button','seg-chip seg-chip--' + variant);
+      b.type = 'button';
+      if(_filters.urgencia === key) b.classList.add('on');
+      b.appendChild(el('span','n', String(n)));
+      b.appendChild(el('span','l', label));
+      b.appendChild(el('span','a', sub));
+      b.onclick = () => { _filters.urgencia = (_filters.urgencia === key) ? '' : key; renderAll(); };
+      return b;
+    };
+    const mkGroup = (label, chips) => {
+      const g = el('div','seg-tgroup');
+      g.appendChild(el('div','g', label));
+      const row = el('div','row');
+      chips.forEach(c => row.appendChild(c));
+      g.appendChild(row);
+      box.appendChild(g);
+    };
+    mkGroup('Envío de documentación', [
+      mkChip('vencidas', nVencidas, 'Vencidas', 'zarpó y venció el plazo de envío', 'red'),
+      mkChip('porvencer', nPorVencer, 'Por vencer', 'límite en pocos días', 'amber'),
+      mkChip('pendenvio', nPendEnvio, 'Pend. de envío', 'doc aún no enviada al cliente', 'blue'),
+    ]);
+    mkGroup('Planta', [ mkChip('gi', nGi, 'Good Issue pend.', 'registrar fecha de planta', 'blue') ]);
+    mkGroup('Cert. de Origen', [ mkChip('co', nCo, 'Definir CO', '¿esta orden lleva certificado?', 'gray') ]);
+    mkGroup('Resumen', [ mkChip('alertas', nAlertas, 'Alertas', 'ver todas', 'purple') ]);
+  }
+
+  function renderClean(){
+    const box = $('seg-clean'); if(!box) return;
+    const active = computeAll().filter(x => !x.c.archived);
+    const bad = active.filter(x => x.c.bucket === 'vencida' || x.c.bucket === 'porvencer' || x.c.alerts.includes('despacho_pendiente') || x.c.alerts.includes('co_sin_definir'));
+    while(box.firstChild) box.removeChild(box.firstChild);
+    if(bad.length){ box.style.display = 'none'; return; }
+    box.style.display = 'flex';
+    box.appendChild(svgUse('#i-check'));
+    box.appendChild(document.createTextNode(' Sin pendientes hoy'));
+    const pending = active
+      .filter(x => x.r.mot === 'maritimo' && !x.r.first_real_send_at && x.r.deadline_envio)
+      .map(x => x.r)
+      .sort((a, b) => a.deadline_envio < b.deadline_envio ? -1 : (a.deadline_envio > b.deadline_envio ? 1 : 0));
+    if(pending.length){
+      const nxt = pending[0];
+      const txt = ' · próximo vencimiento: ' + fmtDM(nxt.deadline_envio) + ' — orden ' + nxt.order_number + (nxt.ship_to_name ? (' (' + nxt.ship_to_name + ')') : '');
+      box.appendChild(el('small', null, txt));
+    }
+  }
+
+  function syncFilterSelects(){
+    const map = { urgencia:'seg-f-urgencia', mot:'seg-f-mot', kind:'seg-f-kind', co:'seg-f-co', cliente:'seg-f-cliente' };
+    for(const k in map){ const s = $(map[k]); if(s && s.value !== _filters[k]) s.value = _filters[k]; }
+  }
+
+  function passesFilters(x){
+    if(!_showArch && x.c.archived) return false;
+    const fa = _filters.urgencia;
+    if(fa === 'alertas'){ if(!(x.c.alerts.length > 0)) return false; }
+    else if(fa === 'limpias'){ if(x.c.alerts.length > 0 || x.c.bucket === 'vencida') return false; }
+    else if(fa === 'vencidas'){ if(x.c.bucket !== 'vencida') return false; }
+    else if(fa === 'porvencer'){ if(x.c.bucket !== 'porvencer') return false; }
+    else if(fa === 'pendenvio'){ if(!(x.r.mot === 'maritimo' && !x.r.first_real_send_at)) return false; }
+    else if(fa === 'gi'){ if(!x.c.alerts.includes('despacho_pendiente')) return false; }
+    else if(fa === 'co'){ if(!x.c.alerts.includes('co_sin_definir')) return false; }
+    if(_filters.mot && x.r.mot !== _filters.mot) return false;
+    if(_filters.kind && x.r.order_kind !== _filters.kind) return false;
+    if(_filters.co && x.r.co_requerimiento !== _filters.co) return false;
+    if(_filters.cliente && x.r.ship_to_name !== _filters.cliente) return false;
+    return true;
+  }
+
+  function sortRows(list){
+    const FALLBACK = _sortDir === 1 ? '9999-99-99' : '';
+    const sortVal = (x) => {
+      if(_sortK === 'dl') return x.r.deadline_envio || FALLBACK;
+      if(_sortK === 'gi') return x.r.despacho_at || FALLBACK;
+      if(_sortK === 'cliente') return (x.r.ship_to_name || '').toLowerCase();
+      return (x.r.order_number || '').toLowerCase();
+    };
+    return list.slice().sort((a, b) => {
+      if(a.c.archived !== b.c.archived) return a.c.archived ? 1 : -1; // archivadas SIEMPRE al final
+      const va = sortVal(a), vb = sortVal(b);
+      return (va < vb ? -1 : va > vb ? 1 : 0) * _sortDir;
+    });
+  }
+
+  function updateCount(tot, vis){
+    const cEl = $('seg-count'); if(!cEl) return;
+    while(cEl.firstChild) cEl.removeChild(cEl.firstChild);
+    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente) : true;
+    if(filtersActive){
+      cEl.appendChild(el('b', null, String(vis)));
+      cEl.appendChild(document.createTextNode(' de ' + tot + ' órdenes'));
+    } else {
+      cEl.textContent = tot + ' órdenes';
+    }
+    const clearBtn = $('seg-clear');
+    if(clearBtn) clearBtn.classList.toggle('vis', filtersActive);
+  }
+
+  // ── Docs (v2): FC/PL/COz/COp/PE/CRT/COA ──
+  function renderDocs(r){
+    const wrap = el('span','seg-docs');
+    const add = (label, cls, title) => { const d = el('span','seg-doc ' + cls, label); d.title = title; wrap.appendChild(d); };
+    if(r.mot === 'terrestre'){
+      add('FC','off','Factura — sin dato (satélites terrestres aún no integrados)');
+      add('PL','off','Packing List — sin dato (se verifica recién al enviar por Mailing)');
+      add('CRT','fut','CRT — documento de exportación terrestre (reemplaza al BL). Fase futura: aún sin dato en el sistema');
+      return wrap;
+    }
+    add('FC', r.doc_factura ? 'on' : 'off', 'Factura' + (r.doc_factura ? ' ✓' : ' — falta'));
+    // deuda: la view no trae señal de Packing List — se verifica recién al enviar
+    // (Mailing), nunca "on" acá.
+    add('PL','off','Packing List — sin dato (se verifica recién al enviar por Mailing)');
+    if(r.co_requerimiento !== 'no_requerido'){
+      const coCls = r.co_estado === 'generado' ? 'on' : (r.co_requerimiento === 'sin_definir' ? 'q' : 'off');
+      const coTitle = r.co_estado === 'generado' ? ' ✓ generado' : (r.co_requerimiento === 'sin_definir' ? ' — según definición de CO' : ' — falta');
+      add('COz', coCls, 'Cert. Origen ZIP' + coTitle);
+      add('COp', coCls, 'Cert. Origen PDF' + coTitle);
+    }
+    if(r.order_kind === 'trade'){
+      add('PE', r.doc_pe ? 'on' : 'off', 'Permiso de Embarque' + (r.doc_pe ? ' ✓' : ' — falta') + ' (trade)');
+      add('COA','fut','COA — futuro (ppal. trade), aún sin dato en el sistema');
+    }
+    return wrap;
+  }
+
+  function controlBadge(r){
+    if(r.mot === 'terrestre'){
+      const b = mkBadge('mut','no aplica');
+      b.title = 'El Control BL es marítimo — el doc de transporte terrestre es el CRT (columna Docs).';
+      return b;
+    }
+    if(r.overall_result === 'OK') return mkBadge('ok', 'OK · ' + (r.ok_count != null ? r.ok_count : 0) + '✓');
+    if(r.overall_result === 'REVISAR') return mkBadge('rev', 'REVISAR · ' + (r.revisar_count != null ? r.revisar_count : 0) + '⚑');
+    const b = mkBadge('mut', '— sin control');
+    b.title = 'Esta orden no pasó por el Control BL.';
+    return b;
+  }
+
+  function coBadgeCell(r){
+    const req = r.co_requerimiento;
+    if(req === 'no_requerido'){
+      const b = mkBadge('info', 'CO no requerido' + (r.co_override ? ' · override' : ' · auto'));
+      b.title = r.co_motivo || 'Derivado por configuración de reglas de CO.';
+      return b;
+    }
+    if(req === 'sin_definir'){
+      const b = mkBadge('mut', 'CO ¿sin definir?');
+      b.title = 'Sin regla de configuración — definir manualmente si esta orden lleva Certificado de Origen.';
+      return b;
+    }
+    if(r.co_estado === 'generado'){
+      const b = mkBadge('ok', 'CO ✓ generado');
+      const parts = ['Requerido' + (r.co_override ? ' (override)' : ' (config)')];
+      if(r.certificado_numero) parts.push('cert. ' + r.certificado_numero);
+      b.title = parts.join(' · ');
+      return b;
+    }
+    if(r.co_last_attempt_estado === 'error'){
+      const b = mkBadge('bad', 'CO — error al generar');
+      b.title = 'El último intento de generación falló — el CO vigente sigue siendo el anterior (si existía).';
+      return b;
+    }
+    const b = mkBadge('warn', 'CO pendiente');
+    b.title = 'Requerido — todavía no se generó.';
+    return b;
+  }
+
+  const ALERT_MAP = {
+    despacho_pendiente:  { cls:'act',  icon:'#i-pencil', txt:() => 'Registrar Good Issue',              action:(r) => openGiModal(r.order_number) },
+    control_revisar:     { cls:'warn', icon:'#i-alert',  txt:() => 'Control: diferencias',               action:(r) => deepLink(r.order_number, 'control-bl') },
+    sin_control:         { cls:'warn', icon:'#i-clock',  txt:(r) => 'GI hace ' + diasDesde(r.despacho_at) + ' días, sin control BL', action:(r) => deepLink(r.order_number, 'control-bl') },
+    co_config_conflicto: { cls:'conf', icon:'#i-alert',  txt:() => 'Reglas de CO contradictorias',        action:null },
+    co_revisar:          { cls:'conf', icon:'#i-alert',  txt:() => '¿CO a Perú? Confirmar',               action:null },
+    co_pendiente:        { cls:'warn', icon:'#i-stamp',  txt:() => 'Falta generar el CO',                 action:(r) => deepLink(r.order_number, 'cert-origen') },
+    co_sin_definir:      { cls:'info', icon:null,        txt:() => '¿Lleva CO? Definilo',                  action:null },
+    co_inesperado:       { cls:'info', icon:'#i-stamp',  txt:() => 'Hay CO pero figura "no requiere"',     action:null },
+    co_error_reciente:   { cls:'warn', icon:'#i-alert',  txt:() => 'La regeneración del CO falló',         action:(r) => deepLink(r.order_number, 'cert-origen') },
+    envio_vencido:       { cls:'bad',  icon:'#i-alert',  txt:(r) => 'Vencida hace ' + diasDesde(r.deadline_envio) + ' días', action:(r) => deepLink(r.order_number, 'mailing') },
+  };
+  // NOTA (deuda anotada): co_config_conflicto/co_revisar/co_sin_definir/co_inesperado
+  // no traen deep-link en el spec de WP3 — editar co_requerimiento vive en un modal
+  // de config CO (admin) que queda fuera de este alcance. Se muestran informativas.
+
+  function alertsCell(r, c){
+    const td = el('td','seg-alerts');
+    if(c.archived){
+      const b = mkBadge('mut', '⏸ archivada ' + fmtDM(r.archivada_at));
+      b.title = 'Archivada: ciclo cerrado — las alertas se apagan.';
+      td.appendChild(b);
+      return td;
+    }
+    if(!c.alerts.length){
+      td.appendChild(el('span','seg-none', r.mot === 'terrestre' ? '✓ ok · seguimiento manual' : '✓ lista'));
+      return td;
+    }
+    for(const slug of c.alerts){
+      const meta = ALERT_MAP[slug];
+      if(!meta) continue; // slug desconocido: nunca romper el render — se ignora, no se inventa copy
+      const span = el('span', 'seg-alert seg-alert--' + meta.cls);
+      if(meta.icon) span.appendChild(svgUse(meta.icon));
+      span.appendChild(document.createTextNode(' ' + meta.txt(r)));
+      if(meta.action){ span.style.cursor = 'pointer'; span.onclick = () => meta.action(r); }
+      td.appendChild(span);
+    }
+    return td;
+  }
+
+  function dlCell(r, c){
+    const td = el('td','seg-dl');
+    if(r.mot === 'terrestre'){ td.appendChild(el('span','seg-faint','no aplica')); return td; }
+    if(c.bucket === null){ td.appendChild(document.createTextNode('cumplida')); return td; }
+    if(!r.atd || c.bucket === 'espera'){ td.appendChild(el('span','seg-faint','esperando zarpe')); return td; }
+    td.appendChild(document.createTextNode(fmtDM(r.atd) + ' '));
+    td.appendChild(el('span','arr','→'));
+    td.appendChild(document.createTextNode(' '));
+    let label, variant;
+    if(c.bucket === 'vencida'){ label = 'venció ' + fmtDM(r.deadline_envio); variant = 'bad'; }
+    else if(c.bucket === 'porvencer'){ label = 'vence ' + fmtDM(r.deadline_envio); variant = 'warn'; }
+    else if(c.bucket === 'futuro'){ label = 'ATD futuro · revisar'; variant = 'warn'; }
+    else { label = 'límite ' + fmtDM(r.deadline_envio); variant = 'info'; } // enfecha
+    const b = mkBadge(variant, label);
+    b.title = 'ATD ' + fmtDM(r.atd) + ' · límite ' + fmtDM(r.deadline_envio) + ' (ATD+' + SLA_DAYS + ' corridos)';
+    td.appendChild(b);
+    return td;
+  }
+
+  function envioCell(r){
+    const td = el('td');
+    if(r.first_real_send_at){
+      td.appendChild(document.createTextNode(fmtDM(r.first_real_send_at)));
+      if(r.mailing_status === 'ENVIADO' && r.sent_test_mode){
+        td.appendChild(document.createTextNode(' '));
+        const b = mkBadge('mut','(test)');
+        b.title = 'Enviado bajo TEST_MODE — no cuenta para el KPI.';
+        td.appendChild(b);
+      }
+    } else {
+      const span = el('span','seg-faint','—');
+      span.title = r.mot === 'terrestre' ? 'Seguimiento manual — sin envío por Mailing.' : 'Zarpó y la doc todavía no salió por Mailing (envío real).';
+      td.appendChild(span);
+    }
+    return td;
+  }
+
+  function iraCell(r){
+    const td = el('td');
+    const wrap = el('span','seg-links');
+    const hasControl = r.mot !== 'terrestre' && (r.overall_result === 'OK' || r.overall_result === 'REVISAR');
+    const hasCoDoc = r.co_estado === 'generado';
+    const hasMailing = r.mailing_status != null;
+    const mkLink = (icon, titleOn, titleOff, enabled, onClick) => {
+      const b = el('span','seg-link' + (enabled ? '' : ' dis'));
+      b.appendChild(svgUse(icon));
+      b.title = enabled ? titleOn : titleOff;
+      if(enabled) b.onclick = onClick;
+      return b;
+    };
+    wrap.appendChild(mkLink('#i-file-text','Ver control BL','Sin control BL', hasControl, () => deepLink(r.order_number, 'control-bl')));
+    wrap.appendChild(mkLink('#i-stamp','Ver certificado','Sin certificado generado', hasCoDoc, () => deepLink(r.order_number, 'cert-origen')));
+    wrap.appendChild(mkLink('#i-mail','Ver en Mailing','Sin asiento en Mailing', hasMailing, () => deepLink(r.order_number, 'mailing')));
+    td.appendChild(wrap);
+    return td;
+  }
+
+  function deepLink(orderNumber, tab){
+    window.__segPendingOrder = orderNumber;
+    switchTab(tab);
+  }
+
+  function buildRow(x){
+    const r = x.r, c = x.c;
+    const tr = el('tr');
+    if(c.archived) tr.className = 'seg-arch';
+
+    const tdOrden = el('td');
+    tdOrden.appendChild(el('div','seg-orden', r.order_number));
+    tdOrden.appendChild(el('div','seg-kind', (r.order_kind || '—') + ' · ' + (r.mot || '—')));
+    tr.appendChild(tdOrden);
+
+    const tdCli = el('td','seg-cliente');
+    if(r.ship_to_name) tdCli.textContent = r.ship_to_name;
+    else tdCli.appendChild(el('span','seg-faint','— sin asiento mailing'));
+    tr.appendChild(tdCli);
+
+    const tdDest = el('td');
+    if(r.mot === 'terrestre'){ tdDest.appendChild(el('span','seg-faint','— (terrestre)')); }
+    else if(r.pod){ tdDest.appendChild(document.createTextNode(r.pod + ' ')); tdDest.appendChild(el('span','seg-faint','· ' + (r.pais_destino || '—'))); }
+    else { tdDest.appendChild(el('span','seg-faint','—')); }
+    tr.appendChild(tdDest);
+
+    const tdGi = el('td');
+    if(!r.despacho_at){
+      const b = mkBadge('mut','— backfill');
+      b.title = 'Fila del backfill inicial — falta la fecha real de Good Issue.';
+      tdGi.appendChild(b);
+    } else {
+      const span = el('span', null, fmtDM(r.despacho_at));
+      span.title = 'GI registrado' + (r.despacho_source === 'backfill' ? ' (backfill, luego completado)' : ' manualmente') + (r.despacho_by ? (' por ' + r.despacho_by) : '');
+      tdGi.appendChild(span);
+    }
+    tr.appendChild(tdGi);
+
+    const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl);
+    const tdCo = el('td'); tdCo.appendChild(coBadgeCell(r)); tr.appendChild(tdCo);
+    const tdDocs = el('td'); tdDocs.appendChild(renderDocs(r)); tr.appendChild(tdDocs);
+
+    tr.appendChild(dlCell(r, c));
+    tr.appendChild(envioCell(r));
+    tr.appendChild(alertsCell(r, c));
+    tr.appendChild(iraCell(r));
+
+    return tr;
+  }
+
+  const COLS = [
+    { label:'Orden', sortKey:'orden' },
+    { label:'Cliente', sortKey:'cliente' },
+    { label:'Destino', sortKey:null },
+    { label:'Good Issue', sortKey:'gi', title:'Good Issue = despacho físico de planta (GI)' },
+    { label:'Control BL', sortKey:null },
+    { label:'Cert. Origen', sortKey:null },
+    { label:'Docs', sortKey:null },
+    { label:'ATD → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
+    { label:'Envío', sortKey:null },
+    { label:'Alertas', sortKey:null },
+    { label:'Ir a', sortKey:null },
+  ];
+
+  function renderTable(){
+    const wrap = $('seg-tablewrap'); if(!wrap) return;
+    syncFilterSelects();
+    const all = computeAll();
+    const visible = sortRows(all.filter(passesFilters));
+    updateCount(all.length, visible.length);
+
+    while(wrap.firstChild) wrap.removeChild(wrap.firstChild);
+    if(!all.length){
+      wrap.appendChild(stateMsg('#i-search','Sin operaciones','Todavía no hay filas en seguimiento_ordenes.', null));
+      return;
+    }
+    const table = el('table','seg-table');
+    const thead = el('thead'); const trh = el('tr');
+    for(const col of COLS){
+      const th = el('th');
+      if(col.title) th.title = col.title;
+      if(col.sortKey){
+        th.className = 'sort' + (_sortK === col.sortKey ? ' active' : '');
+        th.appendChild(document.createTextNode(col.label));
+        th.appendChild(el('span','arr', _sortK === col.sortKey ? (_sortDir === 1 ? '▲' : '▼') : '⇵'));
+        th.onclick = () => { _sortDir = (_sortK === col.sortKey) ? -_sortDir : 1; _sortK = col.sortKey; renderTable(); };
+      } else {
+        th.textContent = col.label;
+      }
+      trh.appendChild(th);
+    }
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    const tbody = el('tbody');
+    if(!visible.length){
+      const tr = el('tr');
+      const td = el('td', null, 'Ningún resultado con los filtros actuales.');
+      td.colSpan = COLS.length;
+      td.style.whiteSpace = 'normal';
+      td.style.textAlign = 'center';
+      td.style.padding = '24px';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      for(const x of visible) tbody.appendChild(buildRow(x));
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+  }
+
+  function updateBadge(){
+    const total = computeAll().filter(x => !x.c.archived).reduce((sum, x) => sum + x.c.alerts.length, 0);
+    for(const id of ['seg-tab-badge','seg-group-badge']){
+      const b = $(id); if(!b) continue;
+      b.textContent = String(total);
+      b.style.display = total > 0 ? '' : 'none';
+    }
+  }
+
+  // ═══════════ Modal Good Issue — dirty-guard nativo (no clon de .efa-mod-*) ═══════════
+  let _giActiveTab = 'single';
+  let _giBusy = false;
+  let _giBatchApplyDate = null;
+  let _giLastParse = null;
+  let _giModalSnapshot = '';
+
+  function _giModalSerialize(){
+    return ['seg-gi-orden','seg-gi-fecha','seg-gi-mot','seg-gi-modo','seg-gi-notas','seg-gi-ta']
+      .map(id => { const e = $(id); return e ? e.value : ''; }).join('|');
+  }
+  function _giIsDirty(){ return _giModalSerialize() !== _giModalSnapshot; }
+
+  const _segEscHandler = (e) => {
+    if(e.key !== 'Escape') return;
+    const conf = document.getElementById('ssb-confirm-overlay');
+    if(conf && !conf.hidden) return; // el ssbConfirm está arriba — no robarle el Escape
+    const modal = $('seg-modal');
+    if(!modal || !modal.classList.contains('open')) return;
+    closeGiModalGuarded();
+  };
+
+  async function closeGiModalGuarded(){
+    if(_giIsDirty() && !(await ssbConfirm({ title:'Cambios sin guardar', body:'Tenés cambios sin guardar en este registro de Good Issue.', confirmText:'Descartar', danger:true }))) return;
+    closeGiModal();
+  }
+  function closeGiModal(){
+    const modal = $('seg-modal'); if(modal) modal.classList.remove('open');
+    document.removeEventListener('keydown', _segEscHandler);
+  }
+
+  function segModSwitchTab(target){
+    _giActiveTab = target;
+    const bSingle = $('seg-mod-tab-single'), bBatch = $('seg-mod-tab-batch');
+    if(bSingle) bSingle.classList.toggle('active', target === 'single');
+    if(bBatch) bBatch.classList.toggle('active', target === 'batch');
+    const bodySingle = $('seg-mod-body-single'), bodyBatch = $('seg-mod-body-batch');
+    if(bodySingle) bodySingle.style.display = target === 'single' ? '' : 'none';
+    if(bodyBatch) bodyBatch.style.display = target === 'batch' ? '' : 'none';
+  }
+
+  function openGiModal(prefillOrder){
+    const modal = $('seg-modal'); if(!modal) return;
+    const oi = $('seg-gi-orden'); if(oi) oi.value = prefillOrder || '';
+    const fi = $('seg-gi-fecha'); if(fi){ fi.value = hoyBA(); fi.max = isoPlus(hoyBA(), 1); }
+    const mi = $('seg-gi-mot'); if(mi) mi.value = 'maritimo';
+    const moi = $('seg-gi-modo'); if(moi) moi.value = '';
+    const ni = $('seg-gi-notas'); if(ni) ni.value = '';
+    const ta = $('seg-gi-ta'); if(ta) ta.value = '';
+    const ad = $('seg-gi-applydate'); if(ad) ad.value = '';
+    const errEl = $('seg-gi-orden-err'); if(errEl) errEl.hidden = true;
+    _giBatchApplyDate = null;
+    _giLastParse = null;
+    renderGiPreview();
+    segModSwitchTab('single');
+    modal.classList.add('open');
+    _giModalSnapshot = _giModalSerialize();
+    document.addEventListener('keydown', _segEscHandler);
+    setTimeout(() => oi && oi.focus(), 30);
+  }
+
+  // parser GI local — mismo molde que parseAtdGrid del mailing pero permite filas
+  // SOLO-orden (sin fecha) que se resuelven con "aplicar fecha a todas" = deuda
+  // anotada: unificar con parseAtdGrid (mailing) si ese parser suma fill-date.
+  function parseGiGrid(text, applyDate){
+    const porOrden = new Map(); // orden → { fechas:Set, n, usedApply }
+    const errores = [];
+    const maxFecha = isoPlus(hoyBA(), 1);
+    String(text || '').split(/\r?\n/).forEach((raw, i) => {
+      if(!raw.trim()) return;
+      const nl = i + 1;
+      const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
+      const normMiles = t => /^\d{1,3}([.,]\d{3})+$/.test(t) ? t.replace(/[.,]/g, '') : t;
+      const parts = (toks.length ? toks : raw.trim().split(/\s+/)).map(normMiles);
+      const ords = parts.filter(t => /^\d{7,12}$/.test(t));
+      const fechas = parts.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t) || /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
+      if(!ords.length){ errores.push({ linea:nl, orden:null, motivo:'sin número de orden (7-12 dígitos)' }); return; }
+      if(ords.length > 1){ errores.push({ linea:nl, orden:ords[0], motivo:'más de un número tipo orden en la fila' }); return; }
+      const ordenNorm = normalizeOrdenLocal(ords[0]);
+      if(!ORDEN_RE.test(ordenNorm)){ errores.push({ linea:nl, orden:ords[0], motivo:'orden inválida (7-12 dígitos)' }); return; }
+      if(fechas.length > 1){ errores.push({ linea:nl, orden:ordenNorm, motivo:'más de una fecha en la fila' }); return; }
+      let iso = null, usedApply = false;
+      if(fechas.length === 1){
+        iso = /^\d{4}-\d{2}-\d{2}$/.test(fechas[0]) ? fechas[0] : parseFechaArLocal(fechas[0]);
+        if(!iso){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha inválida: ' + fechas[0] }); return; }
+      } else if(applyDate){
+        iso = applyDate; usedApply = true;
+      } else {
+        errores.push({ linea:nl, orden:ordenNorm, motivo:'sin fecha — pegala en la fila o usá "aplicar a todas"' }); return;
+      }
+      if(iso > maxFecha){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha futura (> hoy+1) — ¿typo?' }); return; }
+      if(iso < '2020-01-01'){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha fuera de rango' }); return; }
+      if(!porOrden.has(ordenNorm)) porOrden.set(ordenNorm, { fechas:new Set(), n:0, usedApply:false });
+      const ent = porOrden.get(ordenNorm);
+      ent.fechas.add(iso); ent.n++;
+      if(usedApply) ent.usedApply = true;
+    });
+    return { porOrden, errores };
+  }
+
+  function renderGiPreview(){
+    const box = $('seg-gi-prev'); if(!box) return;
+    while(box.firstChild) box.removeChild(box.firstChild);
+    if(!_giLastParse) return;
+    const { porOrden, errores } = _giLastParse;
+    if(!porOrden.size && !errores.length) return;
+    const t = el('table');
+    const thead = el('thead'); const trh = el('tr');
+    ['orden','fecha GI','estado del lote'].forEach(h => trh.appendChild(el('th', null, h)));
+    thead.appendChild(trh); t.appendChild(thead);
+    const tbody = el('tbody');
+    for(const [orden, ent] of porOrden){
+      const tr = el('tr');
+      tr.appendChild(el('td', null, orden));
+      if(ent.fechas.size === 1){
+        const fecha = [...ent.fechas][0];
+        tr.appendChild(el('td', null, fecha + (ent.usedApply ? ' (aplicada)' : '')));
+        const st = el('td','st');
+        st.appendChild(mkBadge('ok', ent.n > 1 ? ('lista · ×' + ent.n + ' filas (se toma una)') : 'lista'));
+        tr.appendChild(st);
+      } else {
+        tr.appendChild(el('td', null, [...ent.fechas].join(' ≠ ')));
+        const st = el('td','st');
+        const b = mkBadge('bad','conflicto: 2 fechas — no se escribe');
+        b.title = 'La misma orden vino con fechas distintas — no se escribe: corregí el pegado.';
+        st.appendChild(b);
+        tr.appendChild(st);
+      }
+      tbody.appendChild(tr);
+    }
+    for(const e of errores){
+      const tr = el('tr');
+      tr.appendChild(el('td', null, e.orden || '—'));
+      tr.appendChild(el('td', null, '—'));
+      const st = el('td','st');
+      st.appendChild(mkBadge('bad', 'inválida: línea ' + e.linea + ' — ' + e.motivo));
+      tr.appendChild(st);
+      tbody.appendChild(tr);
+    }
+    t.appendChild(tbody);
+    box.appendChild(t);
+  }
+
+  function reparseGiTextarea(){
+    const ta = $('seg-gi-ta'); if(!ta) return;
+    _giLastParse = ta.value.trim() ? parseGiGrid(ta.value, _giBatchApplyDate) : null;
+    renderGiPreview();
+  }
+
+  const STATUS_LBL = { creada:'creada(s)', completada:'completada(s)', ya_existia:'ya existía(n)', invalida:'inválida(s)', conflicto:'con conflicto', error:'con error' };
+
+  async function apiSeguimiento(body){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
+    const res = await fetch('/api/seguimiento', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+
+  function renderGiFooterBusy(busy){
+    const btn = $('seg-mod-submit'); if(btn){ btn.disabled = busy; btn.textContent = busy ? 'Registrando…' : 'Registrar Good Issue'; }
+    const cancel = $('seg-mod-cancel'); if(cancel) cancel.disabled = busy;
+  }
+
+  async function submitGi(){
+    if(_giBusy) return;
+    let rows = [];
+    if(_giActiveTab === 'single'){
+      const rawOrden = ($('seg-gi-orden')?.value || '').trim();
+      const norm = normalizeOrdenLocal(rawOrden);
+      const errEl = $('seg-gi-orden-err');
+      if(!ORDEN_RE.test(norm)){
+        if(errEl){ errEl.textContent = 'Orden inválida: 7 a 12 dígitos (el 0 inicial se quita solo).'; errEl.hidden = false; }
+        $('seg-gi-orden')?.focus();
+        return;
+      }
+      if(errEl) errEl.hidden = true;
+      const fecha = $('seg-gi-fecha')?.value || '';
+      if(!fecha){ ssbToast('Falta la fecha de Good Issue.', 'error'); return; }
+      const modo = ($('seg-gi-modo')?.value || '').trim();
+      const notas = ($('seg-gi-notas')?.value || '').trim();
+      const row = { order_number: norm, despacho_at: fecha, mot: $('seg-gi-mot')?.value || 'maritimo' };
+      if(modo) row.modo = modo;
+      if(notas) row.notas = notas;
+      rows = [row];
+    } else {
+      if(!_giLastParse) reparseGiTextarea();
+      if(!_giLastParse){ ssbToast('No hay filas para registrar — pegá el lote primero.', 'error'); return; }
+      for(const [orden, ent] of _giLastParse.porOrden){
+        if(ent.fechas.size === 1) rows.push({ order_number: orden, despacho_at: [...ent.fechas][0] });
+      }
+      if(!rows.length){ ssbToast('No hay filas listas para registrar en el lote.', 'error'); return; }
+    }
+    _giBusy = true;
+    renderGiFooterBusy(true);
+    try {
+      const resp = await apiSeguimiento({ action:'alta_despacho', rows });
+      const s = resp.summary || {};
+      const parts = Object.keys(s).map(k => s[k] + ' ' + (STATUS_LBL[k] || k));
+      ssbToast(parts.length ? parts.join(' · ') : 'Sin cambios.', (s.error || s.invalida || s.conflicto) ? 'warning' : 'success');
+      const problemRows = (resp.results || []).filter(rr => ['invalida','conflicto','error'].includes(rr.status));
+      if(problemRows.length){
+        await ssbAlert({ title:'Algunas filas no se pudieron registrar', body: problemRows.map(rr => (rr.order_number || '(vacía)') + ': ' + (rr.detail || rr.status)).join('\n') });
+      }
+      closeGiModal();
+      window.loadSeguimiento();
+    } catch(e){
+      ssbToast('No se pudo registrar: ' + e.message, 'error');
+    } finally {
+      _giBusy = false;
+      renderGiFooterBusy(false);
+    }
+  }
+
+  // ═══ Wiring (delegación única en el panel, patrón mailing/cert-origen) ═══
+  (function wire(){
+    const panel = $('panel-seguimiento'); if(!panel) return;
+
+    $('seg-refresh-btn')?.addEventListener('click', () => window.loadSeguimiento());
+    $('seg-gi-open-btn')?.addEventListener('click', () => openGiModal(null));
+    $('seg-arch-toggle')?.addEventListener('change', (e) => { _showArch = e.target.checked; renderAll(); });
+
+    for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-mot','mot'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente']]){
+      $(id)?.addEventListener('change', (e) => { _filters[key] = e.target.value; renderAll(); });
+    }
+    $('seg-clear')?.addEventListener('click', () => { _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'' }; renderAll(); });
+
+    // Modal
+    $('seg-mod-close')?.addEventListener('click', () => closeGiModalGuarded());
+    $('seg-mod-cancel')?.addEventListener('click', () => closeGiModalGuarded());
+    $('seg-modal')?.addEventListener('click', (e) => { if(e.target.id === 'seg-modal') closeGiModalGuarded(); });
+    $('seg-mod-tab-single')?.addEventListener('click', () => segModSwitchTab('single'));
+    $('seg-mod-tab-batch')?.addEventListener('click', () => segModSwitchTab('batch'));
+    $('seg-gi-orden')?.addEventListener('input', () => { const e = $('seg-gi-orden-err'); if(e) e.hidden = true; });
+    $('seg-gi-ta')?.addEventListener('input', debounce(reparseGiTextarea, 250));
+    $('seg-gi-applybtn')?.addEventListener('click', () => {
+      _giBatchApplyDate = $('seg-gi-applydate')?.value || null;
+      reparseGiTextarea();
+    });
+    $('seg-mod-submit')?.addEventListener('click', () => submitGi());
+  })();
+})();
+</script>
+
+<!-- ═══════════ TAB: ESTRUCTURA DB — lógica ═══════════ -->
+<script>
 // ── ESTRUCTURA DB — solapa (read-only, POST /api/schema sin input) ──
 (function(){
   const $ = id => document.getElementById(id);
