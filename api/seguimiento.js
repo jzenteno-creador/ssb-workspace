@@ -20,7 +20,8 @@
 // normaliza a 6 y reventaba el INSERT del lote con un 400 de constraint.
 //
 // POWERS (decididos en el gate): employee = alta_despacho, editar_despacho,
-// set_requiere_co, archivar, desarchivar. ADMIN-ONLY = anular_alta y co_config_*.
+// set_requiere_co, archivar, desarchivar, sellar_control. ADMIN-ONLY = anular_alta,
+// co_config_*, anular_sello.
 //
 // NOTA upsert de config: el unique de seguimiento_co_config es un índice PARCIAL de
 // EXPRESIONES (coalesce(dim,'') WHERE activo) — PostgREST no puede apuntarle
@@ -40,7 +41,7 @@ const MIN_FECHA = '2020-01-01';
 const ORDEN_NORM_RE = /^[1-9]\d{6,11}$/; // ESPEJO exacto del CHECK seguimiento_orden_formato
 const MOTS = new Set(['maritimo', 'terrestre']);
 const REQUIERE_CO_VALS = new Set(['auto', 'requerido', 'no_requerido']);
-const ADMIN_ACTIONS = new Set(['anular_alta', 'co_config_list', 'co_config_upsert', 'co_config_toggle']);
+const ADMIN_ACTIONS = new Set(['anular_alta', 'co_config_list', 'co_config_upsert', 'co_config_toggle', 'anular_sello']);
 
 // normalizeOrden canónica (api/_lib/certOrigen.js): strip de UN 0 inicial.
 function normalizeOrden(raw) {
@@ -593,6 +594,124 @@ async function handleCoConfigToggle(res, body, base, svcHeaders) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// sellar_control — single — EMPLOYEE (sello humano "control revisado", tanda 1.5.b)
+// { order_number, bl_file_id, motivo }
+// Regla X: se sella la VERSIÓN del BL que la persona miró (bl_file_id del FRONT,
+// NUNCA re-leído del latest). El server verifica que el latest de esa orden está en
+// REVISAR y que su bl_file_id COINCIDE con el que mandó el front (si no, el control
+// cambió entre que cargó el detalle y apretó "sellar" → control_cambio, y el sello
+// sería no-vigente igual). Escribe control_bl_sellos (dominio propio, NO bl_controls).
+// Statuses: sellada | ya_sellado | no_aplica | control_cambio | invalida | error
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleSellarControl(res, body, userEmail, base, svcHeaders) {
+  const order = normalizeOrden(body.order_number);
+  if (!ORDEN_NORM_RE.test(order))
+    return res.status(400).json({ error: 'order_number inválido (normalizado: 7-12 dígitos sin 0 inicial)' });
+  const blFileId = strOrNull(body.bl_file_id);
+  if (!blFileId)
+    return res.status(400).json({ error: 'bl_file_id obligatorio (el del BL que estás viendo en el detalle del control)' });
+  const motivo = strOrNull(body.motivo);
+  if (!motivo)
+    return res.status(400).json({ error: 'motivo obligatorio para sellar un control en REVISAR' });
+
+  // 1) Traer el ÚLTIMO control de la orden (overall_result + bl_file_id + bl_number).
+  let latest;
+  try {
+    const gRes = await fetch(
+      `${base}/v_bl_controls_latest?select=overall_result,bl_file_id,bl_number&order_number=eq.${order}&limit=1`,
+      { headers: svcHeaders }
+    );
+    if (!gRes.ok) throw new Error(`GET ${gRes.status}`);
+    latest = (await gRes.json())[0] || null;
+  } catch (e) {
+    console.error('seguimiento sellar_control GET latest error:', e.message);
+    return res.status(502).json({ error: 'No se pudo leer el control BL de la orden' });
+  }
+
+  if (!latest)
+    return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'no_aplica', detail: 'la orden no tiene control BL' } });
+  if (latest.overall_result !== 'REVISAR')
+    return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'no_aplica', detail: `el control está en ${latest.overall_result}, no hay REVISAR que sellar` } });
+  // Regla X: el bl_file_id que vio el front debe seguir siendo el vigente. Si el
+  // workflow re-controló con un BL distinto en el medio, el sello sería inútil.
+  if (latest.bl_file_id !== blFileId)
+    return res.status(200).json({
+      ok: true, action: 'sellar_control',
+      result: { order_number: order, status: 'control_cambio', bl_file_id_vigente: latest.bl_file_id, detail: 'llegó un control nuevo (BL distinto) — refrescá el detalle y sellá la versión actual' },
+    });
+
+  // 2) INSERT del sello. overall_result_al_sellar = el REVISAR verificado; bl_file_id =
+  //    el del front (== latest, ya validado). unique parcial → 23505 (409) = ya_sellado.
+  try {
+    const iRes = await fetch(`${base}/control_bl_sellos`, {
+      method: 'POST',
+      headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({
+        order_number: order,
+        bl_file_id: blFileId,
+        bl_number: strOrNull(latest.bl_number),
+        overall_result_al_sellar: 'REVISAR',
+        sellado_by: userEmail,
+        motivo,
+      }),
+    });
+    if (iRes.status === 409)
+      return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'ya_sellado', detail: 'este control ya estaba sellado (activo)' } });
+    const rows = iRes.ok ? await iRes.json() : [];
+    if (!iRes.ok || !Array.isArray(rows) || rows.length !== 1)
+      return res.status(502).json({ error: `POST ${iRes.status} sobre control_bl_sellos`, detail: (rows && rows.length === 0) ? undefined : String(rows).slice(0, 200) });
+    return res.status(200).json({
+      ok: true, action: 'sellar_control',
+      result: { order_number: order, status: 'sellada', bl_file_id: blFileId, sellado_por: userEmail, sellado_at: rows[0].sellado_at },
+    });
+  } catch (e) {
+    console.error('seguimiento sellar_control POST error:', e.message);
+    return res.status(502).json({ error: 'No se pudo escribir el sello' });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// anular_sello — single — ADMIN-ONLY (des-sellar = borrado LÓGICO, tanda 1.5.b)
+// { order_number, bl_file_id, motivo }
+// PATCH del sello ACTIVO (order_number + bl_file_id + anulado_at IS NULL) → setea
+// anulado_at/by/motivo. Sin sello activo → no_encontrada. Nunca DELETE físico.
+// Statuses: anulada | no_encontrada | error
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleAnularSello(res, body, userEmail, base, svcHeaders) {
+  const order = normalizeOrden(body.order_number);
+  if (!ORDEN_NORM_RE.test(order))
+    return res.status(400).json({ error: 'order_number inválido (normalizado: 7-12 dígitos sin 0 inicial)' });
+  const blFileId = strOrNull(body.bl_file_id);
+  if (!blFileId)
+    return res.status(400).json({ error: 'bl_file_id obligatorio (identifica el sello a anular)' });
+  const motivo = strOrNull(body.motivo);
+  if (!motivo)
+    return res.status(400).json({ error: 'motivo obligatorio para anular un sello' });
+
+  try {
+    const pRes = await fetch(
+      `${base}/control_bl_sellos?order_number=eq.${order}&bl_file_id=eq.${encodeURIComponent(blFileId)}&anulado_at=is.null`,
+      {
+        method: 'PATCH',
+        headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ anulado_at: new Date().toISOString(), anulado_by: userEmail, anulado_motivo: motivo }),
+      }
+    );
+    const rows = pRes.ok ? await pRes.json() : [];
+    if (!pRes.ok) return res.status(502).json({ error: `PATCH ${pRes.status} sobre control_bl_sellos` });
+    if (!Array.isArray(rows) || rows.length === 0)
+      return res.status(200).json({ ok: true, action: 'anular_sello', result: { order_number: order, status: 'no_encontrada', detail: 'no había sello activo para esa orden + bl_file_id' } });
+    return res.status(200).json({
+      ok: true, action: 'anular_sello',
+      result: { order_number: order, status: 'anulada', bl_file_id: blFileId, anulado_por: userEmail, motivo },
+    });
+  } catch (e) {
+    console.error('seguimiento anular_sello PATCH error:', e.message);
+    return res.status(502).json({ error: 'No se pudo anular el sello' });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -651,6 +770,8 @@ export default async function handler(req, res) {
     case 'archivar':
     case 'desarchivar':      return handleArchivo(res, action, b, user.email, base, svcHeaders);
     case 'anular_alta':      return handleAnularAlta(res, b, base, svcHeaders);
+    case 'sellar_control':   return handleSellarControl(res, b, user.email, base, svcHeaders);
+    case 'anular_sello':     return handleAnularSello(res, b, user.email, base, svcHeaders);
     case 'co_config_list':   return handleCoConfigList(res, base, svcHeaders);
     case 'co_config_upsert': return handleCoConfigUpsert(res, b, user.email, base, svcHeaders);
     case 'co_config_toggle': return handleCoConfigToggle(res, b, base, svcHeaders);

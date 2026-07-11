@@ -1,6 +1,6 @@
 # Migración: sello-control-bl (1.5.a)
 
-**Estado: PENDIENTE DE STOP-DDL — no aplicada.** · Proyecto `xkppkzfxgtfsmfooozsm` · PostgreSQL 17.6
+**Estado: APLICADA Y VERIFICADA EN VIVO 2026-07-11** (`apply_migration` nombre `sello_control_bl`). · Proyecto `xkppkzfxgtfsmfooozsm` · PostgreSQL 17.6
 Explore: `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` · Plan: `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md`
 
 ## Qué crea
