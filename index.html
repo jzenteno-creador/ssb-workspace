@@ -2459,6 +2459,7 @@ body.light #panel-vacaciones .vac-gantt-weekend-band{background:rgba(0,0,0,.025)
   --cbl-ok:var(--green); --cbl-ok-bg:var(--green-bg); --cbl-ok-bd:var(--green-bd);
   --cbl-rev:var(--orange); --cbl-rev-bg:var(--orange-bg); --cbl-rev-bd:var(--orange-bd);
   --cbl-miss:var(--muted); --cbl-miss-bg:#141925; --cbl-miss-dot:#6b7488; --cbl-miss-spine:rgba(255,255,255,.16);
+  --cbl-seal:var(--teal); --cbl-seal-bg:rgba(94,234,212,.10); --cbl-seal-bd:rgba(94,234,212,.35);
   --cbl-shadow:var(--shadow);
 }
 body.light #panel-control-bl{
@@ -2470,6 +2471,7 @@ body.light #panel-control-bl{
   --cbl-ok:#3F7A1E; --cbl-ok-bg:#EAF3DE; --cbl-ok-bd:#CFE3BD;
   --cbl-rev:#C2410C; --cbl-rev-bg:#FBEEDB; --cbl-rev-bd:#ECC79A;
   --cbl-miss:#8a897f; --cbl-miss-bg:#f0eee8; --cbl-miss-dot:#b0afa4; --cbl-miss-spine:#cfccc4;
+  --cbl-seal:#0F766E; --cbl-seal-bg:#E6F6F3; --cbl-seal-bd:#B7E4DC;
   --cbl-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
 }
 /* Isla que sigue el tema (dark default / paper en light) */
@@ -2544,12 +2546,15 @@ body.light #panel-control-bl{
 #panel-control-bl .cbl-badge.rev{background:var(--cbl-rev-bg);color:var(--cbl-rev);border:1px solid var(--cbl-rev-bd)}
 #panel-control-bl .cbl-badge.miss{background:var(--cbl-miss-bg);color:var(--cbl-miss);border:1px solid var(--cbl-line-strong)}
 #panel-control-bl .cbl-badge.miss .cbl-dot{background:var(--cbl-miss-dot)}
+#panel-control-bl .cbl-badge.seal{background:var(--cbl-seal-bg);color:var(--cbl-seal);border:1px solid var(--cbl-seal-bd)}
+#panel-control-bl .cbl-badge.seal .ic{width:13px;height:13px}
 
 /* ── Header de expediente (detail) ── */
 #panel-control-bl .cbl-exp-head{position:relative;padding:20px 22px 18px;border-bottom:1px solid var(--cbl-line)}
 #panel-control-bl .cbl-exp-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
 #panel-control-bl .cbl-exp-head.is-ok::before{background:var(--cbl-ok)}
 #panel-control-bl .cbl-exp-head.is-rev::before{background:var(--cbl-rev)}
+#panel-control-bl .cbl-exp-head.is-seal::before{background:var(--cbl-seal)}
 #panel-control-bl .cbl-exp-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
 #panel-control-bl .cbl-exp-order{font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--cbl-ink)}
 #panel-control-bl .cbl-exp-line{font-size:13px;color:var(--cbl-ink-soft);margin-top:7px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -2583,6 +2588,20 @@ body.light #panel-control-bl{
 #panel-control-bl .cbl-reprocess{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--cbl-rev);background:var(--cbl-rev-bg);border:1px solid var(--cbl-rev-bd);border-radius:9px;padding:7px 13px;cursor:pointer;margin-top:9px}
 #panel-control-bl .cbl-reprocess .ic{width:14px;height:14px}
 #panel-control-bl .cbl-reprocess.solid{color:#fff;background:var(--cbl-accent);border-color:var(--cbl-accent)}
+/* ── Sello "control revisado" (tanda 1.5.c) ── */
+#panel-control-bl .cbl-seal-btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:700;color:#fff;background:var(--cbl-seal);border:1px solid var(--cbl-seal);border-radius:9px;padding:7px 14px;cursor:pointer;margin-top:9px}
+#panel-control-bl .cbl-seal-btn .ic{width:14px;height:14px}
+#panel-control-bl .cbl-seal-btn:hover{filter:brightness(1.08)}
+#panel-control-bl .cbl-seal-btn.ghost{color:var(--cbl-seal);background:var(--cbl-seal-bg);border-color:var(--cbl-seal-bd)}
+#panel-control-bl .cbl-sealed-meta{font-size:11.5px;color:var(--cbl-ink-soft);margin-top:8px;line-height:1.5;text-align:right}
+#panel-control-bl .cbl-sealed-meta .who{color:var(--cbl-seal);font-weight:700}
+#panel-control-bl .cbl-sealed-meta .raw{color:var(--cbl-ink-faint)}
+#panel-control-bl .cbl-anular{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:11.5px;font-weight:600;color:var(--cbl-rev);background:none;border:1px solid var(--cbl-line-strong);border-radius:8px;padding:5px 10px;cursor:pointer;margin-top:8px}
+#panel-control-bl .cbl-anular .ic{width:12px;height:12px}
+#panel-control-bl .cbl-anular:hover{border-color:var(--cbl-rev-bd);background:var(--cbl-rev-bg)}
+#panel-control-bl .cbl-cambio{display:flex;align-items:flex-start;gap:9px;margin:14px 22px 0;border:1px solid var(--cbl-rev-bd);background:var(--cbl-rev-bg);color:var(--cbl-rev);border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600}
+#panel-control-bl .cbl-cambio .ic{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+#panel-control-bl .cbl-cambio a{color:var(--cbl-accent);cursor:pointer;text-decoration:underline;font-weight:700}
 #panel-control-bl .cbl-issue-row{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--cbl-rev-bd);background:var(--cbl-rev-bg);border-radius:9px;padding:9px 12px;margin-bottom:7px;font-size:12.5px;color:#7a3b14;line-height:1.5}
 #panel-control-bl .cbl-issue-row .ic{width:15px;height:15px;color:var(--cbl-rev);flex-shrink:0;margin-top:1px}
 #panel-control-bl .cbl-mini{padding:18px}
@@ -2658,6 +2677,12 @@ body.light #panel-mailing{
 #panel-mailing .mail-badge.tier{color:var(--mail-ok);background:var(--mail-ok-bg);border:1px solid var(--mail-ok-bd)}
 #panel-mailing .mail-badge.tier-warn{color:var(--mail-warn);background:var(--mail-warn-bg);border:1px solid var(--mail-warn-bd)}
 #panel-mailing .mail-badge.test{color:var(--mail-test);background:var(--mail-test-bg);border:1px solid var(--mail-test-bd)}
+/* Sello humano "control revisado" (WP-C, display-only) — mismos tokens que .cbl-badge.seal / .seg-bdg--seal */
+#panel-mailing .mail-badge.seal{color:var(--teal);background:rgba(94,234,212,.10);border:1px solid rgba(94,234,212,.35)}
+body.light #panel-mailing .mail-badge.seal{background:#E6F6F3;color:#0F766E;border-color:#B7E4DC}
+#panel-mailing .mail-badge.rev{color:var(--mail-warn);background:var(--mail-warn-bg);border:1px solid var(--mail-warn-bd)}
+#panel-mailing .mail-badge.ok{color:var(--mail-ok);background:var(--mail-ok-bg);border:1px solid var(--mail-ok-bd)}
+#panel-mailing .mail-badge .ic{width:12px;height:12px}
 #panel-mailing .mail-detail{min-width:0}
 #panel-mailing .mail-card{background:var(--mail-surface);border:1px solid var(--mail-line);border-radius:12px;box-shadow:var(--mail-shadow);padding:16px 18px;margin-bottom:14px}
 #panel-mailing .mail-card h3{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--mail-ink-soft)}
@@ -2892,6 +2917,10 @@ body.light #panel-seguimiento{
 #panel-seguimiento .seg-f{display:flex;flex-direction:column;gap:4px}
 #panel-seguimiento .seg-f label{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint)}
 #panel-seguimiento .seg-f select{font-family:var(--font);font-size:var(--fs-md);color:var(--seg-ink);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:9px;padding:7px 9px;outline:none;min-width:130px}
+#panel-seguimiento .seg-f .qbox{display:flex;align-items:center;gap:7px;min-width:190px;padding:0 10px;font-family:var(--font);font-size:var(--fs-md);color:var(--seg-ink);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:9px}
+#panel-seguimiento .seg-f .qbox .ic{width:15px;height:15px;color:var(--seg-ink-faint);flex-shrink:0}
+#panel-seguimiento .seg-f .qbox input{border:none;background:none;outline:none;font-family:var(--font);font-size:var(--fs-md);color:var(--seg-ink);padding:8px 0;width:100%}
+#panel-seguimiento .seg-f .qbox input::placeholder{color:var(--seg-ink-faint)}
 #panel-seguimiento .seg-fstate{margin-left:auto;display:flex;align-items:center;gap:10px}
 #panel-seguimiento .seg-count{font-size:var(--fs-md);font-weight:700;color:var(--seg-ink)}
 #panel-seguimiento .seg-count b{color:var(--blue)}
@@ -2924,7 +2953,12 @@ body.light #panel-seguimiento{
 #panel-seguimiento .seg-bdg--bad{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
 #panel-seguimiento .seg-bdg--mut{background:var(--faint);color:var(--muted);border-color:var(--border)}
 #panel-seguimiento .seg-bdg--info{background:var(--blue-lt);color:var(--blue)}
+/* sello humano "control revisado" (tanda 1.5.c) — mismos tokens que .cbl-badge.seal */
+#panel-seguimiento .seg-bdg--seal{background:rgba(94,234,212,.10);color:var(--teal);border-color:rgba(94,234,212,.35)}
+body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;border-color:#B7E4DC}
+#panel-seguimiento .seg-bdg--seal .ic{width:12px;height:12px}
 #panel-seguimiento .seg-bdg[title]{cursor:help}
+#panel-seguimiento .strike{text-decoration:line-through;color:var(--seg-ink-faint);font-size:var(--fs-xs);margin-left:5px}
 
 #panel-seguimiento .seg-docs{display:inline-flex;gap:3px;flex-wrap:wrap}
 #panel-seguimiento .seg-doc{height:20px;min-width:24px;padding:0 5px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.03em;border:1px solid var(--seg-line);cursor:help}
@@ -4500,6 +4534,9 @@ try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.cl
     <div id="seg-clean" class="seg-clean"></div>
 
     <div class="seg-filters" id="seg-filters">
+      <div class="seg-f"><label for="seg-f-q">Buscar orden</label>
+        <div class="qbox"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input id="seg-f-q" type="text" autocomplete="off" placeholder="Nº de orden… (0118… = 118…)"></div>
+      </div>
       <div class="seg-f"><label for="seg-f-urgencia">Urgencia / alerta</label>
         <select id="seg-f-urgencia">
           <option value="">todas</option>
@@ -15691,6 +15728,37 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _cblIsLote = false;
   const _cblFilters = new Set(); // 'ok' | 'rev' | 'miss'
 
+  // ── Sello humano "control revisado" (tanda 1.5.c) ──
+  // Mapa de sellos ACTIVOS keyeado por order_number+'|'+bl_file_id (Regla X: vigencia
+  // por bl_file_id — ver docs/explore/EXPLORE_SELLO_BL_2026-07-11.md §B). Se repuebla
+  // completo tras cada carga de datos (loadBlControls / cblSearch) y tras cada sellar/anular.
+  let _cblSellos = {};
+  function cblSelloKey(orderNumber, blFileId){ return String(orderNumber) + '|' + String(blFileId); }
+  // Sello vigente de un row, o null. Vigencia = matchea (order_number, bl_file_id) del
+  // row (que ya es el latest — la vista es _latest). Sin bl_file_id no hay identidad de
+  // documento estable → no sellable (espejo del NOT NULL de la tabla).
+  function cblSelloDe(row){
+    if(!row || row._missing || !row.bl_file_id) return null;
+    return _cblSellos[cblSelloKey(row.order_number, row.bl_file_id)] || null;
+  }
+  async function cblFetchSellos(){
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) return;
+    const { data, error } = await supa
+      .from('control_bl_sellos')
+      .select('order_number,bl_file_id,sellado_by,sellado_at')
+      .is('anulado_at', null);
+    if(error){ console.error('control-bl:sellos', error); return; } // no bloquea el render — sin mapa, badges caen al estado normal
+    const map = {};
+    (data || []).forEach(r => { map[cblSelloKey(r.order_number, r.bl_file_id)] = r; });
+    _cblSellos = map;
+  }
+  // sellado_by es el email del JWT (no hay nombre completo persistido) → parte local del email
+  function cblShortWho(email){
+    if(!email) return '—';
+    return String(email).split('@')[0];
+  }
+
   const $ = id => document.getElementById(id);
 
   function el(tag, cls, txt){
@@ -15727,8 +15795,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   }
   const STATUS_CLASS = { ok:'is-ok', rev:'is-rev', neutral:'' };
 
-  // Badge OK / REVISAR·N / neutro (gris, texto = overall_result crudo o "—")
+  // Badge OK / REVISAR·N / neutro (gris) / Revisado (sello humano vigente — gana a todo).
+  // Sellado se resuelve acá adentro (no por parámetro) para que cblMakeCard (card master)
+  // herede el badge "Revisado" automáticamente, sin tocar sus llamadas.
   function cblBadge(row){
+    if(cblSelloDe(row)){
+      const b = el('span', 'cbl-badge seal');
+      b.appendChild(svgUse('#i-stamp'));
+      b.appendChild(document.createTextNode('Revisado'));
+      return b;
+    }
     const st = cblStatusOf(row);
     const variant = st === 'ok' ? 'ok' : st === 'rev' ? 'rev' : 'miss';
     const b = el('span', 'cbl-badge ' + variant);
@@ -15758,17 +15834,22 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function setDetail(node){ const d = $('cbl-detail'); if(!d) return; d.innerHTML = ''; d.appendChild(node); }
 
   // ── Carga (on-enter) ──
-  window.loadBlControls = async function(){
+  // opts.quiet (tanda 1.5.c): refresh de fondo (post control_cambio) — NO resetea la
+  // búsqueda ni pinta el spinner de "Cargando controles…" encima del detalle (eso
+  // taparía el aviso .cbl-cambio antes de que nadie lo vea). Default (sin opts) =
+  // comportamiento de siempre, el único usado al ENTRAR a la solapa.
+  window.loadBlControls = async function(opts){
+    const quiet = !!(opts && opts.quiet);
     const supa = window.__ssb && window.__ssb.supa;
     const master = $('cbl-master');
-    if(master) master.innerHTML = '';
-    const note = $('cbl-master-note'); if(note) note.textContent = '';
+    if(!quiet && master) master.innerHTML = '';
+    const note = $('cbl-master-note'); if(!quiet && note) note.textContent = '';
     // Entrar a la solapa resetea la búsqueda (no los filtros) y recarga el master de 7 días
-    _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null;
-    const q = $('cbl-q'); if(q) q.value = '';
+    if(!quiet){ _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null; }
+    const q = $('cbl-q'); if(!quiet && q) q.value = '';
     try {
-      if(!supa){ setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
-      setDetail(stateLoading());
+      if(!supa){ if(!quiet) setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+      if(!quiet) setDetail(stateLoading());
 
       const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
       const { data, error } = await supa
@@ -15779,26 +15860,34 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
       if(error){
         console.error('control-bl:load', error);
-        setDetail(stateMsg('#i-alert', 'No se pudo cargar', error.message || 'Error de consulta a la base.'));
+        if(!quiet) setDetail(stateMsg('#i-alert', 'No se pudo cargar', error.message || 'Error de consulta a la base.'));
         return;
       }
       _cblData = data || [];
+      await cblFetchSellos(); // sello vigente por (order_number, bl_file_id) — antes de renderizar badges
       if(!_cblData.length){
-        cblRenderLote(); cblRenderSummary();
-        setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
+        if(!quiet){
+          cblRenderLote(); cblRenderSummary();
+          setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
+        }
         return;
       }
       cblAfterDataChange();
     } finally {
-      // WP2: deep-link desde Seguimiento — se consume SIEMPRE (aunque el fetch de
-      // arriba haya fallado o vuelto vacío), entrando por el camino de BÚSQUEDA
-      // (sin gate de 7 días) porque la orden pedida puede no estar en el master reciente.
-      const _po = window.__segPendingOrder;
-      window.__segPendingOrder = null;
-      if(supa && typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
-        const qi = $('cbl-q');
-        if(qi) qi.value = _po;
-        cblSearch();
+      // quiet (refresh de fondo) no toca el deep-link: solo aplica al ENTRAR a la solapa.
+      // Sin "return" acá adentro — swallowearía una excepción real del try. NUNCA usar
+      // return dentro de un finally (JS gotcha: pisa el control-flow del try/catch).
+      if(!quiet){
+        // WP2: deep-link desde Seguimiento — se consume SIEMPRE (aunque el fetch de
+        // arriba haya fallado o vuelto vacío), entrando por el camino de BÚSQUEDA
+        // (sin gate de 7 días) porque la orden pedida puede no estar en el master reciente.
+        const _po = window.__segPendingOrder;
+        window.__segPendingOrder = null;
+        if(supa && typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+          const qi = $('cbl-q');
+          if(qi) qi.value = _po;
+          cblSearch();
+        }
       }
     }
   };
@@ -15907,7 +15996,8 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
 
     const st = cblStatusOf(row);
-    const head = el('div', ('cbl-exp-head ' + STATUS_CLASS[st]).trim());
+    const sello = cblSelloDe(row);
+    const head = el('div', ('cbl-exp-head ' + (sello ? 'is-seal' : STATUS_CLASS[st])).trim());
     const topRow = el('div', 'cbl-exp-top');
 
     const left = el('div');
@@ -15922,22 +16012,59 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
     const right = el('div', 'cbl-exp-status');
     right.appendChild(cblBadge(row));
-    const tally = el('div', 'cbl-exp-tally');
-    tally.appendChild(el('b', 'ok', String(row.ok_count != null ? row.ok_count : 0)));
-    tally.appendChild(document.createTextNode(' coinciden · '));
-    tally.appendChild(el('b', 'rev', String(row.revisar_count != null ? row.revisar_count : 0)));
-    tally.appendChild(document.createTextNode(' a revisar'));
-    right.appendChild(tally);
+    if(sello){
+      // Sellado: sello humano en vez del tally crudo — quién, cuándo, y qué decía el
+      // control al momento de sellar (contexto, no el estado vigente).
+      const meta = el('div', 'cbl-sealed-meta');
+      meta.appendChild(el('span', 'who', cblShortWho(sello.sellado_by)));
+      meta.appendChild(document.createTextNode(' · ' + cblFmtCorrida(sello.sellado_at)));
+      meta.appendChild(document.createElement('br'));
+      const rawTxt = st === 'rev' ? ('el control decía REVISAR · ' + (row.revisar_count != null ? row.revisar_count : 0)) : ('el control decía ' + (row.overall_result ? String(row.overall_result) : '—'));
+      meta.appendChild(el('span', 'raw', rawTxt));
+      right.appendChild(meta);
+    } else {
+      const tally = el('div', 'cbl-exp-tally');
+      tally.appendChild(el('b', 'ok', String(row.ok_count != null ? row.ok_count : 0)));
+      tally.appendChild(document.createTextNode(' coinciden · '));
+      tally.appendChild(el('b', 'rev', String(row.revisar_count != null ? row.revisar_count : 0)));
+      tally.appendChild(document.createTextNode(' a revisar'));
+      right.appendChild(tally);
+      if(st === 'rev' && row.bl_file_id){
+        // Solo aparece cuando el control automático dio REVISAR, todavía no hay sello,
+        // Y hay bl_file_id (identidad de documento — sin él la Regla X no tiene con qué
+        // keyear la vigencia; el server lo exige NOT NULL igual, esto evita el 400 seguro).
+        const sealBtn = el('button', 'cbl-seal-btn');
+        sealBtn.type = 'button';
+        sealBtn.appendChild(svgUse('#i-check'));
+        sealBtn.appendChild(document.createTextNode('Marcar como revisado'));
+        sealBtn.onclick = () => cblStartSellar(row);
+        right.appendChild(sealBtn);
+      }
+    }
     const reproc = el('button', 'cbl-reprocess');
     reproc.type = 'button';
     reproc.appendChild(svgUse('#i-refresh'));
     reproc.appendChild(document.createTextNode('Reprocesar BL draft'));
     reproc.onclick = () => ssbToast('Próximamente — el reproceso del BL draft es una tanda futura.', 'info');
     right.appendChild(reproc);
+    if(sello && window.__ssbAuth && window.__ssbAuth.isAdmin){
+      // Anular: SOLO admin (gate cosmético — el server re-valida con vac_employees.role).
+      const anular = el('button', 'cbl-anular');
+      anular.type = 'button';
+      anular.appendChild(svgUse('#i-rotate'));
+      anular.appendChild(document.createTextNode('Anular revisado'));
+      anular.onclick = () => cblStartAnular(row, sello);
+      right.appendChild(anular);
+    }
     topRow.appendChild(right);
 
     head.appendChild(topRow);
     detail.appendChild(head);
+
+    // Slot del aviso "control_cambio" (Regla X): vacío salvo que un intento de sellar
+    // choque con un BL nuevo llegado entre que se abrió el detalle y se apretó sellar.
+    const cambioSlot = el('div'); cambioSlot.id = 'cbl-cambio-slot';
+    detail.appendChild(cambioSlot);
 
     // Doc-tabs + visor (Análisis real; BL/Aduana/Booking/Factura/PE → visor Drive en commit 5)
     const dt = el('div', 'cbl-doctabs'); dt.id = 'cbl-doctabs';
@@ -15946,6 +16073,131 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     detail.appendChild(viewer);
     cblRenderDocTabs(row);
     cblRenderViewer(row);
+  }
+
+  // ════════════ Sello humano "control revisado" — POST + flujo (tanda 1.5.c) ════════════
+  // Molde 1:1 de apiMailing/apiSeguimiento (T3/Seguimiento): Bearer JWT de sesión,
+  // /api/seguimiento, { ok, action, result } o throw con el mensaje del server.
+  // Local a este IIFE (los helpers de esos módulos no están en window).
+  async function cblApiSeguimiento(body){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
+    const res = await fetch('/api/seguimiento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    return data;
+  }
+
+  // Hace el POST y devuelve result.{status,...} — el caller decide toast/refresh.
+  async function cblPostSello(action, row, motivo){
+    const data = await cblApiSeguimiento({
+      action,
+      order_number: row.order_number,
+      bl_file_id: row.bl_file_id,
+      motivo,
+    });
+    return data.result;
+  }
+
+  // Re-fetch SOLO de sellos (el bl_file_id no cambió) + re-render de lo que esté
+  // seleccionado. Camino simple para 'sellada'/'anulada': no hace falta releer bl_controls.
+  async function cblRefreshSellos(){
+    await cblFetchSellos();
+    cblAfterDataChange();
+  }
+
+  // Re-fetch de LOS CONTROLES por el loader activo (búsqueda si hay una en curso, si no
+  // el master de 7 días) — usado en 'control_cambio', donde llegó un bl_file_id nuevo que
+  // hay que traer. Intenta reconservar la orden que se estaba mirando.
+  async function cblRefreshData(orderToKeep){
+    const want = orderToKeep || _cblSel;
+    if(_cblSearched) await cblSearch();
+    else await window.loadBlControls({ quiet: true });
+    if(want && cblUniverse().some(r => r.order_number === want)) cblSelect(want);
+  }
+
+  // Inserta el banner "el control cambió" en el detalle de esa orden (si seguimos
+  // mirándola — el usuario pudo cambiar de selección mientras el POST estaba en vuelo).
+  function cblShowCambioBanner(orderNumber){
+    if(_cblSel !== orderNumber) return;
+    const slot = $('cbl-cambio-slot');
+    if(!slot) return;
+    slot.innerHTML = '';
+    const banner = el('div', 'cbl-cambio');
+    banner.appendChild(svgUse('#i-alert'));
+    banner.appendChild(el('span', null, 'El control cambió — llegó un BL nuevo (archivo distinto) para esta orden. Refrescando la versión vigente…'));
+    slot.appendChild(banner);
+  }
+
+  // Click "Marcar como revisado" → motivo obligatorio (ssbConfirm reason) → POST → maneja status.
+  async function cblStartSellar(row){
+    const r = await ssbConfirm({
+      title: 'Marcar control como revisado',
+      body: 'Estás dando por bueno un control que dio REVISAR — quedará registrado con tu nombre. El motivo es obligatorio.',
+      reason: { label: 'Motivo', placeholder: 'ej: BL corregido y reemplazado · o: diferencia menor aceptable' },
+      confirmText: 'Marcar revisado',
+    });
+    if(!r || !r.ok) return; // cancelado — sin motivo no postea
+    let result;
+    try {
+      result = await cblPostSello('sellar_control', row, r.reason);
+    } catch(e){
+      ssbToast('No se pudo sellar: ' + (e.message || 'error de red'), 'error');
+      return;
+    }
+    switch(result.status){
+      case 'sellada':
+        ssbToast('Control marcado como revisado.', 'success');
+        await cblRefreshSellos();
+        break;
+      case 'ya_sellado':
+        ssbToast('Este control ya estaba revisado.', 'info');
+        break;
+      case 'no_aplica':
+        ssbToast(result.detail || 'No aplica: el control ya no está en REVISAR.', 'info');
+        break;
+      case 'control_cambio':
+        ssbToast('El control cambió — llegó un BL nuevo. Refrescando…', 'warning');
+        cblShowCambioBanner(row.order_number);
+        await cblRefreshData(row.order_number);
+        break;
+      default:
+        ssbToast('Respuesta inesperada del servidor.', 'error');
+    }
+  }
+
+  // Click "Anular revisado" (admin-only en la UI; el server re-valida el rol) → motivo → POST.
+  async function cblStartAnular(row, sello){
+    const r = await ssbConfirm({
+      title: 'Anular revisado',
+      body: 'Vas a anular el sello de esta orden — vuelve a mostrar el REVISAR crudo del control. El motivo es obligatorio.',
+      reason: { label: 'Motivo', placeholder: 'ej: se selló por error' },
+      confirmText: 'Anular revisado',
+      danger: true,
+    });
+    if(!r || !r.ok) return;
+    let result;
+    try {
+      result = await cblPostSello('anular_sello', row, r.reason);
+    } catch(e){
+      ssbToast('No se pudo anular: ' + (e.message || 'error de red'), 'error');
+      return;
+    }
+    switch(result.status){
+      case 'anulada':
+        ssbToast('Sello anulado — la orden vuelve a REVISAR.', 'success');
+        await cblRefreshSellos();
+        break;
+      case 'no_encontrada':
+        ssbToast('No había sello activo para anular (¿ya se había anulado?).', 'info');
+        break;
+      default:
+        ssbToast('Respuesta inesperada del servidor.', 'error');
+    }
   }
 
   // file-id desde un link de Drive (.../d/{id}/...) o null
@@ -16235,6 +16487,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       _cblSearched = _cblSearchData.map(r => r.order_number);
       _cblIsLote = false;
     }
+    await cblFetchSellos(); // sello vigente por (order_number, bl_file_id) — antes de renderizar badges
     _cblSel = null; // recalcula selección sobre el nuevo resultado
     cblAfterDataChange();
   }
@@ -16280,6 +16533,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
    dato dinámico; body_html SOLO dentro de <iframe sandbox> (sin scripts, sin same-origin). */
 (function(){
   let _orders = [];
+  let _ctrlByOrder = {};  // WP-C: order_number → fila v_operacion_estado (sello "control revisado"; DISPLAY-ONLY, no participa del envío)
   let _sel = null;        // order_number seleccionado
   let _row = null;        // fila mailing_orders seleccionada
   let _contact = null;    // fila mailing_contacts del par (ship,sold)
@@ -16391,6 +16645,21 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     }
     _loadError = null;
     return data || [];
+  }
+  // WP-C: sello "control revisado" — LECTURA PURA para el indicador de la card de
+  // resumen (nunca toca _preview ni el POST a /api/mailing). Degradación suave: si
+  // falla o no hay sesión, {} — el mailing sigue funcionando sin la línea de control.
+  async function fetchControlEstado(orders){
+    const s = supa(); if(!s || !orders || !orders.length) return {};
+    try {
+      const { data, error } = await s.from('v_operacion_estado')
+        .select('order_number,control_estado,control_sellado_por,control_sellado_at,ok_count,revisar_count')
+        .in('order_number', orders.map(o => o.order_number));
+      if(error){ console.error('[mailing] control:', error.message); return {}; }
+      const map = {};
+      for(const r of (data || [])) map[r.order_number] = r;
+      return map;
+    } catch(e){ console.error('[mailing] control:', e.message); return {}; }
   }
   async function fetchContact(row){
     const s = supa(); if(!s || !row || !row.ship_to_key) return null;
@@ -16562,6 +16831,28 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     item('Zarpe (ATD)', _row.atd ? fmtD(_row.atd) : '— sin confirmar');
     dl.style.marginTop = '12px';
     c.appendChild(dl);
+    // WP-C: sello "control revisado" (v_operacion_estado) — indicador DISPLAY-ONLY,
+    // no participa del envío/idempotencia. Sin dato (fallo de red o sin control) → '—'.
+    const ctrl = _ctrlByOrder[_row.order_number];
+    const ctrlP = el('p','mail-note');
+    ctrlP.style.display = 'flex'; ctrlP.style.alignItems = 'center'; ctrlP.style.gap = '8px';
+    const ctrlLbl = el('span', null, 'Control BL:'); ctrlLbl.style.color = 'var(--mail-ink-soft)'; ctrlLbl.style.fontWeight = '700';
+    ctrlP.appendChild(ctrlLbl);
+    if(ctrl && ctrl.control_estado === 'SELLADO'){
+      const b = el('span','mail-badge seal');
+      b.appendChild(svgUse('#i-stamp'));
+      const who = ctrl.control_sellado_por ? String(ctrl.control_sellado_por).split('@')[0] : '';
+      const when = fmtTs(ctrl.control_sellado_at).split(' ')[0]; // dd/mm — fmtTs ya devuelve '—' si inválido/ausente
+      b.appendChild(document.createTextNode('Revisado' + (who ? ' por ' + who : '') + (when && when !== '—' ? ' · ' + when : '')));
+      ctrlP.appendChild(b);
+    } else if(ctrl && ctrl.control_estado === 'REVISAR'){
+      ctrlP.appendChild(el('span','mail-badge rev','REVISAR · ' + (ctrl.revisar_count != null ? ctrl.revisar_count : 0)));
+    } else if(ctrl && ctrl.control_estado === 'OK'){
+      ctrlP.appendChild(el('span','mail-badge ok','OK · ' + (ctrl.ok_count != null ? ctrl.ok_count : 0)));
+    } else {
+      ctrlP.appendChild(document.createTextNode('—'));
+    }
+    c.appendChild(ctrlP);
     if(_row.atd){
       const sb = slaBadge(_row);
       if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
@@ -17260,6 +17551,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       _orders = await fetchOrders();
       _loaded = true;
       renderMaster();
+      _ctrlByOrder = await fetchControlEstado(_orders); // WP-C: sello — no bloquea el render del master
       if(_sel){ _row = _orders.find(r => r.order_number === _sel) || null; renderDetail(); }
       // deep-link desde Seguimiento — solo actúa si la orden está en el dataset ya cargado.
       if(typeof _po === 'string' && /^\d{7,12}$/.test(_po) && _orders.some(r => r.order_number === _po)){
@@ -17583,7 +17875,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   let _loading = false;
   let _loaded = false;
   let _sortK = 'dl', _sortDir = 1;
-  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'' };
+  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', q:'' };
   let _showArch = false;
 
   // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
@@ -17747,6 +18039,13 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
 
   function passesFilters(x){
     if(!_showArch && x.c.archived) return false;
+    const q = (_filters.q || '').trim();
+    if(q){
+      const qNorm = /^\d+$/.test(q) ? normalizeOrdenLocal(q) : q;
+      const qLower = qNorm.toLowerCase();
+      const haystack = [x.r.order_number, x.r.ship_to_name, x.r.vessel, x.r.booking_no, x.r.pod];
+      if(!haystack.some(v => v != null && String(v).toLowerCase().includes(qLower))) return false;
+    }
     const fa = _filters.urgencia;
     if(fa === 'alertas'){ if(!(x.c.alerts.length > 0)) return false; }
     else if(fa === 'limpias'){ if(x.c.alerts.length > 0 || x.c.bucket === 'vencida') return false; }
@@ -17780,7 +18079,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   function updateCount(tot, vis){
     const cEl = $('seg-count'); if(!cEl) return;
     while(cEl.firstChild) cEl.removeChild(cEl.firstChild);
-    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente) : true;
+    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente || _filters.q) : true;
     if(filtersActive){
       cEl.appendChild(el('b', null, String(vis)));
       cEl.appendChild(document.createTextNode(' de ' + tot + ' órdenes'));
@@ -17823,6 +18122,23 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
       const b = mkBadge('mut','no aplica');
       b.title = 'El Control BL es marítimo — el doc de transporte terrestre es el CRT (columna Docs).';
       return b;
+    }
+    // Sello humano "control revisado" (tanda 1.5.c) — gana al overall_result crudo.
+    // control_estado ya lo resuelve v_operacion_estado (migración 1.5.a): 'SELLADO'
+    // cuando hay sello vigente por bl_file_id, si no el overall_result crudo.
+    if(r.control_estado === 'SELLADO'){
+      const frag = document.createDocumentFragment();
+      const b = mkBadge('seal', 'Revisado');
+      b.insertBefore(svgUse('#i-stamp'), b.firstChild);
+      const who = r.control_sellado_por ? String(r.control_sellado_por).split('@')[0] : '';
+      const when = r.control_sellado_at ? fmtDM(r.control_sellado_at) : '';
+      b.title = ['Revisado', who, when].filter(Boolean).join(' · ');
+      frag.appendChild(b);
+      const rawTxt = r.overall_result === 'OK' ? ('OK · ' + (r.ok_count != null ? r.ok_count : 0))
+        : r.overall_result === 'REVISAR' ? ('REVISAR · ' + (r.revisar_count != null ? r.revisar_count : 0))
+        : null;
+      if(rawTxt) frag.appendChild(el('span', 'strike', rawTxt));
+      return frag;
     }
     if(r.overall_result === 'OK') return mkBadge('ok', 'OK · ' + (r.ok_count != null ? r.ok_count : 0) + '✓');
     if(r.overall_result === 'REVISAR') return mkBadge('rev', 'REVISAR · ' + (r.revisar_count != null ? r.revisar_count : 0) + '⚑');
@@ -18306,7 +18622,16 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-mot','mot'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente']]){
       $(id)?.addEventListener('change', (e) => { _filters[key] = e.target.value; renderAll(); });
     }
-    $('seg-clear')?.addEventListener('click', () => { _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'' }; renderAll(); });
+    // buscador de orden: input+debounce (NO change) — molde #mail-q. No se suma a
+    // syncFilterSelects (solo <select>): re-escribir su .value en cada render podría
+    // pisar lo que el usuario está tipeando si otro filtro dispara renderAll() antes
+    // de que el debounce corra (lección "no tocar inputs con focus en re-renders").
+    $('seg-f-q')?.addEventListener('input', debounce((e) => { _filters.q = e.target.value; renderAll(); }, 250));
+    $('seg-clear')?.addEventListener('click', () => {
+      _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', q:'' };
+      const qEl = $('seg-f-q'); if(qEl) qEl.value = '';
+      renderAll();
+    });
 
     // Modal
     $('seg-mod-close')?.addEventListener('click', () => closeGiModalGuarded());
