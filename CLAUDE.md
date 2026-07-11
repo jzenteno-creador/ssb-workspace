@@ -113,6 +113,12 @@ Refactor en curso: index.html → `js/shared/` + `js/features/` (ES Modules nati
 - **Regla:** los módulos consumen símbolos de scripts clásicos SIEMPRE como IDENTIFICADOR PELADO (`esc`, `debounce`, `SLA_DAYS`), NUNCA como `window.X`. PROHIBIDO escribir `window.X` para leer símbolos de scripts clásicos, aunque "parezca el patrón de la casa".
 - Los `<script type="module">` son DIFERIDOS: corren después de TODOS los `<script>` clásicos y antes de DOMContentLoaded. Ningún símbolo publicado por un módulo existe durante el parse-time de un script clásico (inventario de sitios parse-time: memoria `modularizacion-index-explore`).
 
+### Canario GoTrueClient (detector gratis — no perder)
+
+Baseline actual: **2 warnings amarillos** "Multiple GoTrueClient instances detected … same storage key" (`sb-xkppkzfxgtfsmfooozsm-auth-token`) = los 3 createClient anon planos de S3/S4/S5 compartiendo la storage key default. Condición PREEXISTENTE (EXPLORE: 5 createClient misma anon key). **NO arreglar** — unificar clientes es cambio de comportamiento, decisión aparte con John.
+
+USO COMO CANARIO — verificación OBLIGATORIA en el criterio de salida de B1.4 (supabase-client.js + auth.js) y de todo gate que toque clientes/auth: ¿el conteo de warnings sigue en 2? Si SUBIÓ, se activó el fallback de S7:12138 (`const supa = (window.__ssb && …) || fallback`): `window.__ssb` no estaba disponible cuando S7 corrió y Vacaciones creó un cliente extra — la falla silenciosa marcada en el plan. Si sube → FRENAR.
+
 ### Gates del refactor — protocolo obligatorio (regla permanente)
 
 John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verificación.
