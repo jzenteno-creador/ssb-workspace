@@ -101,6 +101,18 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - No agregar npm/bundlers a la app del front
 - No modificar la estructura de tarifas sin consultar al supervisor
 
+## Modularización ES Modules — REGLA DURA: asimetría clásico/módulo (refactor 2026-07, en curso)
+
+Refactor en curso: index.html → `js/shared/` + `js/features/` (ES Modules nativos, sin bundler). Iron Law: UN módulo a la vez, gate humano por módulo, nunca push sin OK. Esta regla aplica a humanos Y a TODO subagente que toque JS del refactor:
+
+- **módulo → clásico:** el shim `window.X = X` publicado desde el módulo funciona — el código clásico resuelve `X` pelado vía window. Es el patrón.
+- **clásico → módulo: NO es simétrico.**
+  - `var` / `function` declarados en un script clásico SÍ quedan en `window`.
+  - `const` / `let` / `class` declarados en un script clásico NO quedan en `window` — viven solo en el scope léxico global (igual visibles por identificador pelado desde módulos).
+- **CONSECUENCIA:** si `js/shared/helpers.js` (clásico durante la transición) declara `const SLA_DAYS`, entonces `window.SLA_DAYS === undefined`. Un módulo que lo consuma como `window.SLA_DAYS` SE ROMPE — y en silencio si hay `?.` u `||` en el medio.
+- **Regla:** los módulos consumen símbolos de scripts clásicos SIEMPRE como IDENTIFICADOR PELADO (`esc`, `debounce`, `SLA_DAYS`), NUNCA como `window.X`. PROHIBIDO escribir `window.X` para leer símbolos de scripts clásicos, aunque "parezca el patrón de la casa".
+- Los `<script type="module">` son DIFERIDOS: corren después de TODOS los `<script>` clásicos y antes de DOMContentLoaded. Ningún símbolo publicado por un módulo existe durante el parse-time de un script clásico (inventario de sitios parse-time: memoria `modularizacion-index-explore`).
+
 ## Skills activas en este proyecto
 
 - **frontend-design** → para cualquier cambio de UI en index.html
