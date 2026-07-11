@@ -113,6 +113,20 @@ Refactor en curso: index.html → `js/shared/` + `js/features/` (ES Modules nati
 - **Regla:** los módulos consumen símbolos de scripts clásicos SIEMPRE como IDENTIFICADOR PELADO (`esc`, `debounce`, `SLA_DAYS`), NUNCA como `window.X`. PROHIBIDO escribir `window.X` para leer símbolos de scripts clásicos, aunque "parezca el patrón de la casa".
 - Los `<script type="module">` son DIFERIDOS: corren después de TODOS los `<script>` clásicos y antes de DOMContentLoaded. Ningún símbolo publicado por un módulo existe durante el parse-time de un script clásico (inventario de sitios parse-time: memoria `modularizacion-index-explore`).
 
+### Gates del refactor — protocolo obligatorio (regla permanente)
+
+John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verificación.
+
+- Server estático desde la raíz del repo, en background, vivo entre gates: `python3 -m http.server 8899 --bind 127.0.0.1` → URL `http://localhost:8899`. Puerto ocupado → usar otro e informarlo (John no debuggea puertos). Server caído (p.ej. sesión nueva) → re-levantarlo sin que lo pida. Nunca `file://` (los módulos ES no cargan).
+- Formato FIJO de entrega de cada gate:
+  1. QUÉ HICE (diff acotado)
+  2. CRITERIO DE SALIDA (con conteo de handlers)
+  3. SERVIDOR: URL lista para pegar (ya corriendo, verificada por Claude con curl + headless)
+  4. QUÉ CLICKEO YO: pasos numerados AUTOSUFICIENTES — qué tab, dónde está el botón, qué espero ver (asumir que John no recuerda la UI ni leyó el razonamiento previo)
+  5. QUÉ SIGNIFICA SI FALLA: síntoma → causa probable
+  6. AUTOCRÍTICA
+- Nunca pedir verificación sin app corriendo y URL a mano.
+
 ## Skills activas en este proyecto
 
 - **frontend-design** → para cualquier cambio de UI en index.html
