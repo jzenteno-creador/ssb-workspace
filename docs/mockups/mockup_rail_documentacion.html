@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rail · grupo Documentación — GATE 1</title>
+<!--
+  MAQUETA GATE 1 — rail agrupado "Documentación" (0.d, decisión B de John: las 4
+  solapas nacen agrupadas). Standalone, cero DB, cero index.html.
+
+  FIDELIDAD: el CSS del rail está COPIADO LITERAL del index.html vivo (líneas 190-269:
+  .tab-bar/.tab-btn/.tab-lbl/tooltips attr(aria-label)/pinned 228px/drawer 268px/
+  .vac-tab-badge con sus 3 overrides). Lo NUEVO es solo el grupo: .rail-group /
+  .rail-sub / .rail-flyout — namespaced, DENTRO de .tab-bar (la clase no se toca:
+  la referencia el anti-bypass de auth).
+
+  DISEÑO — un grupo, TRES comportamientos (uno por modo del rail):
+  · COLAPSADO (64px): el grupo es UN ícono (i-folder) → click abre FLYOUT flotante
+    a la derecha con las 4 solapas (click, no hover: funciona en touch 701-1100 y
+    no flickerea). Badge de alertas en la esquina del ícono.
+  · PINNED (228px, ≥1101): ítem "Documentación" con chevron → ÁRBOL indentado con
+    línea de rama. Estado abierto persistido (localStorage ssb-rail-doc-open) +
+    auto-expand si la solapa activa vive dentro del grupo.
+  · DRAWER (≤700px): igual que pinned (árbol), labels siempre visibles.
+  Sub-solapa activa + grupo cerrado ⇒ el ítem del grupo hereda el estado activo.
+
+  CONTRATOS QUE NO CAMBIAN: ids tab-*/panel-*, onclick switchTab(id), array de
+  switchTab (solo se suma 'seguimiento'), clase .tab-bar, focus-trap del drawer
+  (filtra por offsetParent ⇒ subs ocultas quedan fuera solas).
+-->
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0f17;--surface:#141925;--border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+  --blue:#5b9bf5;--amber:#f5a623;--red:#ef6461;--purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+  --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+  --font:'Inter','system-ui',-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --rail-bg:#080b12;--rail-border:rgba(255,255,255,.07);--rail-w:64px;--rail-w-exp:228px;
+}
+body.light{color-scheme:light;--bg:#f7f8fa;--surface:#fff;--border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;--blue:#2563eb;--purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;--green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.mock-note{background:#1c1533;border-bottom:1px solid #4d3a8a;color:#c9bdf5;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.mock-note b{color:#e6defc}
+.mock-note button{font-family:var(--font);font-size:11px;background:none;border:1px solid #4d3a8a;color:#c9bdf5;border-radius:7px;padding:4px 10px;cursor:pointer}
+body.light .mock-note{background:#f3f0ff;border-color:#c4b5fd;color:#4d3a8a}
+
+.wrap{max-width:1560px;margin:0 auto;padding:22px 18px 60px}
+h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 22px}
+.stages{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.stage{border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden;flex-shrink:0}
+.stage>.hd{padding:10px 14px;border-bottom:1px solid var(--border)}
+.stage>.hd .t{font-size:13px;font-weight:800}
+.stage>.hd .d{font-size:11px;color:var(--muted)}
+.frame{position:relative;height:560px;background:var(--bg);overflow:hidden;display:flex}
+.fake{flex:1;padding:16px 18px;min-width:0}
+.fake .ttl{font-size:16px;font-weight:800;margin-bottom:6px}
+.fake .ln{height:9px;border-radius:5px;background:var(--border);margin:9px 0;opacity:.55}
+.fake .ln.w60{width:60%}.fake .ln.w80{width:80%}.fake .ln.w40{width:40%}
+
+/* ══════════ CSS DEL RAIL — copiado literal del index.html vivo ══════════ */
+.rail{position:absolute;left:0;top:0;bottom:0;width:var(--rail-w);z-index:30;background:var(--rail-bg);border-right:1px solid var(--rail-border);display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;overflow:visible;transition:width .2s cubic-bezier(.16,1,.3,1)}
+.rail-logo{width:40px;height:40px;border-radius:9px;background:#5b9bf5;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:10px}
+.rail-logo svg{width:20px;height:20px;color:#fff;stroke-width:2}
+.rail .tab-btn{display:flex;align-items:center;width:40px;height:40px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.55);position:relative;flex-shrink:0;font-family:var(--font);font-size:13px;font-weight:500;white-space:nowrap;transition:background .15s,color .15s}
+.rail .tab-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.rail .tab-btn.active{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+.rail .tab-btn.active::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+.rail .tab-btn svg{width:18px;height:18px;margin:0;flex-shrink:0}
+.rail .tab-lbl{width:0;padding-left:0;opacity:0;overflow:hidden}
+/* tooltip colapsado (attr(aria-label)) — igual al vivo */
+.frame.collapsed .tab-btn:hover::after{content:attr(aria-label);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);background:#0b0f17;border:1px solid var(--rail-border);color:rgba(255,255,255,.88);font-size:12px;font-weight:500;padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:5}
+/* badge (patrón vac-tab-badge, 3 estados) */
+.rbadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;margin-left:6px;background:var(--amber);color:#fff;font-size:10px;font-weight:700;border-radius:9px;line-height:1}
+.frame.collapsed .rbadge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;margin:0;font-size:9px;border:1.5px solid var(--rail-bg)}
+/* estados expandidos (pinned / drawer) */
+.frame.pinned .rail{width:var(--rail-w-exp)}
+.frame.pinned .fake{margin-left:var(--rail-w-exp)}
+.frame.collapsed .fake{margin-left:var(--rail-w)}
+.frame.pinned .rail .tab-btn{width:100%}
+.frame.pinned .rail .tab-lbl{width:auto;padding-left:10px;opacity:1}
+.frame.drawer .rail{width:268px;transform:translateX(-100%);visibility:hidden;box-shadow:8px 0 32px rgba(0,0,0,.45);transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s .22s;z-index:40}
+.frame.drawer.nav-open .rail{transform:translateX(0);visibility:visible;transition:transform .22s cubic-bezier(.16,1,.3,1),visibility 0s 0s}
+.frame.drawer .rail .tab-btn{width:100%}
+.frame.drawer .rail .tab-lbl{width:auto;padding-left:10px;opacity:1}
+.frame.drawer .backdrop{position:absolute;inset:0;z-index:35;background:rgba(4,6,10,.55);display:none}
+.frame.drawer.nav-open .backdrop{display:block}
+.frame.drawer .topbar{position:absolute;top:0;left:0;right:0;height:48px;background:#0b0f17;border-bottom:1px solid var(--rail-border);display:flex;align-items:center;gap:10px;padding:0 12px;z-index:20}
+.frame.drawer .btn-burger{display:inline-flex;align-items:center;padding:7px 9px;border-radius:7px;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.88);background:rgba(255,255,255,.09);cursor:pointer}
+.frame.drawer .btn-burger svg{width:16px;height:16px}
+.frame.drawer .brand{color:rgba(255,255,255,.85);font-size:13px;font-weight:700}
+.frame.drawer .fake{margin-left:0;padding-top:60px}
+.rail-spacer{flex:1}
+.rail-pin{display:flex;align-items:center;width:40px;height:36px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;cursor:pointer;color:rgba(255,255,255,.4);flex-shrink:0;font-size:12px;white-space:nowrap}
+.rail-pin svg{width:17px;height:17px}
+.frame.pinned .rail-pin{width:100%}
+.frame.pinned .rail-pin .tab-lbl{width:auto;padding-left:10px;opacity:1}
+.frame.drawer .rail-pin{display:none}
+
+/* ══════════ LO NUEVO — grupo "Documentación" ══════════ */
+/* Contenedor del grupo: vive DENTRO del nav, no toca .tab-bar */
+.rail-group{display:flex;flex-direction:column;width:100%;flex-shrink:0}
+/* Botón cabecera del grupo: mismo molde .tab-btn + chevron en expandido */
+.rail-group>.tab-btn .chev{margin-left:auto;width:14px;height:14px;opacity:0;transition:transform .18s}
+.frame.pinned .rail-group>.tab-btn .chev,.frame.drawer .rail-group>.tab-btn .chev{opacity:.6}
+.rail-group.open>.tab-btn .chev{transform:rotate(90deg)}
+/* estado "sub activa adentro" cuando el grupo está cerrado o colapsado */
+.rail-group.has-active>.tab-btn{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+.rail-group.has-active>.tab-btn::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+/* Árbol (pinned/drawer): rama indentada, animación de altura reduce-safe */
+.rail-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .2s cubic-bezier(.16,1,.3,1);width:100%}
+.rail-group.open .rail-sub{grid-template-rows:1fr}
+.rail-sub>.inner{overflow:hidden;display:flex;flex-direction:column;gap:3px;min-height:0}
+.rail-sub .tab-btn{height:36px;font-size:12.5px}
+.frame.pinned .rail-sub .tab-btn,.frame.drawer .rail-sub .tab-btn{width:calc(100% - 22px);margin-left:22px;position:relative}
+.frame.pinned .rail-sub .inner,.frame.drawer .rail-sub .inner{position:relative;padding-top:3px}
+.frame.pinned .rail-sub .inner::before,.frame.drawer .rail-sub .inner::before{content:'';position:absolute;left:19px;top:2px;bottom:6px;width:1px;background:rgba(255,255,255,.10)}
+.rail-sub .tab-btn svg{width:16px;height:16px}
+/* En COLAPSADO las subs no se muestran en el rail: viven en el flyout */
+.frame.collapsed .rail-sub{display:none}
+@media (prefers-reduced-motion:reduce){.rail-sub,.rail,.rail-group>.tab-btn .chev{transition:none}}
+
+/* Flyout (solo colapsado): card flotante a la derecha del grupo */
+.rail-flyout{position:absolute;left:calc(100% + 10px);top:-4px;min-width:200px;background:#0b0f17;border:1px solid rgba(255,255,255,.14);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.55);padding:6px;display:none;z-index:50}
+.rail-group.fly-open .rail-flyout{display:block}
+.rail-flyout .fhd{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:6px 10px 5px}
+.rail-flyout .tab-btn{width:100%;height:36px;font-size:12.5px}
+.rail-flyout .tab-btn .tab-lbl{width:auto;padding-left:10px;opacity:1}
+.rail-flyout .tab-btn::before{display:none}
+.rail-flyout .tab-btn.active::before{display:block;left:-2px}
+.rail-flyout .rbadge{position:static;margin-left:auto;min-width:18px;height:18px;font-size:10px;border:none}
+/* el flyout solo existe en colapsado */
+.frame.pinned .rail-flyout,.frame.drawer .rail-flyout{display:none !important}
+
+/* ══════════ Secciones de decisión ══════════ */
+.sec{margin-top:30px}
+.sec h2{font-size:17px;font-weight:800;margin-bottom:4px}
+.sec .d{font-size:13px;color:var(--muted);margin-bottom:12px}
+.gate{border:1px dashed var(--purple-bd);border-radius:14px;padding:16px 20px;background:var(--purple-bg)}
+.gate h2{font-size:15px;font-weight:800;color:var(--purple);margin-bottom:8px}
+.gate li{margin:6px 0 6px 18px;font-size:13px}
+.gate b{color:var(--purple)}
+.tech{border:1px solid var(--green-bd);background:var(--green-bg);border-radius:14px;padding:14px 18px;margin-top:14px}
+.tech h3{font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px}
+.tech li{margin:4px 0 4px 18px;font-size:12.5px;color:var(--text)}
+code{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-anchor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-ship" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1s1.2 1 2.5 1c2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="i-panel-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<div class="mock-note">
+  <span><b>GATE 1 — rail agrupado "Documentación"</b> · CSS del rail copiado literal del vivo · lo nuevo: grupo con 3 comportamientos (flyout / árbol / drawer) · INTERACTIVO: clickeá el grupo en cada panel</span>
+  <button onclick="document.body.classList.toggle('light')">☀ / ☾ tema</button>
+</div>
+
+<div class="wrap">
+  <h1>Un grupo, tres comportamientos</h1>
+  <p class="sub">El rail vive en tres modos distintos (colapsado 64px · pinned 228px · drawer móvil 268px) — un acordeón no funciona en 64px y un flyout no funciona en touch. Cada panel de abajo es el rail REAL en ese modo, funcional: probá click en <b>Documentación</b>, en las sub-solapas, hover para tooltips.</p>
+
+  <div class="stages">
+
+    <!-- ═══ STAGE A · COLAPSADO + FLYOUT ═══ -->
+    <div class="stage" style="width:400px">
+      <div class="hd"><div class="t">A · Rail colapsado (64px) → FLYOUT</div><div class="d">≥1101 sin pin y todo el tier 701–1100 · click en la carpeta abre el flyout (funciona en touch) · badge de alertas en la esquina</div></div>
+      <div class="frame collapsed" id="fA">
+        <nav class="rail">
+          <div class="rail-logo"><svg><use href="#i-anchor"/></svg></div>
+          <button class="tab-btn" aria-label="Tarifas BID" onclick="act('fA',this)"><svg><use href="#i-clipboard"/></svg><span class="tab-lbl">Tarifas BID</span></button>
+          <button class="tab-btn" aria-label="EFA" onclick="act('fA',this)"><svg><use href="#i-zap"/></svg><span class="tab-lbl">EFA</span></button>
+          <button class="tab-btn" aria-label="Schedule" onclick="act('fA',this)"><svg><use href="#i-ship"/></svg><span class="tab-lbl">Schedule</span></button>
+          <button class="tab-btn" aria-label="Vacaciones" onclick="act('fA',this)"><svg><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span></button>
+          <!-- GRUPO -->
+          <div class="rail-group fly has-active" id="gA">
+            <button class="tab-btn" aria-label="Documentación" onclick="toggleFly('gA',event)"><svg><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="rbadge">4</span><svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="rail-flyout">
+              <div class="fhd">Documentación</div>
+              <button class="tab-btn active" aria-label="Seguimiento" onclick="act('fA',this,'gA')"><svg><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento</span><span class="rbadge">4</span></button>
+              <button class="tab-btn" aria-label="Control BL" onclick="act('fA',this,'gA')"><svg><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+              <button class="tab-btn" aria-label="Cert. de Origen" onclick="act('fA',this,'gA')"><svg><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+              <button class="tab-btn" aria-label="Mailing" onclick="act('fA',this,'gA')"><svg><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+            </div>
+            <div class="rail-sub"><div class="inner"></div></div>
+          </div>
+          <button class="tab-btn" aria-label="Estructura DB" onclick="act('fA',this)"><svg><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
+          <div class="rail-spacer"></div>
+          <button class="rail-pin" aria-label="Expandir menú"><svg><use href="#i-panel-left"/></svg></button>
+        </nav>
+        <div class="fake"><div class="ttl">Seguimiento</div><div class="ln w80"></div><div class="ln w60"></div><div class="ln w40"></div><div class="ln w80"></div><div class="ln w60"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ STAGE B · PINNED + ÁRBOL ═══ -->
+    <div class="stage" style="width:480px">
+      <div class="hd"><div class="t">B · Rail expandido/pinned (228px) → ÁRBOL</div><div class="d">≥1101 con pin · chevron expande las 4 sub-solapas con rama · abierto se persiste (localStorage) · auto-expande si la solapa activa vive adentro</div></div>
+      <div class="frame pinned" id="fB">
+        <nav class="rail">
+          <div class="rail-logo"><svg><use href="#i-anchor"/></svg></div>
+          <button class="tab-btn" aria-label="Tarifas BID" onclick="act('fB',this)"><svg><use href="#i-clipboard"/></svg><span class="tab-lbl">Tarifas BID</span></button>
+          <button class="tab-btn" aria-label="EFA" onclick="act('fB',this)"><svg><use href="#i-zap"/></svg><span class="tab-lbl">EFA</span></button>
+          <button class="tab-btn" aria-label="Schedule" onclick="act('fB',this)"><svg><use href="#i-ship"/></svg><span class="tab-lbl">Schedule</span></button>
+          <button class="tab-btn" aria-label="Vacaciones" onclick="act('fB',this)"><svg><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span><span class="rbadge" style="background:var(--amber)">2</span></button>
+          <!-- GRUPO -->
+          <div class="rail-group open has-active" id="gB">
+            <button class="tab-btn" aria-label="Documentación" onclick="toggleTree('gB')"><svg><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="rbadge tree-badge" style="display:none">4</span><svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="rail-sub"><div class="inner">
+              <button class="tab-btn active" aria-label="Seguimiento" onclick="act('fB',this,'gB')"><svg><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento</span><span class="rbadge">4</span></button>
+              <button class="tab-btn" aria-label="Control BL" onclick="act('fB',this,'gB')"><svg><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+              <button class="tab-btn" aria-label="Cert. de Origen" onclick="act('fB',this,'gB')"><svg><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+              <button class="tab-btn" aria-label="Mailing" onclick="act('fB',this,'gB')"><svg><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+            </div></div>
+          </div>
+          <button class="tab-btn" aria-label="Estructura DB" onclick="act('fB',this)"><svg><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
+          <div class="rail-spacer"></div>
+          <button class="rail-pin" aria-label="Colapsar menú"><svg><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
+        </nav>
+        <div class="fake"><div class="ttl">Seguimiento</div><div class="ln w80"></div><div class="ln w60"></div><div class="ln w40"></div><div class="ln w80"></div><div class="ln w60"></div></div>
+      </div>
+    </div>
+
+    <!-- ═══ STAGE C · DRAWER MÓVIL ═══ -->
+    <div class="stage" style="width:360px">
+      <div class="hd"><div class="t">C · Drawer móvil (≤700px) → ÁRBOL</div><div class="d">off-canvas 268px, labels siempre visibles · mismo árbol que pinned · abrilo con la hamburguesa</div></div>
+      <div class="frame drawer nav-open" id="fC">
+        <div class="topbar"><button class="btn-burger" onclick="document.getElementById('fC').classList.toggle('nav-open')"><svg><use href="#i-menu"/></svg></button><span class="brand">SSB Workspace</span></div>
+        <div class="backdrop" onclick="document.getElementById('fC').classList.remove('nav-open')"></div>
+        <nav class="rail">
+          <div class="rail-logo"><svg><use href="#i-anchor"/></svg></div>
+          <button class="tab-btn" aria-label="Tarifas BID" onclick="act('fC',this)"><svg><use href="#i-clipboard"/></svg><span class="tab-lbl">Tarifas BID</span></button>
+          <button class="tab-btn" aria-label="EFA" onclick="act('fC',this)"><svg><use href="#i-zap"/></svg><span class="tab-lbl">EFA</span></button>
+          <button class="tab-btn" aria-label="Schedule" onclick="act('fC',this)"><svg><use href="#i-ship"/></svg><span class="tab-lbl">Schedule</span></button>
+          <button class="tab-btn" aria-label="Vacaciones" onclick="act('fC',this)"><svg><use href="#i-calendar"/></svg><span class="tab-lbl">Vacaciones</span></button>
+          <!-- GRUPO -->
+          <div class="rail-group open has-active" id="gC">
+            <button class="tab-btn" aria-label="Documentación" onclick="toggleTree('gC')"><svg><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="rbadge tree-badge" style="display:none">4</span><svg class="chev"><use href="#i-chev"/></svg></button>
+            <div class="rail-sub"><div class="inner">
+              <button class="tab-btn active" aria-label="Seguimiento" onclick="act('fC',this,'gC')"><svg><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento</span><span class="rbadge">4</span></button>
+              <button class="tab-btn" aria-label="Control BL" onclick="act('fC',this,'gC')"><svg><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
+              <button class="tab-btn" aria-label="Cert. de Origen" onclick="act('fC',this,'gC')"><svg><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
+              <button class="tab-btn" aria-label="Mailing" onclick="act('fC',this,'gC')"><svg><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+            </div></div>
+          </div>
+          <button class="tab-btn" aria-label="Estructura DB" onclick="act('fC',this)"><svg><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
+          <div class="rail-spacer"></div>
+        </nav>
+        <div class="fake"><div class="ttl">Seguimiento</div><div class="ln w80"></div><div class="ln w60"></div><div class="ln w40"></div><div class="ln w80"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ Decisiones del gate ═══ -->
+  <section class="sec">
+    <div class="gate">
+      <h2>⚑ Para decidir mirando este gate</h2>
+      <li><b>Comportamiento en colapsado</b>: flyout al CLICK (propuesta — funciona en touch 701-1100 y no flickerea). Alternativa: abrir también con hover. ¿Click solo alcanza?</li>
+      <li><b>Orden interno del grupo</b>: Seguimiento (torre de control, primero) → Control BL → Cert. de Origen → Mailing (orden del flujo documental). ¿O preferís otro?</li>
+      <li><b>Ícono del grupo</b>: <code>i-folder</code> (carpeta — libre en el rail hoy). El badge del grupo muestra las alertas de Seguimiento cuando el grupo está cerrado/colapsado.</li>
+      <li><b>Persistencia</b>: el árbol abierto/cerrado se recuerda (localStorage <code>ssb-rail-doc-open</code>) y se AUTO-expande si navegás a una sub-solapa. ¿OK?</li>
+      <li><b>Sub activa + grupo cerrado</b>: el ítem "Documentación" hereda el resaltado activo (probalo: cerrá el árbol en el panel B con Seguimiento activa).</li>
+      <li><b>Posición</b>: el grupo queda donde hoy están las 3 solapas (después de Workspace IA, antes de Estructura DB) — ya eran consecutivas, nada más se reordena.</li>
+    </div>
+    <div class="tech">
+      <h3>✓ Contratos que NO cambian (verificado contra el index.html vivo)</h3>
+      <li>Los ids <code>tab-*</code> / <code>panel-*</code> y el <code>onclick="switchTab('x')"</code> quedan idénticos — switchTab no lee la posición en el DOM, solo el id. Al array solo se le suma <code>'seguimiento'</code>.</li>
+      <li>La clase <code>.tab-bar</code> del nav se conserva (la referencia el anti-bypass de auth <code>body:not(.is-authed)</code>); el grupo vive DENTRO del nav.</li>
+      <li>Tooltips del colapsado siguen siendo CSS <code>attr(aria-label)</code>; el grupo trae su propio aria-label.</li>
+      <li>El focus-trap del drawer filtra por <code>offsetParent</code> ⇒ las subs de un grupo cerrado quedan fuera del ciclo de Tab automáticamente.</li>
+      <li>Badge = patrón <code>vac-tab-badge</code> exacto (absoluto en colapsado / inline al final en expandido y drawer).</li>
+      <li><code>prefers-reduced-motion</code>: la animación del árbol/chevron se anula.</li>
+    </div>
+  </section>
+</div>
+
+<script>
+/* JS de maqueta — solo chrome del grupo (en la app real esto se integra al IIFE del rail) */
+function toggleFly(gid, e){
+  e.stopPropagation();
+  document.getElementById(gid).classList.toggle('fly-open');
+}
+document.addEventListener('click', e=>{
+  document.querySelectorAll('.rail-group.fly-open').forEach(g=>{ if(!g.contains(e.target)) g.classList.remove('fly-open'); });
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.rail-group.fly-open').forEach(g=>g.classList.remove('fly-open')); });
+function toggleTree(gid){
+  const g = document.getElementById(gid);
+  g.classList.toggle('open');
+  // badge del grupo: visible solo con el árbol cerrado (las alertas no se pierden de vista)
+  const b = g.querySelector('.tree-badge');
+  if(b) b.style.display = g.classList.contains('open') ? 'none' : '';
+}
+function act(fid, btn, gid){
+  const f = document.getElementById(fid);
+  f.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  f.querySelectorAll('.rail-group').forEach(g=>g.classList.toggle('has-active', g.contains(btn)));
+  if(gid){ const g=document.getElementById(gid); g.classList.remove('fly-open'); }
+  const ttl = f.querySelector('.fake .ttl'); if(ttl) ttl.textContent = btn.getAttribute('aria-label');
+  if(f.id==='fC') f.classList.remove('nav-open'); // drawer cierra al navegar (como el hook real)
+}
+</script>
+</body></html>
