@@ -46,9 +46,11 @@ python3 upload_detention.py <archivo.xlsx>
 
 No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
 
-## Mapa de la app — 13 módulos (rail lateral)
+## Mapa de la app — 14 módulos (rail lateral)
 
 La nav es un **rail lateral fijo** estilo Flight Deck (2026-07-04): `<nav class="tab-bar">` fixed left 64px icon-only + tooltip, expandible a 228px vía botón pin (persistido en `localStorage['ssb-rail-pinned']`, solo ≥1101px), y drawer off-canvas ≤700px con hamburguesa en topbar. La clase `.tab-bar` se conserva a propósito: la referencia el anti-bypass de auth. Constant-dark en ambos temas (vars `--rail-*` + hex fijos — nunca vars que flipen en `body.light`).
+
+Desde F0 (2026-07-11) los 4 módulos de documentación (**Seguimiento, Control BL, Mailing, Cert-Origen**) viven **agrupados bajo un ítem "Documentación"** del rail (ícono `i-folder`, badge que cuenta solo alertas de órdenes activas): flyout en colapsado / árbol en pinned / drawer ≤700px.
 
 `switchTab` **hardcodea el array de tab-ids** → al agregar un módulo nuevo hay que sumar el id ahí y el botón al rail (con `aria-label` e ícono único del sprite) o el panel nunca se activa.
 
@@ -65,14 +67,15 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | `docs/modules/vacaciones.md` + `docs/modules/auth-global.md` |
 | `agente` | SSB Copilot — text-to-SQL contra MySQL (orders/shipments) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
 | `workspace-ia` | Workspace IA — text-to-SQL contra Supabase (todas las tablas) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
-| `control-bl` | Control BL read-only (Supabase `bl_controls`) | `docs/modules/control-bl.md` |
+| `seguimiento` | Seguimiento — torre de control por orden (Supabase vista `v_operacion_estado`; write-actions vía `/api/seguimiento`, auth Bearer JWT + gate `vac_employees`). Agrupada bajo **Documentación**. | `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md` |
+| `control-bl` | Control BL read-only (Supabase `bl_controls`) + **sello humano "Revisado"** (tabla `control_bl_sellos`, actions `sellar_control`/`anular_sello`; regla X keyea por `bl_file_id`) | `docs/modules/control-bl.md` · sello: `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` |
 | `mailing` | Mailing — envío de documentación (Supabase `mailing_*` + `/api/mailing` → webhook n8n) | header de `api/mailing.js` |
 | `cert-origen` | Certificado de Origen — ZIP COD en Drive → PDF pdf-lib + registro (Supabase `certificados_origen`) | `docs/modules/certificado-origen.md` · el ZIP jamás se modifica |
 | `schema` | Estructura DB — browser read-only del schema public (`/api/schema` → RPC F0, queries fijas sin input) | `docs/modules/schema-viewer.md` · el endpoint jamás acepta parámetros |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
 
-> **Referencias de línea desfasadas:** los docs citan líneas concretas (`~3329`, `~11737`, etc.). `index.html` creció a ~13.400 líneas → usar `grep` por nombre de función/símbolo, no por línea.
+> **Referencias de línea desfasadas:** los docs citan líneas concretas (`~3329`, `~11737`, etc.). `index.html` creció a ~18.800 líneas → usar `grep` por nombre de función/símbolo, no por línea.
 
 ## Docs por módulo (abrir on-demand según el trigger)
 
@@ -82,6 +85,8 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **Tarifas Terrestres Dow** o su seed → `docs/modules/tarifas-terrestres-dow.md`
 - tocás **saldos / balance / ajustes / solicitudes / calendario / feriados de Vacaciones** → `docs/modules/vacaciones.md`
 - tocás **login / signup / reset o el gate** → `docs/modules/auth-global.md`
+- tocás **Seguimiento** (solapa `seguimiento`, `api/seguimiento.js`, vista `v_operacion_estado`) → `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md`
+- tocás **el sello "Revisado" del Control BL** (`control_bl_sellos`, actions `sellar_control`/`anular_sello`, regla X por `bl_file_id`) → `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` + `migrations/2026-07-11-sello-control-bl/`
 - tocás **Control BL** o su workflow n8n → `docs/modules/control-bl.md`
 - tocás **Certificado de Origen** (solapa `cert-origen`, `api/certificado-origen.js`, `api/_lib/`) → `docs/modules/certificado-origen.md`
 - tocás **Estructura DB** (solapa `schema`, `api/schema.js`) → `docs/modules/schema-viewer.md`
