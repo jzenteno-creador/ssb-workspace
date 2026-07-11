@@ -4325,6 +4325,30 @@ function debounce(fn, ms){
 function nfAR(v, dec){
   return Number(v).toLocaleString('es-AR', dec == null ? undefined : { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
+
+// "Hoy" date-only (YYYY-MM-DD) en TZ America/Argentina/Buenos_Aires (ex mailing).
+function hoyBA(){ return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }); }
+
+// Días corridos entre iso (YYYY-MM-DD) y hoyBA(), vía Date.UTC — sin TZ (ex mailing).
+function diasDesde(iso){
+  const [y1,m1,d1] = hoyBA().split('-').map(Number);
+  const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
+  return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
+}
+
+// Umbrales KPI zarpe→envío del SLA de mailing (aprobados STOP 1): deadline = ATD+SLA_DAYS, amarillo con ≤SLA_WARN restantes.
+const SLA_DAYS = 4, SLA_WARN = 1;
+
+// Bucket SLA a partir de primitivas: atdIso string|null, sentIso truthy = ya enviada (ex slaBucket() de mailing).
+function ssbSlaBucket(atdIso, sentIso){
+  if(sentIso) return null;
+  if(!atdIso) return 'espera';
+  const d = diasDesde(atdIso);
+  if(d < 0) return 'futuro';
+  if(d > SLA_DAYS) return 'vencida';
+  if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
+  return 'enfecha';
+}
 /* === FIN SSB CORE HELPERS === */
 
 /* === SSB UI PRIMITIVES ===
@@ -15920,7 +15944,7 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
   // ── Fechas de negocio: SIEMPRE strings YYYY-MM-DD date-only, "hoy" en TZ
   // Buenos Aires (mismo contrato que el resolver del workflow). Cero Date
   // locales: la aritmética va por Date.UTC puro — inmune al huso del browser. ──
-  const hoyBA = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+  // hoyBA/diasDesde: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
   // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null; round-trip real: 31/02 y 32/01 → null
   function parseFechaAr(tok){
@@ -15934,27 +15958,9 @@ function dmyToISO(dmy){if(!dmy)return '';const m=String(dmy).match(/^(\d{1,2})\/
     return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
 
-  // ── SLA de mailing (A-c3): deadline = atd + SLA_DAYS corridos; amarillo cuando
-  // quedan ≤ SLA_WARN. Umbrales tunables (aprobados en STOP 1). Comparación
-  // date-only: diasDesde opera sobre strings YYYY-MM-DD vía Date.UTC — sin TZ. ──
-  const SLA_DAYS = 4, SLA_WARN = 1;
-  const diasDesde = iso => {
-    const [y1,m1,d1] = hoyBA().split('-').map(Number);
-    const [y2,m2,d2] = String(iso).slice(0,10).split('-').map(Number);
-    return Math.round((Date.UTC(y1, m1-1, d1) - Date.UTC(y2, m2-1, d2)) / 86400000);
-  };
-  // Bucket de una fila NO enviada: espera (sin atd, fuera de la cola accionable) ·
-  // futuro (atd > hoy: "revisar", NUNCA verde — corrección STOP 1: un typo futuro
-  // no puede disfrazarse de en-fecha) · enfecha · porvencer · vencida.
-  function slaBucket(r){
-    if(r.status === 'ENVIADO') return null;
-    if(!r.atd) return 'espera';
-    const d = diasDesde(r.atd);
-    if(d < 0) return 'futuro';
-    if(d > SLA_DAYS) return 'vencida';
-    if(d >= SLA_DAYS - SLA_WARN) return 'porvencer';
-    return 'enfecha';
-  }
+  // SLA_DAYS/SLA_WARN/diasDesde: usan las globales de SSB CORE HELPERS.
+  // wrapper local → helper canónico ssbSlaBucket (CORE HELPERS)
+  const slaBucket = r => ssbSlaBucket(r.atd, r.status === 'ENVIADO' ? '1' : null);
   const SLA_CLS = { enfecha:'verde', porvencer:'amar', vencida:'rojo', futuro:'fut' };
   function slaBadge(r){
     const bk = slaBucket(r); if(!bk || bk === 'espera') return null;
