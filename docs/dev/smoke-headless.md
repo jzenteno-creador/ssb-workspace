@@ -10,7 +10,7 @@
 - `sleep` en foreground está bloqueado en este entorno → usar `until <check>; do sleep N; done`.
 - `node --check` por cada `<script>` inline (sin `src`) antes de commitear.
 - **TZ obligatorio para bugs de fecha:** `chromium.newContext({ timezoneId:'America/Argentina/Buenos_Aires' })` — sin esto los bugs TZ (ej. `fDate` date-only) no se reproducen en headless.
-- `page.evaluate` ve el `let rates` top-level (main world resuelve el binding léxico global) → se puede leer/computar contra `rates` sin exponerlo en `window`.
+- Post-modularización (2026-07-12): el estado (`rates`, `schedule`, `efaSheet`, etc.) vive module-scoped en `js/features/*.js` — `page.evaluate` YA NO ve `let rates` top-level (era cierto solo mientras S1/S2 eran scripts clásicos). Para leer estado desde headless: `await import('/js/features/tarifas.js')` (u otro módulo — los exports son live bindings) o, si el símbolo está en el manifest de shims del módulo, `window.<símbolo>` (ver cabecera de cada `.js` en `js/features/`/`js/shared/` para su lista de shims).
 - Scopear selectores de modal: `.efa-mod-x` matchea 7 modales → usar `#bid-modal .efa-mod-x` (o el id del modal puntual).
 - Datos de prueba en Supabase: nombres `ZZ*` identificables + limpiar (tarifa + log por `registro_id` + puerto; el trigger de delete re-loguea → borrar el log después).
 - **Control BL:** Playwright global `~/.npm-global/lib/node_modules/playwright/index.js` vía `node` `require()` (CommonJS; el MCP Playwright falla, busca chrome en `/opt/google/chrome`). El query **anon funciona headless** → data layers verificables sin login; el iframe de Drive embebe igual (id falso → "archivo no existe" de Drive, no es bug).

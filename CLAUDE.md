@@ -13,11 +13,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Vista web de tarifas de flete y schedule marítimo para SSB International (también
 "ssb-workspace"). Se comparte con el equipo y con PBB Polisur como herramienta de
 consulta. Está en producción en `https://ssb-workspace.vercel.app` — cambios
-afectan al equipo.
+afectan al equipo. Modularizada en ES Modules nativos desde 2026-07 (ver "Stack"
+y "Modularización ES Modules" abajo): `index.html` es el cascarón, la lógica
+vive en `js/`.
 
 ## Stack
 
-- HTML/CSS/JS vanilla — toda la app vive en `index.html` (~13.400 líneas: CSS en `<style>`, lógica en `<script>` al final, sin módulos externos)
+- HTML/CSS/JS vanilla — `index.html` (~5.060 líneas: markup + CSS `<style>` + anti-FOUC + tags `<script>`/`<script type="module">`) es el cascarón. La LÓGICA vive en `js/shared/` (8 archivos: `helpers.js`/`supabase-client.js`/`auth.js` CLÁSICOS vía `<script src>` + `toast.js`/`autocomplete.js`/`nav.js`/`app-shell.js`/`mm-writes.js` ES Modules) y `js/features/` (14 módulos ES, uno por tab — ver mapa de módulos abajo), con `js/main.js` como entry point. Sin bundler — ES Modules nativos del browser
 - Persistencia: Supabase (proyecto `xkppkzfxgtfsmfooozsm`). Datos de tarifas marítimas/EFA históricamente desde Google Sheets/Excel
 - Deploy: Vercel — auto-deploy en `git push origin master` (rama es `master`, no `main`). `vercel.json` setea headers de seguridad, no hay build step. URL: `https://ssb-workspace.vercel.app`
 - Sin frameworks, sin bundlers. CDN-only (Supabase JS, fuentes). `npm` existe SOLO en `scripts/` y en los serverless de `api/` (utilidades/agentes), nunca en la app del front
@@ -173,6 +175,8 @@ John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verifica
 - Nunca pedir verificación sin app corriendo y URL a mano.
 - **Falsos positivos de LOCAL:** `python http.server` NO ejecuta las serverless de Vercel — cualquier POST a `/api/*` devuelve **501 (rojo en consola, ruido esperado)**. Los tabs/flujos que dependen de `/api/*` (Estructura DB/schema; acciones de seguimiento, mailing, cert-origen, chat) **NO son verificables en local: su smoke es SOLO en prod post-deploy**. En cada gate: separar explícitamente los pasos "verificable en local" vs "solo prod", y el criterio de consola limpia EXCLUYE los 501 de `/api/*` — los errores que importan son los otros.
 
+**REFACTOR COMPLETADO 2026-07-12** (PASO 0 + baldes 1-3, 24 gates). Queda opcional el GATE F (flip de los 3 clásicos — ver plan §8 y check 8e). Las reglas duras de esta sección siguen vigentes para todo trabajo futuro en `js/`.
+
 ## Skills activas en este proyecto
 
 - **frontend-design** → para cualquier cambio de UI en index.html
@@ -180,11 +184,11 @@ John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verifica
 - **postgres-best-practices** → cuando se migre de Google Sheets a Supabase
 - **security-review** → correr después de cada batch de fixes en index.html, especialmente cambios que generen HTML con interpolación de variables
 
-## Workflow recomendado para fixes en index.html
+## Workflow recomendado para fixes
 
-1. Leer la zona afectada antes de tocar (archivo tiene ~13.400 líneas)
+1. Ubicar el archivo correcto ANTES de tocar: fixes de LÓGICA van en `js/shared/` o en `js/features/<tab>.js` (ver "Mapa de la app" para el tab→archivo); fixes de markup/CSS/anti-FOUC/tags van en `index.html` (~5.060 líneas). Leer la zona afectada completa antes de tocar
 2. Aplicar fix
-3. Correr análisis de seguridad sobre el diff antes de commitear
+3. Correr análisis de seguridad sobre el diff antes de commitear, especialmente si hay interpolación de HTML
 4. **Antes de commitear cambios de UI → correr smoke headless** (receta: `docs/dev/smoke-headless.md`)
 5. Commit con formato: "fix: <descripción> (BUG-N si aplica)"
 

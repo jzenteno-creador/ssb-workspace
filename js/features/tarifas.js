@@ -18,8 +18,9 @@
    bidSelectedRowKey + bidRenderImpact (regla f — ciclo ESM legal, acceso
    runtime dentro de syncScheduleBackground). renderAdminBID/applyFilter:
    asignaciones window → bare resuelve por window en runtime.
-   postEfaAction/_mm*: vía shims window de mm-writes.js (regla c — sin
-   imports desde mm-writes). Helpers clásicos (esc, debounce, toISO, fDate,
+   postEfaAction/_mm*: este módulo NO los usa (0 refs propias — verificado
+   por grep; B3.5 los movió a import directo en efa.js/admin-bid.js, únicos
+   consumidores). Helpers clásicos (esc, debounce, toISO, fDate,
    usd, isNum, daysUntil, sortOrder, normalizeOrigen, portFlag, …) y XLSX
    CDN: identificador PELADO, jamás window.X (regla dura CLAUDE.md).
    Shims window.* al pie: manifest B3.4 tarifas = 12 (applyFilter ya es

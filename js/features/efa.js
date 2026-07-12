@@ -11,8 +11,10 @@
    skelCardsHtml, syncErrorHtml, schedNavieraMatch de tarifas.js
    (selectedVessel: 0 usos en este cuerpo → NO se importa, regla grep).
    applyFilter: asignación window en tarifas.js → bare resuelve por window.
-   postEfaAction/_mmEnsureLookups/_mmLookups: vía shims window + espejo
-   B3.3 de mm-writes.js (regla c — sin imports desde mm-writes).
+   postEfaAction/_mmEnsureLookups/_mmLookups: B3.5 — import directo de
+   mm-writes.js (espejo/shims B3.3 borrados; _mmResolveOrCreate NO se usa en
+   este cuerpo — solo interno a mm-writes.js — verificado por grep, no se
+   importa).
    Helpers clásicos (esc, usd, fDate, toISO, isoToDMY, dmyMinusOneDay,
    daysUntil, normEquipo, normalizeOrigen, …): identificador PELADO.
    ESPEJO DE ESTADO bulkRowsState (enmienda APROBADA — PERMANENTE, no se
@@ -22,6 +24,7 @@
    asignaciones (mutaciones por índice cubiertas por referencia compartida).
    Shims window.* al pie: manifest B3.4 efa = 31. */
 import { rates, schedule, skelCardsHtml, syncErrorHtml, schedNavieraMatch } from './tarifas.js';
+import { postEfaAction, _mmEnsureLookups, _mmLookups } from '../shared/mm-writes.js';
 
 export { efaSheet, loadEFAFromSupabase, efaApplies };
 
@@ -1307,9 +1310,10 @@ async function smartAddEFA(data){
 
 /* === ESCRITURA EFA/BID → js/shared/mm-writes.js (módulo ES, B3.3 modularización) ===
    _mmLookups/_mmEnsureLookups/_mmNormEquipo/_mmToISO/_mmErr/_mmResolveOrCreate/
-   _mmConfirmNewCatalog/postEfaAction. Shims window.postEfaAction/_mmEnsureLookups/
-   _mmResolveOrCreate + espejo window._mmLookups (SUTURA B3.3, borrar en B3.5) —
-   S1 remanente (historial, smartAddEFA) y S2 (Admin BID) resuelven igual que antes. */
+   _mmConfirmNewCatalog/postEfaAction. B3.5: postEfaAction/_mmEnsureLookups/
+   _mmLookups se importan directo (ver import al tope del archivo) —
+   smartAddEFA/findEmptyEfaRow y el resto del historial resuelven igual que
+   antes, ahora vía el import en vez del shim window. */
 
 async function reloadEfaFromSheet(){
   try{

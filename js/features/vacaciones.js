@@ -55,9 +55,12 @@
 
    Exports `window.X=` preservados VERBATIM (contrato con auth.js, con
    nav.js y con el markup del panel — CERO `export`, el contrato sigue
-   siendo window): `vacApplySsbSession`, `vacUpdatePendingBadge`,
-   `vacSwitchSubtab`, `vacOnEnterTab`, `vacOnLeaveTab`, más el estado
-   `window.__vac` / `window.__vacAuth`.
+   siendo window): `vacApplySsbSession`, `vacOnEnterTab`, `vacOnLeaveTab`,
+   más el estado `window.__vac` / `window.__vacAuth`. (B3.5: se borraron
+   `window.vacUpdatePendingBadge`/`window.vacSwitchSubtab` — 0 consumidores
+   externos verificados por grep en todo el repo; `updatePendingBadge`/
+   `switchSubtab` siguen intactas como funciones internas, llamadas
+   pelado dentro de este mismo módulo.)
 
    Consume de clásicos SIEMPRE pelados (regla dura CLAUDE.md, nunca
    window.X): `esc` (helpers.js, vía `escHtml`), `ssbToast`/`ssbConfirm`
@@ -272,8 +275,6 @@
       if(banner) banner.style.display = 'none';
     }
   }
-  // Exponer para uso desde futuras fases (insert/update/delete refrescan inmediato)
-  window.vacUpdatePendingBadge = updatePendingBadge;
 
   function startBadgePolling(){
     stopBadgePolling();
@@ -3256,7 +3257,6 @@
     else if(name === 'equipo') onEnterEquipo();
     else if(name === 'admin') onEnterAdmin();
   }
-  window.vacSwitchSubtab = switchSubtab;
 
   // Hooks que llama switchTab() del index
   window.vacOnEnterTab = function(){

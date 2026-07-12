@@ -1,5 +1,9 @@
 # Schedule Realtime — arquitectura (completado 2026-04-10)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/schedule-rt.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás el tab `schedule-rt` (Supabase `schedules_master` Realtime).
 > Recordá la regla cross-cutting de cleanup de canales Realtime (CLAUDE.md →
 > "Patrones a evitar").

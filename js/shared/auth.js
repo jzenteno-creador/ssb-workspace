@@ -287,7 +287,6 @@
       });
     });
   }
-  window.setupPasswordToggles = setupPasswordToggles;
 
   // ── Wire-up de los forms del gate ──
   function wireUp(){

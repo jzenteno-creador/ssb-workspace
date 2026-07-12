@@ -11,14 +11,17 @@
    (buildCarrierBtns/buildEquipoBtns aparecen SOLO en un comentario → NO se
    importan, regla grep). Este módulo JAMÁS reasigna rates/schedule (solo
    lectura — verificado; sus writes van por postEfaAction).
-   postEfaAction/_mmEnsureLookups/_mmLookups: vía shims window + espejo B3.3
-   de mm-writes.js (regla c — sin imports desde mm-writes). Helpers clásicos
-   (esc, toISO, isoToDMY, dmyToISO, usd, fDate, normEquipo, normalizeOrigen,
-   debounce, …) y primitivas UI (ssbToast/ssbConfirm) + autocomplete
-   (clearAc/opts/openDrop): identificador PELADO vía window/global.
+   postEfaAction/_mmEnsureLookups/_mmLookups: B3.5 — import directo de
+   mm-writes.js (espejo/shims B3.3 borrados; _mmResolveOrCreate NO se usa en
+   este cuerpo — solo interno a mm-writes.js — verificado por grep, no se
+   importa). Helpers clásicos (esc, toISO, isoToDMY, dmyToISO, usd, fDate,
+   normEquipo, normalizeOrigen, debounce, …) y primitivas UI (ssbToast/
+   ssbConfirm) + autocomplete (clearAc/opts/openDrop): identificador PELADO
+   vía window/global.
    Shims window.* al pie: manifest B3.4 admin-bid = 22 (renderAdminBID ya es
    window.renderAdminBID = debounce(...) en el cuerpo — cuenta como su shim). */
 import { rates, schedule, skelCardsHtml, syncErrorHtml, loadTarifasFromSupabase } from './tarifas.js';
+import { postEfaAction, _mmEnsureLookups, _mmLookups } from '../shared/mm-writes.js';
 
 export { bidSelectedRowKey, bidRenderImpact };
 

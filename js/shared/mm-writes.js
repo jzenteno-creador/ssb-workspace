@@ -5,19 +5,13 @@
    ver docs/plans/PLAN_BALDE3_modularizacion_2026-07-12.md). reloadEfaFromSheet
    y el HISTORIAL (_MM_LOG_SKIP/_mmLogFmt/_mmExpandLogEntry/loadLogData/
    renderLogTable) QUEDAN en S1 — se mueven a efa.js en B3.4.
-   SUTURA B3.3 (2 líneas, borrar en B3.5): _mmLookups es let module-scoped —
-   deja de ser global léxico. S2 (openBidModal) y el HISTORIAL de S1
-   (_mmExpandLogEntry/_mmLogFmt vía loadLogData) leen `_mmLookups.idNav/.idPort`
-   como identificador PELADO tras `await _mmEnsureLookups()` (contrato
-   ensure-then-read, ambos con try/catch). El espejo `window._mmLookups`
-   preserva esa lectura bare sin cambiar semántica: init null (antes del
-   ensure daría TypeError si se leyera, igual que hoy) + reasignación en el
-   único punto donde `_mmEnsureLookups` puebla el cache.
-   Shims window.* al pie (postEfaAction, _mmEnsureLookups, _mmResolveOrCreate)
-   — S1 remanente (historial, smartAddEFA/findEmptyEfaRow, EFA modal/bulk/
-   import) y S2 (Admin BID CRUD) los llaman pelados en runtime; ambos siguen
-   siendo scripts clásicos hasta B3.4 y no pueden usar `import`.
-   _mmNormEquipo/_mmToISO/_mmErr/_mmConfirmNewCatalog: sin shim — 0
+   B3.5 (limpieza — ver docs/plans/PLAN_BALDE3): el espejo temporal
+   window._mmLookups (introducido en B3.3, ver git log de este archivo) y
+   los 3 shims window.* (postEfaAction, _mmEnsureLookups, _mmResolveOrCreate)
+   se BORRARON — efa.js y admin-bid.js (únicos consumidores externos,
+   verificados por grep) ya importan directo vía export-list (live binding
+   para `_mmLookups`, que sigue reasignándose acá adentro).
+   _mmNormEquipo/_mmToISO/_mmErr/_mmConfirmNewCatalog: sin export — 0
    consumidores externos al bloque movido (verificado por grep). */
 
 // ════════ ESCRITURA → SUPABASE (Tanda 1 Paso 3 · FASE B) ════════
@@ -29,7 +23,6 @@
 
 // Catálogos canónicos cacheados para resolver nombre→id.
 let _mmLookups = null;
-window._mmLookups = null;   // SUTURA B3.3 (espejo p/ lectores bare clásicos) — borrar en B3.5
 async function _mmEnsureLookups(){
   if(_mmLookups) return _mmLookups;
   const supa = window.__ssb && window.__ssb.supa;
@@ -48,7 +41,6 @@ async function _mmEnsureLookups(){
   (pue.data||[]).forEach(p=>{puertoMap.set(norm(p.nombre), p.id); idPort.set(p.id, p.nombre);});
   (pueAl.data||[]).forEach(a=>puertoMap.set(norm(a.alias), a.puerto_id));
   _mmLookups = { navMap, puertoMap, idNav, idPort, norm };
-  window._mmLookups = _mmLookups;   // SUTURA B3.3 — borrar en B3.5
   return _mmLookups;
 }
 // Normaliza equipo a los 2 valores canónicos del CHECK; si no matchea lo deja pasar
@@ -211,9 +203,7 @@ async function postEfaAction(payload){
 }
 
 
-// Shims para S1 remanente (historial, EFA modal/bulk/import, smartAddEFA/
-// findEmptyEfaRow) y S2 (Admin BID CRUD) — llaman estos 3 símbolos pelados
-// en runtime. Borrar cuando efa.js/admin-bid.js importen directo (B3.4).
-window.postEfaAction = postEfaAction;
-window._mmEnsureLookups = _mmEnsureLookups;
-window._mmResolveOrCreate = _mmResolveOrCreate;
+// B3.5: exports reales (espejo/shims B3.3 borrados) — efa.js y admin-bid.js
+// importan estos símbolos directo. _mmLookups export-list = live binding
+// (sigue siendo `let`, reasignada en _mmEnsureLookups arriba).
+export { postEfaAction, _mmEnsureLookups, _mmResolveOrCreate, _mmLookups };

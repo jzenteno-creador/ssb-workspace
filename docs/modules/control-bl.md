@@ -1,5 +1,9 @@
 # Control BL — completo y en prod (2026-06-29; deployado `5aa8b9d`)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/control-bl.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás el tab `control-bl` o el workflow n8n que lo persiste.
 > El IRON LAW de escritura al workflow vive como one-liner en CLAUDE.md
 > ("Decisiones de diseño inamovibles"); acá está el detalle.

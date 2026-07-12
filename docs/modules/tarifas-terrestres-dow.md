@@ -1,5 +1,9 @@
 # Tarifas Terrestres Dow — arquitectura (2026-04-28)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/tt-dow.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás el tab `tt-dow` (Tarifas Terrestres Dow) o su seed/migración.
 
 Tab (7º) `#tab-tt-dow` / `#panel-tt-dow`. Vista de tarifas terrestres por

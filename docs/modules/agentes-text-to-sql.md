@@ -1,5 +1,10 @@
 # SSB Copilot + Workspace IA — agentes text-to-SQL (2026-06-30)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/agente.js` + `js/features/workspace-ia.js`. Las
+> referencias de línea de este doc apuntan al monolito viejo — ubicar
+> símbolos por grep, no por línea.
+
 > Disparador: tocás los tabs `agente` / `workspace-ia` o sus serverless.
 > **El guardrail de validación SQL (no aflojar whitelist + FORBIDDEN + LIMIT 200)
 > y los env var names viven en `api/CLAUDE.md`** (se auto-carga al tocar `api/**`)

@@ -1,5 +1,9 @@
 # Estructura DB (schema viewer) — módulo
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/schema.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Solapa `schema` + `api/schema.js`. Browser visual **read-only** del schema
 > `public` de Supabase: tablas, columnas, tipos, PK/FK, RLS y comments.
 > Objetivo: que John controle el armado del schema mientras agrega features.

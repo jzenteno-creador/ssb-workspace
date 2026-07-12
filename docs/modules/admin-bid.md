@@ -1,5 +1,9 @@
 # Admin BID — alta/edición + CRUD (2026-06-26)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/admin-bid.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás el tab `admin-bid` (alta/edición de BID / tarifas marítimas).
 > Recordá la regla cross-cutting del autocomplete `pickAc`/`data-v` y de `esc()`
 > en atributos (CLAUDE.md → "Patrones a evitar").

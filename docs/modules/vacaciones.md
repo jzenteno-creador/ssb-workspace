@@ -1,5 +1,9 @@
 # Módulo Vacaciones — completo (5 fases + extensiones)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/vacaciones.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás saldos / balance / ajustes / solicitudes / calendario /
 > feriados de Vacaciones (tab `vacaciones`). Plan canon: `docs/VACACIONES_PLAN.md`.
 > Consolida 3 ex-secciones del CLAUDE.md: módulo base (2026-05-05), migración días

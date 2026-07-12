@@ -1,5 +1,9 @@
 # Certificado de Origen — módulo (solapa `cert-origen`)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/cert-origen.js`. Las referencias de línea de este doc
+> apuntan al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Trigger de apertura: tocás la solapa Certificado de Origen, `api/certificado-origen.js`,
 > `api/_lib/driveClient.js`, `api/_lib/certOrigen.js` o la tabla `certificados_origen`.
 

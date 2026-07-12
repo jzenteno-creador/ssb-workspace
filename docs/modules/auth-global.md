@@ -1,5 +1,10 @@
 # Auth global — detalle del gate (2026-05-05)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/shared/auth.js` + `js/shared/supabase-client.js`. Las
+> referencias de línea de este doc apuntan al monolito viejo — ubicar
+> símbolos por grep, no por línea.
+
 > Disparador: tocás el flujo de login/signup/reset o el gate `#auth-gate`.
 > Los invariantes cross-cutting (hooks globales, anti-bypass, headers, storageKey,
 > RLS como última defensa) viven en CLAUDE.md → "Auth global". Acá está la

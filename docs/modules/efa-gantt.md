@@ -1,5 +1,9 @@
 # EFA Gantt — arquitectura actual (post-rediseño 2026-04-09)
 
+> **NOTA (2026-07-12):** desde la modularización, la lógica de este módulo
+> vive en `js/features/efa.js`. Las referencias de línea de este doc apuntan
+> al monolito viejo — ubicar símbolos por grep, no por línea.
+
 > Disparador: tocás el tab `efa` (Gantt de EFA) en `index.html`.
 
 - Estructura anidada 2 niveles: `navierGroups[carrier].rutas[origen||destino].equipos[equipo].periods[]`
