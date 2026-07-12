@@ -15,3 +15,4 @@ import './features/cert-origen.js';
 import './features/detention.js';
 import './features/seguimiento.js';
 import './features/control-bl.js';
+import './features/mailing.js';
