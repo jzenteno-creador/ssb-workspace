@@ -4,3 +4,4 @@
    ningún símbolo publicado acá existe en parse-time de un script clásico
    (regla dura: CLAUDE.md "asimetría clásico/módulo"). */
 import './shared/toast.js';
+import './shared/autocomplete.js';
