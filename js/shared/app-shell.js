@@ -126,3 +126,4 @@ window.initClockAR = initClockAR;
 window.setDot = setDot;
 window.splashReady = splashReady;
 window.toggleLight = toggleLight;
+window.addEventListener('DOMContentLoaded', initClockAR);   // SUTURA-BOOT-2 (B3.4): el listener viejo de S1 desaparece con el carve — el reloj es del shell

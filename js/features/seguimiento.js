@@ -22,14 +22,16 @@
    Supabase directo y SÍ es verificable en local. Modal Good Issue con
    Escape-handler dinámico (_segEscHandler se agrega/quita vía
    addEventListener/removeEventListener en cada apertura/cierre). */
+import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates/skel dejaron de ser globales de S1
 
 /* ═══════════ Seguimiento — solapa (WP3) ═══════════ */
 /* Lecturas: window.__ssb.supa sobre v_operacion_estado (RLS SELECT authenticated,
    view read-only). Escritura: SOLO vía /api/seguimiento (Bearer JWT + gate
    vac_employees server-side) — acción alta_despacho. Render 100% XSS-safe:
    createElement + textContent en todo dato dinámico (cero innerHTML con datos;
-   skelCardsHtml() es la única excepción — label estático, mismo molde que los
-   otros 5 usos en la app). Fuente visual: docs/mockups/mockup_seguimiento.html. */
+   skelCardsHtml() es la única excepción — label estático, importada de
+   tarifas.js desde B3.4 (antes global de S1), mismo molde que los otros
+   usos en la app). Fuente visual: docs/mockups/mockup_seguimiento.html. */
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
   const svgUse = (href, cls) => { const NS='http://www.w3.org/2000/svg'; const s=document.createElementNS(NS,'svg'); s.setAttribute('class',cls||'ic'); s.setAttribute('aria-hidden','true'); const u=document.createElementNS(NS,'use'); u.setAttribute('href',href); s.appendChild(u); return s; };

@@ -1,13 +1,17 @@
 /* === SSB AUTOCOMPLETE (js/shared/autocomplete.js — ES Module, B1.2 modularización) ===
    Motor de autocomplete compartido por 3 tabs: tarifas (t-), admin-bid (bid-)
-   y schedule-rt (rt-). Movido verbatim desde index.html (S1).
+   y schedule-rt (rt-). Movido verbatim desde index.html (S1; + import de
+   `rates` desde B3.4 — ver abajo).
    Estado `acs` era const en script clásico → NUNCA estuvo en window → queda
    module-scoped (no publicar). Las 9 funciones eran function declarations
    clásicas → SÍ estaban en window → se re-publican TODAS como shims al pie
    (37 handlers inline + S2/S3 las resuelven por identificador pelado vía window).
-   Lee `rates`/`applyFilter`/`renderAdminBID`/`applyRtFilter` como identificador
-   PELADO (símbolos de scripts clásicos — regla dura CLAUDE.md); `window._rtAcOpts`
+   Importa `rates` de tarifas.js (live binding ESM, B3.4 — decisión firmada:
+   dejó de ser `let` global de S1 clásico); el resto de símbolos clásicos
+   sigue PELADO (regla dura CLAUDE.md). `applyFilter`/`renderAdminBID`/
+   `applyRtFilter` resuelven bare vía sus asignaciones window; `window._rtAcOpts`
    se lee como window-property porque S3 la publica explícitamente así. */
+import { rates } from '../features/tarifas.js';
 
 const acs = {};
 

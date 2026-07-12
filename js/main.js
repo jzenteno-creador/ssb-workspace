@@ -21,3 +21,9 @@ import './features/mailing.js';
 import './features/tt-dow.js';
 import './features/vacaciones.js';
 import './features/schedule-rt.js';
+
+// features (balde 3 — B3.4 EL CARVE: tarifas + efa + admin-bid, ciclo ESM legal,
+// cero lectura top-level de imports — ver plan §6.c)
+import './features/tarifas.js';
+import './features/efa.js';
+import './features/admin-bid.js';
