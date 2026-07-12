@@ -10,3 +10,4 @@ import './shared/nav.js';
 // features (balde 2)
 import './features/schema.js';
 import './features/workspace-ia.js';
+import './features/agente.js';
