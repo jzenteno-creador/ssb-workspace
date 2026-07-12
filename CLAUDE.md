@@ -136,6 +136,8 @@ Cada extracción ARRANCA leyendo su fila de "Especificidades por tab" (abajo) y 
 
 **VERIFICACIÓN (después):**
 8. **Byte-diff INDEPENDIENTE** contra `git show HEAD:index.html` (rango del cuerpo) — el revisor lo corre por su cuenta, no acepta el reporte del worker.
+8b. **Auditoría de la ZONA DE SUTURA** (paso fijo — lección S9): inspeccionar las líneas alrededor del corte en index.html buscando restos (marcadores temporales, comentarios duplicados, cuerpo viejo residual). Un byte-diff limpio del cuerpo movido NO garantiza que la zona del corte quedó limpia.
+8c. **Protocolo HEAD-repro (regla fija — lección BUG-WIA-RESET):** cualquier anomalía que aparezca en un gate (crash, comportamiento raro) se REPRODUCE contra el monolito HEAD servido aparte ANTES de asumir que es del refactor. Preexistente → documentar en tarifa-schedule-bugs.md, NO arreglar (fuera de scope), avisar en el gate. Solo si NO reproduce en HEAD es regresión del move → FRENO.
 9. `node --check` (parsea como ESM=strict) + conteo de handlers después = antes.
 10. Headless contra el server de gates: navegar al tab vía `switchTab` real; **canario GoTrue = 2 POR CARGA (medido aislado — el listener de Playwright acumula a través de reloads)**; 0 errores rojos EXCEPTO 501 de `/api/*` y favicon (ruido documentado de local).
 11. Gate en formato fijo con separación explícita "verificable en LOCAL" vs "SOLO PROD" (todo lo que dependa de `/api/*` es solo-prod).
