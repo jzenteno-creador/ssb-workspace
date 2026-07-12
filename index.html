@@ -4925,85 +4925,10 @@ async function syncScheduleBackground(tarifasOk) {
 }
 
 // ── UPLOAD TARIFAS BID ──
-function handleTarifasUpload(input) {
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
-      // Find the BID sheet — look for name containing BID or FLETE, fallback to first
-      const sheetName = wb.SheetNames.find(n =>
-        n.toUpperCase().includes('BID') || n.toUpperCase().includes('FLETE')
-      ) || wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(ws, {raw:false, dateNF:'YYYY-MM-DD'});
-      if(!data.length){ ssbToast('No se encontraron datos en el archivo.', 'warning'); return; }
-      loadTarifas(data);
-      setDot('ok', `Tarifas: ${data.length} registros · ${new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`);
-      input.value = '';
-    } catch(err) {
-      ssbToast('Error al leer el archivo de tarifas: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
+// handleTarifasUpload (muerta) borrada en B3.0 — ver docs/plans/PLAN_BALDE3
 
 // ── LOAD TARIFAS ──
-function loadTarifas(data) {
-  if (!data.length) return;
-  const s = data[0];
-  const keys = Object.keys(s);
-  const fk = (...kws) => {
-    for(const kw of kws){
-      // Try exact match first
-      let k = keys.find(k=>k.toUpperCase()===kw.toUpperCase());
-      if(k) return k;
-      // Then partial match
-      k = keys.find(k=>k.toUpperCase().includes(kw.toUpperCase()));
-      if(k) return k;
-    }
-    return null;
-  };
-
-  const kA  = fk('EMBARQUE','ORIGEN');
-  const kB  = fk('DESTINO');
-  const kC  = fk('CARRIER','NAVIERA');
-  const kD  = fk('EQUIPO','CONTAINER');
-  const kE  = fk('TARIFA');
-  const kF  = fk('CONTRATO');
-  const kG  = keys.find(k=>k.toUpperCase().includes('INICIO VIGENCIA')||k.toUpperCase().includes('INICIO VIGENCIA'));
-  const kH  = keys.find(k=>k.toUpperCase().includes('FIN VIGENCIA'));
-  const kI  = fk('ESTADO');
-  const kJ  = fk('COMENTARIO');
-  const kQT = fk('QUARTER');
-  // EFA: ya NO se lee de la solapa Tarifas. Esas columnas (L/M/N) quedan
-  // en el Sheet para notas del operario, pero la web usa la solapa EFA.
-
-  const g  = (row,k) => k&&row[k]!=null ? row[k].toString().trim() : '';
-  const gn = (row,k) => { const v=row[k]; return(v!==null&&v!==undefined&&!isNaN(Number(v))&&v!=='') ? Number(v) : null; };
-
-  rates = data
-    .filter(row=>Object.values(row).some(v=>v!==''&&v!==null&&v!==undefined))
-    .map(row=>({
-      _rowIndex: row._rowIndex || null,
-      origen:g(row,kA), destino:g(row,kB), carrier:g(row,kC), equipo:g(row,kD),
-      tarifa:gn(row,kE)??(g(row,kE)||null),
-      contrato:g(row,kF), desde:g(row,kG), hasta:g(row,kH),
-      estado:g(row,kI), comentario:g(row,kJ), quarter:g(row,kQT),
-      efaNum:null, efaDesde:'', efaHasta:'',
-    }));
-
-  // Parte B (saneo fantasma · Tarifas BID): sacar de selC/selE valores que ya no existen
-  // tras recargar (carrier/equipo dado de baja) → dejan de filtrar a 0 sin botón visible.
-  { const cs=new Set(rates.map(r=>r.carrier).filter(Boolean)), es=new Set(rates.map(r=>r.equipo).filter(Boolean));
-    for(const c of [...selC]) if(!cs.has(c)) selC.delete(c);
-    for(const e of [...selE]) if(!es.has(e)) selE.delete(e); }
-
-  buildCarrierBtns();
-  buildEquipoBtns();
-  applyFilter();
-}
+// loadTarifas (muerta) borrada en B3.0 — ver docs/plans/PLAN_BALDE3
 
 // ── LOAD TARIFAS — fuente Supabase (Tanda 1 Paso 3) ──
 // Lee la view v_tarifas_maritimas (naviera/origen/destino ya resueltos a nombre
@@ -5455,11 +5380,7 @@ function periodGapDays(a,b){
   return Math.round(ms/86400000)-1;
 }
 
-function daysUntil(iso){
-  if(!iso)return null;
-  const ms=new Date(iso)-new Date(new Date().toISOString().split('T')[0]);
-  return Math.round(ms/86400000);
-}
+// daysUntil (muerta) borrada en B3.0 — ver docs/plans/PLAN_BALDE3
 
 function efaPeriodStatus(e, todayISO){
   const d=toISO(e.desde),h=toISO(e.hasta);
@@ -6789,33 +6710,7 @@ const stCls  = s=>{if(!s)return'nd';const u=s.toUpperCase();if(u.includes('CONFI
 function sortOrder(r){const e=(r.estado||'').toUpperCase();if(e.includes('CONFIRM'))return 0;if(e.includes('PEND'))return 1;return 2;}
 
 // ── EFA SHEET (nueva fuente, solapa "EFA") ──
-function loadEFA(data){
-  if(!Array.isArray(data)){efaSheet=[];return;}
-  efaSheet = data
-    .filter(row=>row && Object.values(row).some(v=>v!==''&&v!==null&&v!==undefined))
-    .map(row=>{
-      const keys=Object.keys(row);
-      const fk=(...kws)=>{
-        for(const kw of kws){
-          let k=keys.find(k=>k.toUpperCase()===kw.toUpperCase());if(k)return k;
-          k=keys.find(k=>k.toUpperCase().includes(kw.toUpperCase()));if(k)return k;
-        }return null;
-      };
-      const g=k=>k&&row[k]!=null?row[k].toString().trim():'';
-      const gn=k=>{const v=row[k];return(v!==null&&v!==undefined&&!isNaN(Number(v))&&v!=='')?Number(v):null;};
-      return {
-        _rowIndex: row._rowIndex || null,
-        carrier:g(fk('CARRIER','NAVIERA')),
-        origen :g(fk('ORIGEN','EMBARQUE')),
-        destino:g(fk('DESTINO')),
-        equipo :g(fk('EQUIPO','CONTAINER')),
-        monto  :gn(fk('MONTO','USD','EFA')),
-        desde  :g(fk('INICIO','DESDE','VIGENCIA INICIO')),
-        hasta  :g(fk('FIN','HASTA','VIGENCIA FIN')),
-        comentario:g(fk('COMENTARIO','OBSERV')),
-      };
-    });
-}
+// loadEFA (muerta) borrada en B3.0 — ver docs/plans/PLAN_BALDE3
 
 // ── LOAD EFA — fuente Supabase (Tanda 1 Paso 3) ──
 // Lee v_recargos_efa y llena efaSheet[] con la MISMA forma que loadEFA(). Maersk
