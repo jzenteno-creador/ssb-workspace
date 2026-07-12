@@ -3097,7 +3097,11 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
 <body>
 
 <script>/* anti-FOUC: aplica el estado pinned del rail antes del primer paint */
-try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.classList.add('rail-pinned')}catch(_){}</script>
+try{if(localStorage.getItem('ssb-rail-pinned')==='1')document.documentElement.classList.add('rail-pinned')}catch(_){}
+/* anti-FOUC tema (B3.2): el init de modo claro pasa a module-eval (app-shell.js) —
+   sin esto, usuarios en modo claro verían 1 frame oscuro antes de que el módulo
+   corra. El módulo re-aplica la misma clase de forma idempotente al arrancar. */
+try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('light')}catch(_){}</script>
 
 <!-- ── A1: Lucide SVG icon sprite (hidden, used via <use href="#i-*">) ── -->
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true" focusable="false">
@@ -4708,63 +4712,11 @@ window.addEventListener('DOMContentLoaded', () => {
   initClockAR();
 });
 
-// ── Reloj AR — 1 línea "Martes · 05 - Mayo - 2026 · 16:46:23" ──
-// Timezone fijo America/Argentina/Buenos_Aires (independiente del SO del cliente).
-// Refresh cada 1s para mostrar segundos.
-function initClockAR(){
-  const widget    = document.getElementById('clock-widget');
-  const elWeekday = document.getElementById('clock-weekday');
-  const elDate    = document.getElementById('clock-date');
-  const elTime    = document.getElementById('clock-time');
-  if(!widget || !elWeekday || !elDate || !elTime) return;
-
-  const TZ = 'America/Argentina/Buenos_Aires';
-  let fmtWeekday, fmtDate, fmtTime;
-  try{
-    fmtWeekday = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, weekday: 'long' });
-    fmtDate    = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, day: '2-digit', month: 'long', year: 'numeric' });
-    fmtTime    = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  }catch(e){
-    elWeekday.textContent = '—';
-    elDate.textContent    = '—';
-    elTime.textContent    = '--:--:--';
-    return;
-  }
-
-  const cap = s => s ? (s.charAt(0).toUpperCase() + s.slice(1)) : '';
-
-  function tick(){
-    if(!navigator.onLine){ widget.classList.add('is-offline'); return; }
-    widget.classList.remove('is-offline');
-    const now = new Date();
-    try{
-      // Weekday "Martes"
-      const wParts = fmtWeekday.formatToParts(now);
-      const weekday = cap(wParts.find(p => p.type === 'weekday')?.value || '');
-
-      // Date "05 - Mayo - 2026"
-      const dParts = fmtDate.formatToParts(now);
-      const day   = dParts.find(p => p.type === 'day')?.value || '';
-      const month = cap(dParts.find(p => p.type === 'month')?.value || '');
-      const year  = dParts.find(p => p.type === 'year')?.value || '';
-      const dateStr = `${day} - ${month} - ${year}`;
-
-      // Time "16:46:23"
-      const timeStr = fmtTime.format(now);
-
-      elWeekday.textContent = weekday;
-      elDate.textContent    = dateStr;
-      elTime.textContent    = timeStr;
-    }catch(_){
-      // ignore (mantenemos el último valor renderizado)
-    }
-  }
-
-  tick();
-  setInterval(tick, 1000);
-  window.addEventListener('online',  () => { tick(); });
-  window.addEventListener('offline', () => { widget.classList.add('is-offline'); });
-}
+/* === RELOJ AR → js/shared/app-shell.js (módulo ES, B3.2 modularización) ===
+   initClockAR con su tick interno y su shadow LOCAL de fmtDate (let function-
+   scoped, inmune al move — ver docs/plans/PLAN_BALDE3_modularizacion_2026-07-12.md).
+   Shim window.initClockAR — el boot DOMContentLoaded de arriba sigue
+   llamándola pelada. */
 
 /* === TABS + RAIL → js/shared/nav.js (módulo ES, B1.3 modularización) ===
    switchTab (async, dirty-guard TT-Dow + lazy-loaders de los 14 tabs) y las
@@ -4818,16 +4770,10 @@ function renderBell() {
   `).join('');
 }
 
-// ── STATUS ──
-const setDot = (t,txt) => { document.getElementById('dot').className='dot '+t; document.getElementById('sync-lbl').textContent=txt; };
+/* === STATUS + SPLASH → js/shared/app-shell.js (módulo ES, B3.2 modularización) ===
+   setDot (const arrow) y splashReady. Shims window.setDot / window.splashReady —
+   el failsafe de abajo y syncSheet las siguen llamando peladas. */
 
-// ── SPLASH ──
-function splashReady(kind,msg){
-  const s=document.getElementById('splash-status');const b=document.getElementById('splash-btn');
-  if(s){s.className='splash-status '+(kind||'ok');s.innerHTML=msg;}
-  // focus solo si el splash sigue operativo: en fade-out (.hide) robaría el foco del gate de login
-  if(b){b.disabled=false;if(!document.getElementById('splash')?.classList.contains('hide'))b.focus();}
-}
 // Failsafe: si syncSheet se cuelga (Supabase colgado o file:// — los loaders no tienen abort),
 // habilitar Ingresar a los 4s. El schedule de Apps Script ya NO gatea esto: baja en background.
 setTimeout(()=>{const b=document.getElementById('splash-btn');if(b&&b.disabled)splashReady('err','⚠ Sincronización lenta — podés ingresar igual');},4000);
@@ -7217,37 +7163,15 @@ function updateSchedIndicator() {
   }
 }
 
-window.addEventListener('load', ()=>{
-  // Migración one-shot darkMode (legacy) → lightMode (nuevo default dark)
-  const _oldDark = localStorage.getItem('darkMode');
-  if(_oldDark!==null){
-    localStorage.setItem('lightMode', _oldDark==='0'?'1':'0');
-    localStorage.removeItem('darkMode');
-  }
-  // Restore light mode preference (default es dark, sin clase)
-  if(localStorage.getItem('lightMode')==='1') enableLight();
-});
-
-// ── LIGHT MODE (toggle, default dark) ──
-function toggleLight(){
-  document.body.classList.contains('light') ? disableLight() : enableLight();
-}
-function enableLight(){
-  document.body.classList.add('light');
-  setLightIcon('moon'); // en light → botón invita a volver a dark
-  localStorage.setItem('lightMode','1');
-}
-function disableLight(){
-  document.body.classList.remove('light');
-  setLightIcon('sun');  // en dark (default) → botón invita a pasar a light
-  localStorage.setItem('lightMode','0');
-}
-function setLightIcon(name){
-  const btn=document.getElementById('btn-light');
-  if(!btn)return;
-  btn.innerHTML='<svg class="ic ic-md" aria-hidden="true"><use href="#i-'+name+'"/></svg>';
-  btn.setAttribute('aria-label', name==='moon'?'Cambiar a modo oscuro':'Cambiar a modo claro');
-}
+/* === MODO CLARO/OSCURO → js/shared/app-shell.js (módulo ES, B3.2 modularización) ===
+   Toggle de tema + sus 3 helpers internos, más el init (migración darkMode→
+   lightMode + restore). Shim window.toggleLight — el botón #btn-light del
+   topbar sigue resolviendo su handler inline pelado vía window. Los 3
+   helpers internos del grupo quedan encapsulados en el módulo (0 consumidores
+   externos, verificado por grep) — sin shim.
+   SUTURA anti-FOUC: 1 línea nueva en el <script> de arriba (~línea 3100)
+   aplica la clase de tema pre-paint — el init de este módulo corre en
+   module-eval. */
 
 // ── EXPORT HELPERS ──
 function getActiveFiltersLabel(){
