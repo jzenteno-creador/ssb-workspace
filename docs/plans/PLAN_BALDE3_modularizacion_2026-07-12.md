@@ -2,7 +2,9 @@
 
 > **Fecha:** 2026-07-12 · **Base:** master `535fe70` (balde 2 cerrado, 11/11 tabs extraídos)
 > **Autor del plan:** Fable (orquestador). **Ejecutor previsto:** Sonnet supervisado, o cualquier agente SIN el contexto de la sesión — este documento es el contrato completo.
-> **Aprobación:** PENDIENTE de John. NO ejecutar nada sin su GO explícito.
+> **Aprobación: DADA por John (2026-07-12)** con dos decisiones FIRMADAS:
+> **(1) Desviación del bell APROBADA** — campana + `scheduleChanges` van a tarifas.js (no a app-shell): los imports ESM son read-only y el estado debe convivir con TODOS sus reasignadores (bell 4795 + upload 7303).
+> **(2) B3.4 atómico APROBADO** — un solo commit (tarifas+efa+admin-bid); la co-propiedad léxica del estado hace que partirlo genere espejos temporales más frágiles que el flip atómico. A cambio: VERIFICACIÓN MÁXIMA (manifest 65/65 obligatorio + smoke completo de John de los 3 tabs + revisión Fable a fondo). **B3.4 NO SE EJECUTA sin supervisión de Fable — sin Fable disponible, se pausa en B3.3 y se avisa a John.**
 
 ---
 
