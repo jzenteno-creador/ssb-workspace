@@ -18,3 +18,4 @@ import './features/control-bl.js';
 import './features/mailing.js';
 import './features/tt-dow.js';
 import './features/vacaciones.js';
+import './features/schedule-rt.js';
