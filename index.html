@@ -5728,7 +5728,7 @@ function efaModalPreview(){
   }
   const C=carrier.toUpperCase(),O=normalizeOrigen(origen),D=destino.toUpperCase();
   const matches=schedule.filter(s=>{
-    if(!matchCarrier(s.NAVIERA,[carrier]))return false;
+    if(!schedNavieraMatch(s.NAVIERA,[carrier]))return false;   // FIX BUG-EFA-PREVIEW-MATCHCARRIER: matchCarrier jamás existió (llamada huérfana desde 36847b3)
     if(normalizeOrigen(s.ORIGEN)!==O)return false;
     if(!(s.DESTINO||'').toUpperCase().includes(D))return false;
     const etd=toISO(s.ETD);if(!etd)return false;
