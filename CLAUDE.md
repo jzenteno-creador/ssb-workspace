@@ -119,6 +119,43 @@ Baseline actual: **2 warnings amarillos** "Multiple GoTrueClient instances detec
 
 USO COMO CANARIO — verificación OBLIGATORIA en el criterio de salida de B1.4 (supabase-client.js + auth.js) y de todo gate que toque clientes/auth: ¿el conteo de warnings sigue en 2? Si SUBIÓ, se activó el fallback de S7:12138 (`const supa = (window.__ssb && …) || fallback`): `window.__ssb` no estaba disponible cuando S7 corrió y Vacaciones creó un cliente extra — la falla silenciosa marcada en el plan. Si sube → FRENAR.
 
+### Template balde 2 — conversión IIFE→módulo (checklist ejecutable, validado con el piloto schema `881d671`)
+
+Cada extracción ARRANCA leyendo su fila de "Especificidades por tab" (abajo) y ejecuta este checklist. Aplicar y verificar — no re-derivar el método, no confiar.
+
+**ANTES de mover:**
+1. Bordes exactos del bloque `<script>` por grep (nunca por líneas citadas en docs — corren con cada commit).
+2. **Asimetría símbolo por símbolo:** grep de todos los símbolos externos que el bloque consume. Cada uno se copia CON SU FORMA ORIGINAL — pelado si está pelado, `window.X` si está `window.X`. PROHIBIDO convertir formas en cualquier dirección; PROHIBIDO `window.X` por reflejo para leer clásicos (`const`/`let` clásicos NO están en window).
+3. **Strict-scan:** los módulos son strict siempre; las IIFEs pueden ser sloppy. Grep de `with(`, `arguments.callee`, octales `0NN`, asignación sin declarar. Un fallo acá es RUIDOSO (consola) — igual se escanea antes.
+4. **Conteo de handlers inline** que referencian símbolos del tab (`grep on*=`). Aunque dé 0, se hace y se reporta.
+
+**CONVERSIÓN:**
+5. `js/features/<tab>.js`: header estándar + cuerpo VERBATIM **sin el wrapper de IIFE** (el scope de módulo lo reemplaza), indentación original intacta (el byte-diff es el criterio).
+6. **Los `window.X =` del cuerpo se PRESERVAN VERBATIM** — son el contrato con los handlers del markup y con nav.js. NUNCA convertir a `export`, nunca "limpiar". CERO statements `export` (el contrato sigue siendo window).
+7. index.html: bloque → comentario-sutura (qué se movió + qué `window.X` siguen publicados). `js/main.js`: import al final de la sección features.
+
+**VERIFICACIÓN (después):**
+8. **Byte-diff INDEPENDIENTE** contra `git show HEAD:index.html` (rango del cuerpo) — el revisor lo corre por su cuenta, no acepta el reporte del worker.
+9. `node --check` (parsea como ESM=strict) + conteo de handlers después = antes.
+10. Headless contra el server de gates: navegar al tab vía `switchTab` real; **canario GoTrue = 2 POR CARGA (medido aislado — el listener de Playwright acumula a través de reloads)**; 0 errores rojos EXCEPTO 501 de `/api/*` y favicon (ruido documentado de local).
+11. Gate en formato fijo con separación explícita "verificable en LOCAL" vs "SOLO PROD" (todo lo que dependa de `/api/*` es solo-prod).
+12. Commit atómico SIN push; push solo con OK explícito de John. Tabs críticos (control-bl, mailing, seguimiento, tt-dow, vacaciones, schedule-rt): gate SIEMPRE individual.
+
+**Especificidades por tab (los 10 restantes, en orden de extracción):**
+
+| Tab | Particularidades (leer ANTES de extraer) |
+|---|---|
+| workspace-ia (S9) | 7 handlers inline (funciones ya window-exportadas → verbatim las cubre). CDN marked con guard `typeof`. Espejo deliberado de S8 — NO unificar. Acciones `/api/chat-workspace` → solo prod. |
+| agente (S8) | Ídem S9 (7 handlers). `agentUpdateStats` lo llama nav.js (`window.X` guarded). Stubs `buildContext`/`updateStats` son restos de versión previa — viajan tal cual. `/api/chat` solo prod. |
+| cert-origen (S12) | 0 inline. Consume `__segPendingOrder` (runtime, dentro de `loadCertOrigen`). `nfAR` pelado. Historial lee Supabase (local ✓); GENERAR usa `/api/certificado-origen` (solo prod). CSS en isla mailing-styles — NO-TOUCH. |
+| detention (S4) | 11 handlers inline estáticos. Cliente Supabase anon PROPIO (no tocar, es 1 de los 3 del canario). XLSX global (upload). localStorage `det_*`. `applyDetFilter` está MUERTA — viaja igual (borrar es otro cambio). `fmtDate/esc/ssbConfirm/ssbAlert` pelados. |
+| control-bl (S10) | 0 inline. 2 sub-IIFEs de wiring con anchors (`#cbl-detail`, `#cbl-q`) — como módulo el DOM ya está parseado ✓. Viewer `iframe.srcdoc` sandbox — no tocar. Sello vía `/api/seguimiento` (solo prod). Consume `__segPendingOrder`. CSS isla `#cbl-styles` + overrides externos por orden — NO-TOUCH. |
+| mailing (S11) | 0 inline. `wire()` con anchor `#panel-mailing`. Helpers SLA pelados (`hoyBA/diasDesde/ssbSlaBucket`). Consume `__segPendingOrder`. Flag `__mailTestOff` propio. Preview `iframe.srcdoc` sandbox vacío. Acciones `/api/mailing` solo prod. CSS isla mailing-styles NO-TOUCH. |
+| seguimiento (S13) | 0 inline. PARSE-TIME propio: `const COLS` evalúa `SLA_DAYS` (pelado, helpers clásico ✓ mientras no haya flip) + `debounce`×2 en `wire()`. ORIGINA `__segPendingOrder` y llama `switchTab` pelado (resuelve vía window ✓). Actualiza el badge del rail (DOM fuera de su panel). Modal GI con Escape-handler dinámico. `/api/seguimiento` solo prod. |
+| tt-dow (S5) | 5 inline estáticos + 5 en HTML generado. `debounce`×2 top-level (pelado ✓). **`window.__ttHasPendingChanges` verbatim es CRÍTICO** — dirty-guard consumido por nav.js; si se pierde = pérdida de datos silenciosa. 4-5 listeners document/window top-level (beforeunload, click delegado tt-*, changes, keydown Enter con preventDefault) — smoke de edición de celdas obligatorio. Cliente anon propio. localStorage `tt_*`. 1.900 líneas. |
+| vacaciones (S7) | 0 inline (33 onclick por propiedad). Top-level: `const escHtml = esc` y `const supa = (window.__ssb && …) \|\| fallback` — con helpers/supabase-client CLÁSICOS no rompen; NO tocar el fallback. **El dispatch por `readyState` CAMBIA DE RAMA bajo módulo** (`'interactive'` → `vacInit()` inmediato, pre-DOMContentLoaded) — smoke dirigido: deep-link `?tab=vacaciones&sub=`, badge polling, puente `vacApplySsbSession` post-login. 3.300 líneas — el más grande. |
+| schedule-rt (S3) | 18 handlers inline estáticos. Lazo bidireccional con autocomplete.js (escribe `window._rtAcOpts`; recibe `applyRtFilter` desde pickAc). Híbrido: cliente anon propio (lecturas, canario) + `__ssb` global (writes RPC). Canal Realtime con cleanup llamado por nav.js en CADA switch — smoke de suscripción/de-suscripción al entrar/salir. Listener delegado en `#sched-rt-list`. |
+
 ### Gates del refactor — protocolo obligatorio (regla permanente)
 
 John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verificación.
