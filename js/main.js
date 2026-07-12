@@ -7,6 +7,7 @@ import './shared/toast.js';
 import './shared/autocomplete.js';
 import './shared/nav.js';
 import './shared/app-shell.js';
+import './shared/mm-writes.js';
 
 // features (balde 2)
 import './features/schema.js';
