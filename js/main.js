@@ -16,3 +16,4 @@ import './features/detention.js';
 import './features/seguimiento.js';
 import './features/control-bl.js';
 import './features/mailing.js';
+import './features/tt-dow.js';
