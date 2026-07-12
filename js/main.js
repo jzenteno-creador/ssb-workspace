@@ -5,3 +5,4 @@
    (regla dura: CLAUDE.md "asimetría clásico/módulo"). */
 import './shared/toast.js';
 import './shared/autocomplete.js';
+import './shared/nav.js';
