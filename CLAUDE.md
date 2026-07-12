@@ -132,6 +132,7 @@ John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verifica
   5. QUÉ SIGNIFICA SI FALLA: síntoma → causa probable
   6. AUTOCRÍTICA
 - Nunca pedir verificación sin app corriendo y URL a mano.
+- **Falsos positivos de LOCAL:** `python http.server` NO ejecuta las serverless de Vercel — cualquier POST a `/api/*` devuelve **501 (rojo en consola, ruido esperado)**. Los tabs/flujos que dependen de `/api/*` (Estructura DB/schema; acciones de seguimiento, mailing, cert-origen, chat) **NO son verificables en local: su smoke es SOLO en prod post-deploy**. En cada gate: separar explícitamente los pasos "verificable en local" vs "solo prod", y el criterio de consola limpia EXCLUYE los 501 de `/api/*` — los errores que importan son los otros.
 
 ## Skills activas en este proyecto
 
