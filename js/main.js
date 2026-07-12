@@ -12,3 +12,4 @@ import './features/schema.js';
 import './features/workspace-ia.js';
 import './features/agente.js';
 import './features/cert-origen.js';
+import './features/detention.js';
