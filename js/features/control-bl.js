@@ -36,7 +36,11 @@
     { key:'factura', label:'Factura', icon:'#i-file-text' },
     { key:'pe', label:'Permiso (PE)', icon:'#i-file-text' },
   ];
-  const CBL_COLS = 'order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link';
+  const CBL_COLS = 'order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link,email_sent,email_sent_at';
+
+  // PLAN1 FIX 5 — red de seguridad: umbral (en minutos) para declarar HUÉRFANO
+  // un control asentado cuyo mail nunca salió. ÚNICO lugar a tocar para cambiarlo.
+  const CBL_HUERFANO_MIN = 15;
 
   // ── Estado de búsqueda/filtros (Commit 6) ──
   let _cblSearchData = []; // filas devueltas por la búsqueda (puede traer controles fuera de los 7 días)
@@ -114,6 +118,33 @@
   // Badge OK / REVISAR·N / neutro (gris) / Revisado (sello humano vigente — gana a todo).
   // Sellado se resuelve acá adentro (no por parámetro) para que cblMakeCard (card master)
   // herede el badge "Revisado" automáticamente, sin tocar sus llamadas.
+  // Control HUÉRFANO (PLAN1 FIX 5): asentó hace > CBL_HUERFANO_MIN minutos y el
+  // mail de control nunca salió (email_sent=false). Funciona AUNQUE n8n reporte
+  // success — garantía de último recurso (decisión 13/17 del handoff): si un fix
+  // futuro vuelve a cortar el flujo, la app lo delata en vez de tragárselo.
+  // Un control sellado no cuenta (el sello prueba que un humano ya lo revisó).
+  // TZ-safe: created_at es timestamptz → Date.parse da epoch UTC; la resta con
+  // Date.now() no depende de la zona local (la clase de bug de umbrales por
+  // "medianoche local" no aplica acá).
+  function cblEsHuerfano(row){
+    if(row.email_sent !== false) return false;   // true O undefined (columna sin traer) → no marcar
+    if(cblSelloDe(row)) return false;
+    const t = Date.parse(row.created_at || '');
+    if(!Number.isFinite(t)) return false;
+    return (Date.now() - t) > CBL_HUERFANO_MIN * 60 * 1000;
+  }
+
+  // Chip global del design system (badge--warning) — a propósito NO usa clases
+  // de la isla #cbl-styles (NO-TOUCH). Estado visual pendiente de OK de John
+  // (mockup: docs/mockups/mockup_control_huerfano.html).
+  function cblHuerfanoChip(){
+    const b = el('span', 'badge badge--warning');
+    b.textContent = '🔕 Sin notificar';
+    b.title = 'Control huérfano: corrió y asentó hace más de ' + CBL_HUERFANO_MIN +
+      ' min pero el mail de control nunca salió. Reprocesá el BL draft; si se repite, avisar a John.';
+    return b;
+  }
+
   function cblBadge(row){
     if(cblSelloDe(row)){
       const b = el('span', 'cbl-badge seal');
@@ -241,6 +272,11 @@
     card.appendChild(vline);
     const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
     card.appendChild(el('div', 'cbl-ctrl-route', route));
+    if(cblEsHuerfano(row)){
+      const chip = cblHuerfanoChip();
+      chip.style.marginTop = '6px'; // inline a propósito: la isla CSS es NO-TOUCH
+      card.appendChild(chip);
+    }
     card.onclick = () => cblSelect(row.order_number);
     return card;
   }
@@ -376,6 +412,18 @@
 
     head.appendChild(topRow);
     detail.appendChild(head);
+
+    // PLAN1 FIX 5 — banner de control huérfano en el expediente (reusa la clase
+    // existente cbl-issue-row de la isla; no se agrega CSS).
+    if(cblEsHuerfano(row)){
+      const orphan = el('div', 'cbl-issue-row');
+      orphan.appendChild(svgUse('#i-alert'));
+      const when = row.email_sent_at ? '' : ' desde ' + cblFmtCorrida(row.created_at);
+      orphan.appendChild(el('span', null,
+        'Sin notificar' + when + ': este control corrió y asentó, pero el mail de control nunca salió. ' +
+        'Reprocesá el BL draft para regenerarlo; si vuelve a quedar huérfano, es un problema del sistema (avisar a John).'));
+      detail.appendChild(orphan);
+    }
 
     // Slot del aviso "control_cambio" (Regla X): vacío salvo que un intento de sellar
     // choque con un BL nuevo llegado entre que se abrió el detalle y se apretó sellar.

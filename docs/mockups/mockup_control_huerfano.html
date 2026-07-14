@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Control BL huérfano (PLAN1 FIX 5)</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --bd:rgba(255,255,255,.08); --ink:#e2e8f0;
+    --ink-soft:#94a3b8; --teal:#2dd4bf; --amber:#f59e0b; --amber-bg:rgba(245,158,11,.12);
+    --amber-bd:rgba(245,158,11,.35); --rev:#fb923c; --rev-bg:rgba(251,146,60,.12);
+    --ok:#4ade80; --font:system-ui,Segoe UI,Roboto,sans-serif;
+  }
+  body.light{
+    --bg:#f1f5f9; --surface:#ffffff; --bd:#e2e8f0; --ink:#0f172a; --ink-soft:#64748b;
+    --amber:#b45309; --amber-bg:#fef3c7; --amber-bd:#fcd34d; --rev:#c2410c; --rev-bg:#fbeedb;
+  }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);padding:28px;transition:.2s}
+  h1{font-size:18px} h2{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin:26px 0 10px}
+  .note{font-size:13px;color:var(--ink-soft);max-width:720px;line-height:1.55}
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px}
+  .wrap{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  /* card del master (aprox. de .cbl-ctrl) */
+  .card{width:250px;background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:13px 14px;font-size:13px}
+  .card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .order{font-weight:700;font-size:14px}
+  .b{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;border-radius:999px;padding:3px 9px}
+  .b.rev{color:var(--rev);background:var(--rev-bg);border:1px solid var(--rev)}
+  .b.ok{color:var(--ok);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.4)}
+  .muted{color:var(--ink-soft);font-size:12px;margin-top:2px}
+  /* EL CHIP NUEVO — badge--warning del design system global */
+  .huerfano{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11.5px;font-weight:600;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:999px;padding:3px 10px}
+  /* banner del expediente (reusa .cbl-issue-row) */
+  .detail{flex:1;min-width:340px;max-width:560px;background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px}
+  .issue{display:flex;gap:9px;align-items:flex-start;margin-top:12px;padding:10px 12px;border-radius:9px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber);font-size:12.5px;line-height:1.5}
+  .issue .ic{flex:0 0 auto;margin-top:1px}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--rev);background:var(--rev-bg);border:1px solid var(--rev);border-radius:9px;padding:7px 13px;margin-top:12px;cursor:pointer}
+  code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 5px;font-size:12px}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+<h1>Control BL — estado "huérfano" (PLAN1 · FIX 5)</h1>
+<p class="note">
+  Un control <b>huérfano</b> corrió y asentó en la base hace más de <code>15 min</code>
+  (constante <code>CBL_HUERFANO_MIN</code>, un solo lugar en <code>control-bl.js</code>)
+  pero el mail de control <b>nunca salió</b> (<code>email_sent=false</code>). Es un estado
+  ADICIONAL al OK/REVISAR del análisis: el control puede estar OK y aun así nadie fue
+  notificado. Funciona aunque n8n reporte success — si un fix futuro vuelve a cortar el
+  flujo, la solapa lo delata en vez de tragárselo. Un control <i>sellado</i> no se marca
+  (el sello prueba que un humano ya lo vio).
+</p>
+
+<h2>1 · Chip en la lista (master)</h2>
+<div class="wrap">
+  <div class="card">
+    <div class="top"><span class="order">118952777</span><span class="b rev">● REVISAR · 3</span></div>
+    <div>MAERSK</div>
+    <div class="muted">AS SABINE 528W</div>
+    <div class="muted">SANTOS · 13/07 13:37</div>
+    <span class="huerfano">🔕 Sin notificar</span>
+  </div>
+  <div class="card">
+    <div class="top"><span class="order">118741210</span><span class="b ok">● OK</span></div>
+    <div>LOG-IN</div>
+    <div class="muted">LOG-IN RESILIENTE 498</div>
+    <div class="muted">ITAJAÍ · 14/07 12:59</div>
+    <span class="huerfano">🔕 Sin notificar</span>
+  </div>
+  <div class="card">
+    <div class="top"><span class="order">118984859</span><span class="b rev">● REVISAR · 3</span></div>
+    <div>MAERSK</div>
+    <div class="muted">MAERSK FREEPORT 628N</div>
+    <div class="muted">NAVEGANTES · 14/07 13:12</div>
+    <!-- notificado a tiempo: SIN chip -->
+  </div>
+</div>
+<p class="note">La tercera tarjeta está notificada (mail salió) → sin chip. El chip usa el
+badge <i>warning</i> del design system global — no toca la isla CSS del módulo.</p>
+
+<h2>2 · Banner en el expediente (detalle)</h2>
+<div class="wrap">
+  <div class="detail">
+    <div class="top" style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="order" style="font-size:17px">118952777</div>
+      <div class="muted">MAERSK · AS SABINE 528W · BL 259238740 · Booking 259238740</div></div>
+      <span class="b rev">● REVISAR · 3</span>
+    </div>
+    <div class="issue"><span class="ic">⚠️</span>
+      <span><b>Sin notificar desde 13/07 13:37:</b> este control corrió y asentó, pero el mail
+      de control nunca salió. Reprocesá el BL draft para regenerarlo; si vuelve a quedar
+      huérfano, es un problema del sistema (avisar a John).</span>
+    </div>
+    <span class="btn">⟳ Reprocesar BL draft</span>
+    <p class="note" style="margin-bottom:0">El banner reusa la clase existente
+    <code>cbl-issue-row</code> (misma que "orden sin control") — cero CSS nuevo.</p>
+  </div>
+</div>
+
+<h2>Notas para la aprobación de John</h2>
+<p class="note">
+  · Texto del chip: <b>"🔕 Sin notificar"</b> — alternativas: "Huérfano", "Mail no enviado".<br>
+  · Umbral inicial: <b>15 minutos</b> (el flujo tarda ~2 min; 15 da margen a reintentos de red).<br>
+  · El chip también podría sumarse como <b>filtro</b> del master ("Sin notificar") — quedó
+  fuera de PLAN 1 a propósito (los filtros nuevos son ítems 8-9 del inventario, PLAN 2).<br>
+  · Colores exactos en la app real: los del badge <code>badge--warning</code> global (ámbar);
+  este mockup los aproxima en ambos temas (botón arriba a la derecha).
+</p>
+</body>
+</html>
