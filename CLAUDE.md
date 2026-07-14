@@ -113,6 +113,7 @@ Refactor en curso: index.html → `js/shared/` + `js/features/` (ES Modules nati
   - `const` / `let` / `class` declarados en un script clásico NO quedan en `window` — viven solo en el scope léxico global (igual visibles por identificador pelado desde módulos).
 - **CONSECUENCIA:** si `js/shared/helpers.js` (clásico durante la transición) declara `const SLA_DAYS`, entonces `window.SLA_DAYS === undefined`. Un módulo que lo consuma como `window.SLA_DAYS` SE ROMPE — y en silencio si hay `?.` u `||` en el medio.
 - **Regla:** los módulos consumen símbolos de scripts clásicos SIEMPRE como IDENTIFICADOR PELADO (`esc`, `debounce`, `SLA_DAYS`), NUNCA como `window.X`. PROHIBIDO escribir `window.X` para leer símbolos de scripts clásicos, aunque "parezca el patrón de la casa".
+- **Datos en handlers inline:** `onclick="fn(${esc(JSON.stringify(v))})"` — sin comillas envolventes. `esc()` solo cubre el boundary HTML; el atributo se decodifica ANTES de compilar el JS, así que `esc()` a secas NO protege el string JS interno. (Firmado 2026-07-14, QF-5 — caso real: `togC` en tarifas.js.)
 - Los `<script type="module">` son DIFERIDOS: corren después de TODOS los `<script>` clásicos y antes de DOMContentLoaded. Ningún símbolo publicado por un módulo existe durante el parse-time de un script clásico (inventario de sitios parse-time: memoria `modularizacion-index-explore`).
 
 ### Canario GoTrueClient (detector gratis — no perder)
