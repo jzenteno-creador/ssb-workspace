@@ -1,41 +1,37 @@
-# Handoff de sesión — 2026-07-14 · ssb-workspace · tanda chore/limpieza-2026-07 (insumo para el plan grande)
+# Handoff de sesión — 2026-07-14 · ssb-workspace · BREAK (cierre refactor + tanda limpieza + fix vacaciones)
 
 ## HECHO
 
-- **QF-1** (`b3ec811`): BUG-WIA-RESET + BUG-AGENT-RESET cerrados — welcome cacheado en var de módulo (la referencia viva sobrevive detached) + ambos resets delegan en `renderMessages()`; en agente la rama 0-mensajes ahora limpia el container (medio bug extra encontrado adentro). Shims window intactos. Smoke: doble ciclo send→reset en ambos chats, welcome reaparece, cero TypeError.
-- **QF-3+4+5** (`d295225`): stub muerto `window.applyDetFilter` borrado (`_doApplyDetFilter` conserva 6 callers) · `passCarrierEquipo(r)` unifica el predicado triplicado (filtro/exportPDF/exportExcel; `schedNavieraMatch` intacto) · `togC` escapado. Evidencia DOM real: `onclick="togC(&quot;LOGIN&quot;)"`, click on/off funcionando, exports sin throw.
-- **QF-2** (`fcc4e1c`): legacy Netlify eliminado — gate grep dio 0 consumidores; −892 líneas (functions gemelas sin auth + toml + entrada .vercelignore); los 4 headers de seguridad ya estaban replicados en `vercel.json`.
-- **QF-6** (sin commit): `put_mailing_docs_fix1.py` rescatado a `~/.claude/harness/` ANTES de tocar branches; **30/30 branches mergeadas borradas con `-d`, cero fallos**; nunca `-D`.
-- **PUSH**: master `4680eb7 → fcc4e1c` en origin (ff-only, los 3 commits tal cual) — Vercel desplegando.
-- **Docs**: `tarifa-schedule-bugs.md` actualizado — WIA/AGENT-RESET CERRADOS, EFA-MATCHCARRIER marcado cerrado (`192eb38`, estaba desactualizado), BUG-1 cerrado, nota de `esc()` corregida (estaba obsoleta: decía que solo escapa `&<>`), BUG-CHAT-RACE-RESET registrado. CLAUDE.md: F3 reducido (netlify ya no existe). Memoria actualizada.
+- **Cierre formal del refactor de modularización** (`4680eb7`): números finales (index.html 19.185→5.060, −73,6%; js/ 14.813 líneas; 24 gates) y **GATE F ABANDONADO** con evidencia 8e (15/20 módulos consumen 26 símbolos clásicos pelados, ~479 usos; beneficio 0 sin bundler). Los 3 clásicos (`helpers`/`supabase-client`/`auth`) son PERMANENTES.
+- **Tanda chore/limpieza-2026-07 EN PROD** (`b3ec811`+`d295225`+`fcc4e1c`): bugs de reset de ambos chats cerrados (welcome cacheado + reset delegado) · `applyDetFilter` muerta borrada · `passCarrierEquipo` unifica el predicado triplicado · `togC` escapado (patrón nuevo) · legacy Netlify eliminado (−892 líneas, gate grep 0 consumidores) · 30 branches mergeadas borradas (`-d`, 0 fallos) · harness `put_mailing_docs_fix1.py` rescatado a `~/.claude/harness/`.
+- **BUG-VAC-FORM-ADJUSTMENTS CERRADO** (`0bfe086`, en prod): el form Cargar de Vacaciones usaba `days_remaining ?? annual` ignorando `vac_balance_adjustments` → un ajuste negativo mostraba más saldo del real. Ahora usa `computeRealAvailable()` con ajustes — 4º consumidor de la misma fuente de verdad que el stats strip. Re-derivado de `203265d` (el único contenido vivo de `fix/dashboard-critical-bugs`; los otros 3 fixes ya estaban re-implementados en master, verificado código a código).
+- **Docs/registro:** `tarifa-schedule-bugs.md` al día (WIA/AGENT-RESET, EFA-MATCHCARRIER, BUG-1 y VAC-FORM-ADJUSTMENTS cerrados; BUG-CHAT-RACE-RESET registrado abierto; nota de esc()+onclick corregida). Regla de handlers inline subida al CLAUDE.md del repo (`ee4cd8d`).
+- **Limpieza final:** `fix/dashboard-critical-bugs` e `integration/smoke` borradas con `-D` (veredicto TIRAR cerrado, orden de John). Dev-servers locales (:8888 y :8899) abajo.
 
-## DECISIONES
+## DECISIONES FIRMADAS (no re-litigar)
 
-- **QF-5 = `onclick="togC(${esc(JSON.stringify(c))})"` sin comillas envolventes** (decisión John tras freno de Claude: esc() solo no protege el string JS del onclick — el browser decodifica entidades ANTES de parsear el JS). Queda como PATRÓN de la casa para datos en handlers inline, documentado en bugs.md.
-- **BUG-CHAT-RACE-RESET registrado, NO arreglado** (severidad BAJA, decisión John). Fix propuesto: token de generación (`_gen++` al reset; el post-await descarta si la generación cambió).
-- Netlify muerto al 100% (aprobado); gate grep obligatorio ejecutado antes de borrar.
-- Header de workspace-ia.js emparejado con agente.js vía amend (los headers de módulo son contrato en este repo).
-
-## HALLAZGOS
-
-- **Dirty-guard EFA quedó huérfano:** `fix/efa-guard-mailing-putfix1` tiene `M index.html` PRE-refactor que nunca llegó a master; el index actual es el cascarón → cherry-pick va a conflictuar. Hay que **re-derivar el fix sobre `js/features/efa.js`**. Pendiente abierto para el plan grande.
-- La rama 0-mensajes de `renderMessages` en agente no limpiaba el container (bug adicional dentro de QF-1, corregido en la misma pasada).
-- Los 401/42501 de seguimiento/control-bl en smoke headless = bypass `is-authed` sin sesión Supabase real (esperado; esos tabs exigen JWT; archivos no tocados).
-- `esc()` + onclick: la nota vieja de bugs.md ya era incorrecta en dos direcciones (esc es superset desde 2026-07-07, pero tampoco alcanza para strings JS en atributos) — corregida con el patrón nuevo.
+- **GATE F ABANDONADO** — asimetría clásico/módulo pasa a regla PERMANENTE de la arquitectura.
+- **Datos en handlers inline:** `onclick="fn(${esc(JSON.stringify(v))})"` sin comillas envolventes — esc() solo cubre el boundary HTML; el atributo se decodifica ANTES de compilar el JS. En CLAUDE.md del repo, sección reglas duras.
+- **"Cherry-pick only" MURIÓ con el refactor:** las branches pre-refactor tocan un index.html que ya no existe → re-derivación o descarte, no hay rescate.
+- **Headers de módulo = contrato**, se actualizan con cada fix.
+- **Saldos de vacaciones con ajustes que se vean raros = tema de DATOS** que John corrige en la próxima tanda de mejoras — **NO es deuda de código, NO tocar.**
 
 ## ESTADO
 
-- **Prod (Vercel): master = `fcc4e1c`**, working tree limpio, canario GoTrue = 2, `node --check` 4/4, smoke headless completo + smoke manual John aprobado.
-- Branches locales: `master` · `chore/limpieza-2026-07` (mergeada ff, borrable) · 4 no-mergeadas: `fix/coordinated-filters`, `fix/dashboard-critical-bugs`, `integration/smoke` (cherry-pick-only, descartables con verificación ~95%) y `fix/efa-guard-mailing-putfix1` (ver HALLAZGOS).
-- Handoff commiteado LOCAL sin push (regla de la tanda: push solo con OK explícito).
+- **Prod (Vercel): master = `0bfe086`.** Working tree limpio, sin commits locales pendientes. Canario GoTrue = 2. Smokes: headless completo + manual de John (tanda) + gate del fix vacaciones aprobado con push.
+- **Branches locales: quedan SOLO 2** (+ master): `fix/coordinated-filters` (FEATURE leave-one-out ×3 solapas, 93 líneas, nunca mergeada — decisión de producto pendiente) y `fix/efa-guard-mailing-putfix1` (contiene `f163281`, dirty-guard del modal EFA, +28 líneas — re-derivación pendiente; su harness ya está rescatado).
+- Pendiente menor de John: smoke en prod de los chats (2 min, ciclo doble "Nueva consulta" + click en sugerencia post-reset).
+
+## PENDIENTES ABIERTOS PARA EL PLAN GRANDE (sin fixes sueltos)
+
+1. **Seguridad:** F1 auth Bearer + rate limit en `/api/chat` y `/api/chat-workspace` + sacar service_role de chat-workspace · F2 LIMIT server-side · F3 hooks de regresión · XSS menor (`data-v`/`hl` en autocomplete.js).
+2. **Bugs:** BUG-CHAT-RACE-RESET (token de generación) · portar render XSS-safe (createElement/textContent) de workspace-ia al agente.
+3. **Features a re-derivar:** filtros coordinados leave-one-out ×3 solapas (decisión producto) · dirty-guard EFA `f163281` sobre `js/features/efa.js`.
+4. **Go-live (gates propios):** Mailing TEST_MODE → real (3 pasos) · Cert-Origen fase mailing (n8n `kh6TORgRg9R1Shj1`).
+5. **Limpieza mayor:** 5 createClient (canario 2→0, gate propio) · CSS ~2.400 líneas sin mapear + 2 islas NO-TOUCH · stubs del agente · migrar `validador-aduana/` a módulo de 1ª clase · saneo selC/selE duplicado en los 2 loaders de tarifas.
+6. **UX:** responsive Fase C (Detention + Admin BID en teléfono) · `prompt()` en bidBulkAction · audit-trail.
+7. **Datos (John, no código):** corrección de saldos de vacaciones con ajustes.
 
 ## PRÓXIMO PASO
 
-John arma el **plan grande con Opus**. Inventario actualizado post-tanda, por prioridad sugerida:
-
-1. **Seguridad F1**: auth Bearer JWT + rate limiting en `/api/chat` y `/api/chat-workspace` (siguen SIN auth; workspace usa service_role → migrar a rol read-only con RLS). F2: LIMIT server-side. F3 (reducido): hooks de regresión + subagent security-reviewer.
-2. **Chats**: BUG-CHAT-RACE-RESET (token de generación) + portar render XSS-safe de workspace-ia (createElement/textContent) a agente.
-3. **Dirty-guard EFA**: re-derivar sobre `js/features/efa.js` (branch vieja divergida, no cherry-pickeable).
-4. **XSS menor**: `data-v`/`hl` sin esc en autocomplete.js · VESSEL escape a medias en tarifas.js.
-5. **Limpieza mayor**: unificar 5 createClient (canario 2→0, gate propio) · CSS ~2.400 líneas sin mapear + 2 islas NO-TOUCH · stubs agente · saneo selC/selE duplicado en los 2 loaders de tarifas.
-6. **Features**: Cert-Origen fase mailing (workflow `kh6TORgRg9R1Shj1`) · Mailing TEST_MODE → real · responsive Fase C (Detention + Admin BID) · migrar validador-aduana a módulo · audit-trail · `prompt()` en bidBulkAction.
+**La próxima sesión entra con el plan ya diseñado.** Flujo definido: John trae el relevamiento de mejoras de los operarios → Claude web define el plan (despejando dudas con John) → el plan se pega a Claude Code → CC hace su propio EXPLORE → PLAN → IMPLEMENT con multiagentes sobre el repo completo. No arrancar nada antes de recibir ese plan.
