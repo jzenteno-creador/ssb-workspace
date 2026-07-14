@@ -15,9 +15,8 @@
    pelados (toast.js→window) — regla dura CLAUDE.md, nunca window.X para
    leer clásicos. `XLSX` es CDN global (SheetJS, usado en el upload) y
    `supabase` es CDN global (usado arriba para createClient) — ambos
-   verbatim, sin guard nuevo. `window.applyDetFilter` está MUERTA (0
-   callers en todo el archivo, verificado) — viaja tal cual, borrarla es
-   otro cambio. localStorage `det_selected_countries`/`det_selected_navieras`
+   verbatim, sin guard nuevo. `window.applyDetFilter` (muerta, 0 callers)
+   BORRADA 2026-07-14. localStorage `det_selected_countries`/`det_selected_navieras`
    y el cache TTL (`_detData`/`_detLastFetch`) viajan tal cual. Datos leídos
    son anon-readable (Detention accesible a anon por decisión
    arquitectónica) — verificable en LOCAL sin auth. */
@@ -317,9 +316,6 @@
     _renderDetUI('navieras');
     _doApplyDetFilter();
   };
-
-  // Stub para compatibilidad: si algún caller residual lo invoca, lo encadena bien.
-  window.applyDetFilter = function() { _doApplyDetFilter(); };
 
   function buildMailText(country, rows) {
     const lines = [`${String(country||'').toUpperCase()} — Destination free time`];

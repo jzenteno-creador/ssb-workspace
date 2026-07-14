@@ -273,7 +273,7 @@ async function loadTarifasFromSupabase(){
 // ── CARRIER / EQUIPO BUTTONS ──
 function buildCarrierBtns() {
   const vals=[...new Set(rates.map(r=>r.carrier).filter(Boolean))].sort();
-  document.getElementById('carrier-grp').innerHTML=vals.map(c=>`<button class="tog${selC.has(c)?' on':''}" onclick="togC('${c}')">${c}</button>`).join('');
+  document.getElementById('carrier-grp').innerHTML=vals.map(c=>`<button class="tog${selC.has(c)?' on':''}" onclick="togC(${esc(JSON.stringify(c))})">${esc(c)}</button>`).join('');
   // Poblar dinámicamente el dropdown de Quarter desde los valores reales del sheet
   const qSel=document.getElementById('f-quarter');
   if(qSel){
@@ -474,6 +474,13 @@ window.applyFilter = debounce(_applyFilterImpl, 250);
 // Tarifas BID y por el badge "Vencida" de buildCard — no inventar otra comparación. Sin hasta → no
 // vencida. Relativo a HOY (no al ETD): el ETD lo cubre el banner/alert aparte.
 function isTarifaVencida(r){ const d=daysUntil(r.hasta); return d!==null && d<0; }
+// Predicado compartido de los filtros Carrier/Equipo sobre tarifas (filtro + export PDF + export Excel).
+// NO confundir con el filtro de schedule: ese matchea por naviera con schedNavieraMatch().
+function passCarrierEquipo(r){
+  if(selC.size>0&&!selC.has(r.carrier))return false;
+  if(selE.size>0&&!selE.has(r.equipo))return false;
+  return true;
+}
 function _applyFilterImpl(){
   if(!rates.length)return;
   const vO  = document.getElementById('f-t-origen').value.trim();
@@ -487,8 +494,7 @@ function _applyFilterImpl(){
     if(!r.origen&&!r.destino&&!r.carrier)return false;
     if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
     if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selC.size>0&&!selC.has(r.carrier))return false;
-    if(selE.size>0&&!selE.has(r.equipo))return false;
+    if(!passCarrierEquipo(r))return false;
     const qf=document.getElementById('f-quarter').value;
     if(qf){
       const norm=s=>(s||'').toUpperCase().replace(/\s/g,'');
@@ -990,8 +996,7 @@ function exportTarifasPDF(){
     if(!r.origen&&!r.destino)return false;
     if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
     if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selC.size>0&&!selC.has(r.carrier))return false;
-    if(selE.size>0&&!selE.has(r.equipo))return false;
+    if(!passCarrierEquipo(r))return false;
     const u=(r.estado||'').toUpperCase();
     if(est==='confirmada'&&!u.includes('CONFIRM'))return false;
     if(est==='pendiente'&&!u.includes('PEND'))return false;
@@ -1038,8 +1043,7 @@ function exportTarifasExcel(){
     if(!r.origen&&!r.destino)return false;
     if(vO&&!r.origen.toUpperCase().includes(vO.toUpperCase()))return false;
     if(vD&&!r.destino.toUpperCase().includes(vD.toUpperCase()))return false;
-    if(selC.size>0&&!selC.has(r.carrier))return false;
-    if(selE.size>0&&!selE.has(r.equipo))return false;
+    if(!passCarrierEquipo(r))return false;
     const u=(r.estado||'').toUpperCase();
     if(est==='confirmada'&&!u.includes('CONFIRM'))return false;
     if(est==='pendiente'&&!u.includes('PEND'))return false;
