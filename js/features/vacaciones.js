@@ -68,7 +68,12 @@
    `window.switchTab` / `window.ssbLogout` en su forma original `window.X`
    porque son publicados por OTROS scripts (auth.js/nav.js) — no son el
    caso de "clásico→módulo" de la regla dura, son lecturas legítimas de
-   contrato inter-script. */
+   contrato inter-script.
+
+   BUG-VAC-FORM-ADJUSTMENTS CERRADO 2026-07-14: el disponible del form
+   Cargar (updateCargarSummary) pasa a computeRealAvailable() con los
+   ajustes — misma fuente de verdad que el stats strip. Re-derivado de
+   203265d (fix/dashboard-critical-bugs, pre-refactor). */
   // Reusa el cliente global de auth para no acumular GoTrueClient con la
   // misma key (warning resuelto). Si por algún motivo el script global no
   // cargó, fallback a un cliente local — pero esto NO debería pasar.
@@ -491,8 +496,9 @@
     return `${w} ${w === 1 ? 'semana' : 'semanas'}`;
   }
 
-  // Helper: cómputo del "disponible real" — única fuente de verdad para 3 consumidores
-  // (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview).
+  // Helper: cómputo del "disponible real" — única fuente de verdad para 4 consumidores
+  // (Mi calendario stats strip, Resumen del equipo admin, modal de ajuste preview,
+  // y el form Cargar vía updateCargarSummary — BUG-VAC-FORM-ADJUSTMENTS, 2026-07-14).
   // Pure function: mismos inputs → mismos outputs, sin side effects.
   // balanceRow: fila de vac_balance_view (puede ser null si el empleado no tiene fila)
   // adjustmentsForEmployee: array de filas de vac_balance_adjustments YA filtradas
@@ -926,7 +932,11 @@
     $('vac-form-range').textContent = (fromIso && toIso) ? `${formatDmy(fromIso)} al ${formatDmy(toIso)} inclusive` : '—';
 
     const annual    = effectiveAnnualDays(window.__vac.balance, window.__vacAuth?.employee);
-    const remaining = window.__vac.balance?.days_remaining ?? annual;
+    // BUG-VAC-FORM-ADJUSTMENTS (fix 2026-07-14, re-derivado de 203265d): el disponible del
+    // form debe incluir los ajustes manuales (vac_balance_adjustments), igual que el stats
+    // strip. days_remaining de la view NO los contempla → un empleado con ajuste negativo
+    // veía más saldo del real y podía pedir de más.
+    const remaining = computeRealAvailable(window.__vac.balance, window.__vac.adjustments || []).disponible;
     let projected;
     if(window.__vac.editingId){
       const orig = (window.__vac.requests || []).find(x => x.id === window.__vac.editingId);
