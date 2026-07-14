@@ -175,7 +175,7 @@ John NO levanta la app: la levanta Claude, en CADA gate, ANTES de pedir verifica
 - Nunca pedir verificación sin app corriendo y URL a mano.
 - **Falsos positivos de LOCAL:** `python http.server` NO ejecuta las serverless de Vercel — cualquier POST a `/api/*` devuelve **501 (rojo en consola, ruido esperado)**. Los tabs/flujos que dependen de `/api/*` (Estructura DB/schema; acciones de seguimiento, mailing, cert-origen, chat) **NO son verificables en local: su smoke es SOLO en prod post-deploy**. En cada gate: separar explícitamente los pasos "verificable en local" vs "solo prod", y el criterio de consola limpia EXCLUYE los 501 de `/api/*` — los errores que importan son los otros.
 
-**REFACTOR COMPLETADO 2026-07-12** (PASO 0 + baldes 1-3, 24 gates). Queda opcional el GATE F (flip de los 3 clásicos — ver plan §8 y check 8e). Las reglas duras de esta sección siguen vigentes para todo trabajo futuro en `js/`.
+**REFACTOR CERRADO 2026-07-14** (PASO 0 + baldes 1-3, 24 gates; smoke final B3.5 aprobado 5/5, todo en prod). **GATE F (flip de los 3 clásicos) = ABANDONADO** — veredicto de cierre con evidencia check 8e: 15/20 módulos ES consumen 26 símbolos clásicos pelados (~479 usos; `esc`=167, `toISO`=59, `fDate`=45, `usd`=30). Costo = reescribir imports en 15 archivos con clase de rotura SILENCIOSA + nav→imports encadenado; beneficio operativo = 0 (sin bundler/tree-shaking por decisión inamovible). Reabrir SOLO ante necesidad real nueva (p.ej. si algún día se levanta la prohibición de bundler). Las reglas duras de esta sección siguen vigentes para todo trabajo futuro en `js/`.
 
 ## Skills activas en este proyecto
 
