@@ -257,7 +257,7 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
 - **PENDIENTE (F1 en adelante):**
   - **F1** — **auth Bearer** (JWT de sesión Supabase) en `/api/chat` y `/api/chat-workspace` + **rate limiting** + `chat-workspace` migrar a rol read-only con RLS activa (dejar de usar service_role). Hoy los endpoints siguen **sin auth**.
   - **F2** — LIMIT forzado server-side (no por regex). ~~unificar las 5 defs de `esc()`/`escHtml`~~ ✅ HECHO 2026-07-07 (superset único).
-  - **F3** — hooks de regresión (SQL/secrets + XSS) + subagent `security-reviewer` + **borrar `netlify/functions/`** (gemelas muertas sin auth).
+  - **F3** — hooks de regresión (SQL/secrets + XSS) + subagent `security-reviewer`. (~~borrar `netlify/functions/`~~ ✅ HECHO 2026-07-14, tanda limpieza — gate grep 0 consumidores.)
   - Grants MySQL `db_reader_jz_1` (`SHOW GRANTS` → solo SELECT, sin FILE/SUPER) — sin verificar aún; otra base/sistema (Metric), fuera de Supabase.
 - **Regla:** writes por CC o SQL editor de Supabase, **nunca desde el chat**. Seguridad = capa DB/infra; la capa prompt del LLM **NO** es guardrail.
 
