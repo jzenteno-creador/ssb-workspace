@@ -20,8 +20,9 @@
 // normaliza a 6 y reventaba el INSERT del lote con un 400 de constraint.
 //
 // POWERS (decididos en el gate): employee = alta_despacho, editar_despacho,
-// set_requiere_co, archivar, desarchivar, sellar_control. ADMIN-ONLY = anular_alta,
-// co_config_*, anular_sello.
+// set_requiere_co, archivar, desarchivar, sellar_control, reprocesar_bl (PLAN1
+// FIX 3 — lo usa la operatoria diaria). ADMIN-ONLY = anular_alta, co_config_*,
+// anular_sello.
 //
 // NOTA upsert de config: el unique de seguimiento_co_config es un índice PARCIAL de
 // EXPRESIONES (coalesce(dim,'') WHERE activo) — PostgREST no puede apuntarle
@@ -35,6 +36,8 @@
 //
 // Env (Vercel / .env local): SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (o el nombre
 // legacy SUPABASE_DB_PASSWORD, que es el que ya existe — se aceptan ambos).
+// PLAN1 FIX 3: + N8N_CBL_FORM_URL (URL del Form Trigger "Test por orden" del
+// workflow Control BL — hoy https://jzenteno.app.n8n.cloud/form/b8b6e00a-0620-4ecf-8844-e97f7162a753).
 
 const MAX_BATCH = 200;
 const MIN_FECHA = '2020-01-01';
@@ -712,6 +715,64 @@ async function handleAnularSello(res, body, userEmail, base, svcHeaders) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// reprocesar_bl — EMPLOYEE — PLAN1 FIX 3 (modo de falla M2: pisar un archivo en
+// Drive NO dispara el Drive Trigger). Dispara el control del BL vía el Form
+// Trigger de n8n (que QUEDA como backup — decisión 10 del handoff). Alcanza
+// CUALQUIER orden mientras el BL exista en BL DRAFT: el form busca por nombre
+// de archivo, sin ventana temporal (la ventana de 7 días es de la VISTA).
+// { order_number } → result.status: disparado | disparado_sin_confirmar
+//
+// Caveats de gateway n8n (documentados en CLAUDE.md raíz):
+// - El form puede responder recién cuando el workflow TERMINA (~1-2 min con los
+//   5 extractores IA) → timeout corto acá y "disparado_sin_confirmar" (el
+//   reproceso arrancó igual; el resultado se ve como control nuevo de la orden).
+// - Una ejecución FALLIDA puede responder 200 con cuerpo vacío → indistinguible
+//   de un éxito desde acá; la red de seguridad de la solapa (FIX 5) y el propio
+//   control nuevo son la confirmación real.
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleReprocesarBl(res, body, userEmail) {
+  const formUrl = process.env.N8N_CBL_FORM_URL;
+  if (!formUrl) return res.status(500).json({ error: 'N8N_CBL_FORM_URL no configurada.' });
+  const order = normalizeOrden(body.order_number);
+  if (!ORDEN_NORM_RE.test(order))
+    return res.status(400).json({ error: 'order_number inválido (normalizado debe ser 7-12 dígitos sin 0 inicial)' });
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    // Mismo shape que el POST probado históricamente contra este form: field-0=<orden>
+    // (el nodo "Seleccionar BL draft" lee la orden en forma defensiva, cualquier key sirve).
+    const fRes = await fetch(formUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ 'field-0': order }).toString(),
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    if (!fRes.ok) {
+      const detail = (await fRes.text().catch(() => '')).slice(0, 200);
+      return res.status(502).json({ error: `El form de n8n respondió ${fRes.status}`, detail });
+    }
+    console.log(`seguimiento reprocesar_bl: orden ${order} disparada por ${userEmail}`);
+    return res.status(200).json({
+      ok: true, action: 'reprocesar_bl',
+      result: { order_number: order, status: 'disparado', detail: 'Control disparado — tarda ~1-2 min y aparece como control nuevo de la orden.' },
+    });
+  } catch (e) {
+    clearTimeout(t);
+    if (e.name === 'AbortError') {
+      console.log(`seguimiento reprocesar_bl: orden ${order} disparada por ${userEmail} (sin confirmación en 8 s)`);
+      return res.status(200).json({
+        ok: true, action: 'reprocesar_bl',
+        result: { order_number: order, status: 'disparado_sin_confirmar', detail: 'El form no confirmó en 8 s (suele esperar el fin del workflow) — en ~2 min buscá la orden y verificá el control nuevo.' },
+      });
+    }
+    console.error('seguimiento reprocesar_bl error:', e.message);
+    return res.status(502).json({ error: 'No se pudo disparar el reproceso', detail: String(e.message || '').slice(0, 200) });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -771,6 +832,7 @@ export default async function handler(req, res) {
     case 'desarchivar':      return handleArchivo(res, action, b, user.email, base, svcHeaders);
     case 'anular_alta':      return handleAnularAlta(res, b, base, svcHeaders);
     case 'sellar_control':   return handleSellarControl(res, b, user.email, base, svcHeaders);
+    case 'reprocesar_bl':    return handleReprocesarBl(res, b, user.email);
     case 'anular_sello':     return handleAnularSello(res, b, user.email, base, svcHeaders);
     case 'co_config_list':   return handleCoConfigList(res, base, svcHeaders);
     case 'co_config_upsert': return handleCoConfigUpsert(res, b, user.email, base, svcHeaders);

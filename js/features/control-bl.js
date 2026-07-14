@@ -305,7 +305,7 @@
       ctrlBtn.type = 'button';
       ctrlBtn.appendChild(svgUse('#i-refresh'));
       ctrlBtn.appendChild(document.createTextNode('Controlar ahora'));
-      ctrlBtn.onclick = () => ssbToast('Próximamente — el control on-demand es una tanda futura.', 'info');
+      ctrlBtn.onclick = () => cblReprocesar(row.order_number, ctrlBtn);
       mini.appendChild(ctrlBtn);
       detail.appendChild(mini);
       return;
@@ -361,7 +361,7 @@
     reproc.type = 'button';
     reproc.appendChild(svgUse('#i-refresh'));
     reproc.appendChild(document.createTextNode('Reprocesar BL draft'));
-    reproc.onclick = () => ssbToast('Próximamente — el reproceso del BL draft es una tanda futura.', 'info');
+    reproc.onclick = () => cblReprocesar(row.order_number, reproc);
     right.appendChild(reproc);
     if(sello && window.__ssbAuth && window.__ssbAuth.isAdmin){
       // Anular: SOLO admin (gate cosmético — el server re-valida con vac_employees.role).
@@ -406,6 +406,26 @@
     const data = await res.json().catch(() => ({}));
     if(!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
     return data;
+  }
+
+  // ── Reproceso web del BL (PLAN1 FIX 3 — modo de falla M2: pisar el archivo en
+  // Drive no dispara el trigger). POST /api/seguimiento action=reprocesar_bl →
+  // Form Trigger de n8n (backup, decisión 10). Alcanza cualquier orden mientras
+  // el BL exista en Drive — la ventana de 7 días es de la vista, no de la acción.
+  // El botón queda deshabilitado 15 s para no re-disparar por doble click (el
+  // asiento es upsert y el mail tiene claim — un doble disparo ya no duplica,
+  // pero cada corrida igual cuesta ~5 llamadas de IA).
+  async function cblReprocesar(orderNumber, btn){
+    if(btn) btn.disabled = true;
+    try {
+      const data = await cblApiSeguimiento({ action: 'reprocesar_bl', order_number: orderNumber });
+      const r = data.result || {};
+      ssbToast(r.detail || 'Reproceso disparado.', r.status === 'disparado' ? 'success' : 'info');
+      if(btn) setTimeout(() => { btn.disabled = false; }, 15000);
+    } catch(e){
+      ssbToast('No se pudo disparar el reproceso: ' + (e.message || 'error de red'), 'error');
+      if(btn) btn.disabled = false;
+    }
   }
 
   // Hace el POST y devuelve result.{status,...} — el caller decide toast/refresh.
