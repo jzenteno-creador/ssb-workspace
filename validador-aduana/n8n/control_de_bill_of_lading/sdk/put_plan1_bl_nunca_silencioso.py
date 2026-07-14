@@ -116,7 +116,9 @@ def apply_transforms(pre):
 
     # ---- T6: Armar fila Control BL sin email_sent/email_sent_at (espejo nuevo)
     code_armar = open(SDK + "code_armar_fila_control_bl.js", encoding="utf-8").read()
-    if "email_sent" in code_armar and "email_sent:" in code_armar:
+    if "PLAN1-FIX6" not in code_armar:
+        sys.exit("ABORT T6: el espejo code_armar_fila_control_bl.js no es la versión PLAN1 (falta marker)")
+    if "email_sent:" in code_armar:
         sys.exit("ABORT T6: el espejo code_armar_fila_control_bl.js todavía asigna email_sent")
     by_name[N_ARMAR_CBL]["parameters"]["jsCode"] = code_armar
 
