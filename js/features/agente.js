@@ -13,12 +13,9 @@
    `typeof marked !== 'undefined'` (verbatim, sin tocar). `buildContext()`
    y `updateStats()` son stubs heredados de una versión previa (el
    contexto ahora lo maneja el backend/MySQL) — viajan tal cual, sin
-   tocar. BUG PREEXISTENTE conocido: `agentReset` hace
-   `appendChild(welcome)` sin guardar contra `welcome` null — gemelo de
-   BUG-WIA-RESET, ya reproducido contra HEAD (protocolo 8c) y documentado
-   en tarifa-schedule-bugs.md. NO arreglado a propósito, fuera de scope de
-   este move. Las acciones contra /api/chat NO existen en local (501):
-   smoke de contenido SOLO en prod. */
+   tocar. BUG-AGENT-RESET CERRADO 2026-07-14: welcome cacheado en módulo +
+   reset delegado en renderMessages(). Las acciones contra /api/chat NO
+   existen en local (501): smoke de contenido SOLO en prod. */
 
   const THINKING_PHRASES = [
     'Analizando datos...','Revisando tarifas...','Cruzando informacion...',
@@ -46,11 +43,21 @@
     if(el) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
   }
 
+  // Cache del nodo welcome: renderMessages() lo saca del DOM con innerHTML=html;
+  // la referencia viva permite re-appendearlo (BUG-AGENT-RESET, fix 2026-07-14).
+  let _agentWelcomeNode = null;
+  function getWelcomeNode(){
+    if(!_agentWelcomeNode) _agentWelcomeNode = document.getElementById('agent-welcome');
+    return _agentWelcomeNode;
+  }
+
   function renderMessages(){
     const container = document.getElementById('agent-messages');
-    const welcome = document.getElementById('agent-welcome');
+    const welcome = getWelcomeNode();
+    if(!container) return;
     if(!_agentMessages.length && !_agentLoading){
-      if(welcome) welcome.style.display = '';
+      container.innerHTML = '';
+      if(welcome){ welcome.style.display = ''; container.appendChild(welcome); }
       return;
     }
     if(welcome) welcome.style.display = 'none';
@@ -155,10 +162,7 @@
     stopThinking();
     var sendBtn = document.getElementById('agent-send-btn');
     if(sendBtn) sendBtn.disabled = false;
-    var welcome = document.getElementById('agent-welcome');
-    if(welcome) welcome.style.display = '';
-    document.getElementById('agent-messages').innerHTML = '';
-    document.getElementById('agent-messages').appendChild(welcome);
+    renderMessages(); // con 0 mensajes limpia el container y re-appendea el welcome cacheado
     updateStats();
   };
 

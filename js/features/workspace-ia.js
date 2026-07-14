@@ -7,9 +7,10 @@
    publicados acá, preservados VERBATIM (contrato con el markup, no con
    nav.js). Consume de clásicos: `esc` pelado (helpers.js) — regla dura
    CLAUDE.md, nunca window.esc. `marked` es CDN global con guard
-   `typeof marked !== 'undefined'` (verbatim, sin tocar). Las acciones
-   contra /api/chat-workspace NO existen en local (501): smoke de
-   contenido SOLO en prod. */
+   `typeof marked !== 'undefined'` (verbatim, sin tocar). BUG-WIA-RESET
+   CERRADO 2026-07-14: welcome cacheado en módulo + reset delegado en
+   renderMessages(). Las acciones contra /api/chat-workspace NO existen
+   en local (501): smoke de contenido SOLO en prod. */
 
   const WIA_PHRASES = [
     'Consultando workspace...','Revisando tarifas...','Cruzando datos...',
@@ -25,9 +26,17 @@
     return '<p>' + esc(text).replace(/\n/g,'<br>') + '</p>';
   }
 
+  // Cache del nodo welcome: renderMessages() lo saca del DOM con innerHTML='';
+  // la referencia viva permite re-appendearlo (BUG-WIA-RESET, fix 2026-07-14).
+  var _wiaWelcomeNode = null;
+  function getWelcomeNode(){
+    if(!_wiaWelcomeNode) _wiaWelcomeNode = document.getElementById('wia-welcome');
+    return _wiaWelcomeNode;
+  }
+
   function renderMessages(){
     var container = document.getElementById('wia-messages');
-    var welcome = document.getElementById('wia-welcome');
+    var welcome = getWelcomeNode();
     if(!container) return;
     container.innerHTML = '';
     if(_wiaMessages.length === 0){
@@ -140,10 +149,7 @@
     stopThinking();
     var sendBtn = document.getElementById('wia-send-btn');
     if(sendBtn) sendBtn.disabled = false;
-    var welcome = document.getElementById('wia-welcome');
-    if(welcome) welcome.style.display = '';
-    var container = document.getElementById('wia-messages');
-    if(container){ container.innerHTML = ''; container.appendChild(welcome); }
+    renderMessages(); // con 0 mensajes limpia el container y re-appendea el welcome cacheado
   };
 
   document.addEventListener('DOMContentLoaded', function(){
