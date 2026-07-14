@@ -3,9 +3,6 @@
 # no queden accesibles públicamente. El front sigue siendo index.html + assets/ + api/.
 validador-aduana/
 
-# Legacy Netlify (la app está en Vercel)
-netlify/
-
 # Docs internas y maquetas (contienen órdenes/clientes reales y arquitectura) —
 # material de desarrollo, NO parte del front. Sin esto quedan world-readable:
 # el auth-gate es client-side de index.html y no cubre estáticos.
