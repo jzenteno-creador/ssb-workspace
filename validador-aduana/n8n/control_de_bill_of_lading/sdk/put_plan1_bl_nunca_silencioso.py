@@ -121,14 +121,16 @@ def apply_transforms(pre):
     by_name[N_ARMAR_CBL]["parameters"]["jsCode"] = code_armar
 
     # ---- T4: recableado + nodos nuevos
+    # La cadena nueva del envío vive en y=-368 (fila propia — no pisa Detectar
+    # [4752,-208] ni Alerta [4976,-208]).
     s = by_name[N_SEND]
     s["onError"] = "continueErrorOutput"
-    s["position"] = [5088, -208]
+    s["position"] = [5200, -368]
 
     claim = {
         "id": "plan1-claim-email-sent-0001", "name": N_CLAIM,
         "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
-        "position": [4720, -208], "onError": "continueRegularOutput",
+        "position": [4752, -368], "onError": "continueRegularOutput",
         "parameters": {
             "method": "PATCH",
             # test-and-set atómico: solo matchea si NADIE marcó el envío de esta versión del BL.
@@ -147,7 +149,7 @@ def apply_transforms(pre):
     ifnode = {
         "id": "plan1-if-claim-ganado-0001", "name": N_IF,
         "type": "n8n-nodes-base.if", "typeVersion": 2.2,
-        "position": [4904, -208],
+        "position": [4976, -368],
         "parameters": {
             "conditions": {
                 "options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose", "version": 2},
@@ -165,7 +167,7 @@ def apply_transforms(pre):
     revert = {
         "id": "plan1-revert-claim-0001", "name": N_REVERT,
         "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
-        "position": [5272, -80], "onError": "continueRegularOutput",
+        "position": [5424, -288], "onError": "continueRegularOutput",
         "parameters": {
             "method": "PATCH",
             "url": "=" + SUPA_URL + "/bl_controls?id=eq.{{ $json.id || $('" + N_CLAIM + "').item.json.id }}",
