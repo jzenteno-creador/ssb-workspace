@@ -69,7 +69,11 @@ const okTxt = (t) => `<span style="color:${VERDE};font-weight:bold;">${t}</span>
 const revChip = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right"><tbody><tr><td bgcolor="${AMB}" style="${fS(10, '#ffffff', 'font-weight:bold;padding:3px 9px;letter-spacing:.04em;')}">REVISAR</td></tr></tbody></table>`;
 
 // ---------- Entradas ----------
-const item = items[0];
+// PLAN1-FIX2 (2026-07-14): el nodo pasa a "Run Once for Each Item". Antes corría
+// en all-items tomando SOLO el primer item del lote — colapso del batch N→1 (los
+// demás BLs se descartaban en silencio; modo de falla M1 del EXPLORE_CBL).
+// $input.item es el item corriente del modo per-item; el resto del código no cambia.
+const item = $input.item;
 const j = item.json || {};
 const bl  = j.login_extract || {};
 const adu = j.aduana_extract || {};
@@ -655,7 +659,9 @@ Aduana: ${linkAdu}
 Booking: ${linkBA}
 Factura: ${linkFC}`;
 
-return [{
+// PLAN1-FIX2: en modo per-item se devuelve UN objeto (no un array) — n8n arma
+// la lista con un output por cada item de entrada (N BLs ⇒ N mails/filas).
+return {
   json: {
     email_to: to,
     email_cc: cc,
@@ -663,4 +669,4 @@ return [{
     body_html: htmlOut,
     body_text: bodyText
   }
-}];
+};

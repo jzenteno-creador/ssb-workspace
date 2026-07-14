@@ -9,7 +9,8 @@ const fs = require('fs');
 const srcC = fs.readFileSync('_comparador.js', 'utf8');
 const NEW = new Function(srcC.slice(0, srcC.indexOf('const current = $input')) + '\nreturn { buildComparison };')();
 const plantilla = fs.readFileSync('_plantilla_html.js', 'utf8');
-const render0 = (json) => new Function('items', plantilla)([{ json }])[0].json;
+// PLAN1-FIX2: la plantilla corre per-item ($input.item) y devuelve UN objeto.
+const render0 = (json) => new Function('$input', plantilla)({ item: { json } }).json;
 const decSym = (h) => h.replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&middot;/g, '·').replace(/&#10003;/g, '✓').replace(/&#9873;/g, '⚑').replace(/&#8800;/g, '≠').replace(/&#8594;/g, '→').replace(/&#8658;/g, '⇒').replace(/&#8596;/g, '↔').replace(/&ldquo;/g, '“').replace(/&rdquo;/g, '”').replace(/&trade;/g, '™').replace(/&reg;/g, '®').replace(/&deg;/g, '°').replace(/&sup3;/g, '³');
 const render = (json) => { const r = render0(json); r.body_html_raw = r.body_html; r.body_html = decSym(r.body_html); return r; };
 const srcI = fs.readFileSync('code_inyectar_links_order_booking.js', 'utf8');

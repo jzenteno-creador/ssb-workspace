@@ -14,7 +14,9 @@ const OLDWF = JSON.parse(fs.readFileSync('workflow_pre_tanda_b.json', 'utf8'));
 const OLDC = loadComparador(OLDWF.nodes.find((n) => n.name === 'COMPARADOR - BL vs Aduana vs Booking').parameters.jsCode);
 const plantillaNueva = fs.readFileSync('_plantilla_html.js', 'utf8');
 const decSym = (h) => h.replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&middot;/g, '·').replace(/&#10003;/g, '✓').replace(/&#9873;/g, '⚑').replace(/&#8800;/g, '≠').replace(/&#8594;/g, '→').replace(/&#8658;/g, '⇒').replace(/&#8596;/g, '↔').replace(/&ldquo;/g, '“').replace(/&rdquo;/g, '”').replace(/&trade;/g, '™').replace(/&reg;/g, '®').replace(/&deg;/g, '°').replace(/&sup3;/g, '³');
-const renderWith = (code, json) => { const out = new Function('items', code)([{ json }]); out[0].json.body_html = decSym(out[0].json.body_html); return out; };
+// PLAN1-FIX2: la plantilla corre per-item ($input.item) y devuelve UN objeto — se
+// re-envuelve en array para no tocar los call-sites ([0].json).
+const renderWith = (code, json) => { const out = [new Function('$input', code)({ item: { json } })]; out[0].json.body_html = decSym(out[0].json.body_html); return out; };
 
 const fixtures = JSON.parse(fs.readFileSync('_debug/tanda_b/fixtures.json', 'utf8'));
 const run = (orden) => {
