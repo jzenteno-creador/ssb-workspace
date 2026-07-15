@@ -45,6 +45,9 @@ const ORDEN_NORM_RE = /^[1-9]\d{6,11}$/; // ESPEJO exacto del CHECK seguimiento_
 const MOTS = new Set(['maritimo', 'terrestre']);
 const REQUIERE_CO_VALS = new Set(['auto', 'requerido', 'no_requerido']);
 const ADMIN_ACTIONS = new Set(['anular_alta', 'co_config_list', 'co_config_upsert', 'co_config_toggle', 'anular_sello']);
+// PLANCOMPLETO TANDA E — decisión §5.7 ("una tabla, una regla"): seguimiento_co_config
+// generaliza de CO-only a documento en {CO,PE,SEG,COA}. Ver migrations/2026-07-15-plancompleto-e-seguimiento/.
+const CO_CONFIG_DOCUMENTOS = new Set(['CO', 'PE', 'SEG', 'COA']);
 
 // normalizeOrden canónica (api/_lib/certOrigen.js): strip de UN 0 inicial.
 function normalizeOrden(raw) {
@@ -483,7 +486,17 @@ async function handleCoConfigList(res, base, svcHeaders) {
 
 // Upsert MANUAL (el unique es índice parcial de expresiones — PostgREST no puede
 // apuntarle on_conflict): GET regla ACTIVA con dims exactas → PATCH | POST.
-// { ship_to_key?, material?, pais_destino?, requiere_co: bool, motivo }
+// { ship_to_key?, material?, pais_destino?, requiere_co: bool, motivo, documento? }
+//
+// documento (TANDA E, decisión §5.7): CO/PE/SEG/COA, default 'CO'. La migración
+// 2026-07-15-plancompleto-e-seguimiento agrega la columna y la mete en el unique
+// index (documento, ship_to_key, material, pais_destino) — pero puede no estar
+// aplicada todavía (deploy antes de migración). Por eso: (a) el lookup usa
+// select=* + match de documento EN JS, nunca un filtro `documento=eq.…` en la
+// URL — filtrar/seleccionar una columna inexistente tira 400 de PostgREST; select=*
+// nunca falla por columnas ausentes; (b) el POST de creación solo manda `documento`
+// en el payload cuando es distinto de 'CO' — así crear una regla CO (el caso de
+// hoy) sigue funcionando aunque la columna todavía no exista.
 async function handleCoConfigUpsert(res, body, userEmail, base, svcHeaders) {
   const dims = {
     ship_to_key: strOrNull(body.ship_to_key),
@@ -496,17 +509,25 @@ async function handleCoConfigUpsert(res, body, userEmail, base, svcHeaders) {
     return res.status(400).json({ error: 'requiere_co debe ser boolean' });
   const motivo = strOrNull(body.motivo);
   if (!motivo) return res.status(400).json({ error: 'motivo obligatorio' });
+  const documento = strOrNull(body.documento) || 'CO';
+  if (!CO_CONFIG_DOCUMENTOS.has(documento))
+    return res.status(400).json({ error: `documento inválido: ${documento} (CO|PE|SEG|COA)` });
 
   const dimQs = ['ship_to_key', 'material', 'pais_destino'].map((k) => dimFilter(k, dims[k])).join('&');
-  let activa = null;
+  let candidatos = [];
   try {
-    const gRes = await fetch(`${base}/seguimiento_co_config?select=id,requiere_co,motivo&${dimQs}&activo=is.true&limit=1`, { headers: svcHeaders });
+    const gRes = await fetch(`${base}/seguimiento_co_config?select=*&${dimQs}&activo=is.true`, { headers: svcHeaders });
     if (!gRes.ok) throw new Error(`GET ${gRes.status}`);
-    activa = (await gRes.json())[0] || null;
+    candidatos = await gRes.json();
   } catch (e) {
     console.error('seguimiento co_config_upsert GET error:', e.message);
     return res.status(502).json({ error: 'No se pudo leer seguimiento_co_config' });
   }
+  // Post-migración puede haber una fila activa por documento con las mismas dims
+  // (el unique ahora es documento+dims) → matchear por documento exacto. Pre-
+  // migración la columna no existe (c.documento === undefined en TODAS) → hay a
+  // lo sumo una fila posible con esas dims, se toma igual (comportamiento viejo).
+  const activa = candidatos.find((c) => (c.documento === undefined ? true : c.documento === documento)) || null;
 
   try {
     if (activa) {
@@ -521,16 +542,24 @@ async function handleCoConfigUpsert(res, body, userEmail, base, svcHeaders) {
       if (!pRes.ok || rows.length !== 1) return res.status(502).json({ error: `PATCH ${pRes.status} sobre seguimiento_co_config` });
       return res.status(200).json({ ok: true, action: 'co_config_upsert', result: { status: 'actualizada', id: activa.id, old_requiere_co: activa.requiere_co } });
     }
+    const createPayload = { ...dims, requiere_co: body.requiere_co, motivo, activo: true, created_by: userEmail };
+    if (documento !== 'CO') createPayload.documento = documento; // ver nota de cabecera: CO nunca toca la columna
     const cRes = await fetch(`${base}/seguimiento_co_config`, {
       method: 'POST',
       headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation' },
-      body: JSON.stringify({ ...dims, requiere_co: body.requiere_co, motivo, activo: true, created_by: userEmail }),
+      body: JSON.stringify(createPayload),
     });
     if (cRes.status === 409)
       return res.status(409).json({ error: 'Ya existe una regla ACTIVA con esas dimensiones (carrera o regla recién reactivada) — refrescá la lista' });
+    if (!cRes.ok && documento !== 'CO') {
+      // Un documento≠CO es un pedido explícito de la columna nueva: si la migración
+      // todavía no está aplicada, error claro en vez de reintento silencioso.
+      const detail = (await cRes.text().catch(() => '')).slice(0, 200);
+      return res.status(502).json({ error: `No se pudo crear la regla con documento=${documento} — ¿la migración de la columna "documento" ya está aplicada?`, detail });
+    }
     const rows = cRes.ok ? await cRes.json() : [];
     if (!cRes.ok || rows.length !== 1) return res.status(502).json({ error: `POST ${cRes.status} sobre seguimiento_co_config` });
-    return res.status(200).json({ ok: true, action: 'co_config_upsert', result: { status: 'creada', id: rows[0].id, especificidad: rows[0].especificidad } });
+    return res.status(200).json({ ok: true, action: 'co_config_upsert', result: { status: 'creada', id: rows[0].id, especificidad: rows[0].especificidad, documento } });
   } catch (e) {
     console.error('seguimiento co_config_upsert error:', e.message);
     return res.status(502).json({ error: 'No se pudo escribir seguimiento_co_config' });
@@ -545,8 +574,10 @@ async function handleCoConfigToggle(res, body, base, svcHeaders) {
 
   let regla;
   try {
+    // select=* (no lista de columnas fija): documento puede no existir todavía
+    // (deploy antes de migración) — select=* nunca tira 400 por columna ausente.
     const gRes = await fetch(
-      `${base}/seguimiento_co_config?select=id,ship_to_key,material,pais_destino,activo&id=eq.${encodeURIComponent(id)}`,
+      `${base}/seguimiento_co_config?select=*&id=eq.${encodeURIComponent(id)}`,
       { headers: svcHeaders }
     );
     if (!gRes.ok) throw new Error(`GET ${gRes.status}`);
@@ -563,15 +594,19 @@ async function handleCoConfigToggle(res, body, base, svcHeaders) {
     return res.status(200).json({ ok: true, action: 'co_config_toggle', result: { id, status: 'sin_cambio' } });
 
   if (body.activo) {
-    // Reactivación: ¿otra regla ACTIVA con las mismas dims? → 409 claro, no 500 del unique
+    // Reactivación: ¿otra regla ACTIVA con las mismas dims (+ documento, si la
+    // columna existe)? → 409 claro, no 500 del unique. Mismo criterio degradado
+    // que el upsert: select=* + match de documento en JS, nunca en la URL.
     const dimQs = ['ship_to_key', 'material', 'pais_destino'].map((k) => dimFilter(k, regla[k])).join('&');
     try {
       const cRes = await fetch(
-        `${base}/seguimiento_co_config?select=id&${dimQs}&activo=is.true&id=neq.${encodeURIComponent(id)}&limit=1`,
+        `${base}/seguimiento_co_config?select=*&${dimQs}&activo=is.true&id=neq.${encodeURIComponent(id)}`,
         { headers: svcHeaders }
       );
       if (!cRes.ok) throw new Error(`GET ${cRes.status}`);
-      if ((await cRes.json()).length)
+      const candidatos = await cRes.json();
+      const choca = candidatos.some((c) => (c.documento === undefined || regla.documento === undefined) ? true : c.documento === regla.documento);
+      if (choca)
         return res.status(409).json({ error: 'Ya existe otra regla ACTIVA con esas dimensiones — desactivala primero o editá esa' });
     } catch (e) {
       console.error('seguimiento co_config_toggle unique-check error:', e.message);
@@ -599,11 +634,17 @@ async function handleCoConfigToggle(res, body, base, svcHeaders) {
 // ─────────────────────────────────────────────────────────────────────────────
 // sellar_control — single — EMPLOYEE (sello humano "control revisado", tanda 1.5.b)
 // { order_number, bl_file_id, motivo }
+// TANDA D (decisión de John, PLAN COMPLETO 2026-07-15): sellable en OK Y en
+// REVISAR — OK = controlado técnico, el sello registra el visto humano por
+// separado del resultado técnico. Rechazo (no_aplica) solo si la orden no tiene
+// control, o si el control no está en un estado sellable (OK|REVISAR — cualquier
+// otro valor violaría el CHECK de la tabla). "Falta bl_file_id" ya se valida
+// arriba (400) sobre el bl_file_id del FRONT; el del LATENT se valida vía Regla X.
 // Regla X: se sella la VERSIÓN del BL que la persona miró (bl_file_id del FRONT,
-// NUNCA re-leído del latest). El server verifica que el latest de esa orden está en
-// REVISAR y que su bl_file_id COINCIDE con el que mandó el front (si no, el control
-// cambió entre que cargó el detalle y apretó "sellar" → control_cambio, y el sello
-// sería no-vigente igual). Escribe control_bl_sellos (dominio propio, NO bl_controls).
+// NUNCA re-leído del latest). El server verifica que el bl_file_id del latest
+// COINCIDE con el que mandó el front (si no, el control cambió entre que cargó
+// el detalle y apretó "sellar" → control_cambio, y el sello sería no-vigente
+// igual). Escribe control_bl_sellos (dominio propio, NO bl_controls).
 // Statuses: sellada | ya_sellado | no_aplica | control_cambio | invalida | error
 // ─────────────────────────────────────────────────────────────────────────────
 async function handleSellarControl(res, body, userEmail, base, svcHeaders) {
@@ -633,8 +674,10 @@ async function handleSellarControl(res, body, userEmail, base, svcHeaders) {
 
   if (!latest)
     return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'no_aplica', detail: 'la orden no tiene control BL' } });
-  if (latest.overall_result !== 'REVISAR')
-    return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'no_aplica', detail: `el control está en ${latest.overall_result}, no hay REVISAR que sellar` } });
+  // TANDA D: OK también es sellable — cualquier otro valor de overall_result no es
+  // un estado sellable (y violaría el CHECK de la tabla, que solo admite OK|REVISAR).
+  if (latest.overall_result !== 'REVISAR' && latest.overall_result !== 'OK')
+    return res.status(200).json({ ok: true, action: 'sellar_control', result: { order_number: order, status: 'no_aplica', detail: `el control está en ${latest.overall_result}, no es un estado sellable (OK o REVISAR)` } });
   // Regla X: el bl_file_id que vio el front debe seguir siendo el vigente. Si el
   // workflow re-controló con un BL distinto en el medio, el sello sería inútil.
   if (latest.bl_file_id !== blFileId)
@@ -643,8 +686,9 @@ async function handleSellarControl(res, body, userEmail, base, svcHeaders) {
       result: { order_number: order, status: 'control_cambio', bl_file_id_vigente: latest.bl_file_id, detail: 'llegó un control nuevo (BL distinto) — refrescá el detalle y sellá la versión actual' },
     });
 
-  // 2) INSERT del sello. overall_result_al_sellar = el REVISAR verificado; bl_file_id =
-  //    el del front (== latest, ya validado). unique parcial → 23505 (409) = ya_sellado.
+  // 2) INSERT del sello. overall_result_al_sellar = el valor verificado arriba (OK o
+  //    REVISAR); bl_file_id = el del front (== latest, ya validado). unique parcial →
+  //    23505 (409) = ya_sellado.
   try {
     const iRes = await fetch(`${base}/control_bl_sellos`, {
       method: 'POST',
@@ -653,7 +697,7 @@ async function handleSellarControl(res, body, userEmail, base, svcHeaders) {
         order_number: order,
         bl_file_id: blFileId,
         bl_number: strOrNull(latest.bl_number),
-        overall_result_al_sellar: 'REVISAR',
+        overall_result_al_sellar: latest.overall_result,
         sellado_by: userEmail,
         motivo,
       }),

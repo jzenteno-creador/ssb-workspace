@@ -20,7 +20,21 @@
    — intencional, comentado así en el propio código original; VERBATIM,
    no tocar. CSS en isla `#cbl-styles` (index.html, con overrides
    externos por orden vía atributo) — NO-TOUCH total, no se movió ni se
-   tocó una sola línea de CSS en este balde. */
+   tocó una sola línea de CSS en este balde.
+
+   TANDA D (PLAN COMPLETO, 2026-07-15) — agregado sobre el balde de arriba,
+   MISMO contrato de NO-TOUCH CSS: filtros extendidos (Sin revisar /
+   Huérfanos / Mostrar archivadas — reusan la clase existente .cbl-fchip vía
+   el MISMO Set _cblFilters y la MISMA delegación de click, cero CSS nuevo),
+   select de buque (elemento nuevo sin clase de la isla — estilos por
+   defecto del navegador + inline mínimo de espaciado), badge "Roleada" y
+   auto-archivo de órdenes con envío real (mailing_orders), y el modo
+   HISTÓRICO (consulta bl_controls cruda por orden, sin la ventana de
+   v_bl_controls_latest — reusa cblRenderDetail/doc-tabs/viewer con
+   selección propia por id de fila porque una orden puede tener N
+   corridas). Todo lo nuevo se construye con createElement/textContent
+   (mismo patrón XSS-safe del balde original) e inyecta sobre el DOM ya
+   existente de index.html — CERO líneas nuevas en index.html. */
 
 /* ═══════════ Control BL — data layer (Commit 3/6) ═══════════ */
 /* Reusa window.__ssb.supa (NO crea cliente). Render XSS-safe: createElement + textContent. */
@@ -46,7 +60,21 @@
   let _cblSearchData = []; // filas devueltas por la búsqueda (puede traer controles fuera de los 7 días)
   let _cblSearched = null; // tokens (lote) u order_numbers (1-término); null = mostrar master de 7 días
   let _cblIsLote = false;
-  const _cblFilters = new Set(); // 'ok' | 'rev' | 'miss'
+  const _cblFilters = new Set(); // 'ok' | 'rev' | 'miss' | 'sinrev' | 'huerfanos' | 'archivadas' (TANDA D)
+
+  // ── Filtros/estado extendidos (TANDA D — items 8/9/13/14) ──
+  let _cblVesselFilter = ''; // select Buque — '' = todos
+  let _cblArchivedSet = new Set(); // order_number con envío real (mailing_orders status=ENVIADO && !sent_test_mode) — cblFetchArchivadas(), Set vacío (nunca oculta de más) si el fetch falla o no hay sesión
+  let _cblRoleoMap = new Map(); // order_number -> {roleo_at, roleo_to_vessel} (mailing_orders roleo_*) — cblFetchRoleos(), Map vacío si la migración TANDA B no está aplicada o el fetch falla
+  let _cblVesselEtd = new Map(); // BUQUE(upper trim) -> próxima ETD (schedules_master) — cblFetchVesselEtds(), Map vacío si falla
+
+  // ── Histórico (item 7 + O1): sub-modo del buscador — consulta bl_controls CRUDA
+  // (no v_bl_controls_latest) por orden. El eje es la CORRIDA, no la orden: una misma
+  // orden puede tener N filas, cada una con su propio id/body_html — selección propia
+  // (_cblHistSel) para no confundir con _cblSel (que sigue siendo por order_number).
+  let _cblMode = 'master'; // 'master' | 'historico'
+  let _cblHistData = []; // filas crudas de bl_controls de la búsqueda histórica actual
+  let _cblHistSel = null; // id (bl_controls.id) de la corrida seleccionada en histórico
 
   // ── Sello humano "control revisado" (tanda 1.5.c) ──
   // Mapa de sellos ACTIVOS keyeado por order_number+'|'+bl_file_id (Regla X: vigencia
@@ -66,12 +94,78 @@
     if(!supa) return;
     const { data, error } = await supa
       .from('control_bl_sellos')
-      .select('order_number,bl_file_id,sellado_by,sellado_at')
+      .select('order_number,bl_file_id,sellado_by,sellado_at,motivo') // motivo (O1): histórico y detalle lo muestran
       .is('anulado_at', null);
     if(error){ console.error('control-bl:sellos', error); return; } // no bloquea el render — sin mapa, badges caen al estado normal
     const map = {};
     (data || []).forEach(r => { map[cblSelloKey(r.order_number, r.bl_file_id)] = r; });
     _cblSellos = map;
+  }
+
+  // ── Satélites de la barra de filtros extendida (TANDA D) — mailing_orders (auto-
+  // archivo item 13 + roleo item 14) y schedules_master (próxima ETD del select Buque).
+  // Los 3 degradan a colección vacía si el fetch falla (401 anon/headless, RLS,
+  // columna roleo_* todavía sin migrar) — NUNCA rompen el render ni ocultan de más.
+  async function cblFetchArchivadas(){
+    _cblArchivedSet = new Set();
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) return;
+    try {
+      const { data, error } = await supa
+        .from('mailing_orders')
+        .select('order_number')
+        .eq('status', 'ENVIADO')
+        .eq('sent_test_mode', false);
+      if(error){ console.warn('control-bl:archivadas', error.message); return; }
+      (data || []).forEach(r => _cblArchivedSet.add(String(r.order_number)));
+    } catch(e){ console.warn('control-bl:archivadas', e); }
+  }
+
+  async function cblFetchRoleos(){
+    _cblRoleoMap = new Map();
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) return;
+    try {
+      const { data, error } = await supa
+        .from('mailing_orders')
+        .select('order_number,roleo_at,roleo_to_vessel')
+        .not('roleo_at', 'is', null);
+      // error esperado hasta que se aplique migrations/2026-07-15-plancompleto-b-mailing
+      // (columnas roleo_* todavía no existen en prod) — degrada en silencio, no console.error.
+      if(error){ console.warn('control-bl:roleos', error.message); return; }
+      (data || []).forEach(r => { if(r.roleo_at) _cblRoleoMap.set(String(r.order_number), r); });
+    } catch(e){ console.warn('control-bl:roleos', e); }
+  }
+
+  async function cblFetchVesselEtds(){
+    _cblVesselEtd = new Map();
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) return;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await supa
+        .from('schedules_master')
+        .select('buque,etd')
+        .eq('activo', true)
+        .gte('etd', today)
+        .order('etd', { ascending: true });
+      if(error){ console.warn('control-bl:vessel-etd', error.message); return; }
+      (data || []).forEach(r => {
+        const key = String(r.buque || '').toUpperCase().trim();
+        if(key && !_cblVesselEtd.has(key)) _cblVesselEtd.set(key, r.etd); // primera = la más próxima (ya viene ASC)
+      });
+    } catch(e){ console.warn('control-bl:vessel-etd', e); }
+  }
+
+  async function cblFetchSatelites(){
+    await Promise.allSettled([cblFetchArchivadas(), cblFetchRoleos(), cblFetchVesselEtds()]);
+  }
+
+  // "DD/MM" desde un date-only "YYYY-MM-DD" — regex pura, sin Date() (evita el gotcha
+  // TZ de parsear date-only como UTC medianoche y mostrar el día anterior en AR).
+  function cblFmtEtd(iso){
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    return m ? `${m[3]}/${m[2]}` : '';
   }
   // sellado_by es el email del JWT (no hay nombre completo persistido) → parte local del email
   function cblShortWho(email){
@@ -145,6 +239,55 @@
     return b;
   }
 
+  // ── TANDA D — predicados nuevos (puros, parámetros explícitos — sliceables por
+  // test/plancompleto_d_cbl_test.mjs con el mismo patrón que cblEsHuerfano) ──
+
+  // "Sin revisar" (item 8): sin sello vigente. Aplica a OK Y REVISAR por igual —
+  // decisión de John: OK = controlado técnico, el sello registra el visto humano
+  // aparte. Missing rows (sin control) no aplican — no hay nada que revisar.
+  function cblEsSinRevisar(row){
+    if(!row || row._missing) return false;
+    return !cblSelloDe(row);
+  }
+
+  // "Cerrada" (item 13 — auto-archivo): la orden tiene un envío REAL de
+  // documentación (mailing_orders.status='ENVIADO' && sent_test_mode=false).
+  // archivedSet lo arma cblFetchArchivadas() — Set vacío (nunca oculta de más) si
+  // el fetch falla o no hay sesión (401 anon/headless).
+  function cblEsCerrada(row, archivedSet){
+    if(!row || row._missing || !archivedSet) return false;
+    return archivedSet.has(String(row.order_number));
+  }
+
+  // "Roleada" (item 14 — roleo por exclusión): mailing_orders.roleo_at not null Y
+  // sin control POSTERIOR al roleo. Cuando llega el BL nuevo y se controla, la fecha
+  // del control supera a roleo_at y la condición se apaga SOLA (sin flag manual que
+  // alguien tenga que acordarse de bajar). roleoMap: order_number -> {roleo_at,
+  // roleo_to_vessel} (cblFetchRoleos(); Map vacío si la migración TANDA B no está
+  // aplicada o el fetch falla).
+  function cblEsRoleada(row, roleoMap){
+    if(!row || !roleoMap) return false;
+    const info = roleoMap.get(String(row.order_number));
+    if(!info || !info.roleo_at) return false;
+    const roleoT = Date.parse(info.roleo_at);
+    if(!Number.isFinite(roleoT)) return false;
+    if(row._missing) return true;
+    const ctrlT = Date.parse(row.created_at || '');
+    if(!Number.isFinite(ctrlT)) return true;
+    return ctrlT <= roleoT;
+  }
+
+  // Chip global del design system (badge--warning), mismo patrón que cblHuerfanoChip
+  // (NO usa clases de la isla #cbl-styles — NO-TOUCH).
+  function cblRoleadaChip(row, roleoMap){
+    const info = roleoMap.get(String(row.order_number));
+    const toVessel = (info && info.roleo_to_vessel) || 'a confirmar';
+    const b = el('span', 'badge badge--warning');
+    b.textContent = '⟳ Roleada → ' + toVessel;
+    b.title = 'La orden fue roleada a otro buque — pendiente de que llegue el BL nuevo y se reprocese.';
+    return b;
+  }
+
   function cblBadge(row){
     if(cblSelloDe(row)){
       const b = el('span', 'cbl-badge seal');
@@ -192,8 +335,16 @@
     if(!quiet && master) master.innerHTML = '';
     const note = $('cbl-master-note'); if(!quiet && note) note.textContent = '';
     // Entrar a la solapa resetea la búsqueda (no los filtros) y recarga el master de 7 días
-    if(!quiet){ _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null; }
-    const q = $('cbl-q'); if(!quiet && q) q.value = '';
+    if(!quiet){
+      _cblSearched = null; _cblIsLote = false; _cblSearchData = []; _cblSel = null;
+      // TANDA D: entrar a la solapa también vuelve del modo histórico al master — no
+      // queremos dejar a alguien "atrapado" en histórico al volver de otro tab.
+      if(_cblMode === 'historico'){
+        _cblMode = 'master'; _cblHistData = []; _cblHistSel = null;
+        const hb = $('cbl-hist-btn'); if(hb) hb.textContent = 'Histórico';
+      }
+    }
+    const q = $('cbl-q'); if(!quiet && q){ q.value = ''; q.placeholder = 'Pegá órdenes (una o varias) · o booking / BL / buque…'; }
     try {
       if(!supa){ if(!quiet) setDetail(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
       if(!quiet) setDetail(stateLoading());
@@ -211,10 +362,10 @@
         return;
       }
       _cblData = data || [];
-      await cblFetchSellos(); // sello vigente por (order_number, bl_file_id) — antes de renderizar badges
+      await Promise.all([cblFetchSellos(), cblFetchSatelites()]); // sellos + satélites (archivo/roleo/ETD) antes de renderizar
       if(!_cblData.length){
         if(!quiet){
-          cblRenderLote(); cblRenderSummary();
+          cblRenderLote(); cblRenderSummary(); cblRenderVesselOptions();
           setDetail(stateMsg('#i-search', 'Sin controles en los últimos 7 días', 'Usá el buscador para traer controles más viejos, o esperá a que el workflow registre uno nuevo.'));
         }
         return;
@@ -277,6 +428,11 @@
       chip.style.marginTop = '6px'; // inline a propósito: la isla CSS es NO-TOUCH
       card.appendChild(chip);
     }
+    if(cblEsRoleada(row, _cblRoleoMap)){
+      const rchip = cblRoleadaChip(row, _cblRoleoMap);
+      rchip.style.marginTop = '6px'; // inline a propósito: la isla CSS es NO-TOUCH
+      card.appendChild(rchip);
+    }
     card.onclick = () => cblSelect(row.order_number);
     return card;
   }
@@ -289,7 +445,7 @@
     if(!rows.length){
       const empty = el('div', 'cbl-ctrl');
       empty.style.cursor = 'default';
-      empty.appendChild(el('div', 'cbl-ctrl-vessel', (_cblFilters.size || _cblSearched) ? 'Sin resultados con este filtro o búsqueda.' : 'Sin controles.'));
+      empty.appendChild(el('div', 'cbl-ctrl-vessel', (_cblFilters.size || _cblSearched || _cblVesselFilter) ? 'Sin resultados con este filtro o búsqueda.' : 'Sin controles.'));
       master.appendChild(empty);
       return;
     }
@@ -365,14 +521,18 @@
     const right = el('div', 'cbl-exp-status');
     right.appendChild(cblBadge(row));
     if(sello){
-      // Sellado: sello humano en vez del tally crudo — quién, cuándo, y qué decía el
-      // control al momento de sellar (contexto, no el estado vigente).
+      // Sellado: sello humano en vez del tally crudo — quién, cuándo, motivo (O1) y
+      // qué decía el control al momento de sellar (contexto, no el estado vigente).
       const meta = el('div', 'cbl-sealed-meta');
       meta.appendChild(el('span', 'who', cblShortWho(sello.sellado_by)));
       meta.appendChild(document.createTextNode(' · ' + cblFmtCorrida(sello.sellado_at)));
       meta.appendChild(document.createElement('br'));
       const rawTxt = st === 'rev' ? ('el control decía REVISAR · ' + (row.revisar_count != null ? row.revisar_count : 0)) : ('el control decía ' + (row.overall_result ? String(row.overall_result) : '—'));
       meta.appendChild(el('span', 'raw', rawTxt));
+      if(sello.motivo){
+        meta.appendChild(document.createElement('br'));
+        meta.appendChild(el('span', 'raw', '"' + sello.motivo + '"'));
+      }
       right.appendChild(meta);
     } else {
       const tally = el('div', 'cbl-exp-tally');
@@ -381,9 +541,10 @@
       tally.appendChild(el('b', 'rev', String(row.revisar_count != null ? row.revisar_count : 0)));
       tally.appendChild(document.createTextNode(' a revisar'));
       right.appendChild(tally);
-      if(st === 'rev' && row.bl_file_id){
-        // Solo aparece cuando el control automático dio REVISAR, todavía no hay sello,
-        // Y hay bl_file_id (identidad de documento — sin él la Regla X no tiene con qué
+      // TANDA D (decisión de John): también sellable en OK — OK = controlado técnico,
+      // el sello registra el visto humano por separado. Antes solo aparecía en REVISAR.
+      if((st === 'rev' || st === 'ok') && row.bl_file_id){
+        // hay bl_file_id (identidad de documento — sin él la Regla X no tiene con qué
         // keyear la vigencia; el server lo exige NOT NULL igual, esto evita el 400 seguro).
         const sealBtn = el('button', 'cbl-seal-btn');
         sealBtn.type = 'button';
@@ -423,6 +584,17 @@
         'Sin notificar' + when + ': este control corrió y asentó, pero el mail de control nunca salió. ' +
         'Reprocesá el BL draft para regenerarlo; si vuelve a quedar huérfano, es un problema del sistema (avisar a John).'));
       detail.appendChild(orphan);
+    }
+
+    // TANDA D item 14 — banner de orden roleada (misma clase cbl-issue-row, cero CSS nuevo).
+    if(cblEsRoleada(row, _cblRoleoMap)){
+      const info = _cblRoleoMap.get(String(row.order_number));
+      const toVessel = (info && info.roleo_to_vessel) || 'a confirmar';
+      const roleBanner = el('div', 'cbl-issue-row');
+      roleBanner.appendChild(svgUse('#i-alert'));
+      roleBanner.appendChild(el('span', null,
+        'Orden roleada → ' + toVessel + ': pendiente de BL nuevo — descargá el BL del nuevo buque a BL DRAFT y reprocesá.'));
+      detail.appendChild(roleBanner);
     }
 
     // Slot del aviso "control_cambio" (Regla X): vacío salvo que un intento de sellar
@@ -491,7 +663,8 @@
   // seleccionado. Camino simple para 'sellada'/'anulada': no hace falta releer bl_controls.
   async function cblRefreshSellos(){
     await cblFetchSellos();
-    cblAfterDataChange();
+    if(_cblMode === 'historico'){ cblRenderHistList(); cblRenderHistDetail(); }
+    else cblAfterDataChange();
   }
 
   // Re-fetch de LOS CONTROLES por el loader activo (búsqueda si hay una en curso, si no
@@ -519,9 +692,15 @@
 
   // Click "Marcar como revisado" → motivo obligatorio (ssbConfirm reason) → POST → maneja status.
   async function cblStartSellar(row){
+    const st = cblStatusOf(row);
+    // TANDA D: copy OK-aware — OK ya no es "dar por bueno un REVISAR", es registrar
+    // el visto humano sobre un control que técnicamente ya está bien (decisión de John).
+    const body = st === 'ok'
+      ? 'Vas a registrar el visto humano sobre un control que dio OK — el control técnico ya está bien, esto certifica que una persona lo revisó. Quedará registrado con tu nombre. El motivo es obligatorio.'
+      : 'Estás dando por bueno un control que dio REVISAR — quedará registrado con tu nombre. El motivo es obligatorio.';
     const r = await ssbConfirm({
       title: 'Marcar control como revisado',
-      body: 'Estás dando por bueno un control que dio REVISAR — quedará registrado con tu nombre. El motivo es obligatorio.',
+      body,
       reason: { label: 'Motivo', placeholder: 'ej: BL corregido y reemplazado · o: diferencia menor aceptable' },
       confirmText: 'Marcar revisado',
     });
@@ -542,12 +721,19 @@
         ssbToast('Este control ya estaba revisado.', 'info');
         break;
       case 'no_aplica':
-        ssbToast(result.detail || 'No aplica: el control ya no está en REVISAR.', 'info');
+        ssbToast(result.detail || 'No aplica: el control no está en un estado sellable.', 'info');
         break;
       case 'control_cambio':
-        ssbToast('El control cambió — llegó un BL nuevo. Refrescando…', 'warning');
-        cblShowCambioBanner(row.order_number);
-        await cblRefreshData(row.order_number);
+        if(_cblMode === 'historico'){
+          // En histórico la corrida seleccionada casi siempre NO es la vigente de la
+          // orden — la Regla X del server ya lo protegió, no hay nada que refrescar acá
+          // (refrescar significaría abandonar la corrida vieja que se estaba mirando).
+          ssbToast('Esta corrida ya no es la vigente de la orden — el sello no aplica sobre una corrida vieja (Regla X). Mirá la corrida más reciente o volvé al modo normal.', 'warning');
+        } else {
+          ssbToast('El control cambió — llegó un BL nuevo. Refrescando…', 'warning');
+          cblShowCambioBanner(row.order_number);
+          await cblRefreshData(row.order_number);
+        }
         break;
       default:
         ssbToast('Respuesta inesperada del servidor.', 'error');
@@ -658,30 +844,44 @@
       return;
     }
 
-    // Análisis → body_html on-demand (cache por order_number, sin re-fetch)
+    // Análisis → body_html on-demand. HISTÓRICO (TANDA D): cada corrida es su PROPIA
+    // fila con body_html YA TRAÍDO en el select de bl_controls crudo — nunca re-fetch a
+    // v_bl_controls_latest, que siempre da la versión MÁS NUEVA y pisaría el análisis
+    // de la corrida vieja que se está mirando. Cache por row.id en histórico, por
+    // order_number en master/búsqueda (ahí solo hay 1 versión visible por orden).
     const orderNumber = row.order_number;
-    let html = _cblBodyCache[orderNumber];
+    const isHist = !!row._histRow;
+    const cacheKey = isHist ? ('hist:' + row.id) : orderNumber;
+    const stillSelected = () => isHist
+      ? (_cblMode === 'historico' && _cblHistSel === row.id)
+      : (_cblSel === orderNumber);
+    let html = _cblBodyCache[cacheKey];
     if(html === undefined){
-      v.innerHTML = '';
-      v.appendChild(stateLoading('Cargando análisis…'));
-      const supa = window.__ssb && window.__ssb.supa;
-      if(!supa){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
-      const { data, error } = await supa
-        .from('v_bl_controls_latest')
-        .select('body_html')
-        .eq('order_number', orderNumber)
-        .limit(1)
-        .maybeSingle();
-      if(error){
-        console.error('control-bl:body_html', error);
-        if(_cblActiveDoc === 'analisis' && _cblSel === orderNumber){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
-        return;
+      if(isHist){
+        html = row.body_html || '';
+        _cblBodyCache[cacheKey] = html;
+      } else {
+        v.innerHTML = '';
+        v.appendChild(stateLoading('Cargando análisis…'));
+        const supa = window.__ssb && window.__ssb.supa;
+        if(!supa){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+        const { data, error } = await supa
+          .from('v_bl_controls_latest')
+          .select('body_html')
+          .eq('order_number', orderNumber)
+          .limit(1)
+          .maybeSingle();
+        if(error){
+          console.error('control-bl:body_html', error);
+          if(_cblActiveDoc === 'analisis' && stillSelected()){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
+          return;
+        }
+        html = (data && data.body_html) || '';
+        _cblBodyCache[cacheKey] = html;
       }
-      html = (data && data.body_html) || '';
-      _cblBodyCache[orderNumber] = html;
     }
     // El usuario pudo cambiar de tab/control mientras resolvía el fetch
-    if(_cblActiveDoc !== 'analisis' || _cblSel !== orderNumber) return;
+    if(_cblActiveDoc !== 'analisis' || !stillSelected()) return;
 
     v.innerHTML = '';
     if(!html){ v.appendChild(stateMsg('#i-file-text', 'Sin análisis', 'Este control no tiene el cuerpo del análisis guardado.')); return; }
@@ -708,7 +908,10 @@
       const doc = tab.getAttribute('data-cbl-doc');
       if(doc === _cblActiveDoc) return;
       _cblActiveDoc = doc;
-      const row = cblUniverse().find(r => r.order_number === _cblSel);
+      // TANDA D: en histórico el eje es la CORRIDA (_cblHistSel por id), no la orden.
+      const row = _cblMode === 'historico'
+        ? _cblHistData.find(r => r.id === _cblHistSel)
+        : cblUniverse().find(r => r.order_number === _cblSel);
       cblRenderDocTabs(row);
       if(row) cblRenderViewer(row);
     });
@@ -751,16 +954,33 @@
     return out;
   }
 
+  // TANDA D item 13 — universo con auto-archivo aplicado. Solo actúa en el master
+  // DEFAULT (sin búsqueda activa) y con el toggle "mostrar archivadas" apagado — en
+  // búsqueda/lote nunca oculta nada (el usuario pidió ver esa orden puntual).
+  // Degradado: _cblArchivedSet vacío (fetch falló) → no oculta nada.
+  function cblVisibleUniverse(){
+    const universe = cblUniverse();
+    if(_cblSearched || _cblFilters.has('archivadas')) return universe;
+    return universe.filter(r => !cblEsCerrada(r, _cblArchivedSet));
+  }
+
   // clave de filtro: 'miss' (sin control) | 'ok' | 'rev' (rev + neutral, nunca OK)
   function cblFilterKey(row){
     if(row._missing) return 'miss';
     return cblStatusOf(row) === 'ok' ? 'ok' : 'rev';
   }
 
-  // filas visibles = universo con los filtros activos aplicados
+  // filas visibles = universo (con auto-archivo) con los filtros activos aplicados.
+  // 'ok'/'rev'/'miss' son mutuamente excluyentes (cblFilterKey, comportamiento
+  // original); 'sinrev'/'huerfanos' son ejes ORTOGONALES (un OK puede estar "sin
+  // revisar" a la vez) → AND aparte, nunca mezclados en la misma membresía de Set.
   function cblRows(){
-    let list = cblUniverse();
-    if(_cblFilters.size) list = list.filter(r => _cblFilters.has(cblFilterKey(r)));
+    let list = cblVisibleUniverse();
+    const statusOn = [..._cblFilters].filter(f => f === 'ok' || f === 'rev' || f === 'miss');
+    if(statusOn.length) list = list.filter(r => statusOn.includes(cblFilterKey(r)));
+    if(_cblFilters.has('sinrev')) list = list.filter(r => cblEsSinRevisar(r));
+    if(_cblFilters.has('huerfanos')) list = list.filter(r => cblEsHuerfano(r));
+    if(_cblVesselFilter) list = list.filter(r => (r.vessel || '') === _cblVesselFilter);
     return list;
   }
 
@@ -788,28 +1008,59 @@
     lb.appendChild(clr);
   }
 
-  // resumen "N órdenes · X OK · Y a revisar · Z sin control" (Z solo en modo búsqueda)
+  // resumen "N órdenes · X OK · Y a revisar · Z sin control [· W archivadas ocultas]"
   function cblRenderSummary(){
     const sumEl = $('cbl-summary');
     if(!sumEl) return;
-    const universe = cblUniverse();
+    const totalRaw = cblUniverse();
+    const universe = cblVisibleUniverse();
+    const ocultas = totalRaw.length - universe.length;
     sumEl.innerHTML = '';
-    if(!universe.length) return;
-    let ok = 0, rev = 0, miss = 0;
-    universe.forEach(r => { const k = cblFilterKey(r); if(k === 'ok') ok++; else if(k === 'miss') miss++; else rev++; });
-    const n = universe.length;
-    sumEl.appendChild(el('b', null, String(n)));
-    sumEl.appendChild(document.createTextNode(` ${n === 1 ? 'orden' : 'órdenes'} · `));
-    sumEl.appendChild(el('span', 'cbl-s-ok', ok + ' OK'));
-    sumEl.appendChild(document.createTextNode(' · '));
-    sumEl.appendChild(el('span', 'cbl-s-rev', rev + ' a revisar'));
-    if(_cblSearched){
+    if(!universe.length && !ocultas) return;
+    if(universe.length){
+      let ok = 0, rev = 0, miss = 0;
+      universe.forEach(r => { const k = cblFilterKey(r); if(k === 'ok') ok++; else if(k === 'miss') miss++; else rev++; });
+      const n = universe.length;
+      sumEl.appendChild(el('b', null, String(n)));
+      sumEl.appendChild(document.createTextNode(` ${n === 1 ? 'orden' : 'órdenes'} · `));
+      sumEl.appendChild(el('span', 'cbl-s-ok', ok + ' OK'));
       sumEl.appendChild(document.createTextNode(' · '));
-      sumEl.appendChild(el('span', 'cbl-s-miss', miss + ' sin control'));
+      sumEl.appendChild(el('span', 'cbl-s-rev', rev + ' a revisar'));
+      if(_cblSearched){
+        sumEl.appendChild(document.createTextNode(' · '));
+        sumEl.appendChild(el('span', 'cbl-s-miss', miss + ' sin control'));
+      }
+    }
+    if(ocultas > 0){
+      if(universe.length) sumEl.appendChild(document.createTextNode(' · '));
+      sumEl.appendChild(el('span', 'cbl-s-miss', ocultas + (ocultas === 1 ? ' archivada oculta' : ' archivadas ocultas')));
     }
   }
 
-  // re-render tras cambiar datos (búsqueda/filtros): lote + summary + lista + selección + detalle
+  // Opciones del select Buque (item 8) — vessels únicos del universo cargado
+  // (cblUniverse(), NO cblRows(): si filtrás por buque no querés que el propio select
+  // se vacíe). Enriquece el label con la próxima ETD (_cblVesselEtd) si hay match.
+  function cblRenderVesselOptions(){
+    const sel = $('cbl-vessel-filter');
+    if(!sel) return;
+    const vessels = [...new Set(cblUniverse().filter(r => !r._missing && r.vessel).map(r => r.vessel))].sort();
+    const prev = sel.value;
+    sel.innerHTML = '';
+    const optAll = document.createElement('option'); optAll.value = ''; optAll.textContent = 'Todos los buques';
+    sel.appendChild(optAll);
+    vessels.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      const etd = _cblVesselEtd.get(String(v).toUpperCase().trim());
+      const etdTxt = cblFmtEtd(etd);
+      opt.textContent = etdTxt ? `${v} · ETD ${etdTxt}` : v;
+      sel.appendChild(opt);
+    });
+    if(vessels.includes(prev)) sel.value = prev;
+    else { sel.value = ''; _cblVesselFilter = ''; }
+  }
+
+  // re-render tras cambiar datos (búsqueda/filtros): lote + summary + buque + lista + selección + detalle
   function cblAfterDataChange(){
     const rows = cblRows();
     if(!rows.length){ _cblSel = null; }
@@ -819,6 +1070,7 @@
     }
     cblRenderLote();
     cblRenderSummary();
+    cblRenderVesselOptions();
     cblRenderList();
     const note = $('cbl-master-note');
     if(note) note.textContent = _cblSearched ? '' : (_cblData.length ? `${_cblData.length} ${_cblData.length === 1 ? 'control' : 'controles'} · últimos 7 días` : '');
@@ -826,7 +1078,7 @@
       const sel = rows.find(r => r.order_number === _cblSel) || rows[0];
       cblRenderDetail(sel);
     } else {
-      setDetail(stateMsg('#i-search', 'Nada para mostrar', 'Cambiá el filtro o la búsqueda.'));
+      setDetail(stateMsg('#i-search', 'Nada para mostrar', 'Cambiá el filtro, la búsqueda, o el buque.'));
     }
   }
 
@@ -871,25 +1123,174 @@
       _cblSearched = _cblSearchData.map(r => r.order_number);
       _cblIsLote = false;
     }
-    await cblFetchSellos(); // sello vigente por (order_number, bl_file_id) — antes de renderizar badges
+    await Promise.all([cblFetchSellos(), cblFetchSatelites()]); // sellos + satélites (archivo/roleo/ETD) antes de renderizar
     _cblSel = null; // recalcula selección sobre el nuevo resultado
     cblAfterDataChange();
+  }
+
+  // ════════════ Histórico (TANDA D — item 7 + O1) ════════════
+  // Sub-modo del buscador: consulta bl_controls CRUDA (no v_bl_controls_latest) por
+  // orden exacta o lote → TODAS las corridas de esas órdenes, sin límite ni ventana
+  // de fecha. Reusa cblRenderDetail/doc-tabs/viewer (misma pinta que master/búsqueda)
+  // con selección propia por id de fila — una orden puede tener N corridas.
+  function cblHistToggle(){
+    _cblMode = (_cblMode === 'historico') ? 'master' : 'historico';
+    const btn = $('cbl-hist-btn');
+    const q = $('cbl-q');
+    if(_cblMode === 'historico'){
+      if(btn) btn.textContent = '◀ Volver';
+      if(q){ q.placeholder = 'Orden exacta (o varias) — histórico completo, sin ventana de fecha…'; q.value = ''; }
+      _cblHistData = []; _cblHistSel = null; _cblActiveDoc = 'analisis';
+      const lb = $('cbl-lotebar'); if(lb){ lb.style.display = 'none'; lb.innerHTML = ''; }
+      cblRenderHistList();
+      setDetail(stateMsg('#i-search', 'Modo histórico', 'Buscá una orden (o varias) para ver TODAS sus corridas — sin límite de fecha. Los links a Drive de documentos de más de ~1 mes pueden estar caducados; el análisis se conserva igual.'));
+    } else {
+      if(btn) btn.textContent = 'Histórico';
+      if(q){ q.placeholder = 'Pegá órdenes (una o varias) · o booking / BL / buque…'; q.value = ''; }
+      cblClearSearch(); // vuelve a pintar el master de 7 días ya cargado en memoria
+    }
+  }
+
+  async function cblHistSearch(){
+    const input = $('cbl-q');
+    const raw = (input ? input.value : '').trim();
+    if(!raw){ _cblHistData = []; _cblHistSel = null; cblRenderHistList(); setDetail(stateMsg('#i-search', 'Modo histórico', 'Buscá una orden (o varias) para ver todas sus corridas.')); return; }
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa){ ssbToast('Sin conexión a la base.', 'error'); return; }
+    const toks = cblParseOrders(raw);
+    if(!toks.length){ _cblHistData = []; _cblHistSel = null; cblRenderHistList(); return; }
+    const { data, error } = await supa
+      .from('bl_controls')
+      .select(CBL_COLS + ',id,body_html')
+      .in('order_number', toks)
+      .order('created_at', { ascending: false });
+    if(error){ console.error('control-bl:historico', error); ssbToast('No se pudo buscar el histórico: ' + (error.message || ''), 'error'); return; }
+    _cblHistData = (data || []).map(r => Object.assign({}, r, { _histRow: true }));
+    await cblFetchSellos(); // sellos frescos — cualquier corrida vieja puede tener sello activo
+    _cblHistSel = _cblHistData.length ? _cblHistData[0].id : null;
+    _cblActiveDoc = 'analisis';
+    cblRenderHistList();
+    cblRenderHistDetail();
+  }
+
+  function cblHistMakeCard(row){
+    const st = cblStatusOf(row);
+    const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
+    card.type = 'button';
+    if(row.id === _cblHistSel) card.classList.add('cbl-ctrl--sel');
+    const top = el('div', 'cbl-ctrl-top');
+    top.appendChild(el('span', 'cbl-ctrl-order', row.order_number || '—'));
+    top.appendChild(cblBadge(row));
+    card.appendChild(top);
+    if(row.carrier) card.appendChild(el('div', 'cbl-ctrl-carrier', row.carrier));
+    const vline = el('div', 'cbl-ctrl-vessel', row.vessel || '—');
+    if(row.voyage){ vline.appendChild(document.createTextNode(' ')); vline.appendChild(el('span', 'cbl-ctrl-route', row.voyage)); }
+    card.appendChild(vline);
+    const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
+    card.appendChild(el('div', 'cbl-ctrl-route', route));
+    card.onclick = () => { _cblHistSel = row.id; _cblActiveDoc = 'analisis'; cblRenderHistList(); cblRenderHistDetail(); };
+    return card;
+  }
+
+  function cblRenderHistList(){
+    const master = $('cbl-master');
+    if(!master) return;
+    master.innerHTML = '';
+    if(!_cblHistData.length){
+      const empty = el('div', 'cbl-ctrl');
+      empty.style.cursor = 'default';
+      empty.appendChild(el('div', 'cbl-ctrl-vessel', 'Buscá una orden para ver su histórico completo.'));
+      master.appendChild(empty);
+      const note = $('cbl-master-note'); if(note) note.textContent = '';
+      return;
+    }
+    _cblHistData.forEach(row => master.appendChild(cblHistMakeCard(row)));
+    const note = $('cbl-master-note');
+    if(note) note.textContent = `${_cblHistData.length} ${_cblHistData.length === 1 ? 'corrida' : 'corridas'} · sin límite de fecha`;
+  }
+
+  function cblRenderHistDetail(){
+    const row = _cblHistData.find(r => r.id === _cblHistSel);
+    if(!row){ setDetail(stateMsg('#i-search', 'Nada para mostrar', 'Elegí una corrida de la lista.')); return; }
+    cblRenderDetail(row);
+    // Aviso de histórico (item 7 + O1): reusa .cbl-issue-row, cero CSS nuevo.
+    const detail = $('cbl-detail');
+    const dt = $('cbl-doctabs');
+    if(detail && dt && dt.parentNode){
+      const warn = el('div', 'cbl-issue-row');
+      warn.style.margin = '0 18px 12px';
+      warn.appendChild(svgUse('#i-alert'));
+      warn.appendChild(el('span', null, 'Corrida histórica: los documentos de Drive de más de ~1 mes pueden tener el link caducado — el análisis igual se conserva. Los doc-tabs intentan abrir el link de todas formas.'));
+      dt.parentNode.insertBefore(warn, dt);
+    }
+  }
+
+  // ════════════ Construcción de controles nuevos de la barra (TANDA D) ════════════
+  // Todo se inyecta sobre el DOM ya existente de index.html — CERO líneas nuevas ahí.
+  // Los chips nuevos reusan la clase .cbl-fchip (misma isla CSS, NO-TOUCH) y quedan
+  // cubiertos por la MISMA delegación de click que ya maneja ok/rev/miss (más abajo).
+  function cblBuildFilterExtras(){
+    const fbar = document.querySelector('#panel-control-bl .cbl-filterbar');
+    if(!fbar || fbar.querySelector('[data-cbl-f="sinrev"]')) return; // ya construido
+    const summary = $('cbl-summary');
+    const anchor = summary && fbar.contains(summary) ? summary : null;
+
+    const mkChip = (key, label) => {
+      const chip = el('button', 'cbl-fchip');
+      chip.type = 'button';
+      chip.setAttribute('data-cbl-f', key);
+      chip.appendChild(el('span', 'cbl-dot'));
+      chip.appendChild(document.createTextNode(label));
+      return chip;
+    };
+    fbar.insertBefore(mkChip('sinrev', 'Sin revisar'), anchor);
+    fbar.insertBefore(mkChip('huerfanos', 'Huérfanos'), anchor);
+    fbar.insertBefore(mkChip('archivadas', 'Mostrar archivadas'), anchor);
+
+    // Select Buque — no es un chip de la isla (elemento nuevo), estilos por defecto
+    // del navegador + inline mínimo de espaciado (sin colores: legible en ambos temas).
+    const vesselSel = document.createElement('select');
+    vesselSel.id = 'cbl-vessel-filter';
+    vesselSel.style.cssText = 'font-family:inherit;font-size:12.5px;padding:4px 6px;border-radius:8px';
+    vesselSel.title = 'Filtrar por buque';
+    const optAll0 = document.createElement('option'); optAll0.value = ''; optAll0.textContent = 'Todos los buques';
+    vesselSel.appendChild(optAll0);
+    vesselSel.addEventListener('change', () => {
+      _cblVesselFilter = vesselSel.value;
+      if(_cblMode !== 'historico') cblAfterDataChange();
+    });
+    fbar.insertBefore(vesselSel, anchor);
+  }
+
+  function cblBuildHistToggle(){
+    const search = document.querySelector('#panel-control-bl .cbl-search');
+    if(!search || $('cbl-hist-btn')) return; // ya construido
+    const btn = el('button', 'cbl-search-btn');
+    btn.type = 'button';
+    btn.id = 'cbl-hist-btn';
+    btn.style.marginLeft = '8px';
+    btn.style.borderRadius = '11px'; // standalone: el original solo redondea el lado pegado al input
+    btn.textContent = 'Histórico';
+    btn.title = 'Ver TODAS las corridas de una orden (histórico completo, sin ventana de fecha)';
+    btn.onclick = cblHistToggle;
+    search.appendChild(btn);
   }
 
   // ── Listeners de búsqueda + filtros (elementos del skeleton del commit 2) ──
   (function(){
     const qInput = $('cbl-q');
     const sBtn = $('cbl-search-btn');
-    if(sBtn) sBtn.addEventListener('click', cblSearch);
+    const dispatchSearch = () => { _cblMode === 'historico' ? cblHistSearch() : cblSearch(); };
+    if(sBtn) sBtn.addEventListener('click', dispatchSearch);
     if(qInput){
-      qInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); cblSearch(); } });
+      qInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); dispatchSearch(); } });
       qInput.addEventListener('paste', e => {
         const cd = e.clipboardData || window.clipboardData;
         const txt = (cd && cd.getData ? cd.getData('text') : '') || '';
         if(/[\n\r\t,;]/.test(txt)){
           e.preventDefault();
           qInput.value = cblParseOrders(txt).join(' ');
-          setTimeout(cblSearch, 0);
+          setTimeout(dispatchSearch, 0);
         }
       });
     }
@@ -901,7 +1302,15 @@
         const f = chip.getAttribute('data-cbl-f');
         if(_cblFilters.has(f)){ _cblFilters.delete(f); chip.classList.remove('cbl-fchip--on'); }
         else { _cblFilters.add(f); chip.classList.add('cbl-fchip--on'); }
-        cblAfterDataChange();
+        // TANDA D: en histórico este toolbar no pinta nada (otro pipeline de render) —
+        // igual se guarda el estado del chip para cuando se vuelva al modo normal.
+        if(_cblMode !== 'historico') cblAfterDataChange();
       });
     }
+  })();
+
+  // ── TANDA D: construcción de los controles nuevos (una sola vez, al cargar el módulo) ──
+  (function(){
+    cblBuildFilterExtras();
+    cblBuildHistToggle();
   })();

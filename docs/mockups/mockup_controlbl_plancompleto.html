@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Control BL, plan completo (TANDA D)</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface-2:#161e2b; --bd:rgba(255,255,255,.08); --bd-strong:rgba(255,255,255,.16);
+    --ink:#e2e8f0; --ink-soft:#94a3b8; --ink-faint:#64748b;
+    --teal:#2dd4bf; --teal-bg:rgba(45,212,191,.12); --teal-bd:rgba(45,212,191,.35);
+    --amber:#f59e0b; --amber-bg:rgba(245,158,11,.12); --amber-bd:rgba(245,158,11,.35);
+    --green:#4ade80; --green-bg:rgba(74,222,128,.12); --green-bd:rgba(74,222,128,.35);
+    --orange:#fb923c; --orange-bg:rgba(251,146,60,.12); --orange-bd:rgba(251,146,60,.35);
+    --red:#f87171; --red-bg:rgba(248,113,113,.12); --red-bd:rgba(248,113,113,.35);
+    --purple:#a78bfa; --purple-bg:rgba(167,139,250,.12); --purple-bd:rgba(167,139,250,.35);
+    --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12); --blue-bd:rgba(96,165,250,.35);
+    --font:system-ui,Segoe UI,Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.28);
+  }
+  body.light{
+    --bg:#f1f5f9; --surface:#ffffff; --surface-2:#f8fafc; --bd:#e2e8f0; --bd-strong:#cbd5e1;
+    --ink:#0f172a; --ink-soft:#64748b; --ink-faint:#94a3b8;
+    --teal:#0f766e; --teal-bg:#e6f6f3; --teal-bd:#b7e4dc;
+    --amber:#b45309; --amber-bg:#fef3c7; --amber-bd:#fcd34d;
+    --green:#15803d; --green-bg:#eaf3de; --green-bd:#cfe3bd;
+    --orange:#c2410c; --orange-bg:#fbeedb; --orange-bd:#ecc79a;
+    --red:#b91c1c; --red-bg:#fde2e2; --red-bd:#f3b4b4;
+    --purple:#7c3aed; --purple-bg:#f1e9fe; --purple-bd:#ddc9fb;
+    --blue:#1f5fae; --blue-bg:#eaf0f8; --blue-bd:#c7d9ef;
+    --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 20px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.5;padding:28px 28px 80px;transition:background .2s,color .2s}
+  .page{max-width:1180px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 6px}
+  h2{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin:34px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd);font-size:11px;font-weight:800}
+  h3{font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--ink-soft);max-width:840px;line-height:1.6}
+  .note b{color:var(--ink)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:var(--ink-faint);max-width:840px;line-height:1.6;margin:2px 0 14px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:50;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--bd)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-decoration:none;background:var(--surface);border:1px solid var(--bd);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal-bd)}
+
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .muted{color:var(--ink-soft);font-size:12px}
+  .faint{color:var(--ink-faint);font-size:11.5px}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .badge--amber{color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd)}
+  .badge--teal{color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-bd)}
+  .badge--green{color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd)}
+  .badge--orange{color:var(--orange);background:var(--orange-bg);border:1px solid var(--orange-bd)}
+  .badge--red{color:var(--red);background:var(--red-bg);border:1px solid var(--red-bd)}
+  .badge--purple{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd)}
+  .badge--neutral{color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--bd-strong)}
+  .badge--nuevo{color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;font-size:12.5px;line-height:1.55}
+  .banner.amber{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner.teal{background:var(--teal-bg);border:1px solid var(--teal-bd);color:var(--teal)}
+  .banner .ic{flex:0 0 auto;margin-top:1px;font-size:14px}
+  .banner .txt{color:var(--ink)}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink)}
+  .btn.pri{background:var(--teal);border-color:var(--teal);color:#04211c}
+  body.light .btn.pri{color:#fff}
+  .btn.mini{padding:4px 10px;font-size:11px;border-radius:7px}
+
+  /* ============ SECCIÓN 1 — barra de filtros (aprox. de .cbl-filterbar/.cbl-fchip) ============ */
+  .fbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+  .flabel{font-size:12px;color:var(--ink-faint);margin-right:2px}
+  .fchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:20px;padding:5px 12px;cursor:pointer;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink-soft)}
+  .fchip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.5}
+  .fchip.on{background:var(--teal-bg);border-color:var(--teal-bd);color:var(--teal)}
+  .fchip.on .dot{opacity:1}
+  .fchip.on.warn{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+  .fsel{font-family:inherit;font-size:12.5px;padding:5px 8px;border-radius:8px;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink)}
+  .fsum{margin-left:auto;font-size:12.5px;color:var(--ink-soft)}
+  .fsum b{color:var(--ink)}
+  .tag-new{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:1px}
+
+  /* ============ SECCIÓN 2 — card master (aprox. de .cbl-ctrl) ============ */
+  .ctrl{width:258px;background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:13px 14px 13px 18px;position:relative;font-size:13px}
+  .ctrl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
+  .ctrl.ok::before{background:var(--green)}
+  .ctrl.rev::before{background:var(--orange)}
+  .ctrl .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .ctrl .order{font-family:var(--mono);font-weight:600;font-size:14.5px}
+  .cbadge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .cbadge.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+  .cbadge.rev{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-bd)}
+  .ctrl .vessel{font-size:12.5px;font-weight:500;margin-top:1px}
+  .ctrl .route{font-size:11.5px;color:var(--ink-faint);font-family:var(--mono);margin-top:1px}
+  .chiprow{display:flex;flex-direction:column;gap:5px;margin-top:8px;align-items:flex-start}
+  .chip-mini{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 10px}
+  .chip-mini.amber{color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd)}
+
+  /* ============ SECCIÓN 3 — histórico ============ */
+  .hist-layout{display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start}
+  .hist-search{display:flex;align-items:stretch;margin-bottom:12px;max-width:520px}
+  .hist-search input{flex:1;min-width:0;border:1px solid var(--bd-strong);border-right:none;border-radius:11px 0 0 11px;padding:9px 12px;font-size:13px;background:var(--surface);color:var(--ink)}
+  .hist-search button{border-radius:0 11px 11px 0;border:1px solid var(--teal);background:var(--teal);color:#04211c;font-weight:700;font-size:13px;padding:0 16px;cursor:pointer}
+  body.light .hist-search button{color:#fff}
+  .timeline{display:flex;flex-direction:column;gap:0}
+  .trow{display:flex;gap:12px;align-items:flex-start;padding:11px 4px;border-left:2px solid var(--bd-strong);padding-left:16px;position:relative;cursor:pointer}
+  .trow::before{content:"";position:absolute;left:-6px;top:16px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--bd-strong)}
+  .trow.ok::before{border-color:var(--green)}
+  .trow.rev::before{border-color:var(--orange)}
+  .trow.sel{background:var(--surface-2);border-radius:0 10px 10px 0}
+  .trow .fecha{font-family:var(--mono);font-size:12px;color:var(--ink-faint);min-width:88px}
+  .trow .mid{flex:1;font-size:12.5px}
+  .trow .mid b{font-weight:700}
+  .hist-detail{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px}
+  .kv-line{display:flex;gap:8px;font-size:12.5px;margin:3px 0;color:var(--ink-soft)}
+  .kv-line b{color:var(--ink)}
+  .doctabs-mini{display:flex;gap:4px;margin:12px 0 0;flex-wrap:wrap}
+  .doctabs-mini span{font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:8px 8px 0 0;background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--bd)}
+  .doctabs-mini span.active{background:var(--surface);color:var(--teal);border-bottom-color:var(--surface)}
+
+  /* ============ SECCIÓN 4 — sello sobre OK ============ */
+  .exp-mini{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;max-width:520px}
+  .exp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+  .exp-order{font-family:var(--mono);font-size:20px;font-weight:700}
+  .exp-sub{font-size:12.5px;color:var(--ink-soft);margin-top:5px}
+  .tally{font-size:12px;color:var(--ink-soft);margin-top:7px;font-family:var(--mono)}
+  .tally b.ok{color:var(--green)}
+  .tally b.rev{color:var(--orange)}
+  .seal-btn{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-bd);border-radius:9px;padding:7px 13px;margin-top:10px;cursor:pointer}
+
+  /* ============ SECCIÓN 5 — comparador antes/después (render email-safe) ============ */
+  .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.cmp-grid{grid-template-columns:1fr}}
+  .cmp-col h3{margin-bottom:8px}
+  .cmp-col h3.antes{color:var(--red)}
+  .cmp-col h3.despues{color:var(--green)}
+  .maildoc{background:#FFFFFF;font-family:Arial,Helvetica,sans-serif;color:#1C1B19;border:1px solid var(--bd);border-radius:10px;padding:16px;font-size:13px}
+  .maildoc table{width:100%;border-collapse:collapse}
+  .maildoc td{padding:4px 6px;font-size:12.5px;vertical-align:top}
+  .m-row-ok{background:#EAF3DE;color:#2C4A16}
+  .m-row-warn{background:#FEF3C7;color:#7A4A05}
+  .m-row-warn2{background:#FBEEDB;color:#8A4A0F}
+  .m-note{font-size:11px;color:#6b7280;font-style:italic;padding:2px 6px 6px}
+  .m-strike{text-decoration:line-through;color:#9c9c96}
+  .arrow-mid{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink-faint);padding:0 4px}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="page">
+  <h1>Control BL — plan completo (TANDA D, 2026-07-15)</h1>
+  <p class="note">5 piezas nuevas sobre el módulo Control BL ya en prod: filtros extendidos del master, badge de orden roleada, modo Histórico (todas las corridas de una orden, sin ventana de fecha), sello humano habilitado también sobre OK, y — para tu aprobación — el ANTES/DESPUÉS del comparador del workflow (ya implementado en el flujo n8n de otro agente en paralelo, se muestra acá solo para que lo veas en contexto de la UI). <b>Todo lo nuevo reusa clases globales (<code>badge</code>/<code>badge--warning</code>) y la clase existente <code>.cbl-fchip</code> de la isla <code>#cbl-styles</code> — cero CSS nuevo en <code>index.html</code></b>, este mockup aproxima los estilos reales con su propia hoja.</p>
+
+  <div class="subnav">
+    <a href="#s1">① Filtros del master</a>
+    <a href="#s2">② Badge roleada</a>
+    <a href="#s3">③ Modo Histórico</a>
+    <a href="#s4">④ Sello sobre OK</a>
+    <a href="#s5">⑤ Comparador antes/después</a>
+    <a href="#notas">Notas para John</a>
+  </div>
+
+  <!-- ============ SECCIÓN 1 ============ -->
+  <h2 id="s1"><span class="num">1</span>Barra de filtros del master — chips nuevos + select Buque + auto-archivo</h2>
+  <p class="intent">Hoy la barra tiene 3 chips (OK / REVISAR / No controladas). Se agregan 2 chips más (Sin revisar, Huérfanos), un chip-toggle para desarchivar, y un select de buque con la próxima salida si hay match en el schedule.</p>
+
+  <div class="fbar">
+    <span class="flabel">Filtrar:</span>
+    <span class="fchip on"><span class="dot"></span>Todos</span>
+    <span class="fchip"><span class="dot"></span>OK</span>
+    <span class="fchip"><span class="dot"></span>REVISAR</span>
+    <span class="fchip warn"><span class="dot"></span>Sin revisar<span class="tag-new">nuevo</span></span>
+    <span class="fchip on warn"><span class="dot"></span>Huérfanos<span class="tag-new">nuevo</span></span>
+    <select class="fsel"><option>Todos los buques</option><option>MAERSK FREEPORT · ETD 21/07</option><option>LOG-IN RESILIENTE · ETD 24/07</option><option>AS SABINE (sin ETD futura)</option></select>
+    <span class="fchip"><span class="dot"></span>Mostrar archivadas<span class="tag-new">nuevo</span></span>
+    <span class="fsum"><b>34</b> órdenes · <span style="color:var(--green)">22 OK</span> · <span style="color:var(--orange)">9 a revisar</span> · <span style="color:var(--ink-faint)">3 archivadas ocultas</span></span>
+  </div>
+  <p class="note" style="margin-top:12px">
+    · <b>Sin revisar</b> = sin sello vigente (aplica a OK y a REVISAR — el sello es el visto humano, independiente del resultado técnico).<br>
+    · <b>Huérfanos</b> = ya existía como chip visual en la card (PLAN 1); se suma como filtro clickeable.<br>
+    · <b>Select Buque</b>: opciones = buques del universo cargado. Si el buque tiene una salida futura en <code>schedules_master</code>, el label la muestra ("· ETD 21/07"); si no hay match, solo el nombre.<br>
+    · <b>Mostrar archivadas</b> (item 13): por defecto el master OCULTA órdenes con envío real de documentación ya hecho (<code>mailing_orders.status=ENVIADO</code> con <code>sent_test_mode=false</code>) — el contador de la derecha dice cuántas quedaron ocultas. Prender el chip las vuelve a mostrar.<br>
+    · Degradado: si el fetch de <code>mailing_orders</code>/<code>schedules_master</code> falla (401 anon, RLS, sin sesión) — nunca oculta de más ni rompe el render, simplemente no hay ETD en el select ni auto-archivo.
+  </p>
+
+  <!-- ============ SECCIÓN 2 ============ -->
+  <h2 id="s2"><span class="num">2</span>Card con badge "Roleada"</h2>
+  <p class="intent">Item 14 — roleo por exclusión: la orden tiene <code>mailing_orders.roleo_at</code> cargado (acción "informar roleo" de Mailing) y el último control BL es anterior a ese roleo → sigue pendiente de que llegue el BL del buque nuevo. Cuando el control se actualiza con fecha posterior al roleo, el badge se apaga SOLO — no hay flag que alguien tenga que acordarse de bajar.</p>
+
+  <div class="wrap">
+    <div class="ctrl rev">
+      <div class="top"><span class="order">118962688</span><span class="cbadge rev">● REVISAR · 2</span></div>
+      <div class="faint" style="text-transform:uppercase;font-weight:600;font-size:11px">MAERSK</div>
+      <div class="vessel">AS SABINE 528W</div>
+      <div class="route">SANTOS · 08/07 09:14</div>
+      <div class="chiprow">
+        <span class="chip-mini amber">⟳ Roleada → MAERSK LOTA 630N</span>
+      </div>
+    </div>
+    <div class="card" style="max-width:420px">
+      <h3>Banner correspondiente en el detalle</h3>
+      <div class="banner amber"><span class="ic">⚠️</span><span class="txt">Orden roleada → MAERSK LOTA 630N: pendiente de BL nuevo — descargá el BL del nuevo buque a BL DRAFT y reprocesá.</span></div>
+      <p class="note" style="margin-top:10px">Si el roleo no trae buque de destino cargado (<code>roleo_to_vessel</code> vacío), el texto dice <b>"→ a confirmar"</b> en vez de un nombre.</p>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 3 ============ -->
+  <h2 id="s3"><span class="num">3</span>Modo HISTÓRICO — todas las corridas de una orden, sin ventana</h2>
+  <p class="intent">Item 7 + O1: hoy el buscador siempre trae el ÚLTIMO control por orden (<code>v_bl_controls_latest</code> colapsa el histórico). Un botón nuevo junto al buscador ("Histórico") cambia a un sub-modo que consulta <code>bl_controls</code> CRUDA por orden exacta/lote: aparecen TODAS las corridas, ordenadas de más reciente a más vieja, con fecha + resultado + buque + sello (si lo hay, con motivo y quién).</p>
+
+  <div class="hist-search">
+    <input type="text" value="118962688" readonly>
+    <button>◀ Volver</button>
+  </div>
+  <p class="faint" style="margin:-6px 0 12px">3 corridas · sin límite de fecha</p>
+
+  <div class="hist-layout">
+    <div class="timeline">
+      <div class="trow rev sel">
+        <span class="fecha">08/07 09:14</span>
+        <span class="mid"><b>REVISAR · 2</b><br><span class="faint">AS SABINE 528W</span></span>
+      </div>
+      <div class="trow ok">
+        <span class="fecha">02/07 14:02</span>
+        <span class="mid"><b>OK</b> <span class="badge badge--teal" style="margin-left:4px">✓ Revisado</span><br><span class="faint">AS SABINE 528W</span></span>
+      </div>
+      <div class="trow ok">
+        <span class="fecha">28/06 08:51</span>
+        <span class="mid"><b>OK</b><br><span class="faint">MAERSK LOTA 611N (buque anterior al roleo)</span></span>
+      </div>
+    </div>
+
+    <div class="hist-detail">
+      <div class="exp-top">
+        <div>
+          <div class="exp-order">118962688</div>
+          <div class="exp-sub">MAERSK · AS SABINE 528W · BL 259238740 · Booking 259238740</div>
+        </div>
+        <span class="cbadge rev">● REVISAR · 2</span>
+      </div>
+      <div class="banner amber" style="margin-top:12px"><span class="ic">⚠️</span><span class="txt">Corrida histórica: los documentos de Drive de más de ~1 mes pueden tener el link caducado — el análisis igual se conserva. Los doc-tabs intentan abrir el link de todas formas.</span></div>
+      <div class="doctabs-mini">
+        <span class="active">Análisis</span><span>BL</span><span>Planilla Aduana</span><span>Booking</span><span style="opacity:.5">Factura</span><span style="opacity:.5">Permiso (PE)</span>
+      </div>
+      <p class="note" style="margin-top:12px">El detalle es el MISMO componente que en el master/búsqueda (<code>cblRenderDetail</code> reusado tal cual) — misma pinta, mismos doc-tabs, mismo botón "Marcar como revisado" si aplica. La única diferencia es la SELECCIÓN: acá se elige por corrida (id de fila), no por orden.</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;max-width:640px">
+    <h3>Sello con motivo y quién (O1)</h3>
+    <p class="muted" style="margin:0 0 8px">Naara: <i>"para volver a revisarlo… y ver si yo escribí un comentario. Eso se puede ver."</i></p>
+    <div style="font-size:12.5px;text-align:right;color:var(--ink-soft);max-width:260px;margin-left:auto">
+      <span style="color:var(--teal);font-weight:700">naara</span> · 02/07 14:05<br>
+      <span class="faint">el control decía OK</span><br>
+      <span class="faint">"BL corregido y reemplazado por el proveedor — verificado contra la factura nueva"</span>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 4 ============ -->
+  <h2 id="s4"><span class="num">4</span>"Marcar como revisado" también sobre OK</h2>
+  <p class="intent">Decisión de John: OK = controlado técnico; el sello registra el visto humano por separado. Hoy el botón solo aparece con REVISAR — se habilita también con OK (mientras haya <code>bl_file_id</code>, igual que hoy). El strike/tally sigue mostrando los conteos crudos sin cambios — solo se agrega el botón.</p>
+
+  <div class="wrap">
+    <div class="exp-mini">
+      <div class="exp-top">
+        <div>
+          <div class="exp-order">118849241</div>
+          <div class="exp-sub">MAERSK · MAERSK FREEPORT 628N · BL 259241002 · Booking 259241002</div>
+        </div>
+        <span class="cbadge ok">● OK</span>
+      </div>
+      <div class="tally"><b class="ok">7</b> coinciden · <b class="rev">0</b> a revisar</div>
+      <button class="seal-btn">✓ Marcar como revisado</button>
+    </div>
+    <div class="card" style="max-width:420px">
+      <h3>Copy del confirm (motivo obligatorio)</h3>
+      <p class="muted">"Vas a registrar el visto humano sobre un control que dio OK — el control técnico ya está bien, esto certifica que una persona lo revisó. Quedará registrado con tu nombre. El motivo es obligatorio."</p>
+      <p class="faint" style="margin-top:8px">(en REVISAR el copy no cambia: "Estás dando por bueno un control que dio REVISAR…")</p>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 5 ============ -->
+  <h2 id="s5"><span class="num">5</span>Comparador ANTES / DESPUÉS — para tu aprobación</h2>
+  <p class="intent">Este cambio YA ESTÁ implementado en el workflow n8n (otro agente, en paralelo) — se muestra acá en contexto de UI porque es lo que termina viéndose en el mail de control. Dos casos: (a) el bloque "Destino (País) · Incoterm" cuando el BL está en tránsito terrestre hacia otro país declarado, y (b) el warning de "posible refacturación" que hoy sale en cada trade Dow aunque sea el patrón normal de la empresa.</p>
+
+  <h3 style="margin-top:22px">5a · Destino (País) · Incoterm — Booking a Perú vía Arica (Chile)</h3>
+  <div class="cmp-grid">
+    <div class="cmp-col">
+      <h3 class="antes">✕ Antes</h3>
+      <div class="maildoc">
+        <table>
+          <tr class="m-row-warn"><td><b>Destino (País) · Incoterm</b></td><td>PERÚ</td><td>⚠️ REVISAR</td></tr>
+        </table>
+        <div class="m-note">POD del BL = ARICA (Chile) ≠ destino declarado PERÚ → se marca como discrepancia a revisar, aunque es tránsito normal (Arica es el puerto de entrada, la carga sigue por tierra a Perú).</div>
+      </div>
+    </div>
+    <div class="cmp-col">
+      <h3 class="despues">✓ Después</h3>
+      <div class="maildoc">
+        <table>
+          <tr class="m-row-ok"><td><b>Destino (País) · Incoterm</b></td><td>PERÚ</td><td>✓ OK</td></tr>
+        </table>
+        <div class="m-note" style="color:#0f766e;font-style:normal">ℹ️ Destino en tránsito: el BL llega a CHILE (POD ARICA) y el destino final declarado es PERÚ — no es un error (regla de negocio).</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:26px">5b · Warning de refacturación — trades Dow (interno propio)</h3>
+  <div class="cmp-grid">
+    <div class="cmp-col">
+      <h3 class="antes">✕ Antes</h3>
+      <div class="maildoc">
+        <table>
+          <tr class="m-row-warn2"><td colspan="2">⚠️ Posible refacturación: el N° interno de la FC (0926932546) difiere del N° de orden del nombre de archivo (118962688). Esta FC es la que se controla; verificar permiso y datos.</td></tr>
+        </table>
+        <div class="m-note">Sale en CADA trade Dow — el interno de Dow siempre difiere del n° de orden SSB por diseño (no es refacturación real), así que el warning es ruido constante que nadie termina leyendo.</div>
+      </div>
+    </div>
+    <div class="cmp-col">
+      <h3 class="despues">✓ Después</h3>
+      <div class="maildoc">
+        <table>
+          <tr class="m-row-ok"><td colspan="2">Factura — sin observaciones</td></tr>
+        </table>
+        <div class="m-note" style="color:#0f766e;font-style:normal">Sin warning para internos con el patrón conocido de Dow. El warning se sigue mostrando SOLO si el interno parece corresponder a OTRA orden (caso real de refacturación).</div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">Fuente de la redacción: <code>_comparador.js</code> (nodo del workflow, otro agente en paralelo — <b>este mockup NO lo edita</b>, solo refleja el texto ya implementado para que apruebes el copy que ve Naara).</p>
+
+  <!-- ============ NOTAS ============ -->
+  <h2 id="notas"><span class="num">✎</span>Notas para John — decisiones abiertas / a confirmar</h2>
+  <p class="note">
+    · Texto de los chips nuevos: <b>"Sin revisar"</b> / <b>"Huérfanos"</b> / <b>"Mostrar archivadas"</b> — ¿van bien así, o preferís otra redacción?<br>
+    · <b>"Mostrar archivadas"</b> como chip toggle (mismo look que los otros 3) en vez de un checkbox aparte — reusa 100% el CSS existente. Si preferís un switch visualmente distinto, es un cambio de componente, no de lógica.<br>
+    · El select de buque no filtra por naviera ni corta empates de nombre entre navieras distintas (ej. dos "MAERSK X" de servicios distintos) — aceptado como simplificación de esta tanda.<br>
+    · Badge roleada: <b>"⟳ Roleada → {buque}"</b> — mismo ícono/estilo que el chip huérfano (⟲ vs 🔕), ambos badge--warning ámbar. Si aparecen los dos juntos en la misma card (huérfano Y roleada), quedan apilados uno debajo del otro.<br>
+    · Modo Histórico: la búsqueda es por <b>orden exacta</b> (no ilike parcial como el buscador normal) — evita traer corridas de órdenes no relacionadas por un match parcial de texto.<br>
+    · El botón "Marcar como revisado" en OK usa el MISMO botón/estilo que en REVISAR — ¿o preferís diferenciarlo visualmente (otro color) para remarcar que es "solo el visto", no una corrección?<br>
+    · Sección 5 (comparador) es SOLO para tu aprobación de copy — la implementación real vive en el workflow n8n, no en este módulo.
+  </p>
+</div>
+</body>
+</html>
