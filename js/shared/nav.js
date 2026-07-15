@@ -21,6 +21,11 @@ async function switchTab(name) {
   const leavingTT = document.getElementById('panel-tt-dow')?.classList.contains('active') && name!=='tt-dow';
   if(leavingTT && window.__ttHasPendingChanges && window.__ttHasPendingChanges()){
     if(!(await ssbConfirm({title:'Cambios sin guardar', body:'Tenés cambios sin guardar en Tarifas Terrestres. Si salís los vas a perder.', confirmText:'Salir igual', danger:true}))) return;
+    // FIX (item 53): antes este guard avisaba pero nunca limpiaba — al volver a
+    // Tarifas Terrestres los "cambios sin guardar" reaparecían (discardTTAll/
+    // discardTTCarriersAll existían pero nadie los llamaba acá). Guard defensivo
+    // typeof: si tt-dow.js todavía no cargó, no revienta la navegación.
+    if(window.__ttDiscardAll) window.__ttDiscardAll();
   }
   ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','control-bl','mailing','cert-origen','schema'].forEach(t => {
     const btn = document.getElementById('tab-'+t);

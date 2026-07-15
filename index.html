@@ -3762,12 +3762,9 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
           </div>
         </div>
         <div id="tt-edit-table"></div>
-        <!-- Datalists para auto-completar valores existentes (pero permitiendo tipear nuevos) -->
-        <datalist id="tt-dl-carriers"></datalist>
-        <datalist id="tt-dl-departures"></datalist>
-        <datalist id="tt-dl-destinations"></datalist>
-        <datalist id="tt-dl-paises"></datalist>
-        <datalist id="tt-dl-aduanas"></datalist>
+        <!-- (TANDA F 2026-07-15) 5 <datalist> huérfanos removidos acá — ningún input los
+             referenciaba (grep confirmado, ver docs/explore/EXPLORE_APP_VENTANAS_Y_SENALES_2026-07-14.md
+             §C4). Reemplazados por el autocomplete propio de tt-dow.js (dropdown + teclado). -->
       </div>
       <div id="tt-edicion-carriers" data-subtab="carriers" style="display:none">
         <div class="results-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:.6rem">
