@@ -1,5 +1,46 @@
 # RESULTADO PLAN COMPLETO — las 7 tandas + auditoría
 
+## GO-LIVE — estado vivo (actualizado 2026-07-15 ~19:15 UTC)
+
+> Fuente de verdad del avance entre sesiones. Solo estado VERIFICADO — nada adelantado.
+> Modelo de trabajo: Sonnet ejecuta lo delegable · Fable verifica independiente y da veredicto · John ratifica cada gate.
+
+| Ítem | Estado | Fecha UTC | Ejecutó / Verificó | Evidencia (1 línea) | Próximo gate |
+|---|---|---|---|---|---|
+| Migración plan1-idempotencia | ✅ | 07-15 ~13:00 | Fable / Fable | 95→82 filas (dedupe 13, backup 13), constraint `bl_controls_order_file_uniq`, `email_sent` NOT NULL default false | — |
+| PUT Control BL `WVt6gvghL2nFVbt6` | ✅ | 07-15 ~13:10 | Fable / Fable + check independiente | 64→69 nodos, pin `9b85ae3c`→**`69f11831`**, connections==preview, 4 creds intactas | smoke comparador (John, opcional) |
+| Trigger CBL + batch N→N | ✅ | 07-15 13:17–13:34 | Fable / Fable | execs trigger 33130/33133/33134; 3 copias→3 mails (batch 2→2); **rescate de 3 BLs perdidos de ayer** (118957318/4010708596/118963137) | — |
+| Backfill plan1 | ✅ | 07-15 ~14:00 | Fable / Fable | huérfanos 82→0; 6 envíos reales intactos (`email_sent_at≠created_at`); backup 13 intacto | — |
+| Migración A — notify | ✅ | 07-15 ~14:15 | Fable / Fable | constraint 3-dim `ship_sold_notify_unico`, 4 comodines, probe REST 400→401 | — |
+| Migración B — mailing (+revoke) | ✅ | 07-15 ~14:30 | Fable / Fable | 5 cols `roleo_*`, tabla `mailing_naviera_destino` (RLS, seed vacío), revoke writes authenticated; auditoría `mailing_*` limpia | contactos navieras (Naara) |
+| Migración E — seguimiento v3 | ✅ | 07-15 ~14:45 | Fable / Fable | vista 46→54 cols, 126 filas, `ssb_pais_norm`, prueba viva 118979709: `pais_destino_final=PERU` → `no_requerido` | smoke John post-push |
+| Migración G — vacaciones RLS (+revoke) | ✅ | 07-15 ~15:10 | Sonnet (a31d…/aa03…) / Fable | 15/15 + revoke vistas (cerró escalación: vistas owner-rights auto-updatables CON write grants); authenticated=SELECT-only; policies own-or-admin | email Mariano (consultor) · smoke John post-push |
+| PUT Mailing `kh6TORgRg9R1Shj1` + FIX1 | ✅ | 07-15 15:34–15:46 | Fable / Fable + Sonnet (ad70…) | 28→33 (pin `4ed497f3`→`84a78dde`) + fix1 `alwaysOutputData` en 5 GETs (→**`bce090d2`**); smoke exec 33227: JSON ok, cadena nueva 1 item c/u, 0 mails reales, TEST_MODE intacto | smoke sello regla 16 (John) |
+| Fix N8 — visor Factura/PE (front) | ✅ | 07-15 ~18:50 | Fable / Fable + John (GO) | commit `52797d3`: proyecciones `fc_link`/`pe_link` (solo strings, no el JSONB); smoke headless 118979709 (6 tabs, iframes con file-ids reales) + 118963137 (Factura disabled con gracia); canario 2 | — |
+| Env Vercel `N8N_CBL_FORM_URL` | ✅ | 07-15 ~18:55 | Fable (npx vercel CLI) / John confirmó valor | Encrypted en Production+Preview (`vercel env ls`); URL validada contra webhookId del Form Trigger vivo (`b8b6e00a…`) + HTTP 200 | — |
+| Push a master → deploy front+api | ✅ | 07-15 ~19:00 | Fable / Fable | FF `89c021f..b1bc1ed` (26 commits: 24 plan + N8 `52797d3` + harness FIX1 `b1bc1ed`); deploy verificado: prod sirve `fc_link` ×4 (age 0); `/api/seguimiento`+`/api/mailing` 401 sin auth, `/api/schema` 405 a GET | smokes |
+| Smokes post-deploy — técnico | ✅ | 07-15 ~19:00 | Sonnet (ad9981…) / Fable veredicto + cross-check propio | carga 200, 0 pageerrors en TODA la sesión, canario 2 exacto, 7 solapas OK (401/42501 solo de tablas solo-auth bajo anon, esperados), N8 en vivo (118979709 → 6 tabs habilitados / 118963137 → Factura disabled con tooltip genérico), 8 módulos JS 200, `/api` ×3 deployadas y gateadas (401/405 propios, cross-check independiente de Fable) | — |
+| Smokes funcionales (John) | ⏳ | — | John | con login real: vacaciones + seguimiento post-migración (última milla E/G), sello regla 16, botón reprocesar (estrena `N8N_CBL_FORM_URL`) | John |
+| TEST_MODE → real (mailing) | ⏳ | — | — | — | gate propio John |
+
+### Apéndice I — Desvíos descubiertos durante el go-live
+
+1. **Planilla BRASIL (118979709):** los 2 REVISAR de destino son el comparador funcionando — la planilla física dice `DESTINO: BRASIL` para carga a Perú (¿error Interlog?). NO es el falso positivo de tránsito (ese lo cubre T8). Pendiente decisión John: ¿corregir dato o regla `finalBase` por mayoría + `COUNTRY_MAP` sin PERU/CHILE?
+2. **3 BLs rescatados:** en BL DRAFT desde el 14-07 15:04–15:11 sin procesar (el trigger viejo se los comió en silencio — M-clase confirmada en vivo). El primer poll del trigger re-registrado los procesó, asentó y notificó.
+3. **Default privileges (×2 revokes):** `mailing_naviera_destino` y las 3 vistas `vac_*` nacieron con writes de `authenticated`. En vacaciones era **escalación real** (vistas owner-rights + auto-updatables → `UPDATE ... SET role='admin'` posible). Cerrado con revokes verificados.
+4. **FIX1 mailing (items=0):** los 5 GETs nuevos sin `alwaysOutputData` → query vacío mata la rama sin error (success + respuesta vacía). Con `mailing_naviera_destino` vacía moría el 100% de los requests. El smoke del `--apply` lo cazó (gate_t2 no podía: testea lógica, no items-flow). Fix-forward `put_plancompleto_mailing_fix1.py` (commiteado en `b1bc1ed`).
+5. **Menor (smoke post-deploy):** `tt-dow` emite `console.log('[TT] 61 tarifas + 5 carriers cargados.')` en prod — anti-patrón del CLAUDE.md global; deuda chica para la próxima tanda, no bloquea.
+
+### Apéndice II — Reglas nuevas (candidatas a CLAUDE.md al cierre)
+
+- **Todo objeto nuevo en `public` (tabla O vista) nace con writes de `authenticated` por default privileges** → `revoke insert, update, delete, references, trigger, truncate ... from authenticated` explícito SIEMPRE, y las vistas simples son auto-updatables (el riesgo es escalación, no solo hygiene).
+- **Nodo n8n "best effort" (GET que puede devolver vacío) → `alwaysOutputData: true` obligatorio** + assert del campo en el verify del harness (0 items = rama muerta sin error).
+- Pins vigentes post go-live: CBL = `69f11831` · Mailing = `bce090d2` (todo PUT futuro pina contra estos).
+
+---
+
+> **[HISTÓRICO — foto al cierre de la implementación, 07-15 ~01:25. El estado real vive en GO-LIVE arriba.]**
+
 **2026-07-15 · rama `feat/plan1-bl-nunca-silencioso` (encima de PLAN 1) · TODO LOCAL: sin push, sin publicar a n8n, sin escribir Supabase prod.**
 Server local corriendo para tu review: `http://localhost:8899`.
 **Verificación integral al cierre:** 9 suites de `test/` + 3 del sdk + gate_t2 (100 asserts) + 2 dry-runs Iron Law + smoke multi-tab (7 solapas, 0 pageerrors, canario GoTrue=2) — TODO VERDE, árbol limpio.

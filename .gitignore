@@ -32,3 +32,5 @@ data/*.xls
 
 # Local Netlify folder
 .netlify
+.vercel
+.env*
