@@ -44,7 +44,7 @@ ENV = _os.path.abspath(_os.path.join(SDK, "..", "..", "..", ".env"))
 
 EXPECT_VER_PRE   = "9b85ae3c-85b3-4296-9571-d0ac2c117e81"
 EXPECT_NODES_PRE = 64
-EXPECT_NODES_POST = 67
+EXPECT_NODES_POST = 69  # 64 + 3 (claim/if/revert PLAN1) + 2 (M3: armar alerta + gmail)
 SUPA_URL = "https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1"
 SUPA_CRED = {"id": "aQoShf0TVYyf2lrt", "name": "Supabase account ssb workspace"}
 
@@ -58,9 +58,12 @@ N_IF        = "IF claim ganado"
 N_REVERT    = "Revertir claim (mail falló)"
 N_COMPARADOR = "COMPARADOR - BL vs Aduana vs Booking"
 N_INY_FC     = "Inyectar Factura"
+N_SWITCH     = "Switch (ruteo por naviera + validación de orden)"
+N_M3_ARMAR   = "Ruta no soportada — armar alerta"
+N_M3_MAIL    = "Alerta: BL no procesado"
 # Nodos editados en su lugar (drift permitido) + nodos nuevos:
 TARGETS   = {N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_ARMAR_MAIL, N_SEND, N_COMPARADOR, N_INY_FC}
-NEW_NODES = {N_CLAIM, N_IF, N_REVERT}
+NEW_NODES = {N_CLAIM, N_IF, N_REVERT, N_M3_ARMAR, N_M3_MAIL}
 
 def api_key():
     for line in open(ENV, encoding="utf-8"):
@@ -216,6 +219,62 @@ def apply_transforms(pre):
     }
     nodes.extend([claim, ifnode, revert])
 
+    # ---- T10 (PLANCOMPLETO G, M3 del EXPLORE): las salidas 0/2/4/5/6 del Switch
+    #      eran callejones sin salida (HAPAG-LLOYD/MERCOSUL/SEALAND/desconocida/
+    #      orden-no-match morían con status=success, sin mail ni fila ni alerta —
+    #      caso 118859989, irreprocesable). Ahora TODAS desembocan en una alerta
+    #      a la operatoria. NO se crean parsers nuevos (decisión: alertar, no parsear).
+    m3_armar = {
+        "id": "plancompleto-m3-armar-alerta-01", "name": N_M3_ARMAR,
+        "type": "n8n-nodes-base.code", "typeVersion": 2,
+        "position": [2280, 380], "onError": "continueRegularOutput",
+        "parameters": {"mode": "runOnceForEachItem", "jsCode": (
+            "// M3: el BL entró pero NINGUNA rama lo puede procesar — armar el aviso.\n"
+            "const j = $json || {};\n"
+            "const orden = j.order_number || '(sin orden en el nombre)';\n"
+            "const naviera = j.carrier_name || j.carrier_code || 'desconocida';\n"
+            "const motivo = j.order_match === false\n"
+            "  ? 'el número de orden del nombre del archivo no aparece en el texto del PDF (¿archivo mal nombrado o layout no soportado?)'\n"
+            "  : `la naviera detectada (${naviera}) no tiene rama de extracción en el workflow`;\n"
+            "const subject = `⚠️ BL NO PROCESADO — orden ${orden} (${naviera})`;\n"
+            "const html = `<div style=\\\"font-family:Arial,sans-serif;color:#222;max-width:640px;\\\">`\n"
+            "  + `<p><b>El control automático NO pudo procesar este BL.</b></p>`\n"
+            "  + `<table style=\\\"border-collapse:collapse;font-size:13px;\\\">`\n"
+            "  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Archivo</td><td><b>${(j.name||'—')}</b></td></tr>`\n"
+            "  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Orden</td><td><b>${orden}</b></td></tr>`\n"
+            "  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Naviera detectada</td><td><b>${naviera}</b></td></tr>`\n"
+            "  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Booking</td><td>${j.booking_no||'—'}</td></tr>`\n"
+            "  + `</table>`\n"
+            "  + `<p style=\\\"background:#FBEEDB;border:1px solid #ECC79A;padding:8px 12px;font-size:13px;color:#7a3300;\\\">Motivo: ${motivo}.</p>`\n"
+            "  + `<p style=\\\"font-size:13px;\\\">Qué hacer: verificar el nombre del archivo y el PDF; si la naviera es nueva o el layout cambió, avisar a John — el control de esta orden queda MANUAL hasta entonces. Este aviso reemplaza al silencio de antes (el flujo terminaba en éxito sin procesar nada).</p>`\n"
+            "  + `</div>`;\n"
+            "return { json: { alert_subject: subject, alert_html: html } };\n"
+        )},
+    }
+    m3_mail = {
+        "id": "plancompleto-m3-alerta-mail-01", "name": N_M3_MAIL,
+        "type": "n8n-nodes-base.gmail", "typeVersion": 2.1,
+        "position": [2500, 380], "onError": "continueRegularOutput",
+        "webhookId": "plancompleto-m3-alerta-mail-01",
+        "parameters": {
+            "sendTo": "expoarpbb@ssbint.com",
+            "subject": "={{ $json.alert_subject }}",
+            "message": "={{ $json.alert_html }}",
+            "options": {"appendAttribution": False, "ccList": "jzenteno@ssbint.com"},
+        },
+        "credentials": {"gmailOAuth2": {"id": "wWZzmUj5MQLrECH0", "name": "Gmail account 3"}},
+    }
+    nodes.extend([m3_armar, m3_mail])
+    # El JSON de conexiones solo materializa slots hasta la última salida cableada
+    # (hoy: [null, LOG-IN, null, MAERSK]) — se paddea a las 7 del numberOutputs.
+    if N_SWITCH not in conns: sys.exit("ABORT T10: el Switch no tiene conexiones en el snapshot")
+    sw = conns[N_SWITCH].setdefault("main", [])
+    while len(sw) < 7: sw.append([])
+    for out_idx in (0, 2, 4, 5, 6):
+        if sw[out_idx]: sys.exit(f"ABORT T10: la salida {out_idx} del Switch ya está cableada (¿re-run o drift?)")
+        sw[out_idx] = [{"node": N_M3_ARMAR, "type": "main", "index": 0}]
+    conns[N_M3_ARMAR] = {"main": [[{"node": N_M3_MAIL, "type": "main", "index": 0}]]}
+
     # plantilla ya NO alimenta directo a Send a message (el mail pasa a depender del asiento)
     plant_out = conns[N_PLANTILLA]["main"][0]
     before = len(plant_out)
@@ -248,6 +307,13 @@ PLANNED_ADDED = {
     (N_CLAIM, "main", 0, N_IF, 0),
     (N_IF, "main", 0, N_SEND, 0),
     (N_SEND, "main", 1, N_REVERT, 0),
+    # T10 (M3): las 5 salidas muertas del Switch dejan de morir en silencio
+    (N_SWITCH, "main", 0, N_M3_ARMAR, 0),   # order_match === false
+    (N_SWITCH, "main", 2, N_M3_ARMAR, 0),   # MERCOSUL
+    (N_SWITCH, "main", 4, N_M3_ARMAR, 0),   # SEALAND
+    (N_SWITCH, "main", 5, N_M3_ARMAR, 0),   # HAPAG-LLOYD (caso 118859989)
+    (N_SWITCH, "main", 6, N_M3_ARMAR, 0),   # naviera desconocida
+    (N_M3_ARMAR, "main", 0, N_M3_MAIL, 0),
 }
 
 def verify(pre, nodes, conns, label):
@@ -272,8 +338,9 @@ def verify(pre, nodes, conns, label):
     def cred_ids(ns): return sorted(c["id"] for n in ns for c in (n.get("credentials") or {}).values()
                                     if isinstance(c, dict) and c.get("id"))
     pre_creds, post_creds = cred_ids(pre["nodes"]), cred_ids(nodes)
-    if post_creds != sorted(pre_creds + [SUPA_CRED["id"]] * 2):
-        fails.append(f"creds: pre={len(pre_creds)} post={len(post_creds)} (esperado pre+2 supabaseApi)")
+    # pre + 2 supabaseApi (Claim/Revertir) + 1 gmailOAuth2 (Alerta M3 T10)
+    if post_creds != sorted(pre_creds + [SUPA_CRED["id"]] * 2 + ["wWZzmUj5MQLrECH0"]):
+        fails.append(f"creds: pre={len(pre_creds)} post={len(post_creds)} (esperado pre+2 supabaseApi +1 gmail)")
     print(f"[{label}] verificación de grafo:", "PASS" if not fails else "FAIL")
     for f in fails: print("   ✗", f)
     return fails

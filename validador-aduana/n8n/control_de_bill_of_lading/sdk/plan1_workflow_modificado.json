@@ -1562,6 +1562,48 @@
      "name": "Supabase account ssb workspace"
     }
    }
+  },
+  {
+   "id": "plancompleto-m3-armar-alerta-01",
+   "name": "Ruta no soportada — armar alerta",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2280,
+    380
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "// M3: el BL entró pero NINGUNA rama lo puede procesar — armar el aviso.\nconst j = $json || {};\nconst orden = j.order_number || '(sin orden en el nombre)';\nconst naviera = j.carrier_name || j.carrier_code || 'desconocida';\nconst motivo = j.order_match === false\n  ? 'el número de orden del nombre del archivo no aparece en el texto del PDF (¿archivo mal nombrado o layout no soportado?)'\n  : `la naviera detectada (${naviera}) no tiene rama de extracción en el workflow`;\nconst subject = `⚠️ BL NO PROCESADO — orden ${orden} (${naviera})`;\nconst html = `<div style=\\\"font-family:Arial,sans-serif;color:#222;max-width:640px;\\\">`\n  + `<p><b>El control automático NO pudo procesar este BL.</b></p>`\n  + `<table style=\\\"border-collapse:collapse;font-size:13px;\\\">`\n  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Archivo</td><td><b>${(j.name||'—')}</b></td></tr>`\n  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Orden</td><td><b>${orden}</b></td></tr>`\n  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Naviera detectada</td><td><b>${naviera}</b></td></tr>`\n  + `<tr><td style=\\\"padding:4px 10px 4px 0;color:#666;\\\">Booking</td><td>${j.booking_no||'—'}</td></tr>`\n  + `</table>`\n  + `<p style=\\\"background:#FBEEDB;border:1px solid #ECC79A;padding:8px 12px;font-size:13px;color:#7a3300;\\\">Motivo: ${motivo}.</p>`\n  + `<p style=\\\"font-size:13px;\\\">Qué hacer: verificar el nombre del archivo y el PDF; si la naviera es nueva o el layout cambió, avisar a John — el control de esta orden queda MANUAL hasta entonces. Este aviso reemplaza al silencio de antes (el flujo terminaba en éxito sin procesar nada).</p>`\n  + `</div>`;\nreturn { json: { alert_subject: subject, alert_html: html } };\n"
+   }
+  },
+  {
+   "id": "plancompleto-m3-alerta-mail-01",
+   "name": "Alerta: BL no procesado",
+   "type": "n8n-nodes-base.gmail",
+   "typeVersion": 2.1,
+   "position": [
+    2500,
+    380
+   ],
+   "onError": "continueRegularOutput",
+   "webhookId": "plancompleto-m3-alerta-mail-01",
+   "parameters": {
+    "sendTo": "expoarpbb@ssbint.com",
+    "subject": "={{ $json.alert_subject }}",
+    "message": "={{ $json.alert_html }}",
+    "options": {
+     "appendAttribution": false,
+     "ccList": "jzenteno@ssbint.com"
+    }
+   },
+   "credentials": {
+    "gmailOAuth2": {
+     "id": "wWZzmUj5MQLrECH0",
+     "name": "Gmail account 3"
+    }
+   }
   }
  ],
  "connections": {
@@ -1622,7 +1664,13 @@
   },
   "Switch (ruteo por naviera + validación de orden)": {
    "main": [
-    [],
+    [
+     {
+      "node": "Ruta no soportada — armar alerta",
+      "type": "main",
+      "index": 0
+     }
+    ],
     [
      {
       "node": "Parser LOG-IN (IA)",
@@ -1630,10 +1678,37 @@
       "index": 0
      }
     ],
-    [],
+    [
+     {
+      "node": "Ruta no soportada — armar alerta",
+      "type": "main",
+      "index": 0
+     }
+    ],
     [
      {
       "node": "Parser MAERSK (IA)",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Ruta no soportada — armar alerta",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Ruta no soportada — armar alerta",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Ruta no soportada — armar alerta",
       "type": "main",
       "index": 0
      }
@@ -2289,6 +2364,17 @@
     [
      {
       "node": "Asentar Mailing",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ruta no soportada — armar alerta": {
+   "main": [
+    [
+     {
+      "node": "Alerta: BL no procesado",
       "type": "main",
       "index": 0
      }
