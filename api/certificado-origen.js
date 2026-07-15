@@ -14,6 +14,16 @@
 // DRIVE_CO_PDF_FOLDER_ID, DRIVE_TEAM_DRIVE_ID (opcional, acota el search),
 // SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (fallback: SUPABASE_DB_PASSWORD, nombre
 // legacy que ya contiene el JWT service_role — verificado role=service_role).
+//
+// TANDA C (2026-07-15) — action `reasignar`: body {action:'reasignar', orden_actual,
+// orden_nueva, certificado} mueve la fila (orden, certificado_numero) a otra orden.
+// Operación 100% DB (sin Drive) — mismo auth/gate que el flujo de generación; el
+// guard de config de Drive (SA_CONFIG_MISSING) se salta para esta action a propósito,
+// no la necesita. `certificados_origen` NO tiene columna updated_by/reasignado_por
+// (verificado en vivo, 2026-07-15: solo generado_por) — no se pisa generado_por (se
+// perdería quién generó el PDF originalmente); el actor de la reasignación viaja
+// SOLO en la respuesta JSON. El UNIQUE(orden, certificado_numero) es la red de
+// seguridad final ante una carrera con otra reasignación simultánea → 409.
 
 import AdmZip from 'adm-zip';
 import { createDriveClient, DriveError } from './_lib/driveClient.js';
@@ -52,22 +62,29 @@ async function upsertRegistro(supaUrl, supaKey, row) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ estado: 'error', error_code: 'METHOD', error: 'Method Not Allowed' });
 
+  const b = req.body && typeof req.body === 'object' ? req.body : {};
+  const action = b.action === 'reasignar' ? 'reasignar' : 'generar';
+
   // ── Guard de config AL INICIO (pedido explícito post-primer-deploy): una env var
   // faltante tiene que salir como error legible, nunca como crash/500 vacío. Va antes
   // del gate a propósito: permite diagnosticar el setup con curl sin token.
   // Variante n8n-gateway (2026-07-05): el SA-direct quedó descartado; Drive I/O va
   // por el workflow "CO Drive Gateway" (ver docs/modules/certificado-origen.md).
-  const missing = [
-    'N8N_DRIVE_GATEWAY_URL', 'N8N_DRIVE_GATEWAY_TOKEN',
-    'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID',
-  ].filter((k) => !process.env[k]);
-  if (missing.length)
-    return res.status(500).json({
-      estado: 'error',
-      error_code: 'SA_CONFIG_MISSING', // código estable (el front ya lo mapea)
-      error: `Falta env var: ${missing.join(', ')}`,
-      detail: 'Setup del gateway de Drive incompleto en Vercel (ver docs/modules/certificado-origen.md).',
-    });
+  // SOLO aplica a `generar` — `reasignar` es una operación pura de DB, sin I/O de
+  // Drive, y no tiene sentido bloquearla por un env var de Drive sin relación.
+  if (action === 'generar') {
+    const missing = [
+      'N8N_DRIVE_GATEWAY_URL', 'N8N_DRIVE_GATEWAY_TOKEN',
+      'DRIVE_CO_ZIP_FOLDER_ID', 'DRIVE_CO_PDF_FOLDER_ID',
+    ].filter((k) => !process.env[k]);
+    if (missing.length)
+      return res.status(500).json({
+        estado: 'error',
+        error_code: 'SA_CONFIG_MISSING', // código estable (el front ya lo mapea)
+        error: `Falta env var: ${missing.join(', ')}`,
+        detail: 'Setup del gateway de Drive incompleto en Vercel (ver docs/modules/certificado-origen.md).',
+      });
+  }
 
   const supaUrl = process.env.SUPABASE_URL;
   const supaKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_DB_PASSWORD;
@@ -106,8 +123,9 @@ export default async function handler(req, res) {
     return res.status(502).json({ estado: 'error', error_code: 'AUTH', error: 'No se pudo validar el acceso' });
   }
 
+  if (action === 'reasignar') return handleReasignar(b, { supaUrl, supaKey, user }, res);
+
   // ── Inputs ──
-  const b = req.body && typeof req.body === 'object' ? req.body : {};
   const rawOrden = String(b.orden || '').trim();
   if (!ORDEN_RE.test(rawOrden))
     return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'orden inválida (7-12 dígitos)' });
@@ -226,7 +244,7 @@ export default async function handler(req, res) {
         ...payload,
         estado: 'error_registro',
         error_code: 'DB_FAILED',
-        error: 'El PDF se subió a Drive pero el registro en la base falló. Usá Regenerar para reintentar.',
+        error: 'El PDF se subió a Drive pero el registro en la base falló. Reintentá generando el certificado de nuevo (podés usar el pegado masivo).',
       });
     }
     return res.status(200).json({ ...payload, estado: 'generado' });
@@ -244,4 +262,99 @@ export default async function handler(req, res) {
       isDrive ? e.detail : e.message
     );
   }
+}
+
+// ── action `reasignar` — mueve (orden, certificado_numero) → (orden_nueva, certificado_numero) ──
+// Pura DB, sin I/O de Drive. Contrato de error idéntico al resto del handler:
+// {estado:'error', error_code, error, detail?}. Éxito: {estado:'reasignado', ...}.
+async function handleReasignar(b, { supaUrl, supaKey, user }, res) {
+  const certificado = String(b.certificado || '').trim().toUpperCase();
+  if (!CERT_RE.test(certificado))
+    return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'certificado inválido (formato tipo AR004A18 + 12 dígitos)' });
+
+  const rawActual = String(b.orden_actual || '').trim();
+  if (!ORDEN_RE.test(rawActual))
+    return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'orden_actual inválida (7-12 dígitos)' });
+  const rawNueva = String(b.orden_nueva || '').trim();
+  if (!ORDEN_RE.test(rawNueva))
+    return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'orden_nueva inválida (7-12 dígitos)' });
+
+  const ordenActual = normalizeOrden(rawActual);
+  const ordenNueva = normalizeOrden(rawNueva);
+  if (ordenActual === ordenNueva)
+    return res.status(400).json({ estado: 'error', error_code: 'INPUT', error: 'orden_nueva es igual a orden_actual — no hay nada para reasignar' });
+
+  const headers = { apikey: supaKey, Authorization: `Bearer ${supaKey}` };
+  const conflictMsg = `La orden ${ordenNueva} ya tiene un certificado ${certificado} registrado — no se puede reasignar encima.`;
+
+  // 1. La fila origen tiene que existir
+  let origRes;
+  try {
+    origRes = await fetch(
+      `${supaUrl}/rest/v1/certificados_origen?select=id&orden=eq.${encodeURIComponent(ordenActual)}&certificado_numero=eq.${encodeURIComponent(certificado)}&limit=1`,
+      { headers }
+    );
+  } catch (e) {
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: 'No se pudo consultar la fila de origen', detail: e.message });
+  }
+  if (!origRes.ok)
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: `PostgREST ${origRes.status} consultando la fila de origen` });
+  const origRows = await origRes.json().catch(() => []);
+  if (!Array.isArray(origRows) || !origRows.length)
+    return res.status(404).json({ estado: 'error', error_code: 'NOT_FOUND', error: `No existe un certificado ${certificado} registrado para la orden ${ordenActual}` });
+
+  // 2. El destino NO puede tener ya esa combinación (UNIQUE(orden, certificado_numero))
+  let destRes;
+  try {
+    destRes = await fetch(
+      `${supaUrl}/rest/v1/certificados_origen?select=id&orden=eq.${encodeURIComponent(ordenNueva)}&certificado_numero=eq.${encodeURIComponent(certificado)}&limit=1`,
+      { headers }
+    );
+  } catch (e) {
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: 'No se pudo verificar la orden destino', detail: e.message });
+  }
+  if (!destRes.ok)
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: `PostgREST ${destRes.status} verificando la orden destino` });
+  const destRows = await destRes.json().catch(() => []);
+  if (Array.isArray(destRows) && destRows.length)
+    return res.status(409).json({ estado: 'error', error_code: 'CONFLICT', error: conflictMsg });
+
+  // 3. UPDATE — el UNIQUE es la red de seguridad final ante una carrera entre el
+  // check (paso 2) y este write (dos reasignaciones simultáneas del mismo certificado).
+  // NO se toca generado_por (se perdería quién generó el PDF originalmente) ni
+  // pdf_nombre/pdf_drive_url/zip_drive_url (el PDF físico en Drive sigue nombrado con
+  // la orden vieja — se lo dice la respuesta al front).
+  let updRes;
+  try {
+    updRes = await fetch(
+      `${supaUrl}/rest/v1/certificados_origen?orden=eq.${encodeURIComponent(ordenActual)}&certificado_numero=eq.${encodeURIComponent(certificado)}`,
+      {
+        method: 'PATCH',
+        headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ orden: ordenNueva }),
+      }
+    );
+  } catch (e) {
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: 'No se pudo escribir la reasignación', detail: e.message });
+  }
+  if (updRes.status === 409)
+    return res.status(409).json({ estado: 'error', error_code: 'CONFLICT', error: conflictMsg });
+  if (!updRes.ok) {
+    const bodyTxt = await updRes.text().catch(() => '');
+    if (/duplicate key|unique constraint/i.test(bodyTxt))
+      return res.status(409).json({ estado: 'error', error_code: 'CONFLICT', error: conflictMsg });
+    return res.status(502).json({ estado: 'error', error_code: 'DB_FAILED', error: `PostgREST ${updRes.status} reasignando el certificado`, detail: bodyTxt.slice(0, 300) });
+  }
+  const updRows = await updRes.json().catch(() => []);
+  if (!Array.isArray(updRows) || !updRows.length)
+    return res.status(404).json({ estado: 'error', error_code: 'NOT_FOUND', error: `No existe un certificado ${certificado} registrado para la orden ${ordenActual} (¿se reasignó en paralelo?)` });
+
+  return res.status(200).json({
+    estado: 'reasignado',
+    certificado,
+    orden_anterior: ordenActual,
+    orden_nueva: ordenNueva,
+    actor: user.email,
+    warning: 'El PDF en Drive sigue nombrado con la orden anterior — generá el PDF para la orden nueva para que quede prolijo.',
+  });
 }
