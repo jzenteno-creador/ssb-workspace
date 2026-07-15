@@ -65,9 +65,12 @@ const MO_LONDRINA = {
   voyage: '627N', pod: 'PARANAGUA', ship_to_key: 'INPLASUL', ship_to_name: 'INPLASUL IND',
   contacts_extracted: { partner_emails: ['denise@inplasul.ind.br'] },
 };
+// PLANCOMPLETO 2026-07-15: fechas movidas a 2027 — el filtro de candidates usa
+// etd >= HOY real (hoyBA del resolver, no congelable) y las fechas originales
+// de 2026-07 quedaron en el pasado → el assert se pudría con el calendario.
 const SCHED_PARANAGUA_SIN_LONDRINA = { data: [
-  { naviera: 'MAERSK', buque: 'MAERSK LABERINTO 628N', puerto_origen: 'BUENOS AIRES', puerto_destino: 'PARANAGUA', etd: '2026-07-12', eta: '2026-07-19', mes_etd: '2026-07' },
-  { naviera: 'MAERSK', buque: 'MAERSK LINS 629N', puerto_origen: 'BUENOS AIRES', puerto_destino: 'PARANAGUA', etd: '2026-07-19', eta: '2026-07-26', mes_etd: '2026-07' },
+  { naviera: 'MAERSK', buque: 'MAERSK LABERINTO 628N', puerto_origen: 'BUENOS AIRES', puerto_destino: 'PARANAGUA', etd: '2027-07-12', eta: '2027-07-19', mes_etd: '2027-07' },
+  { naviera: 'MAERSK', buque: 'MAERSK LINS 629N', puerto_origen: 'BUENOS AIRES', puerto_destino: 'PARANAGUA', etd: '2027-07-19', eta: '2027-07-26', mes_etd: '2027-07' },
 ] };
 const FILE_BL = { id: 'F1', name: '118959520_BL.pdf', mimeType: 'application/pdf' };
 const FILE_FC = { id: 'F2', name: 'FC 118959520.pdf', mimeType: 'application/pdf' };

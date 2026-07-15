@@ -936,14 +936,26 @@ function buildComparison(doc) {
   ], { nota: (blEmb && !(bl.desc && bl.desc['DESC BL - TIPO DE EMBALAJE'])) ? 'BL: derivado del bloque de mercadería' : '' }));
 
   // Destino (País) — control propio (D5) BL/Aduana/Booking/Factura + sub-chequeos de incoterm (D3)
+  // PLANCOMPLETO-D-DESTINO (2026-07-15, decisión §5.12 "destino en tránsito NO es
+  // error" — caso real Arica/Tacna): el lado BL aporta el país del TRÁNSITO (POD /
+  // consignee), mientras Aduana/Booking/Factura declaran el destino FINAL. Comparar
+  // esos dos niveles como si fueran el mismo dato era el falso positivo (EXPLORE B4a).
+  // Regla nueva: las fuentes de destino FINAL (Aduana/Booking/Factura) se comparan
+  // ENTRE SÍ (difieren → REVISAR — sigue cazando el error de planilla, p.ej. Aduana
+  // Brasil vs Booking Perú); el país del BL que difiera del consenso final NO marca
+  // REVISAR: baja a sub-chequeo INFO "destino en tránsito".
   const blPais = bl.destino_pais || paisFromText(bl.consignee || '');
   const aduPais = adu.destino || '';
   const baPais = ba.destino_pais || ba.country || '';
   const fcPais = (fc && fc.country) || '';
-  const canons = [blPais, aduPais, baPais, fcPais].map(canonCountry);
-  const presentPais = canons.filter(Boolean);
-  const paisDiff = presentPais.length >= 2 && new Set(presentPais).size > 1;
-  const stPais = (v) => v ? (paisDiff ? (canonCountry(v) === canons.find(Boolean) ? 'OK' : 'REVISAR') : 'OK') : 'NODATA';
+  const finalCanons = [aduPais, baPais, fcPais].map(canonCountry).filter(Boolean);
+  const finalBase = finalCanons.length ? finalCanons[0] : null;
+  const finalDiff = finalCanons.length >= 2 && new Set(finalCanons).size > 1;
+  const blCanon = canonCountry(blPais);
+  // paisDiff conserva su rol de "hay algo que mirar" para la nota, pero SOLO entre finales
+  const paisDiff = finalDiff;
+  const stPais = (v) => v ? (finalDiff ? (canonCountry(v) === finalBase ? 'OK' : 'REVISAR') : 'OK') : 'NODATA';
+  const transito = !!(blCanon && finalBase && blCanon !== finalBase && !finalDiff);
   const subsDestino = [];
   const ofKind = getOceanFreightKindFromBL(bl);
   const bucket = expectedIncotermBucketByFreight(ofKind);
@@ -968,11 +980,18 @@ function buildComparison(doc) {
   }
   // v7: la caja Factura muestra país + incoterm CON su place ("BRAZIL · Incoterm CFR NAVEGANTES").
   const fcDestinoShow = [fcPais ? canonCountry(fcPais) : '', fcIncoterm ? `Incoterm ${fcIncoterm}${fcPlace ? ' ' + fcPlace : ''}` : ''].filter(Boolean).join(' · ');
+  // Destino en tránsito (decisión §5.12): INFO explícita, jamás REVISAR.
+  if (transito) {
+    subsDestino.push({
+      texto: `Destino en tránsito: el BL llega a ${blCanon}${bl.pod ? ` (POD ${upper(bl.pod)})` : ''} y el destino final declarado es ${finalBase} (Booking/Aduana/Factura) — la carga sigue en tránsito terrestre. No es un error (regla de negocio).`,
+      estado: 'OK',
+    });
+  }
   totales.push(mkEntry('', 'Destino (País) · Incoterm', 'comparacion', blPais ? canonCountry(blPais) : '', [
     aduPais ? comp('Aduana', 'Aduana', canonCountry(aduPais), stPais(aduPais)) : null,
     baPais ? comp('Booking', 'Booking', canonCountry(baPais), stPais(baPais)) : null,
     fcDestinoShow ? comp('Factura', 'Factura', fcDestinoShow, fcPais ? stPais(fcPais) : 'NODATA') : null,
-  ], { subs: subsDestino, nota: paisDiff ? 'Países difieren entre documentos (normalizado)' : '' }));
+  ], { subs: subsDestino, nota: paisDiff ? 'El destino FINAL difiere entre Aduana/Booking/Factura (normalizado)' : (transito ? 'POD en tránsito — destino final en otro país (dato del Booking)' : '') }));
 
   /* ================= FACTURA: flete (control vive en la tabla de tarifa; acá solo counter+aviso) ===== */
   const fcInc3 = upper(fc.incoterm || '');

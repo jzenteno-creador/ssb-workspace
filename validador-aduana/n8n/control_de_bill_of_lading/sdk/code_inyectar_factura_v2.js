@@ -67,7 +67,18 @@ function stripZeros(s){ return String(s||'').replace(/^0+(?=\d)/,''); }
 const orderFilename = orderFromName(u.name);                                              // autoritativo (nombre)
 const orderInternal = cleanDigits((fc && (fc.internal_doc_number || fc.order_number)) || ''); // contenido
 const orderResolved = orderFilename || cleanDigits(u.order_number) || orderInternal || '';
-const refacturacion = !!(orderFilename && orderInternal && stripZeros(orderFilename) !== stripZeros(orderInternal));
+// PLANCOMPLETO-D-REFACT (2026-07-15, EXPLORE B4b): el warn de refacturación solo
+// dispara si el número interno de la FC PARECE una orden (trade ^1×9 / STO ^4×10
+// tras stripZeros). Los internos Dow tipo 0926… (otro esquema de numeración, jamás
+// coincide con la orden) disparaban el falso positivo en CADA trade cuya factura
+// mostrara el campo (casos reales: 118979844/118999177/118835832). Una
+// refacturación real trae OTRA orden en la FC → sigue detectándose.
+function esRefacturacion(orderFilename, orderInternal) {
+  const fn = stripZeros(orderFilename), interno = stripZeros(orderInternal);
+  if (!fn || !interno || fn === interno) return false;
+  return /^1\d{8}$/.test(interno) || /^4\d{9}$/.test(interno);
+}
+const refacturacion = esRefacturacion(orderFilename, orderInternal);
 
 // continue-on-fail: parser inválido → null + meta (NO rompe; Set Factura usa optional chaining)
 if(!fc||typeof fc!=='object'||Array.isArray(fc)){
