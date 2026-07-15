@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Vacaciones, plan completo (TANDA G)</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface-2:#161e2b; --bd:rgba(255,255,255,.08); --bd-strong:rgba(255,255,255,.16);
+    --ink:#e2e8f0; --ink-soft:#94a3b8; --ink-faint:#64748b;
+    --teal:#2dd4bf; --teal-bg:rgba(45,212,191,.12); --teal-bd:rgba(45,212,191,.35);
+    --amber:#f59e0b; --amber-bg:rgba(245,158,11,.12); --amber-bd:rgba(245,158,11,.35);
+    --green:#4ade80; --green-bg:rgba(74,222,128,.12); --green-bd:rgba(74,222,128,.35);
+    --red:#f87171; --red-bg:rgba(248,113,113,.12); --red-bd:rgba(248,113,113,.35);
+    --purple:#a78bfa; --purple-bg:rgba(167,139,250,.12); --purple-bd:rgba(167,139,250,.35);
+    --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12); --blue-bd:rgba(96,165,250,.35);
+    --font:system-ui,Segoe UI,Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.28);
+  }
+  body.light{
+    --bg:#f1f5f9; --surface:#ffffff; --surface-2:#f8fafc; --bd:#e2e8f0; --bd-strong:#cbd5e1;
+    --ink:#0f172a; --ink-soft:#64748b; --ink-faint:#94a3b8;
+    --teal:#0f766e; --teal-bg:#e6f6f3; --teal-bd:#b7e4dc;
+    --amber:#b45309; --amber-bg:#fef3c7; --amber-bd:#fcd34d;
+    --green:#15803d; --green-bg:#eaf3de; --green-bd:#cfe3bd;
+    --red:#b91c1c; --red-bg:#fdecec; --red-bd:#f3c6c6;
+    --purple:#7c3aed; --purple-bg:#f1e9fe; --purple-bd:#ddc9fb;
+    --blue:#1f5fae; --blue-bg:#eaf0f8; --blue-bd:#c7d9ef;
+    --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 20px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.5;padding:28px 28px 80px;transition:background .2s,color .2s}
+  .page{max-width:1180px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 6px}
+  h2{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin:34px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd);font-size:11px;font-weight:800}
+  h3{font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--ink-soft);max-width:820px;line-height:1.6}
+  .note b{color:var(--ink)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:var(--ink-faint);max-width:820px;line-height:1.6;margin:2px 0 14px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:50;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--bd)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-decoration:none;background:var(--surface);border:1px solid var(--bd);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal-bd)}
+
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .muted{color:var(--ink-soft);font-size:12px}
+  .faint{color:var(--ink-faint);font-size:11.5px}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .badge--amber{color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd)}
+  .badge--teal{color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-bd)}
+  .badge--green{color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd)}
+  .badge--red{color:var(--red);background:var(--red-bg);border:1px solid var(--red-bd)}
+  .badge--purple{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd)}
+  .badge--neutral{color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--bd-strong)}
+  .badge--nuevo{color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;font-size:12.5px;line-height:1.55}
+  .banner.amber{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner.red{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+  .banner .ic{flex:0 0 auto;margin-top:1px;font-size:14px}
+  .banner .txt{color:var(--ink)}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink)}
+  .btn.pri{background:var(--teal);border-color:var(--teal);color:#04211c}
+  body.light .btn.pri{color:#fff}
+  .btn.pri[disabled]{background:var(--surface-2);border-color:var(--bd-strong);color:var(--ink-faint);cursor:not-allowed;opacity:.7}
+  .btn.ghost{background:transparent}
+
+  svg.ic{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+  svg.ic-lg{width:44px;height:44px;stroke-width:1.5}
+
+  /* ============ SECCIÓN 1 — stats strip ============ */
+  .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:8px;overflow:hidden;max-width:760px}
+  .stat{background:var(--surface);padding:14px 18px;min-width:0}
+  .stat-label{font-size:10.5px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  .stat-value{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stat-unit{font-size:11px;color:var(--ink-soft);margin-left:4px;font-weight:500}
+  .stat-sub{font-size:11px;color:var(--ink-faint);margin-top:3px}
+  .ghost-card{border:1.5px dashed var(--bd-strong);border-radius:10px;padding:14px 18px;color:var(--ink-faint);font-size:12px;max-width:340px;display:flex;flex-direction:column;gap:4px}
+  .ghost-card .x{position:absolute}
+  .strike{text-decoration:line-through;opacity:.6}
+
+  /* ============ SECCIÓN 2 — form cargar ============ */
+  .form-card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:20px 22px;max-width:480px;box-shadow:var(--shadow)}
+  .form-row{margin-bottom:14px}
+  .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .form-label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+  .form-input,.form-select{width:100%;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:8px;padding:8px 10px;color:var(--ink);font-size:13px;font-family:inherit}
+  .period-label{background:var(--blue-bg);border:1px solid var(--blue-bd);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--blue);font-weight:600;margin-bottom:10px}
+  body.light .period-label{color:#1f5fae}
+  .form-summary{background:var(--surface-2);border:1px solid var(--bd);border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;gap:14px;margin-bottom:12px}
+  .form-big{font-size:20px;font-weight:800}
+  .form-range{font-size:11px;color:var(--ink-faint);font-family:var(--mono);margin-top:2px}
+
+  /* ============ SECCIÓN 3 — gantt tooltip ============ */
+  .gantt-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .gantt-name{width:110px;font-size:12px;font-weight:600;flex:0 0 auto}
+  .gantt-track{flex:1;height:26px;background:var(--surface-2);border-radius:6px;position:relative;max-width:420px}
+  .gantt-bar{position:absolute;top:2px;height:22px;border-radius:5px;background:var(--green);opacity:.85;cursor:pointer}
+  .gantt-bar.pend{background:var(--amber)}
+  .tooltip-mock{background:#111827;color:#f1f5f9;border-radius:8px;padding:10px 12px;font-size:11.5px;box-shadow:0 8px 20px rgba(0,0,0,.4);max-width:220px;line-height:1.5}
+  body.light .tooltip-mock{background:#1e293b}
+  .tooltip-mock .tip-meta{color:#94a3b8;margin-top:2px}
+  .tooltip-mock .tip-note{color:#fca5a5;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.12)}
+
+  /* ============ SECCIÓN 4 — perfil consultor ============ */
+  .vac-empty-mock{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--ink-soft);text-align:center;gap:14px;border:1px dashed var(--bd-strong);border-radius:10px;background:var(--surface);max-width:520px}
+  .vac-empty-mock svg{opacity:.45}
+  .vac-empty-mock p{font-size:13px;margin:0}
+  .rail-mock{display:flex;flex-direction:column;gap:6px;width:120px;background:var(--surface-2);border:1px solid var(--bd);border-radius:10px;padding:10px}
+  .rail-mock .tabbtn{font-size:11px;padding:6px 8px;border-radius:6px;color:var(--ink-faint)}
+  .rail-mock .tabbtn.active{background:var(--teal-bg);color:var(--teal);font-weight:700}
+  .rail-mock .tabbtn.hidden-out{opacity:.25;text-decoration:line-through}
+
+  /* ============ SECCIÓN 5 — fix refresco ============ */
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-family:var(--mono)}
+  .flow .step{background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:7px;padding:6px 10px}
+  .flow .step.warn{border-color:var(--amber-bd);color:var(--amber)}
+  .flow .step.ok{border-color:var(--green-bd);color:var(--green)}
+  .flow .arrow{color:var(--ink-faint)}
+
+  table.kv{border-collapse:collapse;font-size:12.5px}
+  table.kv td{padding:3px 10px 3px 0;vertical-align:top}
+  table.kv td.k{color:var(--ink-faint);font-weight:700;white-space:nowrap}
+
+  footer.closing{margin-top:48px;padding-top:16px;border-top:1px solid var(--bd);font-size:11.5px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="page">
+  <h1>Vacaciones — plan completo (TANDA G)</h1>
+  <p class="note">
+    Mockup estático, sin lógica — gate visual asincrónico para que John apruebe antes de
+    <code>js/features/vacaciones.js</code> (ya implementado en el branch, pendiente de smoke) y
+    la migración <code>migrations/2026-07-15-plancompleto-g-vacaciones-rls/migration.sql</code>
+    (⛔ no aplicada). Cierra el leak de RLS: saldo/notas de compañeros visibles vía
+    <code>vac_balance_view</code>/<code>vac_employees</code>/<code>vac_requests</code> abiertas a
+    cualquier <code>authenticated</code>. Colores y tipografía calcados de
+    <code>mockup_mailing_plancompleto.html</code>.
+  </p>
+
+  <nav class="subnav">
+    <a href="#s1">1 · Stats strip sin ajustes</a>
+    <a href="#s2">2 · Cargar — período siguiente</a>
+    <a href="#s3">3 · Gantt equipo — tooltip sin nota</a>
+    <a href="#s4">4 · Perfil consultor</a>
+    <a href="#s5">5 · Fix de refresco</a>
+    <a href="#notas">Notas para John</a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <h2 id="s1"><span class="num">1</span>Stats strip de "Mi calendario" — sin card "Ajustes manuales"</h2>
+  <p class="intent">La card "Ajustes manuales" mostraba el detalle (motivo, quién lo cargó) de
+  ajustes propios — con la RLS cerrada ese detalle pasa a ser admin-only (migration.sql punto 5).
+  El número ya vive incorporado en "Restantes" (<code>computeRealAvailable()</code>, sin cambios) así
+  que sacar la card no le quita información al empleado, solo el desglose.</p>
+
+  <div class="wrap" style="align-items:stretch">
+    <div>
+      <div class="faint" style="margin-bottom:6px;font-weight:700">ANTES (5 cards)</div>
+      <div class="stats-strip" style="grid-template-columns:repeat(5,1fr);max-width:900px">
+        <div class="stat"><div class="stat-label">Total anual</div><div class="stat-value">20<span class="stat-unit">días</span></div><div class="stat-sub">4 semanas</div></div>
+        <div class="stat"><div class="stat-label">Aprobados</div><div class="stat-value" style="color:var(--green)">7<span class="stat-unit">días</span></div></div>
+        <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" style="color:var(--amber)">3<span class="stat-unit">días</span></div></div>
+        <div class="stat"><div class="stat-label">Restantes</div><div class="stat-value">8<span class="stat-unit">días</span></div></div>
+        <div class="stat" style="position:relative">
+          <div class="stat-label strike">Ajustes manuales</div>
+          <div class="stat-value strike" style="font-size:16px">-2</div>
+          <div class="stat-sub strike">Ver detalle</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="faint" style="margin:10px 0 18px">↓</p>
+  <div>
+    <div class="faint" style="margin-bottom:6px;font-weight:700">AHORA (4 cards — el -2 del ajuste ya está descontado en "Restantes": 7+3+8=18, faltan 2 de 20)</div>
+    <div class="stats-strip">
+      <div class="stat"><div class="stat-label">Total anual</div><div class="stat-value">20<span class="stat-unit">días</span></div><div class="stat-sub">4 semanas</div></div>
+      <div class="stat"><div class="stat-label">Aprobados</div><div class="stat-value" style="color:var(--green)">7<span class="stat-unit">días</span></div></div>
+      <div class="stat"><div class="stat-label">Pendientes</div><div class="stat-value" style="color:var(--amber)">3<span class="stat-unit">días</span></div></div>
+      <div class="stat"><div class="stat-label">Restantes</div><div class="stat-value">8<span class="stat-unit">días</span></div></div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">El elemento <code>#vac-stat-adj-card</code> sigue en el
+  DOM (<code>index.html</code>, <code>display:none</code> inline) — no se tocó el markup, la lógica
+  de <code>renderStatsStrip()</code> simplemente dejó de mostrarlo/poblarlo.
+  <b>Nota:</b> el detalle de ajustes es interno del admin — un empleado que quiera saber el motivo
+  de un ajuste manual tiene que preguntarle al admin directamente; ya no hay un "Ver detalle" propio.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s2"><span class="num">2</span>Form Cargar — fecha de octubre del período siguiente</h2>
+  <p class="intent">Feature nueva: hoy (julio 2026) un empleado puede cargar días a cuenta del
+  período que arranca el 1° de octubre. El saldo mostrado y validado pasa a ser el del período
+  SIGUIENTE, no el actual — <code>vac_balance_view</code> no sirve para esto (está hardcodeada al
+  período de hoy server-side), así que se arma client-side con
+  <code>buildBalanceRowFromRequests()</code> + <code>vac_adjustments_sum</code> del período que
+  corresponda, reusando <code>computeRealAvailable()</code> SIN modificarla.</p>
+
+  <div class="form-card">
+    <h3 style="margin-bottom:4px">Solicitar vacaciones</h3>
+    <p class="faint" style="margin:0 0 16px">Tu solicitud queda en estado pendiente hasta que un admin la apruebe.</p>
+
+    <div class="form-row">
+      <label class="form-label">Tipo de solicitud</label>
+      <select class="form-select"><option>Días específicos / rango</option></select>
+    </div>
+    <div class="form-row form-row-2">
+      <div>
+        <label class="form-label">Desde</label>
+        <input class="form-input" value="2026-10-05" readonly>
+      </div>
+      <div>
+        <label class="form-label">Hasta</label>
+        <input class="form-input" value="2026-10-09" readonly>
+      </div>
+    </div>
+
+    <div class="period-label">📅 Período oct-2026 → sep-2027 · disponible: 20 días</div>
+
+    <div class="form-summary">
+      <div>
+        <span class="form-big">5</span><span class="faint"> días hábiles</span>
+        <div class="form-range">05/10/2026 al 09/10/2026 inclusive</div>
+      </div>
+      <div style="text-align:right">
+        <div class="faint">Saldo proyectado</div>
+        <span class="form-big" style="color:var(--green)">15</span><span class="faint"> de 20 días</span>
+      </div>
+    </div>
+    <button class="btn pri" style="width:100%;justify-content:center">Enviar solicitud</button>
+  </div>
+
+  <p class="note" style="margin-top:14px">Si en cambio "Desde" quedara en el período ACTUAL
+  (ej. 20/07/2026), el label diría <code>Período oct-2025 → sep-2026 · disponible: 8 días</code> —
+  mismo componente, cambia el año y el disponible según la fecha elegida. Debajo, cómo se ve
+  "Mis solicitudes" cuando hay pedidos de los dos períodos a la vez:</p>
+
+  <div class="card" style="max-width:360px;margin-top:10px">
+    <div class="faint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;margin-bottom:8px">Período actual (oct-2025 → sep-2026)</div>
+    <div style="border-left:3px solid var(--green);padding:6px 10px;margin-bottom:10px;background:var(--surface-2);border-radius:0 6px 6px 0">
+      <div style="font-size:12px;font-weight:600">15/03/2026 → 19/03/2026</div>
+      <div class="faint">5 días · <span class="badge badge--green" style="padding:1px 7px">Aprobada</span></div>
+    </div>
+    <div class="faint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;margin-bottom:8px">Período siguiente (oct-2026 → sep-2027)</div>
+    <div style="border-left:3px solid var(--amber);padding:6px 10px;background:var(--surface-2);border-radius:0 6px 6px 0">
+      <div style="font-size:12px;font-weight:600">05/10/2026 → 09/10/2026</div>
+      <div class="faint">5 días · <span class="badge badge--amber" style="padding:1px 7px">Pendiente</span></div>
+    </div>
+  </div>
+  <p class="faint" style="margin-top:8px;max-width:420px">El título de período solo aparece cuando
+  hay solicitudes de MÁS DE UN período — si todo está en el actual (caso de hoy, sin nada cargado a
+  futuro) la lista se ve exactamente igual que antes, sin título extra.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s3"><span class="num">3</span>Gantt de equipo — tooltip sin nota</h2>
+  <p class="intent">La nota de una solicitud ajena era el peor leak: visible por cualquier
+  compañero con solo pasar el mouse sobre la barra de otra persona en el Gantt. La vista nueva
+  (<code>vac_team_requests</code>) ni siquiera trae la columna <code>note</code> — no es un
+  ocultamiento en el render, el dato no llega.</p>
+
+  <div class="wrap" style="align-items:flex-start">
+    <div class="card" style="width:360px">
+      <h3>Antes</h3>
+      <div class="gantt-row">
+        <div class="gantt-name">Belén R.</div>
+        <div class="gantt-track"><div class="gantt-bar" style="left:20px;width:120px"></div></div>
+      </div>
+      <div class="tooltip-mock">
+        <strong>Belén R.</strong><br>15/03 → 19/03 (5d)
+        <div class="tip-meta">Aprobada</div>
+        <div class="tip-note">"viaje familiar, mamá cumple 60 — pedirle a Naara que cubra el lunes"</div>
+      </div>
+      <p class="faint" style="margin-top:8px">↑ visible por CUALQUIER compañero logueado, ajeno a la solicitud</p>
+    </div>
+    <div class="card" style="width:360px">
+      <h3>Ahora</h3>
+      <div class="gantt-row">
+        <div class="gantt-name">Belén R.</div>
+        <div class="gantt-track"><div class="gantt-bar" style="left:20px;width:120px"></div></div>
+      </div>
+      <div class="tooltip-mock">
+        <strong>Belén R.</strong><br>15/03 → 19/03 (5d)
+        <div class="tip-meta">Aprobada</div>
+      </div>
+      <p class="faint" style="margin-top:8px">↑ solo nombre + fechas + estado — lo que hace falta
+      para coordinar el equipo, nada más</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s4"><span class="num">4</span>Rol consultor — pantalla sin gestión de vacaciones</h2>
+  <p class="intent">Rol nuevo (migration.sql punto 1): un usuario del sistema que NO es empleado
+  de LCT (ej. Mariano García Rosa). Entra a la app normalmente (el gate global mira <code>active</code>,
+  no <code>role</code>) pero la solapa Vacaciones no le sirve — ni gestiona sus propias vacaciones
+  (no tiene) ni debería aparecer en el Gantt/cumpleaños del equipo.</p>
+
+  <div class="wrap" style="align-items:center">
+    <div class="rail-mock">
+      <div class="faint" style="font-size:10px;font-weight:700;margin-bottom:2px">SUBTABS (ocultas)</div>
+      <div class="tabbtn hidden-out">📅 Mi calendario</div>
+      <div class="tabbtn hidden-out">📊 Equipo</div>
+      <div class="tabbtn hidden-out">➕ Cargar</div>
+    </div>
+    <div class="vac-empty-mock">
+      <svg class="ic ic-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg>
+      <p><strong>Tu perfil es consultor</strong> — sin gestión de vacaciones.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">Implementación: <code>applySession()</code> corta
+  temprano para <code>role==='consultor'</code> (ni badge polling, ni fetch de datos de
+  vacaciones) y pinta este aviso por <code>createElement</code> (reusa la clase
+  <code>.vac-empty</code> ya estilada en <code>index.html</code> — no se tocó el markup estático).
+  Defensa en profundidad: toda lista de equipo (cumpleaños, Gantt, back-ups) filtra
+  <code>role!=='consultor'</code> client-side aunque las vistas nuevas ya lo hagan — cubre el
+  fallback pre-migración, que pega directo a <code>vac_employees</code> sin ese filtro.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s5"><span class="num">5</span>Fix de refresco al re-entrar a "Mi calendario"</h2>
+  <p class="intent">Bug de propagación encontrado en esta misma tanda: si un admin aprobaba una
+  solicitud mientras el empleado estaba parado en OTRA sub-tab (ej. "Cargar"), al volver a "Mi
+  calendario" seguía viendo el estado viejo — el guard de "primera carga" no dejaba refrescar de
+  nuevo. Hacía falta un F5 manual para verlo actualizado.</p>
+
+  <div class="wrap">
+    <div class="card" style="width:420px">
+      <h3>Antes</h3>
+      <div class="flow">
+        <span class="step">entrar a "Mi calendario"</span><span class="arrow">→</span>
+        <span class="step warn">¿ya inicializado?</span><span class="arrow">→</span>
+        <span class="step warn">sí → NO refresca</span>
+      </div>
+      <p class="faint" style="margin-top:10px">La solicitud recién aprobada por el admin no
+      aparece hasta un F5 manual.</p>
+    </div>
+    <div class="card" style="width:420px">
+      <h3>Ahora</h3>
+      <div class="flow">
+        <span class="step">entrar a "Mi calendario"</span><span class="arrow">→</span>
+        <span class="step">¿había caché? → pintarla YA</span><span class="arrow">→</span>
+        <span class="step ok">refetch siempre</span><span class="arrow">→</span>
+        <span class="step ok">re-render con datos frescos</span>
+      </div>
+      <p class="faint" style="margin-top:10px">Sin parpadeo: se ve la caché de inmediato (si
+      había) y se reemplaza sola cuando llega la respuesta — nunca un hueco vacío en el medio.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="notas"><span class="num">✓</span>Notas para la aprobación de John</h2>
+  <p class="note">
+  · <b>Card "Ajustes manuales" eliminada, no ocultada condicionalmente</b> — antes aparecía SOLO
+  si había ajustes cargados; ahora nunca aparece (el número ya está en "Restantes"). Si en algún
+  momento un empleado necesita ver el motivo de un ajuste, hoy tiene que preguntarle al admin —
+  no hay UI propia para eso. Avisame si querés que quede algo mínimo (aunque sea "consultá con
+  admin" con el monto, sin motivo).<br>
+  · <b>Label de período en el form Cargar es NUEVO en el DOM</b> (no existía en
+  <code>index.html</code>) — se crea por JS y se inserta arriba del resumen existente, reusando
+  <code>.vac-form-help</code> (mismo estilo que la ayuda de "Estado"). No se tocó CSS ni markup
+  estático.<br>
+  · <b>Sin tope de fecha en "Desde"</b> — el date picker sigue sin <code>max</code>, así que
+  técnicamente se puede tipear una fecha 2+ períodos adelante. El guard existente de feriados
+  (<code>NO_HOLIDAYS_FOR_YEAR</code>, ya estaba antes de esta tanda) bloquea el envío en ese caso
+  porque <code>vac_holidays</code> no tiene cobertura tan lejos — no agregué un tope explícito
+  para no duplicar esa protección. Decilo si preferís un <code>max</code> visual además.<br>
+  · <b>6to call-site del leak, fuera del inventario original</b>: <code>loadGlobalEmployees()</code>
+  (el banner de cumpleaños del header, separado de la card de "Mi calendario") pegaba a la misma
+  tabla abierta que el resto — lo migré igual a la vista nueva porque si no se rompía en silencio
+  apenas se aplicara la migración (el inventario de la migración listaba 5, este es el 6to).<br>
+  · <b><code>vac_balance_view</code> para el Gantt de equipo: ELIMINADO, no reemplazado</b> — 0
+  consumidores del <code>Map</code> resultante (verificado por grep en todo el archivo), era
+  leak de red puro (saldo de todo el equipo bajado al browser de cualquier no-admin sin usarse
+  para nada). El Resumen del equipo del admin sigue con su propio fetch intacto.<br>
+  · <b>Deploy desfasado cubierto en las 5+1 lecturas nuevas</b>: cada una intenta primero la
+  vista nueva y cae a la query legacy si la vista todavía no existe (migración sin aplicar) —
+  funciona ANTES y DESPUÉS del deploy de la migración, en cualquier orden que salgan front/DB.
+  </p>
+
+  <footer class="closing">docs/mockups/mockup_vacaciones_plancompleto.html · gate visual TANDA G (Vacaciones) · sin lógica, sin datos reales de producción · generado 2026-07-15</footer>
+</div>
+</body>
+</html>

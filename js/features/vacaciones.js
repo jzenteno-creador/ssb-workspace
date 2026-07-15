@@ -73,7 +73,47 @@
    BUG-VAC-FORM-ADJUSTMENTS CERRADO 2026-07-14: el disponible del form
    Cargar (updateCargarSummary) pasa a computeRealAvailable() con los
    ajustes — misma fuente de verdad que el stats strip. Re-derivado de
-   203265d (fix/dashboard-critical-bugs, pre-refactor). */
+   203265d (fix/dashboard-critical-bugs, pre-refactor).
+
+   TANDA G (PLAN COMPLETO, 2026-07-15) — cierre del leak de RLS de Vacaciones.
+   Contrato nuevo: migrations/2026-07-15-plancompleto-g-vacaciones-rls/migration.sql
+   (⛔ NO aplicada al escribir este código — deploy desfasado esperado).
+   5 call-sites del inventario original de la migración + 2 hallados en esta
+   tanda (loadGlobalEmployees, back-ups en loadMyData) migrados a vistas de
+   equipo (columnas mínimas, sin saldo/notas ajenas) CON fallback a la query
+   legacy si la vista todavía no existe (`vacFetchWithFallback`, comentado
+   'fallback pre-migración G' en cada uso): cumpleaños (loadMyData +
+   loadGlobalEmployees, este último NO estaba en el inventario), Gantt
+   equipo (loadTeamData), tooltip del Gantt (ya no muestra `note` ajena),
+   nombres de back-up (renderBackupNames), solicitudes de back-ups en
+   loadMyData (tampoco estaba en el inventario — pegaba vac_requests de
+   OTROS empleados por employee_id, la RLS lo hubiera recortado a 0 filas en
+   silencio; vac_team_requests no tiene FK metadata para el embed de nombre
+   así que se resuelve contra allEmployees ya fetcheado en el mismo
+   Promise.all), y el saldo del empleado (vac_adjustments_sum en vez del
+   detalle de vac_balance_adjustments — el detalle queda admin-only).
+   Card "Ajustes manuales" del stats strip ELIMINADA (el saldo ya la
+   incorpora); `openMyAdjustmentsModal` borrada (dead code).
+   `window.__vac.team.balances` (fetch de vac_balance_view para la vista
+   Equipo) ELIMINADO — 0 consumidores verificados por grep, era leak de red
+   puro (el Resumen del equipo admin usa SU PROPIO fetch en loadAdminData,
+   intacto).
+   Nuevo: form Cargar soporta fechas del PERÍODO SIGUIENTE (oct del año que
+   viene) — computeRealAvailable() NO se modifica (contrato de la doc de
+   arriba); en su lugar `buildBalanceRowFromRequests()` arma una fila
+   "tipo balance" client-side a partir de `vac_requests` ya cargadas (dos
+   períodos, ver loadMyData) + `vac_adjustments_sum` del período siguiente,
+   porque `vac_balance_view` está hardcodeada al período ACTUAL server-side
+   (ver `case when extract(month from current_date)...` en
+   migrations/2026-05-04-vacaciones/01_schema.sql:61-81 — no tiene columna
+   `period_year` filtrable, solo `current_period_year` informativo). Mismo
+   patrón que el adaptador de ajustes: NUNCA se toca la función pura.
+   Rol `consultor` (nuevo, ver migration): entra a la app pero sin gestión
+   de vacaciones — `applySession` corta temprano y pinta `#vac-consultor-notice`
+   (creado por JS, reusa `.vac-empty` ya estilada). Defensa en profundidad:
+   toda lista de equipo (`allEmployees`, `team.employees`, back-ups) filtra
+   `role!=='consultor'` client-side aunque la vista ya lo haga — cubre el
+   fallback pre-migración, que pega directo a `vac_employees` sin ese filtro. */
   // Reusa el cliente global de auth para no acumular GoTrueClient con la
   // misma key (warning resuelto). Si por algún motivo el script global no
   // cargó, fallback a un cliente local — pero esto NO debería pasar.
@@ -132,6 +172,46 @@
     }
   }
 
+  // ── TANDA G: gate del rol consultor — entra a la app pero sin gestión de
+  // vacaciones. Oculta subtabs/disclaimer/secciones y pinta un aviso propio
+  // (createElement, reusa la clase .vac-empty ya estilada en index.html —
+  // no se toca el markup estático). ──
+  function showConsultorGate(){
+    document.querySelectorAll('#panel-vacaciones .vac-subtab-bar, #panel-vacaciones .vac-disclaimer, #panel-vacaciones .vac-section')
+      .forEach(el => { el.style.display = 'none'; });
+    let notice = $('vac-consultor-notice');
+    if(!notice){
+      notice = document.createElement('div');
+      notice.id = 'vac-consultor-notice';
+      notice.className = 'vac-empty';
+      notice.style.margin = '40px 2rem';
+      const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('class', 'ic');
+      icon.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', '#i-package');
+      icon.appendChild(use);
+      const p = document.createElement('p');
+      const strong = document.createElement('strong');
+      strong.textContent = 'Tu perfil es consultor';
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(' — sin gestión de vacaciones.'));
+      notice.appendChild(icon);
+      notice.appendChild(p);
+      const app = $('vac-app') || document.getElementById('panel-vacaciones');
+      if(app) app.appendChild(notice);
+    }
+    notice.style.display = 'flex';
+  }
+  function hideConsultorGate(){
+    const notice = $('vac-consultor-notice');
+    if(notice) notice.style.display = 'none';
+    // Limpia el display:none inline que puso showConsultorGate — vuelve a
+    // gobernar el CSS de base (.vac-section--active, etc.).
+    document.querySelectorAll('#panel-vacaciones .vac-subtab-bar, #panel-vacaciones .vac-disclaimer, #panel-vacaciones .vac-section')
+      .forEach(el => { el.style.display = ''; });
+  }
+
   async function loadEmployeeForEmail(email){
     const { data, error } = await supa
       .from('vac_employees')
@@ -154,6 +234,7 @@
       stopBadgePolling();
       updatePendingBadge();
       clearPhase3Data();
+      hideConsultorGate();
       return;
     }
     const email = session.user.email.toLowerCase();
@@ -171,10 +252,24 @@
     window.__vacAuth = {
       user: session.user,
       employee: emp,
-      isAdmin: emp.role === 'admin'
+      isAdmin: emp.role === 'admin',
+      // TANDA G: rol nuevo (migration.sql). Un consultor entra a la app
+      // (los gates de auth global miran `active`, no `role`) pero no
+      // gestiona vacaciones — ver showConsultorGate().
+      isConsultor: emp.role === 'consultor'
     };
     const pillName = $('vac-user-pill-name');
-    if(pillName) pillName.textContent = emp.full_name + (window.__vacAuth.isAdmin ? ' · admin' : '');
+    const pillSuffix = window.__vacAuth.isAdmin ? ' · admin' : (window.__vacAuth.isConsultor ? ' · consultor' : '');
+    if(pillName) pillName.textContent = emp.full_name + pillSuffix;
+    if(window.__vacAuth.isConsultor){
+      // Corte temprano: nada de badge polling, nada de fetch de datos de
+      // vacaciones (RLS los recortaría a "nada" de todos modos, pero acá
+      // ni siquiera lo intentamos — la UI pasa directo al estado consultor).
+      setAdminUI(false);
+      showConsultorGate();
+      return;
+    }
+    hideConsultorGate();
     setAdminUI(window.__vacAuth.isAdmin);
     startBadgePolling();
     updatePendingBadge();
@@ -187,14 +282,21 @@
   window.vacApplySsbSession = applySession;
 
   // ── Cumpleaños del mes (Cambio 6): carga liviana, compartida con el banner ──
+  // TANDA G: 6to call-site del leak (no estaba en el inventario original de
+  // la migración, pero pega la MISMA tabla abierta que loadMyData — si no se
+  // migra acá también, el banner de cumpleaños del equipo se rompe en
+  // silencio apenas se aplique la migración). Vista nueva + fallback legacy.
   async function loadGlobalEmployees(){
     if(!window.__vacAuth) return;
-    const { data, error } = await supa
-      .from('vac_employees')
-      .select('id,full_name,birthday_day,birthday_month,active')
-      .eq('active', true);
+    const { data, error } = await vacFetchWithFallback(
+      () => supa.from('vac_team_employees').select('id,full_name,birthday_day,birthday_month,active,role'),
+      // fallback pre-migración G: vac_team_employees aún no existe
+      () => supa.from('vac_employees').select('id,full_name,birthday_day,birthday_month,active,role').eq('active', true)
+    );
     if(error) return;
-    window.__vac.allEmployees = data || [];
+    // Belt: la vista ya filtra role<>'consultor', pero el fallback legacy
+    // (pre-migración) pega directo a vac_employees sin ese filtro.
+    window.__vac.allEmployees = (data || []).filter(e => e.role !== 'consultor');
   }
 
   function renderBirthdayLine(){
@@ -302,6 +404,10 @@
   window.__vac.currentMonth   = null;
   window.__vac.editingId      = null;
   const _miState = { initialized: false };
+  // TANDA G: caché en memoria period_year -> suma de ajustes (número). Evita
+  // refetch en cada tecla del form Cargar cuando la fecha cae en el período
+  // siguiente. Se resetea en clearPhase3Data() (logout / cambio de sesión).
+  window.__vac.periodAdjCache = new Map();
 
   // Date helpers — todo en 'YYYY-MM-DD' string para evitar shifts UTC
   function toIsoDate(d){
@@ -371,9 +477,23 @@
     const d = new Date();
     return d.getMonth() >= 9 ? d.getFullYear() : d.getFullYear() - 1;
   }
+  // TANDA G: rango [startIso,endIso] de un período dado su año (misma
+  // fórmula que usaba getCurrentPeriodRange, extraída para reusarla también
+  // con el período SIGUIENTE del form Cargar). Pure function.
+  function getPeriodRangeFor(periodYear){
+    return { startIso: `${periodYear}-10-01`, endIso: `${periodYear+1}-09-30` };
+  }
   function getCurrentPeriodRange(){
-    const py = getCurrentPeriodYear();
-    return { startIso: `${py}-10-01`, endIso: `${py+1}-09-30` };
+    return getPeriodRangeFor(getCurrentPeriodYear());
+  }
+  // TANDA G: period_year de UNA FECHA dada (misma regla de corte que
+  // getCurrentPeriodYear — mes>=9 (octubre, 0-based) → año de la fecha;
+  // si no, año-1). Pure function — usada por el form Cargar para detectar
+  // cuándo el usuario eligió una fecha del período siguiente.
+  function getPeriodYearForDate(dateIso){
+    const d = parseIsoDate(dateIso);
+    if(!d) return getCurrentPeriodYear();
+    return d.getMonth() >= 9 ? d.getFullYear() : d.getFullYear() - 1;
   }
   const MONTH_NAMES_LONG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const DOW_SHORT_LUN = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -385,6 +505,7 @@
     window.__vac.balance = null;
     window.__vac.adjustments = [];
     window.__vac.editingId = null;
+    window.__vac.periodAdjCache = new Map();
     _miState.initialized = false;
     if(window.__vac.team) clearTeamData();
     if(window.__vac.admin) clearAdminData();
@@ -430,6 +551,31 @@
     return null;
   }
 
+  // TANDA G: intenta la vista NUEVA (vac_team_employees/vac_team_requests/
+  // vac_adjustments_sum — contrato de migrations/2026-07-15-plancompleto-g-
+  // vacaciones-rls/migration.sql); si la migración todavía no está aplicada
+  // (deploy desfasado) Postgrest devuelve error (la vista no existe) y cae
+  // a la query legacy. Post-migración, primaryFn siempre gana y fallbackFn
+  // ni se llama. primaryFn/fallbackFn devuelven el thenable de Supabase.
+  async function vacFetchWithFallback(primaryFn, fallbackFn){
+    const r = await primaryFn();
+    if(!r.error) return r;
+    return fallbackFn();
+  }
+
+  // TANDA G: normaliza el `data` crudo de una consulta de ajustes a un
+  // número plano — cubre las 2 formas posibles según qué rama de
+  // vacFetchWithFallback ganó: la vista vac_adjustments_sum (maybeSingle:
+  // 1 fila {total_delta} o null) o el fallback legacy de
+  // vac_balance_adjustments (array de filas {delta_days}). Pure function
+  // (sin red, sin DOM) — usada por loadMyData y fetchPeriodAdjustmentsSum
+  // para no duplicar esta rama dos veces.
+  function sumAdjustmentsResult(rawData){
+    if(Array.isArray(rawData)) return rawData.reduce((s, a) => s + (a.delta_days | 0), 0);
+    if(rawData && typeof rawData.total_delta === 'number') return rawData.total_delta;
+    return 0;
+  }
+
   async function loadMyData(errSub){
     if(!window.__vacAuth) return false;
     const empId = window.__vacAuth.employee.id;
@@ -439,29 +585,58 @@
 
     const queries = [
       supa.from('vac_balance_view').select('*').eq('employee_id', empId).maybeSingle(),
-      supa.from('vac_requests').select('*').eq('employee_id', empId).eq('period_year', periodYear).order('start_date', { ascending: false }),
+      // TANDA G (item f, período siguiente): antes solo el período actual.
+      // Ahora actual Y siguiente — "Mis solicitudes" y el calendario mensual
+      // (que se puede navegar sin límite con goToNextMonth) necesitan ver
+      // también las solicitudes que el empleado carga por adelantado para
+      // el próximo período (feature nueva de esta tanda).
+      supa.from('vac_requests').select('*').eq('employee_id', empId).in('period_year', [periodYear, periodYear + 1]).order('start_date', { ascending: false }),
       // Cargar TODOS los feriados (small dataset ~35 filas hoy) para que
       // countBusinessDays pueda chequear cobertura del año al pedir rangos
       // fuera del período actual (ej. mes próximo al período siguiente).
       supa.from('vac_holidays').select('*').order('date', { ascending: true }),
+      // TANDA G (7mo call-site, hallado en esta tanda — no estaba en el
+      // inventario de la migración): esto pega vac_requests de OTROS
+      // empleados (mis back-ups) por employee_id. Post-migración la RLS
+      // (employee_id = propio O admin) lo recorta a 0 filas en silencio —
+      // el aviso "tu back-up también tiene vacaciones" en el form Cargar y
+      // el badge 🛡️ del calendario dejarían de funcionar. vac_team_requests
+      // no está filtrada por dueño (es el calendario abierto del equipo)
+      // así que sirve acá tal cual. No trae el embed de nombre (la vista no
+      // tiene metadata de FK para PostgREST) — se resuelve más abajo contra
+      // eRes (mismo Promise.all, ya trae full_name de todo el equipo).
       backupIds.length
-        ? supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
+        ? vacFetchWithFallback(
+            () => supa.from('vac_team_requests').select('id,employee_id,start_date,end_date,status').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true }),
+            // fallback pre-migración G: vac_team_requests aún no existe
+            () => supa.from('vac_requests').select('*, vac_employees!vac_requests_employee_id_fkey(full_name)').in('employee_id', backupIds).eq('period_year', periodYear).in('status', ['aprobada','pendiente','tentativa']).order('start_date', { ascending: true })
+          )
         : Promise.resolve({ data: [], error: null }),
-      // Ajustes manuales del período actual del empleado autenticado (RLS solo permite los propios o si es admin — acá buscamos los propios)
-      supa.from('vac_balance_adjustments')
-        .select('id,period_year,delta_days,reason,created_at,created_by,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
-        .eq('employee_id', empId)
-        .eq('period_year', periodYear)
-        .order('created_at', { ascending: false }),
-      // Empleados activos con cumpleaños — para marcar los cumples del
-      // equipo en el calendario mensual de Mi calendario. La RLS de
-      // vac_employees permite SELECT a cualquier authenticated, así que
-      // cualquier empleado logueado puede listar a los demás (mismo
-      // alcance que la vista Equipo).
-      supa.from('vac_employees')
-        .select('id,full_name,birthday_day,birthday_month')
-        .eq('active', true)
-        .order('full_name', { ascending: true })
+      // TANDA G (item e): el detalle de vac_balance_adjustments pasa a ser
+      // admin-only por RLS (migration.sql punto 5) — el empleado usa la
+      // SUMA (vac_adjustments_sum), que sí puede leer la propia. Fallback
+      // pre-migración: el detalle legacy (RLS todavía abierta a "los
+      // propios"), tal como estaba antes de esta tanda.
+      vacFetchWithFallback(
+        () => supa.from('vac_adjustments_sum').select('employee_id,period_year,total_delta').eq('employee_id', empId).eq('period_year', periodYear).maybeSingle(),
+        // fallback pre-migración G: vac_adjustments_sum aún no existe
+        () => supa.from('vac_balance_adjustments')
+          .select('id,period_year,delta_days,reason,created_at,created_by,vac_employees!vac_balance_adjustments_created_by_fkey(full_name)')
+          .eq('employee_id', empId)
+          .eq('period_year', periodYear)
+          .order('created_at', { ascending: false })
+      ),
+      // TANDA G (item a): empleados activos con cumpleaños — vista de
+      // equipo (sin saldo/notas) en vez de vac_employees abierta. Fallback
+      // pre-migración: la query legacy de siempre.
+      vacFetchWithFallback(
+        () => supa.from('vac_team_employees').select('id,full_name,birthday_day,birthday_month,role'),
+        // fallback pre-migración G: vac_team_employees aún no existe
+        () => supa.from('vac_employees')
+          .select('id,full_name,birthday_day,birthday_month,role')
+          .eq('active', true)
+          .order('full_name', { ascending: true })
+      )
     ];
     let bRes, rRes, hRes, bkRes, aRes, eRes;
     try {
@@ -471,12 +646,29 @@
     if(_err){ vacLoadError(errSub || 'mi', _err); return false; }
     vacClearLoadError(errSub || 'mi');
 
-    window.__vac.balance        = bRes?.data || null;
-    window.__vac.requests       = rRes?.data || [];
-    window.__vac.holidays       = hRes?.data || [];
-    window.__vac.backupRequests = bkRes?.data || [];
-    window.__vac.adjustments    = aRes?.data || [];
-    window.__vac.allEmployees   = eRes?.data || [];
+    window.__vac.balance   = bRes?.data || null;
+    window.__vac.requests  = rRes?.data || [];
+    window.__vac.holidays  = hRes?.data || [];
+    // Belt: la vista ya filtra role<>'consultor'; el fallback legacy
+    // (pre-migración) pega directo a vac_employees sin ese filtro.
+    window.__vac.allEmployees = (eRes?.data || []).filter(e => e.role !== 'consultor');
+    // TANDA G (7mo call-site): vac_team_requests no trae el embed
+    // `vac_employees.full_name` (la vista no tiene FK metadata para
+    // PostgREST) — se resuelve acá contra allEmployees, ya fetcheado arriba
+    // en el mismo Promise.all. El fallback legacy pre-migración SÍ trae el
+    // embed directo (RLS todavía abierta) — se respeta tal cual si ya vino.
+    const empNameById = new Map((window.__vac.allEmployees || []).map(e => [e.id, e.full_name]));
+    window.__vac.backupRequests = (bkRes?.data || []).map(r =>
+      r.vac_employees?.full_name
+        ? r
+        : { ...r, vac_employees: { full_name: empNameById.get(r.employee_id) || '?' } }
+    );
+    // TANDA G: aRes puede venir en 2 formas según qué rama de
+    // vacFetchWithFallback corrió arriba (sumAdjustmentsResult las normaliza
+    // a un número). computeRealAvailable() NO se toca (contrato de la doc de
+    // arriba): se adapta acá al mismo shape [{delta_days}] que ya consumía
+    // la función pura.
+    window.__vac.adjustments = [{ delta_days: sumAdjustmentsResult(aRes?.data) }];
     return true;
   }
 
@@ -512,6 +704,34 @@
     // Convención: delta_days positivo SUMA al saldo disponible; negativo lo descuenta.
     const disponible = totalAnual - aprobados - pendientes + ajustes;
     return { totalAnual, aprobados, pendientes, ajustes, disponible };
+  }
+
+  // TANDA G (item f, período siguiente): adaptador PURO que arma una fila
+  // "tipo vac_balance_view" a partir de solicitudes ya filtradas por
+  // período, para poder reusar computeRealAvailable() sin tocarla. Hace
+  // falta porque vac_balance_view está hardcodeada al período ACTUAL
+  // server-side (case when extract(month from current_date)... en
+  // migrations/2026-05-04-vacaciones/01_schema.sql) — no acepta filtro de
+  // period_year, así que para el período SIGUIENTE no hay balance row de
+  // la view y se compone client-side con lo que loadMyData ya trajo
+  // (in.(actual,siguiente)).
+  // effAnnualDays: annual_days + extra_days del empleado (no depende del
+  //   período — extra_days persiste hasta que admin lo limpia).
+  // periodRequests: filas de vac_requests YA filtradas por period_year,
+  //   status !== 'rechazada' (el caller hace el filtro).
+  function buildBalanceRowFromRequests(effAnnualDays, periodRequests){
+    let aprobados = 0, pendientes = 0, tentativas = 0;
+    for(const r of (periodRequests || [])){
+      if(r.status === 'aprobada') aprobados += r.days_count || 0;
+      else if(r.status === 'pendiente') pendientes += r.days_count || 0;
+      else if(r.status === 'tentativa') tentativas += r.days_count || 0;
+    }
+    return {
+      effective_annual_days: effAnnualDays,
+      days_approved: aprobados,
+      days_pending: pendientes,
+      days_tentative: tentativas
+    };
   }
 
   // ── Render: stats strip ──
@@ -556,80 +776,13 @@
       }
     }
 
-    // Card "Ajustes manuales" — solo visible si hay ajustes propios cargados por admin.
-    const adjCard = $('vac-stat-adj-card');
-    const adjVal  = $('vac-stat-adj-value');
-    const adjSub  = $('vac-stat-adj-sub');
-    if(adjCard && adjVal && adjSub){
-      if(adjs.length === 0){
-        adjCard.style.display = 'none';
-      } else {
-        adjCard.style.display = '';
-        const sign = r.ajustes > 0 ? '+' : '';
-        adjVal.textContent = `${sign}${r.ajustes}`;
-        adjVal.classList.toggle('is-positive', r.ajustes > 0);
-        adjVal.classList.toggle('is-negative', r.ajustes < 0);
-        adjSub.onclick = () => openMyAdjustmentsModal(adjs);
-        adjSub.onkeydown = (ev) => {
-          if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); openMyAdjustmentsModal(adjs); }
-        };
-      }
-    }
-  }
-
-  // ── Modal: mis ajustes (vista empleado) ──
-  function openMyAdjustmentsModal(adjs){
-    const body = document.createElement('div');
-
-    const head = document.createElement('div');
-    head.className = 'vac-side-hint';
-    head.textContent = `${adjs.length} ajuste${adjs.length === 1 ? '' : 's'} aplicado${adjs.length === 1 ? '' : 's'} a tu saldo en el período actual.`;
-    body.appendChild(head);
-
-    const list = document.createElement('div');
-    list.style.marginTop = '12px';
-
-    for(const a of adjs){
-      const item = document.createElement('div');
-      item.className = 'vac-item';
-      item.style.borderLeftColor = a.delta_days >= 0 ? 'var(--green)' : 'var(--red)';
-
-      const dates = document.createElement('div');
-      dates.className = 'vac-item-dates';
-      const d = new Date(a.created_at);
-      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
-      item.appendChild(dates);
-
-      const meta = document.createElement('div');
-      meta.className = 'vac-item-meta';
-      const adminName = a.vac_employees?.full_name || (a.created_by ? '(admin eliminado)' : '—');
-      meta.textContent = `Aplicado por ${adminName}`;
-      item.appendChild(meta);
-
-      const note = document.createElement('div');
-      note.className = 'vac-item-note';
-      note.textContent = a.reason;
-      item.appendChild(note);
-
-      list.appendChild(item);
-    }
-
-    body.appendChild(list);
-
-    const footer = document.createElement('div');
-    const btnClose = document.createElement('button');
-    btnClose.type = 'button';
-    btnClose.className = 'vac-btn-primary';
-    btnClose.textContent = 'Cerrar';
-    btnClose.onclick = closeModal;
-    footer.appendChild(btnClose);
-
-    openModal({
-      title: 'Mis ajustes manuales',
-      sub: 'Estos ajustes los carga el admin y afectan tu saldo disponible.',
-      body,
-      footer
-    });
+    // TANDA G (item e): card "Ajustes manuales" ELIMINADA — el saldo
+    // (vac-stat-remaining) ya incorpora los ajustes vía computeRealAvailable().
+    // El detalle (motivo, quién) es admin-only ahora (RLS, migration.sql
+    // punto 5); mostrar solo el número sin detalle no aportaba y el modal
+    // (openMyAdjustmentsModal) quedó sin fuente de datos — se borró. El
+    // elemento #vac-stat-adj-card sigue en el DOM con `display:none` inline
+    // (index.html) y no se toca desde acá.
   }
 
   // ── Render: calendario mensual ──
@@ -793,6 +946,44 @@
   }
 
   // ── Render: lista "Mis solicitudes" ──
+  function _buildMyRequestItem(r){
+    const item = document.createElement('div');
+    item.className = `vac-item vac-item--${r.status}`;
+    const dates = `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`;
+    const noteHtml = r.note ? `<div class="vac-item-note">${escHtml(r.note)}</div>` : '';
+    const statusLabel = r.status[0].toUpperCase() + r.status.slice(1);
+    item.innerHTML = `
+      <div class="vac-item-dates">${dates}</div>
+      <div class="vac-item-meta">
+        <span>${r.days_count} ${r.days_count === 1 ? 'día' : 'días'}</span>
+        <span class="vac-item-status vac-${r.status}">${statusLabel}</span>
+      </div>
+      ${noteHtml}
+      <div class="vac-item-actions"></div>
+    `;
+    if(r.status === 'pendiente'){
+      const actions = item.querySelector('.vac-item-actions');
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'vac-mini-btn';
+      editBtn.textContent = 'editar';
+      editBtn.onclick = () => editRequest(r.id);
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'vac-mini-btn vac-mini-btn--danger';
+      delBtn.textContent = 'borrar';
+      delBtn.onclick = () => deleteRequest(r.id);
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+    }
+    return item;
+  }
+
+  // TANDA G (item f): loadMyData ahora trae el período actual Y el
+  // siguiente (in.(p,p+1)) — si hay solicitudes de ambos, se agrupan bajo
+  // un título de período para no mezclarlas sin aviso. Con un solo período
+  // presente (caso de hoy, sin nada cargado a futuro) el render queda
+  // idéntico al de antes: sin título extra.
   function renderMyRequests(){
     const list = $('vac-my-requests-list');
     if(!list) return;
@@ -802,50 +993,48 @@
       return;
     }
     list.innerHTML = '';
+    const curPy = getCurrentPeriodYear();
+    const groups = new Map();
     for(const r of reqs){
-      const item = document.createElement('div');
-      item.className = `vac-item vac-item--${r.status}`;
-      const dates = `${formatDmy(r.start_date)} → ${formatDmy(r.end_date)}`;
-      const noteHtml = r.note ? `<div class="vac-item-note">${escHtml(r.note)}</div>` : '';
-      const statusLabel = r.status[0].toUpperCase() + r.status.slice(1);
-      item.innerHTML = `
-        <div class="vac-item-dates">${dates}</div>
-        <div class="vac-item-meta">
-          <span>${r.days_count} ${r.days_count === 1 ? 'día' : 'días'}</span>
-          <span class="vac-item-status vac-${r.status}">${statusLabel}</span>
-        </div>
-        ${noteHtml}
-        <div class="vac-item-actions"></div>
-      `;
-      if(r.status === 'pendiente'){
-        const actions = item.querySelector('.vac-item-actions');
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'vac-mini-btn';
-        editBtn.textContent = 'editar';
-        editBtn.onclick = () => editRequest(r.id);
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'vac-mini-btn vac-mini-btn--danger';
-        delBtn.textContent = 'borrar';
-        delBtn.onclick = () => deleteRequest(r.id);
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
+      const py = r.period_year;
+      if(!groups.has(py)) groups.set(py, []);
+      groups.get(py).push(r);
+    }
+    const periods = [...groups.keys()].sort((a,b) => a - b);
+    const multi = periods.length > 1;
+    for(const py of periods){
+      if(multi){
+        const hdr = document.createElement('div');
+        hdr.className = 'vac-side-title';
+        hdr.style.marginTop = '10px';
+        hdr.textContent = py === curPy
+          ? `Período actual (oct-${py} → sep-${py + 1})`
+          : `Período siguiente (oct-${py} → sep-${py + 1})`;
+        list.appendChild(hdr);
       }
-      list.appendChild(item);
+      for(const r of groups.get(py)) list.appendChild(_buildMyRequestItem(r));
     }
   }
 
   // ── Render: nombres de back-ups ──
+  // TANDA G (item d): vista de equipo en vez de vac_employees abierta, con
+  // fallback a la query legacy pre-migración.
   async function renderBackupNames(){
     const el = $('vac-backup-list');
     if(!el) return;
     const ids = window.__vacAuth?.employee?.backup_employee_ids || [];
     if(!ids.length){ el.textContent = '—'; return; }
-    const { data, error } = await supa.from('vac_employees').select('id,full_name').in('id', ids);
+    const { data, error } = await vacFetchWithFallback(
+      () => supa.from('vac_team_employees').select('id,full_name,role').in('id', ids),
+      // fallback pre-migración G: vac_team_employees aún no existe
+      () => supa.from('vac_employees').select('id,full_name,role').in('id', ids)
+    );
     if(error || !data){ el.textContent = '—'; return; }
+    // Belt: un back-up nunca debería ser un consultor, pero filtramos igual
+    // por si el fallback legacy trae una fila así (la vista ya lo excluye).
+    const clean = data.filter(e => e.role !== 'consultor');
     const order = new Map(ids.map((id,i) => [id,i]));
-    const sorted = [...data].sort((a,b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
+    const sorted = [...clean].sort((a,b) => (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99));
     el.textContent = sorted.map(e => e.full_name).join(' · ') || '—';
   }
 
@@ -906,6 +1095,41 @@
     return { from: toIsoDate(mon), to: toIsoDate(sun) };
   }
 
+  // TANDA G (item f): suma de ajustes de un período dado, con caché en
+  // memoria (window.__vac.periodAdjCache) para no refetchear en cada tecla
+  // del form Cargar. Fallback pre-migración G: detalle legacy sumado a mano
+  // (misma convención de signo que computeRealAvailable).
+  async function fetchPeriodAdjustmentsSum(periodYear){
+    if(window.__vac.periodAdjCache.has(periodYear)) return window.__vac.periodAdjCache.get(periodYear);
+    const empId = window.__vacAuth?.employee?.id;
+    if(!empId) return 0;
+    const r = await vacFetchWithFallback(
+      () => supa.from('vac_adjustments_sum').select('total_delta').eq('employee_id', empId).eq('period_year', periodYear).maybeSingle(),
+      // fallback pre-migración G: vac_adjustments_sum aún no existe
+      () => supa.from('vac_balance_adjustments').select('delta_days').eq('employee_id', empId).eq('period_year', periodYear)
+    );
+    const total = r.error ? 0 : sumAdjustmentsResult(r.data);
+    window.__vac.periodAdjCache.set(periodYear, total);
+    return total;
+  }
+
+  // TANDA G (item f): label "Período oct-YYYY → sep-YYYY+1 · disponible: N
+  // días" arriba del resumen del form Cargar. Se crea por JS (createElement)
+  // porque index.html no tiene ese nodo — reusa la clase .vac-form-help ya
+  // estilada, no se agrega CSS nuevo.
+  function ensurePeriodLabelEl(){
+    let el = $('vac-form-period-label');
+    if(el) return el;
+    const summary = document.querySelector('#panel-vacaciones .vac-form-summary');
+    if(!summary || !summary.parentNode) return null;
+    el = document.createElement('div');
+    el.id = 'vac-form-period-label';
+    el.className = 'vac-form-help';
+    el.style.marginBottom = '8px';
+    summary.parentNode.insertBefore(el, summary);
+    return el;
+  }
+
   function updateCargarSummary(){
     const modeEl = $('vac-form-mode'), fromEl = $('vac-form-from'), toEl = $('vac-form-to');
     if(!modeEl || !fromEl || !toEl) return;
@@ -931,12 +1155,46 @@
     $('vac-form-days').textContent = days < 0 ? 0 : days;
     $('vac-form-range').textContent = (fromIso && toIso) ? `${formatDmy(fromIso)} al ${formatDmy(toIso)} inclusive` : '—';
 
-    const annual    = effectiveAnnualDays(window.__vac.balance, window.__vacAuth?.employee);
-    // BUG-VAC-FORM-ADJUSTMENTS (fix 2026-07-14, re-derivado de 203265d): el disponible del
-    // form debe incluir los ajustes manuales (vac_balance_adjustments), igual que el stats
-    // strip. days_remaining de la view NO los contempla → un empleado con ajuste negativo
-    // veía más saldo del real y podía pedir de más.
-    const remaining = computeRealAvailable(window.__vac.balance, window.__vac.adjustments || []).disponible;
+    // TANDA G (item f): si "Desde" cae en el período SIGUIENTE (ej. cargar
+    // en julio unos días de octubre que viene), el disponible se valida
+    // contra ESE período, no contra el actual. vac_balance_view no sirve acá
+    // (hardcodeada al período actual — ver buildBalanceRowFromRequests) así
+    // que se arma client-side con las requests que loadMyData ya trajo de
+    // los dos períodos + la suma de ajustes del período siguiente (fetch
+    // lazy con caché, dispara un re-render cuando llega — sin parpadeo: se
+    // muestra primero con ajustes=0 y se corrige sola al resolver).
+    const curPeriodYear = getCurrentPeriodYear();
+    const selPeriodYear = fromIso ? getPeriodYearForDate(fromIso) : curPeriodYear;
+    const isNextPeriod = !!fromIso && selPeriodYear !== curPeriodYear;
+
+    let annual, remaining;
+    if(isNextPeriod){
+      const emp = window.__vacAuth?.employee;
+      annual = (emp?.annual_days || 0) + (emp?.extra_days || 0);
+      const periodReqs = (window.__vac.requests || []).filter(r => r.period_year === selPeriodYear && r.status !== 'rechazada');
+      const syntheticRow = buildBalanceRowFromRequests(annual, periodReqs);
+      const cachedAdj = window.__vac.periodAdjCache.get(selPeriodYear);
+      if(cachedAdj === undefined){
+        fetchPeriodAdjustmentsSum(selPeriodYear).then(() => {
+          // Re-render solo si el usuario sigue parado en la misma fecha/período.
+          const stillSameDate = $('vac-form-from')?.value === fromIso;
+          if(stillSameDate) updateCargarSummary();
+        });
+      }
+      const adjArr = cachedAdj !== undefined ? [{ delta_days: cachedAdj }] : [];
+      remaining = computeRealAvailable(syntheticRow, adjArr).disponible;
+    } else {
+      // BUG-VAC-FORM-ADJUSTMENTS (fix 2026-07-14, re-derivado de 203265d): el disponible del
+      // form debe incluir los ajustes manuales (vac_balance_adjustments), igual que el stats
+      // strip. days_remaining de la view NO los contempla → un empleado con ajuste negativo
+      // veía más saldo del real y podía pedir de más.
+      annual = effectiveAnnualDays(window.__vac.balance, window.__vacAuth?.employee);
+      remaining = computeRealAvailable(window.__vac.balance, window.__vac.adjustments || []).disponible;
+    }
+    const periodLabelEl = ensurePeriodLabelEl();
+    if(periodLabelEl){
+      periodLabelEl.textContent = `Período oct-${selPeriodYear} → sep-${selPeriodYear + 1} · disponible: ${remaining} días`;
+    }
     let projected;
     if(window.__vac.editingId){
       const orig = (window.__vac.requests || []).find(x => x.id === window.__vac.editingId);
@@ -1088,17 +1346,23 @@
   }
 
   // ── Hooks de subtab ──
+  // TANDA G (item g, fix de propagación): antes, con _miState.initialized ya
+  // en true, re-entrar a "Mi calendario" NO refrescaba contra el servidor —
+  // mostraba caché stale (ej. una solicitud que el admin aprobó mientras el
+  // usuario estaba en otro sub-tab no se veía hasta un F5 manual). Ahora
+  // SIEMPRE refresca. Para evitar parpadeo: si ya había datos cacheados, se
+  // pintan primero (sync, con lo que ya había) y el fetch los reemplaza
+  // cuando llega — nunca hay un hueco vacío en el medio.
   async function onEnterMi(){
     if(!window.__vacAuth) return;
     if(!window.__vac.currentMonth) window.__vac.currentMonth = new Date();
-    if(!_miState.initialized){
-      _miState.initialized = true;
-      await refreshAndRender();
-    } else {
+    if(_miState.initialized){
       renderStatsStrip();
       renderMonthGrid();
       renderMyRequests();
     }
+    _miState.initialized = true;
+    await refreshAndRender();
   }
   async function onEnterCargar(){
     if(!window.__vacAuth) return;
@@ -1121,7 +1385,10 @@
     employees: [],
     requests: [],
     holidays: [],
-    balances: new Map(),       // employee_id -> balance row
+    // TANDA G: `balances` (fetch de vac_balance_view para esta vista)
+    // ELIMINADO — 0 consumidores verificados por grep, era leak de red puro
+    // (saldo de todo el equipo visible a cualquier no-admin). El Resumen del
+    // equipo admin tiene su propio fetch en loadAdminData, intacto.
     monthBoundaries: [],       // [{ year, month, startIdx, count }]
     monthStartIdxs: [],        // índices day-from-start de cada 1° del mes
     totalDays: 0,
@@ -1150,35 +1417,49 @@
     const { startIso, endIso } = getCurrentPeriodRange();
 
     const queries = [
-      supa.from('vac_employees')
-        .select('id,email,full_name,role,annual_days,backup_employee_ids,active,birthday_day,birthday_month')
-        .eq('active', true)
-        .order('full_name', { ascending: true }),
-      supa.from('vac_requests')
-        .select('id,employee_id,start_date,end_date,days_count,status,note')
-        .eq('period_year', periodYear)
-        .neq('status', 'rechazada')
-        .order('start_date', { ascending: true }),
+      // TANDA G (item b): vista de equipo (columnas mínimas, sin saldo) en
+      // vez de vac_employees abierta. Fallback pre-migración: la query
+      // legacy de siempre (necesita `role` igual, ya lo seleccionaba).
+      vacFetchWithFallback(
+        () => supa.from('vac_team_employees').select('id,full_name,birthday_day,birthday_month,role').order('full_name', { ascending: true }),
+        // fallback pre-migración G: vac_team_employees aún no existe
+        () => supa.from('vac_employees')
+          .select('id,email,full_name,role,annual_days,backup_employee_ids,active,birthday_day,birthday_month')
+          .eq('active', true)
+          .order('full_name', { ascending: true })
+      ),
+      // TANDA G (item b): vista de equipo SIN `note` (la nota de un
+      // compañero era el peor leak: visible hasta en el tooltip del Gantt —
+      // ver renderTeamGantt/showBarTooltip, ya no la leen). Fallback
+      // pre-migración: la query legacy con note incluida, pero el render ya
+      // no la consume tampoco ahí (item c) — no vuelve a filtrar al DOM.
+      vacFetchWithFallback(
+        () => supa.from('vac_team_requests').select('id,employee_id,start_date,end_date,days_count,status,period_year').eq('period_year', periodYear).neq('status', 'rechazada').order('start_date', { ascending: true }),
+        // fallback pre-migración G: vac_team_requests aún no existe
+        () => supa.from('vac_requests')
+          .select('id,employee_id,start_date,end_date,days_count,status,note')
+          .eq('period_year', periodYear)
+          .neq('status', 'rechazada')
+          .order('start_date', { ascending: true })
+      ),
       supa.from('vac_holidays')
         .select('date,name,type')
         .gte('date', startIso).lte('date', endIso)
-        .order('date', { ascending: true }),
-      supa.from('vac_balance_view').select('*')
+        .order('date', { ascending: true })
     ];
-    let eRes, rRes, hRes, bRes;
+    let eRes, rRes, hRes;
     try {
-      [eRes, rRes, hRes, bRes] = await Promise.all(queries);
+      [eRes, rRes, hRes] = await Promise.all(queries);
     } catch(e){ vacLoadError('equipo', e.message); return false; }
-    const _err = _vacFirstErr([eRes, rRes, hRes, bRes]);
+    const _err = _vacFirstErr([eRes, rRes, hRes]);
     if(_err){ vacLoadError('equipo', _err); return false; }
     vacClearLoadError('equipo');
 
-    window.__vac.team.employees = eRes?.data || [];
+    // Belt: la vista ya filtra role<>'consultor'; el fallback legacy
+    // (pre-migración) pega directo a vac_employees sin ese filtro.
+    window.__vac.team.employees = (eRes?.data || []).filter(e => e.role !== 'consultor');
     window.__vac.team.requests  = rRes?.data || [];
     window.__vac.team.holidays  = hRes?.data || [];
-    const balMap = new Map();
-    for(const b of (bRes?.data || [])) balMap.set(b.employee_id, b);
-    window.__vac.team.balances = balMap;
     return true;
   }
 
@@ -1372,7 +1653,9 @@
         bar.dataset.start = r.start_date;
         bar.dataset.end = r.end_date;
         bar.dataset.days = String(r.days_count);
-        bar.dataset.note = r.note || '';
+        // TANDA G (item c): SIN nota — el tooltip del Gantt de equipo ya no
+        // muestra la nota de solicitudes ajenas (privacidad; vac_team_requests
+        // ni siquiera la trae). No queda código muerto esperándola.
         bar.dataset.status = r.status;
         if(width > 50) bar.textContent = `${r.days_count}d`;
         bar.addEventListener('mouseenter', showBarTooltip);
@@ -1677,8 +1960,8 @@
     const status = t.dataset.status || '';
     const stCap = status ? status[0].toUpperCase() + status.slice(1) : '';
     const dates = `${formatDmy(t.dataset.start)} → ${formatDmy(t.dataset.end)}`;
-    const note = t.dataset.note ? `<div class="vac-tip-meta">${escHtml(t.dataset.note)}</div>` : '';
-    tip.innerHTML = `<strong>${escHtml(t.dataset.empName)}</strong><br>${dates} (${escHtml(t.dataset.days)}d)<div class="vac-tip-meta">${escHtml(stCap)}</div>${note}`;
+    // TANDA G (item c): tooltip SIN nota — solo nombre + fechas + estado.
+    tip.innerHTML = `<strong>${escHtml(t.dataset.empName)}</strong><br>${dates} (${escHtml(t.dataset.days)}d)<div class="vac-tip-meta">${escHtml(stCap)}</div>`;
     tip.style.display = 'block';
     moveBarTooltip(e);
   }
@@ -1695,7 +1978,6 @@
     window.__vac.team.employees = [];
     window.__vac.team.requests = [];
     window.__vac.team.holidays = [];
-    window.__vac.team.balances = new Map();
     window.__vac.team.initialized = false;
     window.__vac.team.initialScrollDone = false;
     window.__vac.team.filterEmpId = '';
@@ -3253,6 +3535,11 @@
   function switchSubtab(name){
     if(!name) return;
     if(name === 'admin' && !(window.__vacAuth && window.__vacAuth.isAdmin)) return;
+    // TANDA G (item h, belt): un consultor no tiene subtabs visibles
+    // (showConsultorGate las oculta), pero el deep-link (?tab=vacaciones&sub=)
+    // podría intentar forzar una igual — no rompe nada porque las queries de
+    // abajo ya vienen recortadas por RLS, pero evita el fetch innecesario.
+    if(window.__vacAuth && window.__vacAuth.isConsultor) return;
     window.__vac.currentSubtab = name;
     document.querySelectorAll('#panel-vacaciones .vac-subtab').forEach(b => {
       const on = b.dataset.subtab === name;
@@ -3271,6 +3558,7 @@
   // Hooks que llama switchTab() del index
   window.vacOnEnterTab = function(){
     if(!window.__vacAuth) return;
+    if(window.__vacAuth.isConsultor) return; // TANDA G (item h, belt)
     updatePendingBadge();
     const cur = window.__vac.currentSubtab;
     if(cur === 'mi') onEnterMi();
