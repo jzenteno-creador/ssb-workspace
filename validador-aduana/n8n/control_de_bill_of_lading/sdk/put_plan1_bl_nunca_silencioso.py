@@ -56,8 +56,10 @@ N_SEND      = "Send a message"
 N_CLAIM     = "Claim envío (email_sent)"
 N_IF        = "IF claim ganado"
 N_REVERT    = "Revertir claim (mail falló)"
+N_COMPARADOR = "COMPARADOR - BL vs Aduana vs Booking"
+N_INY_FC     = "Inyectar Factura"
 # Nodos editados en su lugar (drift permitido) + nodos nuevos:
-TARGETS   = {N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_ARMAR_MAIL, N_SEND}
+TARGETS   = {N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_ARMAR_MAIL, N_SEND, N_COMPARADOR, N_INY_FC}
 NEW_NODES = {N_CLAIM, N_IF, N_REVERT}
 
 def api_key():
@@ -128,6 +130,21 @@ def apply_transforms(pre):
     if "email_sent:" in code_armar:
         sys.exit("ABORT T6: el espejo code_armar_fila_control_bl.js todavía asigna email_sent")
     by_name[N_ARMAR_CBL]["parameters"]["jsCode"] = code_armar
+
+    # ---- T8 (PLANCOMPLETO D, §5.12): COMPARADOR — destino en tránsito = INFO,
+    #      finales (Aduana/Booking/Factura) se comparan entre sí (espejo editado,
+    #      test dual-versión _plancompleto_d_comparador_test.js 15/15)
+    code_comp = open(SDK + "_comparador.js", encoding="utf-8").read()
+    if "PLANCOMPLETO-D-DESTINO" not in code_comp:
+        sys.exit("ABORT T8: _comparador.js no es la versión PLANCOMPLETO-D (falta marker)")
+    by_name[N_COMPARADOR]["parameters"]["jsCode"] = code_comp
+
+    # ---- T9 (PLANCOMPLETO D, EXPLORE B4b): Inyectar Factura — refacturación solo
+    #      si el interno PARECE una orden (esRefacturacion; internos Dow 0926… no disparan)
+    code_iny = open(SDK + "code_inyectar_factura_v2.js", encoding="utf-8").read()
+    if "esRefacturacion" not in code_iny:
+        sys.exit("ABORT T9: code_inyectar_factura_v2.js no trae esRefacturacion (¿versión vieja?)")
+    by_name[N_INY_FC]["parameters"]["jsCode"] = code_iny
 
     # ---- T7 (plancompleto A/B): Armar fila Mailing suma notify_key/notify_name
     code_armar_mail = open(SDK + "code_armar_fila_mailing.js", encoding="utf-8").read()
