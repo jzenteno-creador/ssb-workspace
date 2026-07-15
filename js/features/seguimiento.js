@@ -21,7 +21,17 @@
    (501) — smoke de esa acción SOLO en prod; loadSeguimiento lee
    Supabase directo y SÍ es verificable en local. Modal Good Issue con
    Escape-handler dinámico (_segEscHandler se agrega/quita vía
-   addEventListener/removeEventListener en cada apertura/cierre). */
+   addEventListener/removeEventListener en cada apertura/cierre).
+   PLANCOMPLETO TANDA E (migración v3, NO aplicada al momento de este
+   commit): consume sold_to_key/sold_to_name/notify_name/pais_destino_final/
+   roleo_at/roleo_from_vessel/roleo_to_vessel/roleo_pendiente_bl — columnas
+   AL FINAL del select('*'), así que si la vista todavía es v2 llegan
+   `undefined`. Todo acceso a esas
+   columnas usa `r.campo` con checks `!!`/truthy, nunca asume la columna
+   presente. El filtro Sold-to y la opción "roleadas" del select urgencia
+   se inyectan en runtime (createElement) sobre #seg-filters — index.html
+   no se toca en esta tanda; mockup de referencia:
+   docs/mockups/mockup_seguimiento_plancompleto.html. */
 import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates/skel dejaron de ser globales de S1
 
 /* ═══════════ Seguimiento — solapa (WP3) ═══════════ */
@@ -31,7 +41,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
    createElement + textContent en todo dato dinámico (cero innerHTML con datos;
    skelCardsHtml() es la única excepción — label estático, importada de
    tarifas.js desde B3.4 (antes global de S1), mismo molde que los otros
-   usos en la app). Fuente visual: docs/mockups/mockup_seguimiento.html. */
+   usos en la app). Fuente visual: docs/mockups/mockup_seguimiento.html +
+   docs/mockups/mockup_seguimiento_plancompleto.html (v3, TANDA E). */
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
   const svgUse = (href, cls) => { const NS='http://www.w3.org/2000/svg'; const s=document.createElementNS(NS,'svg'); s.setAttribute('class',cls||'ic'); s.setAttribute('aria-hidden','true'); const u=document.createElementNS(NS,'use'); u.setAttribute('href',href); s.appendChild(u); return s; };
@@ -42,7 +53,9 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   let _loading = false;
   let _loaded = false;
   let _sortK = 'dl', _sortDir = 1;
-  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', q:'' };
+  // soldto (item 49): filtro nuevo por sold_to_name (v3) — undefined/vacío en TODAS
+  // las filas si la vista todavía es v2 → el select queda con solo "todos" (degrade).
+  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
   let _showArch = false;
 
   // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
@@ -93,6 +106,66 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
   function computeAll(){ return _rows.map(r => ({ r, c: computeRow(r) })); }
 
+  // Semáforo de progreso (item 47) — 5 pasos GI→Control→CO→Zarpe→Envío, función
+  // PURA (nada de DOM: se testea aislada, molde cblEsHuerfano de control-bl.js).
+  // done=true pinta verde; false queda gris — NUNCA rojo acá: lo pendiente en este
+  // semáforo es secuencia normal, no error (el error ya lo señala la columna Alertas).
+  function mkSemaforo(r){
+    const steps = [
+      { key:'gi', label:'Good Issue', done: !!(r && r.despacho_at) },
+      { key:'control', label:'Control BL', done: !!(r && r.bl_controlado_at) },
+      { key:'co', label:'Cert. Origen', done: !!(r && (r.co_estado === 'generado' || r.co_requerimiento === 'no_requerido')) },
+      { key:'zarpe', label:'Zarpe (ATD)', done: !!(r && r.atd) },
+      { key:'envio', label:'Envío', done: !!(r && r.first_real_send_at) },
+    ];
+    return { steps, doneCount: steps.filter(s => s.done).length, total: steps.length };
+  }
+
+  function semaforoCell(r){
+    const td = el('td','seg-semaforo');
+    const { steps, doneCount, total } = mkSemaforo(r);
+    const bar = el('div');
+    bar.style.display = 'flex';
+    bar.style.gap = '2px';
+    bar.style.width = '78px';
+    const titleParts = [];
+    for(const s of steps){
+      const seg = el('div');
+      seg.style.flex = '1';
+      seg.style.height = '6px';
+      seg.style.borderRadius = '3px';
+      seg.style.background = s.done ? 'var(--green)' : 'var(--seg-line-strong)';
+      bar.appendChild(seg);
+      titleParts.push((s.done ? '✓ ' : '· ') + s.label);
+    }
+    bar.title = titleParts.join('\n') + '\n(' + doneCount + '/' + total + ')';
+    td.appendChild(bar);
+    const lbl = el('span','seg-faint', doneCount + '/' + total);
+    lbl.style.fontSize = '10px';
+    lbl.style.display = 'block';
+    lbl.style.marginTop = '2px';
+    td.appendChild(lbl);
+    return td;
+  }
+
+  // Multi-orden pegadas (item 50): ≥2 tokens numéricos en el buscador → set de
+  // órdenes EXACTAS normalizadas (nunca substring). Función PURA, testeable aislada.
+  function parseMultiOrderQuery(q){
+    const toks = String(q || '').split(/[\s,;]+/).map(t => t.trim()).filter(Boolean);
+    const numToks = toks.filter(t => /^\d+$/.test(t));
+    if(numToks.length < 2) return null;
+    return new Set(numToks.map(normalizeOrdenLocal));
+  }
+
+  // Etiqueta de envío (item 46) — función PURA (predicado + copy), testeable aislada.
+  function envioLabel(r){
+    if(r && r.first_real_send_at){
+      if(r.mailing_status === 'ENVIADO' && r.sent_test_mode) return { kind:'sent_test', text:'enviado (test)', date:r.first_real_send_at };
+      return { kind:'sent', text:'enviado', date:r.first_real_send_at };
+    }
+    return { kind:'pending', text:'pendiente', date:null };
+  }
+
   // ═══ Carga ═══
   window.loadSeguimiento = async function(){
     if(_loading) return;
@@ -114,6 +187,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       _rows = data || [];
       _loaded = true;
       populateClienteFilter();
+      populateSoldToFilter();
       renderAll();
     } finally {
       _loading = false;
@@ -132,6 +206,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(sel.value !== cur) _filters.cliente = sel.value; // el cliente filtrado desapareció del dataset
   }
 
+  // Sold-to (item 49, v3): mismo molde que populateClienteFilter pero sobre
+  // sold_to_name. Si la vista todavía es v2, _rows no trae ese campo → names
+  // queda vacío → el select solo tiene "todos" (degrade elegante, sin error).
+  function populateSoldToFilter(){
+    const sel = $('seg-f-soldto'); if(!sel) return;
+    const cur = sel.value;
+    while(sel.firstChild) sel.removeChild(sel.firstChild);
+    const optAll = el('option', null, 'todos'); optAll.value = '';
+    sel.appendChild(optAll);
+    const names = [...new Set(_rows.map(r => r.sold_to_name).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    for(const n of names){ const o = el('option', null, n); o.value = n; sel.appendChild(o); }
+    sel.value = names.includes(cur) ? cur : '';
+    if(sel.value !== cur) _filters.soldto = sel.value;
+  }
+
   // ═══ Render ═══
   function renderAll(){
     renderTriage();
@@ -144,10 +233,14 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const box = $('seg-triage'); if(!box) return;
     const active = computeAll().filter(x => !x.c.archived);
     const nVencidas  = active.filter(x => x.c.bucket === 'vencida').length;
+    // "por vencer" (O3, John en el crudo: "no sé si tiene tanto sentido... le
+    // cambiaría este filtro") deja de ser chip/filtro seleccionable — queda como
+    // conteo informativo dentro del grupo de envío, ver mkGroup(info) abajo.
     const nPorVencer = active.filter(x => x.c.bucket === 'porvencer').length;
     const nPendEnvio = active.filter(x => x.r.mot === 'maritimo' && !x.r.first_real_send_at).length;
     const nGi        = active.filter(x => x.c.alerts.includes('despacho_pendiente')).length;
     const nCo        = active.filter(x => x.c.alerts.includes('co_sin_definir')).length;
+    const nRoleadas  = active.filter(x => x.c.alerts.includes('roleo_pendiente_bl')).length; // O4/item 14
     const nAlertas   = active.filter(x => x.c.alerts.length > 0).length;
 
     while(box.firstChild) box.removeChild(box.firstChild);
@@ -161,21 +254,29 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       b.onclick = () => { _filters.urgencia = (_filters.urgencia === key) ? '' : key; renderAll(); };
       return b;
     };
-    const mkGroup = (label, chips) => {
+    const mkGroup = (label, chips, info) => {
       const g = el('div','seg-tgroup');
       g.appendChild(el('div','g', label));
       const row = el('div','row');
       chips.forEach(c => row.appendChild(c));
       g.appendChild(row);
+      if(info){
+        const infoEl = el('div', null, info);
+        infoEl.style.fontSize = 'var(--fs-2xs)';
+        infoEl.style.color = 'var(--seg-ink-faint)';
+        infoEl.style.marginTop = '6px';
+        infoEl.style.padding = '0 2px';
+        g.appendChild(infoEl);
+      }
       box.appendChild(g);
     };
     mkGroup('Envío de documentación', [
       mkChip('vencidas', nVencidas, 'Vencidas', 'zarpó y venció el plazo de envío', 'red'),
-      mkChip('porvencer', nPorVencer, 'Por vencer', 'límite en pocos días', 'amber'),
       mkChip('pendenvio', nPendEnvio, 'Pend. de envío', 'doc aún no enviada al cliente', 'blue'),
-    ]);
+    ], nPorVencer > 0 ? (nPorVencer + ' por vencer en los próximos días (informativo, no filtra)') : null);
     mkGroup('Planta', [ mkChip('gi', nGi, 'Good Issue pend.', 'registrar fecha de planta', 'blue') ]);
     mkGroup('Cert. de Origen', [ mkChip('co', nCo, 'Definir CO', '¿esta orden lleva certificado?', 'gray') ]);
+    mkGroup('Roleo', [ mkChip('roleo', nRoleadas, 'Roleadas', 'pendiente de BL nuevo', 'amber') ]);
     mkGroup('Resumen', [ mkChip('alertas', nAlertas, 'Alertas', 'ver todas', 'purple') ]);
   }
 
@@ -200,7 +301,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   function syncFilterSelects(){
-    const map = { urgencia:'seg-f-urgencia', mot:'seg-f-mot', kind:'seg-f-kind', co:'seg-f-co', cliente:'seg-f-cliente' };
+    const map = { urgencia:'seg-f-urgencia', mot:'seg-f-mot', kind:'seg-f-kind', co:'seg-f-co', cliente:'seg-f-cliente', soldto:'seg-f-soldto' };
     for(const k in map){ const s = $(map[k]); if(s && s.value !== _filters[k]) s.value = _filters[k]; }
   }
 
@@ -208,23 +309,31 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(!_showArch && x.c.archived) return false;
     const q = (_filters.q || '').trim();
     if(q){
-      const qNorm = /^\d+$/.test(q) ? normalizeOrdenLocal(q) : q;
-      const qLower = qNorm.toLowerCase();
-      const haystack = [x.r.order_number, x.r.ship_to_name, x.r.vessel, x.r.booking_no, x.r.pod];
-      if(!haystack.some(v => v != null && String(v).toLowerCase().includes(qLower))) return false;
+      // Multi-orden pegadas (item 50): ≥2 tokens numéricos → match EXACTO por
+      // set de órdenes normalizadas; si no, cae al substring de siempre.
+      const multi = parseMultiOrderQuery(q);
+      if(multi){
+        if(!multi.has(normalizeOrdenLocal(x.r.order_number))) return false;
+      } else {
+        const qNorm = /^\d+$/.test(q) ? normalizeOrdenLocal(q) : q;
+        const qLower = qNorm.toLowerCase();
+        const haystack = [x.r.order_number, x.r.ship_to_name, x.r.vessel, x.r.booking_no, x.r.pod];
+        if(!haystack.some(v => v != null && String(v).toLowerCase().includes(qLower))) return false;
+      }
     }
     const fa = _filters.urgencia;
     if(fa === 'alertas'){ if(!(x.c.alerts.length > 0)) return false; }
     else if(fa === 'limpias'){ if(x.c.alerts.length > 0 || x.c.bucket === 'vencida') return false; }
     else if(fa === 'vencidas'){ if(x.c.bucket !== 'vencida') return false; }
-    else if(fa === 'porvencer'){ if(x.c.bucket !== 'porvencer') return false; }
     else if(fa === 'pendenvio'){ if(!(x.r.mot === 'maritimo' && !x.r.first_real_send_at)) return false; }
     else if(fa === 'gi'){ if(!x.c.alerts.includes('despacho_pendiente')) return false; }
     else if(fa === 'co'){ if(!x.c.alerts.includes('co_sin_definir')) return false; }
+    else if(fa === 'roleo'){ if(!x.c.alerts.includes('roleo_pendiente_bl')) return false; } // item 14/O4
     if(_filters.mot && x.r.mot !== _filters.mot) return false;
     if(_filters.kind && x.r.order_kind !== _filters.kind) return false;
     if(_filters.co && x.r.co_requerimiento !== _filters.co) return false;
     if(_filters.cliente && x.r.ship_to_name !== _filters.cliente) return false;
+    if(_filters.soldto && x.r.sold_to_name !== _filters.soldto) return false; // v3 (undefined en v2 → nunca matchea, degrade OK)
     return true;
   }
 
@@ -246,7 +355,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   function updateCount(tot, vis){
     const cEl = $('seg-count'); if(!cEl) return;
     while(cEl.firstChild) cEl.removeChild(cEl.firstChild);
-    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente || _filters.q) : true;
+    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente || _filters.soldto || _filters.q) : true;
     if(filtersActive){
       cEl.appendChild(el('b', null, String(vis)));
       cEl.appendChild(document.createTextNode(' de ' + tot + ' órdenes'));
@@ -257,20 +366,36 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(clearBtn) clearBtn.classList.toggle('vis', filtersActive);
   }
 
-  // ── Docs (v2): FC/PL/COz/COp/PE/CRT/COA ──
+  // ── Docs (v3): BL/FC/PL/COz/COp/PE/CRT/COA — regla 52 (EXPLORE 2026-07-14): la
+  // existencia del DOCUMENTO (esta columna) y el JUICIO del control (columna
+  // Control BL) son señales SEPARADAS. BL acá = "¿el último control trajo un BL
+  // asentado?" (r.doc_bl), no "¿el control dio OK?" — eso lo dice controlBadge().
   function renderDocs(r){
     const wrap = el('span','seg-docs');
     const add = (label, cls, title) => { const d = el('span','seg-doc ' + cls, label); d.title = title; wrap.appendChild(d); };
+    // PL (item 42, bonus EXPLORE): la view no trae señal de Packing List — se
+    // verifica recién al enviar (Mailing). Estilo NEUTRO propio (inline, no la
+    // clase 'off' de "falta") para no leerse como ámbar de falta: es "s/d todavía",
+    // no "debería estar y no está".
+    const addSoft = (label, title) => {
+      const d = el('span','seg-doc off', label);
+      d.title = title;
+      d.style.fontStyle = 'italic';
+      d.style.opacity = '.62';
+      wrap.appendChild(d);
+    };
     if(r.mot === 'terrestre'){
       add('FC','off','Factura — sin dato (satélites terrestres aún no integrados)');
-      add('PL','off','Packing List — sin dato (se verifica recién al enviar por Mailing)');
+      addSoft('PL','Packing List — s/d (se verifica recién al enviar por Mailing)');
       add('CRT','fut','CRT — documento de exportación terrestre (reemplaza al BL). Fase futura: aún sin dato en el sistema');
       return wrap;
     }
+    // BL (chip NUEVO, item 42): existencia según el ÚLTIMO control asentado —
+    // señal de DOCUMENTO, no de resultado. r.doc_bl viene de la base del select
+    // (ya vivía en v2); si algún día faltara (undefined), !!undefined → 'off'.
+    add('BL', r.doc_bl ? 'on' : 'off', 'Conocimiento de Embarque' + (r.doc_bl ? ' ✓ disponible (según el último control)' : ' — sin control con BL asentado para esta orden'));
     add('FC', r.doc_factura ? 'on' : 'off', 'Factura' + (r.doc_factura ? ' ✓' : ' — falta'));
-    // deuda: la view no trae señal de Packing List — se verifica recién al enviar
-    // (Mailing), nunca "on" acá.
-    add('PL','off','Packing List — sin dato (se verifica recién al enviar por Mailing)');
+    addSoft('PL','Packing List — s/d (se verifica recién al enviar por Mailing)');
     if(r.co_requerimiento !== 'no_requerido'){
       const coCls = r.co_estado === 'generado' ? 'on' : (r.co_requerimiento === 'sin_definir' ? 'q' : 'off');
       const coTitle = r.co_estado === 'generado' ? ' ✓ generado' : (r.co_requerimiento === 'sin_definir' ? ' — según definición de CO' : ' — falta');
@@ -354,6 +479,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     co_inesperado:       { cls:'info', icon:'#i-stamp',  txt:() => 'Hay CO pero figura "no requiere"',     action:null },
     co_error_reciente:   { cls:'warn', icon:'#i-alert',  txt:() => 'La regeneración del CO falló',         action:(r) => deepLink(r.order_number, 'cert-origen') },
     envio_vencido:       { cls:'bad',  icon:'#i-alert',  txt:(r) => 'Vencida hace ' + diasDesde(r.deadline_envio) + ' días', action:(r) => deepLink(r.order_number, 'mailing') },
+    // v3 (O4/item 14 — John en el crudo: "voy a ver si lo pongo en seguimiento
+    // porque van a tener listado lo que está pendiente"): roleo informado sin
+    // control BL posterior → deep-link a Control BL, ahí se sube/controla el BL nuevo.
+    roleo_pendiente_bl:  { cls:'warn', icon:'#i-rotate', txt:() => '⟳ Roleada — pendiente de BL nuevo',   action:(r) => deepLink(r.order_number, 'control-bl') },
   };
   // NOTA (deuda anotada): co_config_conflicto/co_revisar/co_sin_definir/co_inesperado
   // no traen deep-link en el spec de WP3 — editar co_requerimiento vive en un modal
@@ -402,21 +531,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return td;
   }
 
+  // Envío (item 46) — etiquetas nuevas sobre envioLabel(): pendiente / enviado
+  // ✓fecha / enviado (test) diferenciado.
   function envioCell(r){
     const td = el('td');
-    if(r.first_real_send_at){
-      td.appendChild(document.createTextNode(fmtDM(r.first_real_send_at)));
-      if(r.mailing_status === 'ENVIADO' && r.sent_test_mode){
-        td.appendChild(document.createTextNode(' '));
-        const b = mkBadge('mut','(test)');
-        b.title = 'Enviado bajo TEST_MODE — no cuenta para el KPI.';
-        td.appendChild(b);
-      }
-    } else {
-      const span = el('span','seg-faint','—');
-      span.title = r.mot === 'terrestre' ? 'Seguimiento manual — sin envío por Mailing.' : 'Zarpó y la doc todavía no salió por Mailing (envío real).';
-      td.appendChild(span);
+    const lab = envioLabel(r);
+    if(lab.kind === 'pending'){
+      const b = mkBadge('mut','pendiente');
+      b.title = r.mot === 'terrestre' ? 'Seguimiento manual — sin envío por Mailing.' : 'Zarpó y la doc todavía no salió por Mailing (envío real).';
+      td.appendChild(b);
+      return td;
     }
+    const isTest = lab.kind === 'sent_test';
+    const b = mkBadge(isTest ? 'mut' : 'ok', (isTest ? 'enviado (test) ' : 'enviado ✓ ') + fmtDM(lab.date));
+    b.title = isTest ? 'Enviado bajo TEST_MODE — no cuenta para el KPI.' : ('Envío real confirmado ' + fmtDM(lab.date) + '.');
+    td.appendChild(b);
     return td;
   }
 
@@ -433,6 +562,9 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       if(enabled) b.onclick = onClick;
       return b;
     };
+    // item 51 — 3 accesos directos por fila (control-bl / cert-origen / mailing),
+    // los 3 vía deepLink() → window.__segPendingOrder + switchTab(). Ya verificado
+    // que cert-origen.js consume el bus en loadCertOrigen() (prefill de co-orden).
     wrap.appendChild(mkLink('#i-file-text','Ver control BL','Sin control BL', hasControl, () => deepLink(r.order_number, 'control-bl')));
     wrap.appendChild(mkLink('#i-stamp','Ver certificado','Sin certificado generado', hasCoDoc, () => deepLink(r.order_number, 'cert-origen')));
     wrap.appendChild(mkLink('#i-mail','Ver en Mailing','Sin asiento en Mailing', hasMailing, () => deepLink(r.order_number, 'mailing')));
@@ -455,9 +587,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     tdOrden.appendChild(el('div','seg-kind', (r.order_kind || '—') + ' · ' + (r.mot || '—')));
     tr.appendChild(tdOrden);
 
+    // Cliente (item h) — ship_to como principal; sold_to (v3) como sub-línea SOLO
+    // si difiere; notify (v3) en el title. Degrade natural: undefined → nada extra.
     const tdCli = el('td','seg-cliente');
-    if(r.ship_to_name) tdCli.textContent = r.ship_to_name;
-    else tdCli.appendChild(el('span','seg-faint','— sin asiento mailing'));
+    if(r.ship_to_name){
+      tdCli.appendChild(document.createTextNode(r.ship_to_name));
+      if(r.sold_to_name && r.sold_to_name !== r.ship_to_name){
+        const sub = el('div', null, 'sold-to: ' + r.sold_to_name);
+        sub.style.fontSize = 'var(--fs-2xs)';
+        sub.style.color = 'var(--seg-ink-faint)';
+        tdCli.appendChild(sub);
+      }
+      if(r.notify_name) tdCli.title = 'Notify: ' + r.notify_name;
+    } else {
+      tdCli.appendChild(el('span','seg-faint','— sin asiento mailing'));
+    }
     tr.appendChild(tdCli);
 
     const tdDest = el('td');
@@ -466,14 +610,17 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     else { tdDest.appendChild(el('span','seg-faint','—')); }
     tr.appendChild(tdDest);
 
+    // GI (item 45): "GI pendiente de confirmación" reemplaza el término técnico
+    // "backfill" (jerga de importación) — el glosario operativo real es
+    // "falta confirmar la salida de planta".
     const tdGi = el('td');
     if(!r.despacho_at){
-      const b = mkBadge('mut','— backfill');
-      b.title = 'Fila del backfill inicial — falta la fecha real de Good Issue.';
+      const b = mkBadge('mut','GI pendiente de confirmación');
+      b.title = 'Falta confirmar la fecha real de salida de planta (Good Issue).';
       tdGi.appendChild(b);
     } else {
       const span = el('span', null, fmtDM(r.despacho_at));
-      span.title = 'GI registrado' + (r.despacho_source === 'backfill' ? ' (backfill, luego completado)' : ' manualmente') + (r.despacho_by ? (' por ' + r.despacho_by) : '');
+      span.title = 'GI registrado' + (r.despacho_source === 'backfill' ? ' (confirmado después del alta)' : ' manualmente') + (r.despacho_by ? (' por ' + r.despacho_by) : '');
       tdGi.appendChild(span);
     }
     tr.appendChild(tdGi);
@@ -481,6 +628,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl);
     const tdCo = el('td'); tdCo.appendChild(coBadgeCell(r)); tr.appendChild(tdCo);
     const tdDocs = el('td'); tdDocs.appendChild(renderDocs(r)); tr.appendChild(tdDocs);
+    tr.appendChild(semaforoCell(r)); // item 47
 
     tr.appendChild(dlCell(r, c));
     tr.appendChild(envioCell(r));
@@ -498,6 +646,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     { label:'Control BL', sortKey:null },
     { label:'Cert. Origen', sortKey:null },
     { label:'Docs', sortKey:null },
+    { label:'Progreso', sortKey:null, title:'GI → Control → CO → Zarpe → Envío — verde = cumplido, gris = pendiente (no es error)' },
     { label:'ATD → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
     { label:'Envío', sortKey:null },
     { label:'Alertas', sortKey:null },
@@ -778,15 +927,76 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
   }
 
+  // Leyenda de Docs (v3): reconstruida en runtime (createElement, sin innerHTML)
+  // para sumar BL y el copy nuevo de PL sin tocar el markup estático de index.html.
+  function updateDocLegend(){
+    const legend = $('seg-legend'); if(!legend) return;
+    while(legend.firstChild) legend.removeChild(legend.firstChild);
+    legend.appendChild(el('b', null, 'Docs:'));
+    legend.appendChild(document.createTextNode(' BL Conocimiento de Embarque (según el último control) · FC Factura · PL Packing List (se verifica al enviar) · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · CRT doc. de exportación terrestre · COA futuro (ppal. trade) — '));
+    const ital = el('span', null, 'punteado = aún sin dato en el sistema');
+    ital.style.fontStyle = 'italic';
+    legend.appendChild(ital);
+    legend.appendChild(document.createTextNode(' · rayado = falta · '));
+    const verde = el('b', null, 'verde');
+    verde.style.color = 'var(--green)';
+    legend.appendChild(verde);
+    legend.appendChild(document.createTextNode(' = presente'));
+  }
+
+  // Filtro Sold-to (item 49, v3): #seg-filters es estático en index.html pero NO
+  // tiene este <select> todavía (index.html no se toca en esta tanda) — se inyecta
+  // en runtime, idempotente (si ya existe, no duplica), mismo molde visual .seg-f
+  // (la regla CSS #panel-seguimiento .seg-f select ya cubre cualquier <select>
+  // dentro de un .seg-f, sin necesitar clases nuevas).
+  function ensureSoldToFilterUI(){
+    if($('seg-f-soldto')) return;
+    const filters = $('seg-filters'); if(!filters) return;
+    const clienteSel = $('seg-f-cliente');
+    const clienteWrap = clienteSel ? clienteSel.closest('.seg-f') : null;
+    const wrap = el('div','seg-f');
+    const lbl = el('label', null, 'Sold-to');
+    lbl.setAttribute('for','seg-f-soldto');
+    const sel = document.createElement('select');
+    sel.id = 'seg-f-soldto';
+    const optAll = el('option', null, 'todos'); optAll.value = '';
+    sel.appendChild(optAll);
+    wrap.appendChild(lbl);
+    wrap.appendChild(sel);
+    if(clienteWrap && clienteWrap.parentNode === filters) filters.insertBefore(wrap, clienteWrap.nextSibling);
+    else filters.appendChild(wrap);
+  }
+
   // ═══ Wiring (delegación única en el panel, patrón mailing/cert-origen) ═══
   (function wire(){
     const panel = $('panel-seguimiento'); if(!panel) return;
+
+    // v3 (TANDA E): inyectar el select Sold-to y la opción "roleadas" ANTES de
+    // wirear el loop genérico de abajo, así seg-f-soldto queda cubierto por él.
+    ensureSoldToFilterUI();
+    updateDocLegend();
+    const qInput = $('seg-f-q');
+    if(qInput) qInput.placeholder = 'Nº de orden… (0118…=118… · pegá varias para buscarlas juntas)';
+    // "por vencer" deja de ser filtro seleccionable (O3) — se quita del <select>
+    // legacy (index.html no se toca) y se suma la opción "roleadas" nueva.
+    const urgSel = $('seg-f-urgencia');
+    if(urgSel){
+      const stale = urgSel.querySelector('option[value="porvencer"]');
+      if(stale) stale.remove();
+      if(!urgSel.querySelector('option[value="roleo"]')){
+        const optRoleo = document.createElement('option');
+        optRoleo.value = 'roleo';
+        optRoleo.textContent = 'roleadas';
+        const alertasOpt = urgSel.querySelector('option[value="alertas"]');
+        urgSel.insertBefore(optRoleo, alertasOpt || null);
+      }
+    }
 
     $('seg-refresh-btn')?.addEventListener('click', () => window.loadSeguimiento());
     $('seg-gi-open-btn')?.addEventListener('click', () => openGiModal(null));
     $('seg-arch-toggle')?.addEventListener('change', (e) => { _showArch = e.target.checked; renderAll(); });
 
-    for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-mot','mot'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente']]){
+    for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-mot','mot'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente'],['seg-f-soldto','soldto']]){
       $(id)?.addEventListener('change', (e) => { _filters[key] = e.target.value; renderAll(); });
     }
     // buscador de orden: input+debounce (NO change) — molde #mail-q. No se suma a
@@ -795,7 +1005,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     // de que el debounce corra (lección "no tocar inputs con focus en re-renders").
     $('seg-f-q')?.addEventListener('input', debounce((e) => { _filters.q = e.target.value; renderAll(); }, 250));
     $('seg-clear')?.addEventListener('click', () => {
-      _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', q:'' };
+      _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
       const qEl = $('seg-f-q'); if(qEl) qEl.value = '';
       renderAll();
     });
