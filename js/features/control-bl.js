@@ -50,7 +50,9 @@
     { key:'factura', label:'Factura', icon:'#i-file-text' },
     { key:'pe', label:'Permiso (PE)', icon:'#i-file-text' },
   ];
-  const CBL_COLS = 'order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link,email_sent,email_sent_at';
+  // fc_link/pe_link: proyección PostgREST del source_link anidado en los extracts
+  // (no existen columnas factura_*/pe_* de nivel fila; NO traer el JSONB entero a la grilla).
+  const CBL_COLS = 'order_number,carrier,vessel,voyage,pod,overall_result,ok_count,revisar_count,booking_no,bl_number,created_at,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link,email_sent,email_sent_at,fc_link:factura_extract->>source_link,pe_link:pe_extract->>source_link';
 
   // PLAN1 FIX 5 — red de seguridad: umbral (en minutos) para declarar HUÉRFANO
   // un control asentado cuyo mail nunca salió. ÚNICO lugar a tocar para cambiarlo.
@@ -776,15 +778,17 @@
     const m = String(url).match(/\/d\/([^/?#]+)/);
     return m ? m[1] : null;
   }
-  // Mapa de file-ids por doc-tab. Factura/PE = null hasta que el workflow persista *_file_id.
+  // Mapa de file-ids por doc-tab. Factura/PE: el link viaja anidado en el extract
+  // (factura_extract.source_link / pe_extract.source_link, proyectado como fc_link/pe_link
+  // en CBL_COLS) — mismo mecanismo por regex que Aduana/Booking. Sin link → tab disabled.
   function cblDocsFor(row){
     return {
       analisis: true,
       bl: row.bl_file_id || cblFileId(row.bl_drive_link),
       aduana: cblFileId(row.aduana_drive_link),
       booking: cblFileId(row.booking_drive_link),
-      factura: null,
-      pe: null,
+      factura: cblFileId(row.fc_link),
+      pe: cblFileId(row.pe_link),
     };
   }
 
@@ -805,9 +809,7 @@
       const hasContent = t.key === 'analisis' ? true : !!docs[t.key];
       if(!hasContent){
         btn.disabled = true;
-        btn.title = (t.key === 'factura' || t.key === 'pe')
-          ? 'Se habilita cuando el workflow persista factura_file_id / pe_file_id'
-          : 'Sin documento de Drive guardado para este control';
+        btn.title = 'Sin documento de Drive guardado para este control';
       }
       btn.appendChild(svgUse(t.icon));
       btn.appendChild(document.createTextNode(t.label));
