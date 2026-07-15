@@ -20,6 +20,8 @@ export const config = { maxDuration: 60 }; // el send con adjuntos tarda ~10-15s
 const PROXY_ACTIONS = new Set(['preview', 'send', 'save_contacts', 'confirm_schedule']);
 const MAX_ATD_ROWS = 200;
 const MIN_ATD = '2020-01-01';
+const MAX_ROLEO_VESSELS = 20;
+const MAX_ROLEO_ORDERS = 30;
 
 // Fecha date-only válida (round-trip: rechaza 31/02, 32/01, etc.)
 function isValidIsoDate(s) {
@@ -128,6 +130,194 @@ async function handleConfirmAtd(res, body, userEmail, supaUrl, supaKey) {
   return res.status(200).json({ ok: true, action: 'confirm_atd', hoy_ba: hoyBA, summary, results });
 }
 
+// ── ROLEO POR EXCLUSIÓN (PLAN COMPLETO tanda B, migrations/2026-07-15-
+// plancompleto-b-mailing) — columnas roleo_* en mailing_orders. Hasta que John
+// aplique esa migración (gate 2) estas dos actions devuelven error de PostgREST
+// (columna inexistente): esperado, no un bug de este archivo.
+
+// Hoy date-only en Buenos Aires (mismo contrato que confirm_atd/el resolver n8n)
+function todayBA() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+}
+
+// Comparación tolerante de formato del carrier: mailing_orders.carrier vs
+// schedules_master.naviera pueden diferir en guiones/espacios ('LOG-IN' vs 'LOG IN')
+function normCarrierKey(s) {
+  return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+// roleo_candidatas: GET mailing_orders sin ATD confirmado para un set de buques —
+// alimenta el panel "quedaron sin confirmar en {buque}" que sigue a un lote de
+// Confirmar zarpe (item 31 del front). Contrato: { action:'roleo_candidatas', vessels:[string] }
+async function handleRoleoCandidatas(res, body, supaUrl, supaKey) {
+  const vesselsIn = Array.isArray(body.vessels) ? body.vessels : null;
+  if (!vesselsIn) return res.status(400).json({ error: 'roleo_candidatas requiere vessels: [string]' });
+  const vessels = [...new Set(vesselsIn.map(v => String(v || '').trim()).filter(Boolean))];
+  if (!vessels.length) return res.status(400).json({ error: 'vessels no puede quedar vacío tras normalizar' });
+  if (vessels.length > MAX_ROLEO_VESSELS)
+    return res.status(400).json({ error: `máximo ${MAX_ROLEO_VESSELS} buques por consulta` });
+
+  const svcHeaders = { apikey: supaKey, Authorization: `Bearer ${supaKey}` };
+  const inList = vessels.map(v => encodeURIComponent(v)).join(',');
+  try {
+    const gRes = await fetch(
+      `${supaUrl}/rest/v1/mailing_orders?select=order_number,vessel,voyage,pod,ship_to_name,roleo_at&atd=is.null&vessel=in.(${inList})`,
+      { headers: svcHeaders }
+    );
+    if (!gRes.ok) {
+      const detail = await gRes.text().catch(() => '');
+      return res.status(502).json({ error: `No se pudo leer mailing_orders (GET ${gRes.status})`, detail: detail.slice(0, 300) });
+    }
+    const rows = await gRes.json();
+    return res.status(200).json({ ok: true, action: 'roleo_candidatas', candidatas: Array.isArray(rows) ? rows : [] });
+  } catch (e) {
+    console.error('roleo_candidatas error:', e.message);
+    return res.status(502).json({ error: 'No se pudo consultar candidatas de roleo' });
+  }
+}
+
+// Próximo servicio del MISMO carrier hacia el mismo pol→pod con ETD futura — 3
+// intentos en cascada (exacto → variante espaciada → normalizado en memoria)
+// porque el formato de naviera/carrier no siempre coincide byte a byte entre
+// mailing_orders y schedules_master. Best-effort: null si no encuentra nada (el
+// caller lo reporta como sin_proximo_servicio, nunca revienta el lote).
+async function fetchNextService(supaUrl, supaKey, carrier, pol, pod, hoyBA) {
+  const svcHeaders = { apikey: supaKey, Authorization: `Bearer ${supaKey}` };
+  const carrierStr = String(carrier || '').trim();
+  const polStr = String(pol || '').trim();
+  const podStr = String(pod || '').trim();
+  if (!carrierStr || !polStr || !podStr) return null;
+
+  const tryNaviera = async (naviera) => {
+    const url = `${supaUrl}/rest/v1/schedules_master?select=buque,naviera,puerto_origen,puerto_destino,etd`
+      + `&naviera=eq.${encodeURIComponent(naviera)}&puerto_origen=eq.${encodeURIComponent(polStr)}`
+      + `&puerto_destino=eq.${encodeURIComponent(podStr)}&etd=gt.${hoyBA}&order=etd.asc&limit=1`;
+    try {
+      const r = await fetch(url, { headers: svcHeaders });
+      if (!r.ok) return null;
+      const rows = await r.json();
+      return (Array.isArray(rows) && rows[0]) || null;
+    } catch (e) { return null; }
+  };
+
+  let row = await tryNaviera(carrierStr);
+  if (!row) {
+    const spaced = carrierStr.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (spaced && spaced !== carrierStr) row = await tryNaviera(spaced);
+  }
+  if (!row) {
+    // último recurso: trae candidatas del par pol/pod y compara normalizado en memoria
+    try {
+      const url = `${supaUrl}/rest/v1/schedules_master?select=buque,naviera,puerto_origen,puerto_destino,etd`
+        + `&puerto_origen=eq.${encodeURIComponent(polStr)}&puerto_destino=eq.${encodeURIComponent(podStr)}`
+        + `&etd=gt.${hoyBA}&order=etd.asc&limit=100`;
+      const r = await fetch(url, { headers: svcHeaders });
+      if (r.ok) {
+        const rows = await r.json();
+        const key = normCarrierKey(carrierStr);
+        row = (Array.isArray(rows) ? rows : []).find(x => normCarrierKey(x.naviera) === key) || null;
+      }
+    } catch (e) { /* best-effort */ }
+  }
+  return row;
+}
+
+// informar_roleo: PATCH por PK de mailing_orders con el roleo (item 31). Si no
+// viene to_vessel, se resuelve el próximo servicio del mismo carrier; sin
+// próximo servicio se asienta igual (to_vessel null) para que "pendiente de BL
+// nuevo" arranque igual — John confirma el buque después. NUNCA 500 sin cuerpo:
+// cada orden es independiente (Promise.allSettled), una caída no aborta el lote.
+// Contrato: { action:'informar_roleo', orders:[order_number], to_vessel?, to_etd? }
+async function handleInformarRoleo(res, body, userEmail, supaUrl, supaKey) {
+  const ordersIn = Array.isArray(body.orders) ? body.orders : null;
+  if (!ordersIn || !ordersIn.length)
+    return res.status(400).json({ error: 'informar_roleo requiere orders: [order_number]' });
+  if (ordersIn.length > MAX_ROLEO_ORDERS)
+    return res.status(400).json({ error: `máximo ${MAX_ROLEO_ORDERS} órdenes por lote` });
+
+  const toVesselIn = (body.to_vessel != null && String(body.to_vessel).trim()) ? String(body.to_vessel).trim() : null;
+  const toEtdIn = (body.to_etd != null && String(body.to_etd).trim()) ? String(body.to_etd).trim() : null;
+  if (toEtdIn && !isValidIsoDate(toEtdIn))
+    return res.status(400).json({ error: 'to_etd inválida (YYYY-MM-DD)' });
+
+  // de-dup preservando el orden de aparición
+  const seen = new Set();
+  const orders = [];
+  for (const o of ordersIn) {
+    const s = String(o || '').trim();
+    if (seen.has(s)) continue;
+    seen.add(s);
+    orders.push(s);
+  }
+
+  const hoyBA = todayBA();
+  const svcHeaders = { apikey: supaKey, Authorization: `Bearer ${supaKey}` };
+  const base = `${supaUrl}/rest/v1/mailing_orders`;
+  const nowIso = new Date().toISOString();
+
+  const processOne = async (order) => {
+    if (!/^\d{7,12}$/.test(order))
+      return { order_number: order || '(vacía)', status: 'invalida', detalle: 'orden inválida (7-12 dígitos)' };
+
+    let row;
+    try {
+      const gRes = await fetch(`${base}?select=order_number,vessel,carrier,pol,pod&order_number=eq.${order}`, { headers: svcHeaders });
+      if (!gRes.ok) throw new Error(`GET ${gRes.status}`);
+      const rows = await gRes.json();
+      row = (Array.isArray(rows) && rows[0]) || null;
+    } catch (e) {
+      return { order_number: order, status: 'error', detalle: 'no se pudo leer la orden: ' + e.message };
+    }
+    if (!row) return { order_number: order, status: 'no_encontrada', detalle: 'no asentada en mailing_orders' };
+
+    let toVessel = toVesselIn;
+    let toEtd = toEtdIn;
+    let sinProximo = false;
+    if (!toVessel) {
+      let next = null;
+      try { next = await fetchNextService(supaUrl, supaKey, row.carrier, row.pol, row.pod, hoyBA); }
+      catch (e) { console.error('informar_roleo next-service:', order, e.message); }
+      if (next) { toVessel = next.buque || null; toEtd = next.etd || null; }
+      else sinProximo = true;
+    }
+
+    try {
+      const pRes = await fetch(`${base}?order_number=eq.${order}`, {
+        method: 'PATCH',
+        headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({
+          roleo_at: nowIso,
+          roleo_by: userEmail,
+          roleo_from_vessel: row.vessel || null,
+          roleo_to_vessel: toVessel || null,
+          roleo_to_etd: toEtd || null,
+        }),
+      });
+      const rows = pRes.ok ? await pRes.json() : [];
+      if (!pRes.ok || !Array.isArray(rows) || rows.length !== 1)
+        return { order_number: order, status: 'error', detalle: `PATCH ${pRes.status} (${rows.length ?? 0} filas)` };
+      return {
+        order_number: order,
+        status: sinProximo ? 'sin_proximo_servicio' : 'roleada',
+        detalle: sinProximo
+          ? 'roleo asentado sin próximo servicio del mismo carrier — confirmar buque manualmente'
+          : `roleada → ${toVessel || '(a confirmar)'}${toEtd ? ' · ETD ' + toEtd : ''}`,
+        roleo_to_vessel: toVessel || null,
+        roleo_to_etd: toEtd || null,
+      };
+    } catch (e) {
+      return { order_number: order, status: 'error', detalle: e.message };
+    }
+  };
+
+  const settled = await Promise.allSettled(orders.map(processOne));
+  const results = settled.map((s, i) => s.status === 'fulfilled' ? s.value : { order_number: orders[i], status: 'error', detalle: String(s.reason) });
+
+  const summary = {};
+  for (const r of results) summary[r.status] = (summary[r.status] || 0) + 1;
+  return res.status(200).json({ ok: true, action: 'informar_roleo', summary, results });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -176,6 +366,10 @@ export default async function handler(req, res) {
   // ── confirm_atd: se resuelve ACÁ (PostgREST, service key) — no pasa por el webhook ──
   if (action === 'confirm_atd') return handleConfirmAtd(res, b, user.email, supaUrl, supaKey);
 
+  // ── roleo (PLAN COMPLETO tanda B): mismo criterio que confirm_atd, no pasan por el webhook ──
+  if (action === 'roleo_candidatas') return handleRoleoCandidatas(res, b, supaUrl, supaKey);
+  if (action === 'informar_roleo') return handleInformarRoleo(res, b, user.email, supaUrl, supaKey);
+
   // ── Saneo al contrato del webhook; triggered_by lo fija el server (no spoofeable) ──
   if (!PROXY_ACTIONS.has(action)) return res.status(400).json({ error: `action inválida: ${action}` });
   const order = String(b.order_number || '').trim();
@@ -189,6 +383,24 @@ export default async function handler(req, res) {
     triggered_by: user.email,
   };
   if (b.contacts && typeof b.contacts === 'object') payload.contacts = b.contacts;
+
+  // extra_attachments (items 38/39): validación LIVIANA acá (forma + cap ≤3) —
+  // tamaño real / MIME / el límite duro los valida el workflow n8n. Viajan SOLO
+  // en este envío puntual, nunca se persisten en Drive ni en certificados_origen.
+  if (action === 'send' && Array.isArray(b.extra_attachments)) {
+    const clean = b.extra_attachments
+      .slice(0, 3)
+      .filter(x => x && typeof x === 'object'
+        && typeof x.name === 'string' && x.name.trim()
+        && typeof x.data_b64 === 'string' && x.data_b64.trim()
+        && (x.mime === undefined || x.mime === null || typeof x.mime === 'string'))
+      .map(x => ({
+        name: x.name.trim().slice(0, 200),
+        mime: (x.mime ? String(x.mime) : 'application/octet-stream').slice(0, 100),
+        data_b64: x.data_b64,
+      }));
+    if (clean.length) payload.extra_attachments = clean;
+  }
 
   // El check de la URL va DESPUÉS de auth: el 401 sin token debe funcionar
   // aunque MAILING_WEBHOOK_URL todavía no esté configurada en el ambiente.

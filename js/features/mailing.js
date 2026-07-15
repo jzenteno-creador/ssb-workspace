@@ -17,7 +17,21 @@
 
    Consume window.__segPendingOrder (bus originado por Seguimiento) para
    autoseleccionar la orden al llegar desde otro tab, y lo pone en null
-   tras consumirlo — mismo contrato que control-bl y cert-origen.
+   tras consumirlo — mismo contrato que control-bl y cert-origen. Desde
+   PLAN COMPLETO tanda B, Mailing TAMBIÉN ESCRIBE el bus (el link "Ver
+   control BL" del gate de regla 16, cardEnvio/blockReasonsBox) para
+   deep-linkear a control-bl — mismo patrón que deepLink() de seguimiento.js.
+
+   PLAN COMPLETO tanda B (2026-07-15): dos actions nuevas y locales en
+   /api/mailing (roleo_candidatas, informar_roleo — mismo criterio que
+   confirm_atd, no pasan por el webhook n8n) + passthrough de
+   extra_attachments en `send`. El preview puede traer campos nuevos que el
+   resolver del workflow todavía está terminando (otro agente, en paralelo):
+   `notify{key,name}`, `control_revisado{vigente,por,at}`,
+   `roleo{at,from_vessel,to_vessel,to_etd,pendiente_bl}`, `dias_libres`,
+   `seg_alerta`. TODOS se leen con optional-chaining/fallback — un preview
+   viejo (deploy desfasado, columnas roleo_ / notify_ sin migrar) degrada
+   a no-mostrar esa línea, nunca rompe el render.
 
    *** CANDADO TEST_MODE — HARD LOCK, NO TOCAR JAMÁS ***
    `window.__mailTestOff` (flag propio, 5 sitios) + el checkbox
@@ -76,6 +90,23 @@
   function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer = setTimeout(runPreview, 400); }
   // ── Chip-bar de docs (A-c5): PDF abierto en el viewer embebido de Drive ──
   let _docOpen = null; // { fid, label } | null
+  // ── Roleo post-confirmación (item 31, PLAN COMPLETO tanda B): tras un lote de
+  // Confirmar zarpe, ¿quedaron órdenes HERMANAS sin confirmar en el MISMO buque?
+  // (atd is.null) — la separación es la señal de que hubo roleo. Panel
+  // descartable, vive en el card de Confirmar zarpe; best-effort, nunca bloquea
+  // el ATD-gate. Se limpia solo al descartarlo o al informar el lote. ──
+  let _roleoPanel = null; // { candidatas:[{order_number,vessel,voyage,pod,ship_to_name,roleo_at}], sel:Set<order_number> } | null
+  let _roleoBusy = false;
+  // ── Adjuntos extra (items 38/39): documentación puntual (COA, etc.) que NO
+  // vive en Drive/certificados — viaja SOLO en este envío, nunca se persiste.
+  // Estado en variable de módulo; se limpia al cambiar de orden (selectOrder). ──
+  let _extraAtt = []; // [{ name, mime, size, data_b64 }]
+  const MAX_EXTRA_FILES = 3;
+  // 3MB crudos: en base64 (+33%) el body JSON queda ~4MB, DEBAJO del límite de
+  // 4.5MB de las serverless de Vercel (con 4MB crudos el request de send moría
+  // en el borde — autocrítica del verify de tanda B).
+  const MAX_EXTRA_BYTES = 3 * 1024 * 1024;
+  const EXTRA_EXT_RE = /\.(pdf|zip|jpe?g|png|xlsx|docx)$/i;
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -118,9 +149,24 @@
     return b;
   }
 
+  // ⟳ Roleada — badge GLOBAL (badge/badge--warning, fuera de la isla mail-*,
+  // "NADA en la isla" per instrucción). No se muestra si ya hubo envío REAL
+  // (status ENVIADO && sent_test_mode===false): el roleo quedó sin efecto práctico.
+  function roleoBadge(r){
+    if(!r || !r.roleo_at) return null;
+    if(r.status === 'ENVIADO' && r.sent_test_mode === false) return null;
+    const b = el('span','badge badge--warning', '⟳ Roleada → ' + (r.roleo_to_vessel || 'a confirmar'));
+    b.style.marginLeft = '4px';
+    b.title = 'Roleo informado ' + fmtTs(r.roleo_at)
+      + (r.roleo_by ? ' por ' + r.roleo_by : '')
+      + (r.roleo_from_vessel ? ' — desde ' + r.roleo_from_vessel : '')
+      + (r.roleo_to_etd ? ' · ETD ' + fmtD(r.roleo_to_etd) : '');
+    return b;
+  }
+
   const BADGE_CLS = { PENDIENTE:'pend', LISTO:'listo', ENVIADO:'env', ERROR:'err' };
   // Labels humanos de documentos (chips; el copy largo del mail vive en el workflow)
-  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT', co_zip:'CO ZIP', co_pdf:'CO PDF', pe:'PE' };
+  const DOC_LABELS = { bl_draft:'BL', factura:'FC', packing_list:'PL', coo:'COO', crt:'CRT', co_zip:'CO ZIP', co_pdf:'CO PDF', pe:'PE', seg:'SEG' };
   function badge(status, testMode){
     const b = el('span', 'mail-badge ' + (BADGE_CLS[status] || 'pend'));
     b.appendChild(el('span','mail-dot'));
@@ -139,6 +185,42 @@
     const data = await res.json().catch(() => ({}));
     if(!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
     return data;
+  }
+
+  // ── Adjuntos extra (items 38/39) — helpers de lectura/formato ──
+  function fmtBytes(n){
+    if(n < 1024) return n + ' B';
+    if(n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+  function fileToB64(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = String(r.result || '');
+        const i = s.indexOf(',');
+        resolve(i >= 0 ? s.slice(i + 1) : s);
+      };
+      r.onerror = () => reject(r.error || new Error('no se pudo leer el archivo'));
+      r.readAsDataURL(file);
+    });
+  }
+  async function handleExtraFiles(fileList){
+    const files = Array.from(fileList || []);
+    if(!files.length) return;
+    const rejected = [];
+    for(const f of files){
+      if(_extraAtt.length >= MAX_EXTRA_FILES){ rejected.push(f.name + ': máximo ' + MAX_EXTRA_FILES + ' archivos'); continue; }
+      if(!EXTRA_EXT_RE.test(f.name)){ rejected.push(f.name + ': tipo no permitido (pdf/zip/jpg/jpeg/png/xlsx/docx)'); continue; }
+      const totalBytes = _extraAtt.reduce((a, x) => a + x.size, 0) + f.size;
+      if(totalBytes > MAX_EXTRA_BYTES){ rejected.push(f.name + ': supera el máximo de ' + fmtBytes(MAX_EXTRA_BYTES) + ' en total'); continue; }
+      try {
+        const data_b64 = await fileToB64(f);
+        _extraAtt.push({ name: f.name, mime: f.type || 'application/octet-stream', size: f.size, data_b64 });
+      } catch(e){ rejected.push(f.name + ': no se pudo leer (' + e.message + ')'); }
+    }
+    if(rejected.length) ssbToast(rejected.join(' · '), 'warning');
+    renderDetail();
   }
 
   // ── data layer (reads por supa; RLS authenticated) ──
@@ -264,6 +346,7 @@
       const right = el('span'); right.style.display = 'inline-flex'; right.style.gap = '6px'; right.style.alignItems = 'center';
       const sb = slaBadge(r); if(sb) right.appendChild(sb);
       right.appendChild(badge(r.status, r.sent_test_mode));
+      const rb = roleoBadge(r); if(rb) right.appendChild(rb);
       top.appendChild(right);
       it.appendChild(top);
       it.appendChild(el('div','mail-item-cli', r.ship_to_name || '—'));
@@ -329,6 +412,7 @@
       }
       if(kb) head.appendChild(kb);
     }
+    const rb = roleoBadge(_row); if(rb) head.appendChild(rb);
     c.appendChild(head);
     const dl = el('dl','mail-meta-grid');
     const item = (k, v) => { const w = el('div'); w.appendChild(el('dt', null, k)); w.appendChild(el('dd', null, v || '—')); dl.appendChild(w); };
@@ -363,9 +447,25 @@
       ctrlP.appendChild(document.createTextNode('—'));
     }
     c.appendChild(ctrlP);
+    // PLAN COMPLETO tanda B: "pendiente de BL nuevo" — DERIVADO por el resolver
+    // (roleo_at posterior al último control). Campo nuevo, degrada solo (undefined
+    // pre-PUT del workflow → no renderiza nada, nunca rompe).
+    if(_preview && _preview.roleo && _preview.roleo.pendiente_bl){
+      const pend = el('p','mail-note','⟳ Pendiente de BL nuevo: el último control BL es anterior al roleo informado — esperar el BL actualizado antes de enviar.');
+      pend.style.color = 'var(--mail-warn)';
+      c.appendChild(pend);
+    }
     if(_row.atd){
       const sb = slaBadge(_row);
       if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
+    }
+    // dias_libres/seg_alerta: diagnóstico adicional del resolver (bloque naviera /
+    // _SEG) — se muestran SOLO si vienen (deploy desfasado = sin línea, no rompe).
+    if(_preview && (_preview.dias_libres != null || _preview.seg_alerta)){
+      const extra = [];
+      if(_preview.dias_libres != null) extra.push('Días libres: ' + _preview.dias_libres);
+      if(_preview.seg_alerta) extra.push(String(_preview.seg_alerta));
+      c.appendChild(el('p','mail-note', extra.join(' · ')));
     }
     c.appendChild(el('p','mail-note','ETD/ETA no se persisten: los resuelve el Preview en vivo contra schedules_master (activo + disponible).'));
     return c;
@@ -400,6 +500,22 @@
   function cardDestinatarios(){
     const c = el('div','mail-card');
     c.appendChild(el('h3', null, 'Destinatarios — directorio del cliente'));
+
+    // PLAN COMPLETO tanda A/B: 3 dimensiones de la clave del directorio — el
+    // notify es la pata nueva (puede redirigir a quién se manda la doc, ej.
+    // mismo cliente con dos notify = dos juegos de contactos, caso Lupin).
+    // Degradación: si el preview todavía no trae `notify` (deploy desfasado /
+    // pre-PUT), cae a las columnas de mailing_orders o queda "—" — nunca rompe.
+    const notifyObj = (_preview && _preview.notify && typeof _preview.notify === 'object') ? _preview.notify : null;
+    const notifyName = (notifyObj && notifyObj.name) || _row.notify_name || null;
+    const notifyKey = notifyObj ? notifyObj.key : (_row.notify_key != null ? _row.notify_key : undefined);
+    const dims = el('dl','mail-meta-grid');
+    dims.style.marginBottom = '10px';
+    const dimItem = (k, v) => { const w = el('div'); w.appendChild(el('dt', null, k)); w.appendChild(el('dd', null, v || '—')); dims.appendChild(w); };
+    dimItem('Ship-to', _row.ship_to_name);
+    dimItem('Sold-to', _row.sold_to_name);
+    dimItem('Notify', notifyName || (notifyKey === '' ? 'sin notify especial (comodín)' : (notifyKey === undefined ? '— (pendiente del workflow)' : '—')));
+    c.appendChild(dims);
 
     const status = el('p','mail-status-line');
     if(_contact && _contact.confirmed){
@@ -552,6 +668,13 @@
     }
     if(!att.found.length && !(att.missing || []).length) bar.appendChild(el('span','mail-status-line','Adjuntos: ninguno'));
     c.appendChild(bar);
+    // Adjuntos extra (items 38/39): listado LOCAL — el server recién los conoce
+    // en el momento del send (el preview no los recibe), así que el nombre sale
+    // del estado del módulo, no de la respuesta.
+    if(_extraAtt.length){
+      const exNote = el('p','mail-note','Adjuntos extra listos para este envío: ' + _extraAtt.map(f => f.name).join(', '));
+      c.appendChild(exNote);
+    }
     if(_docOpen){
       const dv = el('div','mail-docview');
       const dh = el('div','mail-docview-head');
@@ -594,6 +717,38 @@
     if(reasons.some(t => String(t).includes('candado'))) return { offOk:false, why:'El candado TEST_MODE del workflow está ON: apagarlo requiere un PUT deliberado. Todo envío sale a expoarpbb.' };
     if(!(_preview.recipients && _preview.recipients.sendable_real)) return { offOk:false, why:'Destinatarios sin confirmar en el directorio: solo TEST (tercera red).' };
     return { offOk:true, why:'' };
+  }
+
+  // Bloqueos de envío (block_reasons) — SIEMPRE visibles ANTES del botón, no
+  // solo al intentar (item 4). Regla 16 (sello "Revisado" del Control BL) se
+  // detecta por control_revisado.vigente===false — NUNCA por matchear texto de
+  // block_reasons: el wording exacto lo define el workflow (otro agente, en
+  // paralelo) y puede cambiar sin aviso. Degrada: si control_revisado todavía
+  // no llega, la lista de razones se sigue mostrando igual, solo sin el callout.
+  function blockReasonsBox(p, row){
+    const box = el('div','mail-alert');
+    box.style.marginBottom = '10px';
+    const cr = (p.control_revisado && typeof p.control_revisado === 'object') ? p.control_revisado : null;
+    if(cr && cr.vigente === false){
+      const h = el('div', null, '🔒 Regla 16 — falta el sello "Revisado" del Control BL');
+      h.style.fontWeight = '800'; h.style.marginBottom = '4px';
+      box.appendChild(h);
+      const link = el('button','mail-btn','Ver control BL');
+      link.type = 'button'; link.style.marginTop = '4px';
+      link.onclick = () => { window.__segPendingOrder = row.order_number; switchTab('control-bl'); };
+      box.appendChild(link);
+    }
+    const reasons = p.block_reasons || [];
+    if(reasons.length){
+      const lbl = el('div', null, (cr && cr.vigente === false) ? 'Otros motivos:' : 'Bloqueado:');
+      lbl.style.fontWeight = '700'; lbl.style.fontSize = '12px';
+      lbl.style.marginTop = (cr && cr.vigente === false) ? '8px' : '0';
+      box.appendChild(lbl);
+      const ul = el('ul'); ul.style.margin = '4px 0 0 18px'; ul.style.padding = '0';
+      for(const r of reasons){ const li = el('li', null, r); li.style.fontSize = '12px'; ul.appendChild(li); }
+      box.appendChild(ul);
+    }
+    return box;
   }
 
   function cardEnvio(){
@@ -645,28 +800,61 @@
     }
 
     // ── Completitud documental (pre-send): found/missing ya vienen del preview —
-    // sin tipos nuevos del workflow, este conteo es el mismo de siempre. ──
+    // 'seg' (si el workflow lo suma) cuenta como cualquier otro tipo faltante, sin
+    // excepción (item 7). Copy fix (O5 AUDITORIA, bug "Falta 0" post-envío Lupin):
+    // 0 → "Documentación completa" · 1 → "Falta 1 documento" · N → "Faltan N documentos".
     if(_preview && _preview.attachments){
       const att = _preview.attachments;
       const foundN = (att.found || []).length;
       const missN = (att.missing || []).length;
-      const docLine = el('p','mail-status-line', 'Documentos: ' + foundN + ' de ' + (foundN + missN) + (missN ? '' : ' ✓'));
-      if(missN){
-        const miss = el('span', null, ' — faltan: ' + (att.missing || []).map(m => DOC_LABELS[m] || m).join(', '));
-        miss.style.color = 'var(--mail-warn)';
-        docLine.appendChild(miss);
+      let docLine;
+      if(!missN){
+        docLine = el('p','mail-status-line', 'Documentación completa (' + foundN + ' de ' + foundN + ') ✓');
+      } else {
+        const lbl = missN === 1 ? 'Falta 1 documento' : ('Faltan ' + missN + ' documentos');
+        docLine = el('p','mail-status-line', lbl + ' — ' + (att.missing || []).map(m => DOC_LABELS[m] || m).join(', '));
+        docLine.style.color = 'var(--mail-warn)';
       }
       c.appendChild(docLine);
     }
+
+    // ── Adjuntos extra (items 38/39): documentación puntual (COA, etc.) que NO
+    // vive en Drive/certificados — viaja SOLO en este envío, nunca se persiste.
+    // Estado en _extraAtt (module-scoped), se limpia al cambiar de orden. ──
+    const attWrap = el('div');
+    attWrap.style.marginTop = '12px';
+    attWrap.appendChild(el('span','mail-lbl','ADJUNTAR DOCUMENTACIÓN ADICIONAL (COA, etc.)'));
+    const inpF = el('input'); inpF.type = 'file'; inpF.id = 'mail-extra-files'; inpF.multiple = true;
+    inpF.accept = '.pdf,.zip,.jpg,.jpeg,.png,.xlsx,.docx';
+    inpF.disabled = _extraAtt.length >= MAX_EXTRA_FILES;
+    inpF.style.display = 'block'; inpF.style.marginTop = '4px';
+    attWrap.appendChild(inpF);
+    const chipsWrap = chipRow();
+    chipsWrap.style.marginTop = '6px';
+    if(!_extraAtt.length) chipsWrap.appendChild(el('span','mail-status-line','— ninguno —'));
+    else _extraAtt.forEach((f, i) => {
+      const ch = el('span','mail-chip');
+      ch.appendChild(el('span','mail-chip-txt', f.name + ' (' + fmtBytes(f.size) + ')'));
+      const rm = el('button', null, '×'); rm.type = 'button';
+      rm.setAttribute('aria-label', 'Quitar ' + f.name); rm.title = 'Quitar';
+      rm.onclick = () => { _extraAtt.splice(i, 1); renderDetail(); };
+      ch.appendChild(rm);
+      chipsWrap.appendChild(ch);
+    });
+    attWrap.appendChild(chipsWrap);
+    attWrap.appendChild(el('p','mail-note','Viajan solo en este envío — no se guardan en Drive ni en los registros de la orden.'));
+    c.appendChild(attWrap);
+
+    // ── Gate de envío: block_reasons SIEMPRE visibles, ANTES del botón, no solo
+    // al intentar clickear (item 4). ──
+    if(_preview && _preview.send_blocked) c.appendChild(blockReasonsBox(_preview, _row));
 
     const row = el('div','mail-btnrow');
     const canSend = _preview && !_preview.send_blocked && _busy == null && !_dirty;
     const bt = el('button','mail-btn ' + (tg.checked ? 'pri' : 'danger'), _busy === 'send' ? 'Enviando…' : (tg.checked ? 'Enviar TEST' : 'ENVIAR REAL'));
     bt.type = 'button'; bt.dataset.act = 'send'; bt.disabled = !canSend;
     row.appendChild(bt);
-    if(_preview && _preview.send_blocked){
-      row.appendChild(el('span','mail-status-line','Bloqueado: ' + (_preview.block_reasons || []).join(' · ')));
-    } else if(!_preview){
+    if(!_preview){
       row.appendChild(el('span','mail-status-line','Requiere un Preview previo.'));
     } else if(_dirty){
       row.appendChild(el('span','mail-status-line','Guardá el directorio antes de enviar (cambios sin guardar).'));
@@ -716,6 +904,7 @@
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
     _preview = null; _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
+    _extraAtt = []; // items 38/39: adjuntos extra no sobreviven el cambio de orden
     window.__mailTestOff = null;
     renderMaster();
     if(!_row){ renderDetail(); return; }
@@ -871,6 +1060,7 @@
       '── ENVIABLES (van): ' + (sr ? (rcp.to.join(', ') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '')) : '— ninguno (directorio sin confirmar: solo TEST) —') +
       '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
       '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—') +
+      (_extraAtt.length ? '\n── Adjuntos extra (' + _extraAtt.length + '): ' + _extraAtt.map(f => f.name).join(', ') : '') +
       '\n(El envío se re-resuelve contra el directorio vigente al momento de enviar.)';
     // Pre-lock ANTES del confirm: ssbConfirm no bloquea el hilo como confirm()
     // nativo — sin esto, una segunda invocación (Enter con autorepeat / doble
@@ -890,7 +1080,10 @@
     _busy = 'send'; renderDetail();
     let result = null;
     try {
-      const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides });
+      const extraPayload = _extraAtt.length
+        ? { extra_attachments: _extraAtt.map(f => ({ name: f.name, mime: f.mime, data_b64: f.data_b64 })) }
+        : {};
+      const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides, ...extraPayload });
       result = (resp && resp.send_blocked) ? { ok:false, error: (resp.block_reasons || []).join(' · ') } : resp;
     } catch(e){ result = { ok:false, error: e.message }; }
     // FIX verify (ALTA): lock SIEMPRE liberado; el refresh global de la cola vale
@@ -898,6 +1091,7 @@
     // el estado/render del DETALLE queda gateado por staleness.
     _busy = null;
     window.__mailTestOff = null;
+    if(result && result.ok) _extraAtt = []; // items 38/39: uso único — no reintentar con los mismos adjuntos por error
     _orders = await fetchOrders();
     renderMaster();
     if(gen !== _gen || order !== _sel) return;
@@ -962,7 +1156,7 @@
     box.textContent = '';
     if(btn) btn.disabled = _atdBusy || !_atdParsed || !_atdParsed.listas.length || !!_atdParsed.server;
     if(btn) btn.textContent = _atdBusy ? 'Confirmando…' : 'Confirmar ATD';
-    if(!_atdParsed){ if(sum) sum.textContent = ''; return; }
+    if(!_atdParsed){ if(sum) sum.textContent = ''; renderRoleoPanel(box); return; }
     const p = _atdParsed;
     const t = el('table','mail-atd-tbl');
     const trh = el('tr');
@@ -1005,6 +1199,7 @@
     }
     t.appendChild(tb);
     box.appendChild(t);
+    renderRoleoPanel(box); // item 31: panel independiente del estado del parser, vive en el mismo card
   }
 
   function atdParse(){
@@ -1042,7 +1237,92 @@
       const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
       if(lote.server && !lote.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
     }
+    // item 31: tras confirmar, ¿quedaron hermanas sin confirmar en el MISMO
+    // buque? Best-effort — nunca bloquea ni ensucia el reporte del lote de ATD.
+    const confirmedNow = ((lote.server && lote.server.results) || [])
+      .filter(r => r.status === 'actualizada' || r.status === 'pisada')
+      .map(r => r.order_number);
+    if(confirmedNow.length) await checkRoleoCandidatas(confirmedNow);
     renderAtdReport();
+  }
+
+  // ── Roleo post-confirmación (item 31) ──
+  async function checkRoleoCandidatas(confirmedOrders){
+    const vessels = [...new Set(confirmedOrders
+      .map(on => { const r = _orders.find(o => o.order_number === on); return r && r.vessel; })
+      .filter(Boolean))].slice(0, 20); // cap del server (roleo_candidatas): máximo 20 buques
+    if(!vessels.length) return;
+    try {
+      const resp = await apiMailing({ action: 'roleo_candidatas', vessels });
+      const cand = (resp && Array.isArray(resp.candidatas)) ? resp.candidatas : [];
+      if(cand.length) _roleoPanel = { candidatas: cand, sel: new Set(cand.map(c => c.order_number)) };
+    } catch(e){ console.error('[mailing] roleo_candidatas:', e.message); } // best-effort: nunca bloquea el ATD-gate
+  }
+
+  async function informarRoleo(){
+    if(!_roleoPanel || !_roleoPanel.sel.size || _roleoBusy) return;
+    const orders = [..._roleoPanel.sel];
+    _roleoBusy = true; renderAtdReport();
+    let resp = null, errMsg = null;
+    try { resp = await apiMailing({ action: 'informar_roleo', orders }); }
+    catch(e){ errMsg = e.message; }
+    _roleoBusy = false;
+    if(errMsg){ ssbToast('No se pudo informar el roleo: ' + errMsg, 'error'); renderAtdReport(); return; }
+    for(const r of ((resp && resp.results) || [])){
+      const kind = r.status === 'roleada' ? 'success' : (r.status === 'sin_proximo_servicio' ? 'warning' : 'error');
+      ssbToast(r.order_number + ': ' + (r.detalle || r.status), kind);
+    }
+    _roleoPanel = null;
+    _orders = await fetchOrders();
+    renderMaster();
+    if(_sel){ _row = _orders.find(o => o.order_number === _sel) || _row; renderDetail(); }
+    renderAtdReport();
+  }
+
+  function renderRoleoPanel(box){
+    if(!_roleoPanel) return;
+    const wrap = el('div','mail-alert');
+    wrap.style.marginTop = '10px';
+    // agrupado por buque — un lote de confirm puede tocar más de uno
+    const byVessel = new Map();
+    for(const c of _roleoPanel.candidatas){
+      const v = c.vessel || '(sin buque)';
+      if(!byVessel.has(v)) byVessel.set(v, []);
+      byVessel.get(v).push(c);
+    }
+    const head = el('div', null, 'Quedaron sin confirmar en ' + [...byVessel.keys()].join(', ') + ' — ¿hubo roleo?');
+    head.style.fontWeight = '800'; head.style.marginBottom = '6px';
+    wrap.appendChild(head);
+    for(const [vessel, rows] of byVessel){
+      const grp = el('div'); grp.style.marginBottom = '6px';
+      for(const r of rows){
+        const line = el('label');
+        line.style.display = 'flex'; line.style.alignItems = 'center'; line.style.gap = '8px'; line.style.margin = '3px 0'; line.style.fontSize = '12.5px';
+        const cb = el('input'); cb.type = 'checkbox'; cb.checked = _roleoPanel.sel.has(r.order_number);
+        cb.onchange = () => { if(cb.checked) _roleoPanel.sel.add(r.order_number); else _roleoPanel.sel.delete(r.order_number); };
+        line.appendChild(cb);
+        const meta = [vessel, r.voyage].filter(Boolean).join(' ');
+        line.appendChild(document.createTextNode(r.order_number + ' — ' + (r.ship_to_name || '—') + ' · ' + meta + (r.pod ? ' · ' + r.pod : '')));
+        if(r.roleo_at){
+          const already = el('span', null, ' (ya roleada ' + fmtTs(r.roleo_at) + ')');
+          already.style.color = 'var(--mail-ink-faint)';
+          line.appendChild(already);
+        }
+        grp.appendChild(line);
+      }
+      wrap.appendChild(grp);
+    }
+    const row = el('div','mail-btnrow');
+    const btInf = el('button','mail-btn pri', _roleoBusy ? 'Informando…' : 'Informar roleo al siguiente servicio');
+    btInf.type = 'button'; btInf.disabled = _roleoBusy || !_roleoPanel.sel.size;
+    btInf.onclick = () => informarRoleo();
+    row.appendChild(btInf);
+    const btDesc = el('button','mail-btn','Ahora no');
+    btDesc.type = 'button'; btDesc.disabled = _roleoBusy;
+    btDesc.onclick = () => { _roleoPanel = null; renderAtdReport(); };
+    row.appendChild(btDesc);
+    wrap.appendChild(row);
+    box.appendChild(wrap);
   }
 
   // ── carga del tab ──
@@ -1063,9 +1343,27 @@
       renderMaster();
       _ctrlByOrder = await fetchControlEstado(_orders); // WP-C: sello — no bloquea el render del master
       if(_sel){ _row = _orders.find(r => r.order_number === _sel) || null; renderDetail(); }
-      // deep-link desde Seguimiento — solo actúa si la orden está en el dataset ya cargado.
-      if(typeof _po === 'string' && /^\d{7,12}$/.test(_po) && _orders.some(r => r.order_number === _po)){
-        selectOrder(_po);
+      // deep-link desde Seguimiento (item 34 FIX): antes solo preseleccionaba si la
+      // orden estaba entre las 500 más recientes (fetchOrders trae limit 500) — una
+      // orden vieja/poco tocada quedaba con el bus consumido y SIN feedback, en
+      // silencio. Ahora SIEMPRE se intenta: si no está en el batch, se pide puntual
+      // por PK antes de rendirse (mismo espíritu que el fallback de búsqueda de
+      // control-bl, adaptado — Mailing no tiene un modo de búsqueda genérico).
+      if(typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+        if(_orders.some(r => r.order_number === _po)){
+          selectOrder(_po);
+        } else {
+          const s = supa();
+          let found = null;
+          if(s){
+            try {
+              const { data, error } = await s.from('mailing_orders').select('*').eq('order_number', _po).maybeSingle();
+              if(!error && data) found = data;
+            } catch(e){ console.error('[mailing] deep-link fetch:', e.message); }
+          }
+          if(found){ _orders = [found, ..._orders]; renderMaster(); selectOrder(_po); }
+          else ssbToast('La orden ' + _po + ' no está asentada en Mailing todavía.', 'warning');
+        }
       }
     } finally { _loading = false; }
   };
@@ -1103,6 +1401,9 @@
       if(e.target && e.target.id === 'mail-test-toggle'){
         window.__mailTestOff = e.target.checked ? null : _sel;
         renderDetail();
+      } else if(e.target && e.target.id === 'mail-extra-files'){
+        const files = e.target.files;
+        handleExtraFiles(files).then(() => { e.target.value = ''; }); // reset: permite re-seleccionar el mismo archivo
       }
     });
     const q = $('mail-q');

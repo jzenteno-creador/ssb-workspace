@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Mailing, plan completo (TANDA B)</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface-2:#161e2b; --bd:rgba(255,255,255,.08); --bd-strong:rgba(255,255,255,.16);
+    --ink:#e2e8f0; --ink-soft:#94a3b8; --ink-faint:#64748b;
+    --teal:#2dd4bf; --teal-bg:rgba(45,212,191,.12); --teal-bd:rgba(45,212,191,.35);
+    --amber:#f59e0b; --amber-bg:rgba(245,158,11,.12); --amber-bd:rgba(245,158,11,.35);
+    --green:#4ade80; --green-bg:rgba(74,222,128,.12); --green-bd:rgba(74,222,128,.35);
+    --orange:#fb923c; --orange-bg:rgba(251,146,60,.12); --orange-bd:rgba(251,146,60,.35);
+    --purple:#a78bfa; --purple-bg:rgba(167,139,250,.12); --purple-bd:rgba(167,139,250,.35);
+    --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12); --blue-bd:rgba(96,165,250,.35);
+    --font:system-ui,Segoe UI,Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.28);
+  }
+  body.light{
+    --bg:#f1f5f9; --surface:#ffffff; --surface-2:#f8fafc; --bd:#e2e8f0; --bd-strong:#cbd5e1;
+    --ink:#0f172a; --ink-soft:#64748b; --ink-faint:#94a3b8;
+    --teal:#0f766e; --teal-bg:#e6f6f3; --teal-bd:#b7e4dc;
+    --amber:#b45309; --amber-bg:#fef3c7; --amber-bd:#fcd34d;
+    --green:#15803d; --green-bg:#eaf3de; --green-bd:#cfe3bd;
+    --orange:#c2410c; --orange-bg:#fbeedb; --orange-bd:#ecc79a;
+    --purple:#7c3aed; --purple-bg:#f1e9fe; --purple-bd:#ddc9fb;
+    --blue:#1f5fae; --blue-bg:#eaf0f8; --blue-bd:#c7d9ef;
+    --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 20px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.5;padding:28px 28px 80px;transition:background .2s,color .2s}
+  .page{max-width:1180px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 6px}
+  h2{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin:34px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd);font-size:11px;font-weight:800}
+  h3{font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--ink-soft);max-width:820px;line-height:1.6}
+  .note b{color:var(--ink)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:var(--ink-faint);max-width:820px;line-height:1.6;margin:2px 0 14px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:50;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--bd)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-decoration:none;background:var(--surface);border:1px solid var(--bd);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal-bd)}
+
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .muted{color:var(--ink-soft);font-size:12px}
+  .faint{color:var(--ink-faint);font-size:11.5px}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .badge--amber{color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd)}
+  .badge--teal{color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-bd)}
+  .badge--green{color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd)}
+  .badge--orange{color:var(--orange);background:var(--orange-bg);border:1px solid var(--orange-bd)}
+  .badge--purple{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd)}
+  .badge--neutral{color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--bd-strong)}
+  .badge--nuevo{color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;font-size:12.5px;line-height:1.55}
+  .banner.amber{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner .ic{flex:0 0 auto;margin-top:1px;font-size:14px}
+  .banner .txt{color:var(--ink)}
+  .banner a{color:inherit;font-weight:700;text-decoration:underline}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink)}
+  .btn.pri{background:var(--teal);border-color:var(--teal);color:#04211c}
+  body.light .btn.pri{color:#fff}
+  .btn.pri[disabled]{background:var(--surface-2);border-color:var(--bd-strong);color:var(--ink-faint);cursor:not-allowed;opacity:.7}
+  .btn.warn{background:var(--orange-bg);border-color:var(--orange-bd);color:var(--orange)}
+  .btn.mini{padding:4px 10px;font-size:11px;border-radius:7px}
+  .btn.mini.blq{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber)}
+
+  /* ============ SECCIÓN 1 — correo ============ */
+  .mailclient{background:var(--surface);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);max-width:700px}
+  .mailclient .hdr{padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--surface-2)}
+  .mailclient .hdr-row{display:flex;gap:8px;font-size:12px;padding:2px 0;align-items:baseline}
+  .mailclient .hdr-row .k{color:var(--ink-faint);font-weight:700;width:44px;flex:0 0 auto}
+  .mailclient .hdr-row .v{color:var(--ink)}
+  .mailclient .hdr-row .v.subj{font-weight:700}
+  .mailbody-scroll{max-height:none;overflow:auto;background:#EDEBE4;padding:22px 16px}
+
+  /* contenido del propio email — inline styles reales dentro del HTML, ver comentario en el <table> */
+  .maildoc{width:600px;max-width:100%;margin:0 auto;background:#FFFFFF;font-family:Arial,Helvetica,sans-serif;color:#1C1B19;border-collapse:collapse}
+  .maildoc td{padding:0}
+
+  .m-editable{background:#FFF7E0;border:1px dashed #D9B54A;color:#5C4A12;padding:2px 5px;border-radius:4px;font-weight:700}
+  .m-cfgnote{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;font-style:italic}
+
+  /* ============ SECCIÓN 3 — roleo ============ */
+  .roleo-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--surface-2);margin-bottom:8px;font-size:12.5px}
+  .roleo-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--purple)}
+  .roleo-row .ord{font-weight:800;font-family:var(--mono)}
+  .miniresult{display:flex;flex-direction:column;gap:4px;background:var(--surface-2);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;font-size:11.5px;min-width:150px}
+  .miniresult .lbl{color:var(--ink-faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:10px}
+
+  /* ============ SECCIÓN 4 — directorio ============ */
+  .dim-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .dim{display:flex;flex-direction:column;gap:3px;background:var(--surface-2);border:1px solid var(--bd);border-radius:9px;padding:8px 12px;min-width:150px}
+  .dim .k{font-size:10px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .dim .v{font-size:13px;font-weight:700}
+  .rule{font-size:12px;color:var(--ink-soft);background:var(--surface-2);border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:8px 12px;margin:8px 0 14px}
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:999px;padding:4px 6px 4px 11px;color:var(--ink)}
+  .chip.nuevo{border-style:dashed;border-color:var(--blue-bd);background:var(--blue-bg)}
+
+  /* ============ SECCIÓN 5 — adjuntos ============ */
+  .dropzone{border:1.5px dashed var(--bd-strong);border-radius:10px;padding:18px;text-align:center;color:var(--ink-soft);font-size:12.5px;background:var(--surface-2);cursor:pointer}
+  .dropzone:hover{border-color:var(--teal-bd);color:var(--teal)}
+  .filechip{display:inline-flex;align-items:center;gap:8px;font-size:12px;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:999px;padding:5px 6px 5px 12px;margin:8px 6px 0 0}
+  .filechip .sz{color:var(--ink-faint)}
+  .filechip button{width:18px;height:18px;border-radius:50%;border:none;background:var(--bd-strong);color:var(--ink-soft);cursor:pointer;font-size:11px;line-height:1}
+
+  table.kv{border-collapse:collapse;font-size:12.5px}
+  table.kv td{padding:3px 10px 3px 0;vertical-align:top}
+  table.kv td.k{color:var(--ink-faint);font-weight:700;white-space:nowrap}
+
+  footer.closing{margin-top:48px;padding-top:16px;border-top:1px solid var(--bd);font-size:11.5px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="page">
+  <h1>Mailing — plan completo (TANDA B)</h1>
+  <p class="note">
+    Mockup estático, sin lógica — gate visual asincrónico para que John apruebe antes de tocar
+    <code>js/features/mailing.js</code> / <code>api/mailing.js</code>. Cinco piezas de la TANDA B:
+    el correo rediseñado, el gate de envío (regla 16), el roleo por exclusión post-confirmación
+    de zarpe, el directorio con la dimensión Notify, y los adjuntos extra (COA). Colores y
+    tipografía calcados de <code>mockup_control_huerfano.html</code> (dark slate + acento teal).
+  </p>
+
+  <nav class="subnav">
+    <a href="#s1">1 · Correo nuevo</a>
+    <a href="#s2">2 · Gate del envío</a>
+    <a href="#s3">3 · Roleo por exclusión</a>
+    <a href="#s4">4 · Directorio + Notify</a>
+    <a href="#s5">5 · Adjuntos extra</a>
+    <a href="#notas">Notas para John</a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <h2 id="s1"><span class="num">1</span>Correo nuevo (rediseño del mail de documentación)</h2>
+  <p class="intent">La pieza más importante: hoy el mail sale con formato mínimo. Acá se ve el
+  rediseño completo con los 2 bloques nuevos (días libres + contacto de la naviera en destino) y
+  el nuevo Cc interno. El cuerpo del mail (adentro del marco "cliente de correo") está armado
+  100% con <code>&lt;table&gt;</code> e <b>inline styles</b> — sin flex/grid, sin clases CSS
+  externas — para que sobreviva a Outlook tal cual se ve acá.</p>
+
+  <div class="mailclient">
+    <div class="hdr">
+      <div class="hdr-row"><span class="k">De</span><span class="v">SSB International Expo &lt;ssbintn8n@ssbint.com&gt;</span></div>
+      <div class="hdr-row"><span class="k">Para</span><span class="v">comex@lupin.com, logistica@lupin.com</span></div>
+      <div class="hdr-row"><span class="k">Cc</span><span class="v">gdm.import@gdmlogistics.com&nbsp;&nbsp;<span class="badge badge--nuevo">+ NUEVO</span>&nbsp;expoarpbb@ssbint.com</span></div>
+      <div class="hdr-row"><span class="k">Asunto</span><span class="v subj">Documentación de exportación — Orden 118959520 · LUPIN SA</span></div>
+    </div>
+    <div class="mailbody-scroll">
+      <!-- ============ INICIO DEL HTML DE EMAIL — tabla + inline styles, sin flex/grid ============ -->
+      <table role="presentation" class="maildoc" width="600" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding:26px 32px 18px 32px;border-bottom:3px solid #0F172A;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;letter-spacing:.06em;color:#0F172A;">SSB INTERNATIONAL</td>
+                <td align="right" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Documentación de exportación</td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px;">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#1C1B19;">Orden 118959520 — LUPIN SA</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- tabla de datos -->
+        <tr>
+          <td style="padding:20px 32px 6px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E7E4DD;border-radius:8px;">
+              <tr>
+                <td width="50%" style="padding:10px 14px;border-bottom:1px solid #E7E4DD;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Orden</td>
+                <td width="50%" style="padding:10px 14px;border-bottom:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Booking</td>
+              </tr>
+              <tr>
+                <td style="padding:2px 14px 10px 14px;border-bottom:1px solid #E7E4DD;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">118959520</td>
+                <td style="padding:2px 14px 10px 14px;border-bottom:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">SUAP259238740</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 14px;border-bottom:1px solid #E7E4DD;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">BL</td>
+                <td style="padding:10px 14px;border-bottom:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Buque / Viaje</td>
+              </tr>
+              <tr>
+                <td style="padding:2px 14px 10px 14px;border-bottom:1px solid #E7E4DD;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">SUAP259238740</td>
+                <td style="padding:2px 14px 10px 14px;border-bottom:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">MERCOSUL SUAPE 357</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 14px;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Zarpe (ATD)</td>
+                <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a897f;">Arribo estimado · POD</td>
+              </tr>
+              <tr>
+                <td style="padding:2px 14px 12px 14px;border-right:1px solid #E7E4DD;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">14/07/2026</td>
+                <td style="padding:2px 14px 12px 14px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#1C1B19;">20/07/2026 (+6 días) · NAVEGANTES, Brasil</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- documentación adjunta -->
+        <tr>
+          <td style="padding:22px 32px 4px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#8a897f;padding-bottom:8px;">Documentación adjunta</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Bill of Lading (BL)</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Factura comercial</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Packing List</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Certificado de Origen — digital (ZIP)</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Certificado de Origen — PDF</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Permiso de Exportación</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Certificado de Seguro</td></tr>
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1C1B19;padding:3px 0;"><span style="color:#3F7A1E;font-weight:700;">&#10003;</span>&nbsp; Certificado de Análisis (COA)</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- días libres -->
+        <tr>
+          <td style="padding:20px 32px 4px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F0F9F7;border:1px solid #B7E4DC;border-left:4px solid #0F766E;border-radius:8px;">
+              <tr>
+                <td style="padding:12px 16px 4px 16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#0F766E;">Días libres en destino</td>
+              </tr>
+              <tr>
+                <td style="padding:0 16px 4px 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#1C1B19;">25 días libres (demurrage + detention combinados)</td>
+              </tr>
+              <tr>
+                <td style="padding:0 16px 12px 16px;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;color:#4b4a45;">A partir del día 26: <b>USD&nbsp;25,00/día</b> contenedor seco · <b>USD&nbsp;10,00/día</b> contenedor reefer.<br>
+                <span style="color:#8a897f;font-size:11px;font-style:italic;">HAPAG · Brasil — vence 08/08/2026 (ATD + 25 días). Datos por naviera + país destino.</span></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- contacto naviera -->
+        <tr>
+          <td style="padding:16px 32px 4px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FBF8F0;border:1px solid #ECD9A0;border-left:4px solid #B45309;border-radius:8px;">
+              <tr>
+                <td style="padding:12px 16px 4px 16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#B45309;">Contacto de la línea marítima en destino</td>
+              </tr>
+              <tr>
+                <td style="padding:0 16px 6px 16px;font-family:Arial,Helvetica,sans-serif;font-size:12.5px;line-height:1.6;color:#3a3833;">
+                  Para retiro de contenedores, correcciones de BL y avisos de arribo, contactar a
+                  <span class="m-editable">HAPAG-LLOYD BRASIL</span> en
+                  <span class="m-editable">NAVEGANTES, Brasil</span>:
+                  <span class="m-editable">expo.brasil@hapag-lloyd.com&nbsp;·&nbsp;atencion.navegantes@hapag-lloyd.com</span>.
+                  Aplica a exportaciones desde Argentina.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 16px 12px 16px;" class="m-cfgnote">Texto fijo configurable por (naviera, destino) — no se tipea a mano en cada envío.</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- footer -->
+        <tr>
+          <td style="padding:26px 32px 30px 32px;border-top:1px solid #E7E4DD;margin-top:10px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td style="font-family:Arial,Helvetica,sans-serif;font-size:11.5px;color:#8a897f;line-height:1.6;">
+                Este correo fue generado automáticamente por <b style="color:#4b4a45;">SSB International</b> — Documentación de Exportación.
+                Ante cualquier consulta, respondé este correo o escribí a <span style="color:#1F5FAE;">expoarpbb@ssbint.com</span>.
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <!-- ============ FIN DEL HTML DE EMAIL ============ -->
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px">Fondo del marco fijo en claro aunque cambies el tema
+  de esta página con el botón de arriba a la derecha — un mail real no se ve "dark mode" del
+  lado del cliente, y ese detalle también aplica en producción.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s2"><span class="num">2</span>Gate del envío (regla 16)</h2>
+  <p class="intent">Regla 16 del inventario: "OK + revisado es requisito del mailing. Sin
+  revisar, no se envía." Se muestran los DOS estados posibles del mismo card, uno al lado del
+  otro, para comparar de un vistazo — en la app real es un solo card que cambia según el sello
+  vigente en <code>control_bl_sellos</code>.</p>
+
+  <div class="wrap">
+    <div class="card" style="width:340px">
+      <h3>Estado A — Bloqueado</h3>
+      <div class="muted" style="margin-bottom:10px">Orden 118959520 · LUPIN SA</div>
+      <div class="banner amber">
+        <span class="ic">🔒</span>
+        <span class="txt"><b>Control BL sin revisar</b> — el envío se habilita cuando el
+        control esté sellado como <b>Revisado</b>. <a href="#">Ver control →</a></span>
+      </div>
+      <button class="btn pri" disabled style="margin-top:14px;width:100%;justify-content:center">Enviar documentación</button>
+    </div>
+
+    <div class="card" style="width:340px">
+      <h3>Estado B — Habilitado</h3>
+      <div class="muted" style="margin-bottom:10px">Orden 118959520 · LUPIN SA</div>
+      <div class="banner green">
+        <span class="ic">✓</span>
+        <span class="txt"><span class="badge badge--teal">🖋 Revisado por naara · 14/07</span>
+        &nbsp;el control está sellado — el envío queda habilitado.</span>
+      </div>
+      <button class="btn pri" style="margin-top:14px;width:100%;justify-content:center">Enviar documentación</button>
+    </div>
+  </div>
+  <p class="note">El sello "Revisado" usa el mismo <b>teal</b> que ya pinta ese badge hoy en
+  Control BL y en el card de destinatarios de Mailing (<code>mail-badge.seal</code> /
+  <code>cbl-badge.seal</code>) — ver nota al pie sobre el "verde" del brief.</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s3"><span class="num">3</span>Confirmar zarpe + roleo por exclusión</h2>
+  <p class="intent">El paste-grid de "Confirmar zarpe" ya existe (Mailing → ATD). Esto es el
+  paso NUEVO que aparece DESPUÉS de confirmar: las órdenes que tenían ETD ese mismo día y nadie
+  confirmó quedan listadas para que un humano informe el roleo — decisión 2 del handoff
+  (detección por exclusión, nunca automática).</p>
+
+  <div class="card" style="max-width:640px">
+    <h3>Quedaron sin confirmar</h3>
+    <div class="muted" style="margin-bottom:12px">MAERSK FREEPORT 628N · ETD 14/07 — 2 de 5 órdenes con ese ETD sin confirmar zarpe</div>
+
+    <div class="roleo-row">
+      <input type="checkbox" checked id="rl1"><label for="rl1" style="flex:1;display:flex;gap:10px;align-items:center;cursor:pointer">
+        <span class="ord">118984859</span><span class="muted">MAERSK FREEPORT 628N</span></label>
+    </div>
+    <div class="roleo-row">
+      <input type="checkbox" checked id="rl2"><label for="rl2" style="flex:1;display:flex;gap:10px;align-items:center;cursor:pointer">
+        <span class="ord">118979709</span><span class="muted">MAERSK FREEPORT 628N</span></label>
+    </div>
+
+    <button class="btn warn" style="margin-top:12px">⟳ Informar roleo → siguiente servicio (MAERSK LOTA 630N · ETD 21/07)</button>
+    <p class="faint" style="margin-top:8px">Al confirmar: cancela el BL viejo, reasigna la orden
+    al próximo servicio del mismo carrier, y la deja pendiente de que se descargue y controle
+    el BL nuevo antes de habilitar el envío (encadena con la sección 2).</p>
+  </div>
+
+  <h3 style="margin-top:22px">Dónde aparece el estado resultante</h3>
+  <div class="wrap">
+    <div class="miniresult">
+      <span class="lbl">Control BL</span>
+      <span class="badge badge--orange" style="align-self:flex-start">⟳ Roleada — pendiente de BL nuevo</span>
+      <span class="faint">reemplaza el badge REVISAR crudo hasta que llegue el BL nuevo</span>
+    </div>
+    <div class="miniresult">
+      <span class="lbl">Mailing</span>
+      <span class="badge badge--orange" style="align-self:flex-start">⟳ Roleada — pendiente de BL nuevo</span>
+      <span class="faint">bloquea el gate de envío (sección 2) hasta re-controlar</span>
+    </div>
+    <div class="miniresult">
+      <span class="lbl">Seguimiento</span>
+      <span class="badge badge--orange" style="align-self:flex-start">⟳ Roleada — pendiente de BL nuevo</span>
+      <span class="faint">"voy a ver si lo pongo en seguimiento" — John, reunión 14/07</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s4"><span class="num">4</span>Directorio con Notify</h2>
+  <p class="intent">Hoy el directorio de contactos clavea por (ship_to, sold_to). Decisión 3
+  del handoff: la clave pasa a las <b>tres</b> dimensiones. El chip Notify es lo nuevo — cuando
+  hay un notify especial, ese juego de correos manda por sobre el comodín del cliente.</p>
+
+  <div class="card" style="max-width:640px">
+    <h3>Destinatarios — directorio del cliente</h3>
+    <div class="dim-row">
+      <div class="dim"><span class="k">Sold-to</span><span class="v">LUPIN SA</span></div>
+      <div class="dim"><span class="k">Ship-to</span><span class="v">LUPIN SA</span></div>
+      <div class="dim" style="border-color:var(--blue-bd);background:var(--blue-bg)">
+        <span class="k" style="color:var(--blue)">Notify <span class="badge badge--nuevo" style="margin-left:4px">NUEVO</span></span>
+        <span class="v">GDM LOGISTICS</span></div>
+    </div>
+    <div class="rule">Este juego de correos vale para <b>este notify</b>; sin notify especial
+    = comodín del cliente (se resuelve por sold-to/ship-to como hoy).</div>
+
+    <span class="faint" style="text-transform:uppercase;font-weight:700;letter-spacing:.04em">Nuevos — extraídos del Booking Advice sin decidir</span>
+    <div class="chiprow">
+      <span class="chip nuevo">nuevo.contacto@lupin.com
+        <button class="btn mini" style="border:none;background:var(--teal-bg);color:var(--teal)">✓ Para</button>
+        <button class="btn mini" style="border:none;background:var(--surface);color:var(--ink-soft)">CC</button>
+        <button class="btn mini blq" style="border:none">⊘ Bloquear</button>
+      </span>
+    </div>
+
+    <span class="faint" style="text-transform:uppercase;font-weight:700;letter-spacing:.04em;display:block;margin-top:12px">Confirmados — Para</span>
+    <div class="chiprow">
+      <span class="chip">comex@lupin.com <button style="width:16px;height:16px;border:none;border-radius:50%;background:var(--bd-strong);color:var(--ink-soft);cursor:pointer;font-size:10px">×</button></span>
+      <span class="chip">logistica@lupin.com <button style="width:16px;height:16px;border:none;border-radius:50%;background:var(--bd-strong);color:var(--ink-soft);cursor:pointer;font-size:10px">×</button></span>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px">
+      <input placeholder="agregar@email.com" style="flex:1;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:8px;padding:7px 10px;color:var(--ink);font-size:12.5px">
+      <button class="btn mini" style="border:1px solid var(--bd-strong)">+ Agregar</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s5"><span class="num">5</span>Adjuntar documentación extra (COA + genérico)</h2>
+  <p class="intent">Zona nueva dentro del mismo card de envío (sección 2). Cubre el COA (llega
+  por mail, no está automatizado — decisión 5) y cualquier otro adjunto puntual que no vive en
+  el directorio de documentos regulares.</p>
+
+  <div class="card" style="max-width:520px">
+    <h3>Adjuntar documentación adicional (COA, etc.)</h3>
+    <div class="dropzone">📎 Arrastrá archivos acá o hacé click para elegir</div>
+    <div>
+      <span class="filechip">coa_118959520.pdf <span class="sz">· 240 KB</span> <button>✕</button></span>
+    </div>
+    <p class="faint" style="margin-top:10px">Hasta 3 archivos · 4 MB total.</p>
+    <p class="faint">Viajan solo en <b style="color:var(--ink-soft)">ESTE envío</b> — no se
+    guardan en el directorio ni se reutilizan en el próximo mail de esta orden.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="notas"><span class="num">✓</span>Notas para la aprobación de John</h2>
+  <p class="note">
+  · <b>Sello "Revisado" en teal, no verde literal</b> — usé el mismo acento que ya pinta el sello
+  hoy en Control BL y Mailing (<code>--teal</code>), en vez del verde que pedía el brief. El
+  verde queda reservado para el estado "habilitado" del banner completo (semántica de éxito). Si
+  preferís el sello mismo en verde puro, es un cambio de 1 línea de CSS.<br>
+  · <b>Días libres del mail de ejemplo: HAPAG BRASIL</b> (25 días combinados, USD 25/reefer
+  USD 10 — dato real de <code>detention_freetime</code>) aunque el buque de ejemplo es MERCOSUL
+  SUAPE 357: usé los números que me pasaste tal cual. En producción el bloque se arma por la
+  naviera REAL del BL de esa orden, no por el nombre del buque — si esta orden fuera
+  efectivamente MERCOSUL, el bloque mostraría MERCOSUL/Brasil. Avisame si preferís que el mock
+  quede 100% consistente con una sola naviera.<br>
+  · <b>Tránsito estimado (6 días) es el dato que me diste</b> para el ejemplo — no coincide con
+  el seed de tránsitos por aduana del handoff (Brasil = 3 días); son tablas distintas
+  (tránsito naviera-específico del BL vs. tránsito genérico por aduana de destino), lo dejo tal
+  cual me lo pasaste.<br>
+  · <b>Bloque de contacto de la naviera:</b> el texto con fondo amarillo tenue marca lo
+  configurable por (naviera, destino) — es una convención solo de este mockup para señalarte
+  qué es dato fijo de config vs. texto fijo de plantilla; en el mail real ese resaltado NO
+  existe (se ve como texto normal).<br>
+  · <b>Cc expoarpbb@ssbint.com</b> lo puse fijo en el header del mail y marcado "NUEVO" (cierra
+  el ítem 28 del inventario). Alternativa: en vez de vivir solo en el header crudo, podría
+  aparecer también como chip visible en el directorio de la sección 4 para que sea auditable
+  desde la UI y no solo leyendo el mail ya enviado — quedó afuera del mock a propósito, decilo
+  si lo querés.<br>
+  · <b>Badge de roleo</b> "⟳ Roleada — pendiente de BL nuevo" en <b>naranja</b> (mismo semantic
+  que REVISAR/atención) para diferenciarlo del ámbar del gate bloqueado y del teal del sello.
+  Alternativa: violeta (el design system ya tiene <code>.badge--purple</code>) si preferís que
+  se lea como "estado especial" en vez de "atención".<br>
+  · <b>Sección 1 con scroll propio y fondo claro fijo</b>: el marco del email no sigue el tema
+  dark/light del resto de la página — un cliente de correo real (Gmail/Outlook) casi siempre
+  muestra el HTML con fondo blanco salvo que el destinatario tenga dark mode propio, así que
+  simular "email en dark" hubiese sido engañoso.<br>
+  · Este archivo es <b>visual únicamente</b> — el HTML del mail de la sección 1 sirve como
+  referencia de estructura (tablas + inline styles), pero no pasó por un test real de
+  renderizado en Outlook/Litmus; eso queda para cuando se folleto el template final en
+  <code>api/mailing.js</code> / el workflow n8n.
+  </p>
+
+  <footer class="closing">docs/mockups/mockup_mailing_plancompleto.html · gate visual TANDA B (Mailing) · sin lógica, sin datos reales de producción · generado 2026-07-15</footer>
+</div>
+</body>
+</html>

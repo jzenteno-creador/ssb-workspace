@@ -1,0 +1,1268 @@
+{
+ "name": "Mailing Envío Documentación",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "mailing-send",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "id": "cb69e36c-1147-481c-9671-b70d8408b61e",
+   "name": "Webhook Mailing",
+   "webhookId": "cc7678a0-cdf0-41c2-a4d4-8f6621bbee8f"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "tm-1",
+       "name": "TEST_MODE",
+       "value": true,
+       "type": "boolean"
+      }
+     ]
+    },
+    "includeOtherFields": false,
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    220,
+    0
+   ],
+   "id": "26d6be99-5eea-463c-a819-e33fe03e2adb",
+   "name": "Config (TEST_MODE)"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * NODO Code — \"Validar request\" (Mailing T2)\n * Workflow: Mailing Envío Documentación · Run Once for Each Item\n * Parsea y sanea el body del webhook /mailing-send. Nunca lanza: los errores\n * viajan en req_errors y el Resolver responde con detalle.\n * Candado de dos llaves: lock_test_mode viene del Set \"Config (TEST_MODE)\"\n * (constante del workflow — cambiarla = PUT deliberado) y SIEMPRE gana sobre\n * el test_mode del request.\n * PLANCOMPLETO B (§5.5): valida body.extra_attachments [{name,mime,data_b64}]\n * — máx 3, basename ≤80 chars, mime whitelist, total decodificado ≤4MB.\n */\nconst cfg = $('Config (TEST_MODE)').first().json;\nconst wh = $('Webhook Mailing').first().json;\nconst body = (wh.body && typeof wh.body === 'object') ? wh.body : {};\n\nconst errors = [];\nconst order = String(body.order_number || '').trim();\nif (!/^\\d{7,12}$/.test(order)) errors.push('order_number inválido (esperado: 7-12 dígitos)');\n\nconst ACTIONS = ['preview', 'send', 'save_contacts', 'confirm_schedule'];\nconst action = String(body.action || 'preview');\nif (!ACTIONS.includes(action)) errors.push(`action inválida: \"${action}\" (válidas: ${ACTIONS.join('|')})`);\n\nconst overrides = (body.overrides && typeof body.overrides === 'object') ? body.overrides : {};\nconst contacts = (body.contacts && typeof body.contacts === 'object') ? body.contacts : null;\nif (action === 'save_contacts' && !contacts) errors.push('save_contacts requiere body.contacts {to_emails[], cc_emails[], rejected_emails[], confirmed, notes}');\nif (action === 'confirm_schedule' && !(overrides.schedule && typeof overrides.schedule === 'object'))\n  errors.push('confirm_schedule requiere overrides.schedule {naviera, buque, puerto_origen, puerto_destino, mes_etd}');\n\n// ---- Adjuntos extra manuales (§5.5, plancompleto B): COA u otros documentos\n// que el operario suma al envío desde el front. Estricto: máx 3, nombre saneado\n// (basename, ≤80 chars), mime whitelist, total DECODIFICADO ≤ 4 MB.\n// Cualquier inválido → req_errors y lista vacía (todo-o-nada: jamás a medias).\nconst MIME_OK = ['application/pdf', 'application/zip', 'image/jpeg', 'image/png',\n  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',\n  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];\nconst MAX_EXTRA = 3, MAX_TOTAL_BYTES = 4 * 1024 * 1024;\nconst extrasRaw = Array.isArray(body.extra_attachments) ? body.extra_attachments : [];\nlet extra_attachments = [];\nconst extraErrors = [];\nif (extrasRaw.length > MAX_EXTRA) {\n  extraErrors.push(`extra_attachments: máximo ${MAX_EXTRA} archivos (llegaron ${extrasRaw.length})`);\n} else if (extrasRaw.length) {\n  let total = 0;\n  for (let i = 0; i < extrasRaw.length; i++) {\n    const o = (extrasRaw[i] && typeof extrasRaw[i] === 'object') ? extrasRaw[i] : {};\n    // basename defensivo (sin separadores de path) + tope de 80 chars\n    const name = String(o.name || '').split(/[\\\\/]/).pop().trim().slice(0, 80);\n    const mime = String(o.mime || '').toLowerCase().trim();\n    // tolera dataURL del front (data:mime;base64,....) — se queda solo el payload\n    const b64 = String(o.data_b64 || '').replace(/^data:[^,]*,/, '').replace(/\\s+/g, '');\n    if (!name) { extraErrors.push(`extra_attachments[${i}]: sin nombre`); continue; }\n    if (!MIME_OK.includes(mime)) { extraErrors.push(`extra_attachments[${i}] \"${name}\": mime no permitido (${mime || 'vacío'})`); continue; }\n    if (!b64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(b64)) { extraErrors.push(`extra_attachments[${i}] \"${name}\": data_b64 vacío o no-base64`); continue; }\n    const bytes = Math.floor(b64.length * 3 / 4) - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0);\n    total += bytes;\n    extra_attachments.push({ name, mime, data_b64: b64, bytes });\n  }\n  if (total > MAX_TOTAL_BYTES) extraErrors.push(`extra_attachments: total ${(total / 1048576).toFixed(1)} MB decodificados > 4 MB permitidos`);\n}\nif (extraErrors.length) { errors.push(...extraErrors); extra_attachments = []; }\n\nreturn { json: {\n  order_number: errors.length ? '0' : order,\n  action,\n  // llave 1 (candado del workflow): true salvo que el Set diga explícitamente false\n  lock_test_mode: cfg.TEST_MODE !== false,\n  // llave 2 (request): test salvo test_mode === false explícito\n  request_test_mode: body.test_mode !== false,\n  overrides,\n  contacts,\n  extra_attachments,\n  triggered_by: String(body.triggered_by || '').slice(0, 120) || null,\n  req_errors: errors,\n} };\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    440,
+    0
+   ],
+   "id": "003a73bc-7059-49cc-add7-4bf668f6a407",
+   "name": "Validar request"
+  },
+  {
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_orders?limit=1&order_number=eq.' + encodeURIComponent($('Validar request').first().json.order_number) }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    660,
+    0
+   ],
+   "id": "6caa9de3-6b0e-44dc-8b7a-b1798a86edb5",
+   "name": "GET mailing_orders",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/v_bl_controls_latest?limit=1&order_number=eq.' + encodeURIComponent($('Validar request').first().json.order_number) }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    0
+   ],
+   "id": "3b33caab-e3a5-4fba-87cc-a95dd9baf9d4",
+   "name": "GET control BL (latest)",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_contacts?limit=2&ship_to_key=eq.' + encodeURIComponent(($('GET mailing_orders').first().json.ship_to_key) || '∅') + '&sold_to_key=eq.' + encodeURIComponent(($('GET mailing_orders').first().json.sold_to_key) || '') + '&notify_key=in.(' + encodeURIComponent('\"' + String(($('GET mailing_orders').first().json.notify_key) || String(((($('GET mailing_orders').first().json.contacts_extracted || {}).notify || {}).name) || '').toUpperCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^A-Z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim()).replace(/\"/g, '').trim() + '\",\"\"') + ')' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1100,
+    0
+   ],
+   "id": "92bbf9fa-5aac-40bc-a3a2-22a198ee78cd",
+   "name": "GET mailing_contacts",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/schedules_master?activo=is.true&disponible=is.true&order=etd.asc&limit=1000&puerto_destino=eq.' + encodeURIComponent(($('GET mailing_orders').first().json.pod) || ($('GET control BL (latest)').first().json.pod) || '∅') }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1320,
+    0
+   ],
+   "id": "f720edae-f39b-4980-9cb8-2c078cbd4f2a",
+   "name": "GET schedules pod",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "aggregate": "aggregateAllItemData",
+    "destinationFieldName": "data",
+    "include": "allFields",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.aggregate",
+   "typeVersion": 1,
+   "position": [
+    1540,
+    0
+   ],
+   "id": "fab1e54a-0463-484a-b252-272927d79cfd",
+   "name": "Agg schedules",
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number }}",
+    "limit": 1,
+    "filter": {
+     "folderId": {
+      "__rl": true,
+      "value": "1BUG12Po3fytU1bEP6rrb2lU1n9TV826D",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    1760,
+    0
+   ],
+   "id": "0cd56a49-91f5-451b-854b-af9b40af5bb8",
+   "name": "Buscar BL Draft",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number }}",
+    "limit": 1,
+    "filter": {
+     "driveId": {
+      "__rl": true,
+      "value": "0AKuox28BE9ytUk9PVA",
+      "mode": "id"
+     },
+     "folderId": {
+      "__rl": true,
+      "value": "1NNXEAhC-Sc_vMrDqneG7ssAhCMzhMRDp",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    1980,
+    0
+   ],
+   "id": "ac1fe88e-c8ff-41e3-8d5b-3b129458fc6b",
+   "name": "Buscar Factura",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number }}",
+    "limit": 1,
+    "filter": {
+     "driveId": {
+      "__rl": true,
+      "value": "0AKuox28BE9ytUk9PVA",
+      "mode": "id"
+     },
+     "folderId": {
+      "__rl": true,
+      "value": "1_KiTUAkJdEHaFhIMUr3MBhIfSCUDw3-G",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2200,
+    0
+   ],
+   "id": "d8b7d941-ae93-4e55-b68a-5f9591325f52",
+   "name": "Buscar Packing List",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * NODO Code — \"Resolver Mailing\" (Mailing T2) — el cerebro del workflow de envío.\n * Workflow: Mailing Envío Documentación · Run Once for Each Item\n *\n * Entradas (todas por $('Nodo'), la cadena upstream es lineal):\n *   Validar request | GET mailing_orders | GET control BL (latest) |\n *   GET mailing_contacts | Agg schedules | Buscar BL Draft | Buscar Factura |\n *   Buscar Packing List | GET certificados_origen | Buscar CO PDF | Buscar PE |\n *   GET sellos | GET puertos pais | GET detention | GET naviera destino |\n *   Buscar SEG | Config (TEST_MODE)\n *\n * Responsabilidades (composición ÚNICA preview/send):\n *   1. Destinatarios: override request → mailing_contacts confirmado →\n *      contacts_extracted como PROPUESTA (no enviable en real — tercera red).\n *   2. Schedule EN VIVO por tiers (contrato migrations/2026-07-05-mailing-mvp):\n *      override humano → T1 exacto → T2 vessel+pod+dígitos de voyage →\n *      T3 vessel+pod+ETD≥hoy(America/Argentina/Buenos_Aires) más próximo →\n *      sin-match (send bloqueado + candidates para el picker).\n *   3. TEST_MODE dos llaves + tercera red. En test: To=expoarpbb, CC vacío,\n *      subject \"[TEST → real: …]\".\n *   4. Adjuntos: reporta encontrados/faltantes POR TIPO sin romper el flujo;\n *      attachments.found expone file_id (Batch B: chip-bar del front abre el PDF).\n *   5. Compone subject/body (Batch B ATD-gate: ATD real de zarpe + ETA + tránsito\n *      estimado en días corridos; ETD ya NO aparece; adjuntos con label humano;\n *      SIN producto/cantidad) y decide la ruta del Switch. Degradación sin ATD:\n *      subject sin segmento Zarpe, sin párrafo narrativo, tabla con \"—\" — nunca rompe.\n *   6. Guard best-effort anti doble-click: status ENVIADO real bloquea salvo\n *      overrides.resend=true (sin lock transaccional, asumido).\n *   7. PLANCOMPLETO B (2026-07-15): notify como tercera dimensión del directorio\n *      (fila exacta > comodín ''), gate regla 16 (sello vigente sobre el último\n *      control o no se envía), roleo por exclusión (roleo_at sin control posterior\n *      bloquea), bloque \"Días libres en destino\" (detention_freetime), bloque de\n *      contacto de naviera en destino (mailing_naviera_destino), SEG obligatorio\n *      informativo para CIP/CIF (alerta, NO bloquea) y adjuntos extra manuales\n *      (passthrough al root para \"Unir binarios\" + lista del mail).\n * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).\n * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);\n * fluye sola al GET (sin select=) y se re-emite en el root para \"Evaluar envío\"\n * (snapshot atd_at_send en mailing_sends).\n */\nconst req = $('Validar request').first().json;\n\nconst row = (nodeName) => {\n  try {\n    const j = $(nodeName).first().json;\n    return (j && typeof j === 'object' && Object.keys(j).length) ? j : null;\n  } catch (e) { return null; }\n};\n// como row() pero devuelve TODOS los items del nodo (try/catch → []): los GET\n// con limit>1 (mailing_contacts exacta+comodín, sellos) llegan como items múltiples.\nconst allRows = (nodeName) => {\n  try {\n    return $(nodeName).all().map((it) => it && it.json)\n      .filter((j) => j && typeof j === 'object' && Object.keys(j).length);\n  } catch (e) { return []; }\n};\nconst mo = row('GET mailing_orders');\nconst bl = row('GET control BL (latest)');\n// hasta 2 filas del directorio: (ship,sold,notify exacto) + comodín '' — la\n// elección (ct) se hace más abajo, cuando ya está resuelto el notify de la orden.\nconst cts = allRows('GET mailing_contacts');\nconst aggJ = row('Agg schedules') || {};\nconst schedRaw = Array.isArray(aggJ.data) ? aggJ.data : [];\n\nconst foundFile = (nodeName, tipo) => {\n  const j = row(nodeName);\n  return (j && j.id) ? { tipo, file_id: j.id, name: j.name || null, mime: j.mimeType || null } : null;\n};\nconst afBL = foundFile('Buscar BL Draft', 'bl_draft');\nconst afFC = foundFile('Buscar Factura', 'factura');\nconst afPL = foundFile('Buscar Packing List', 'packing_list');\n\n// ---- F1/F2 (2026-07-07): CO híbrido tabla??búsqueda + PE gateado por tipo ----\n// order_kind por formato de orden (regla de dominio de cert-origen, cero\n// contraejemplos en repo+fixtures): STO = ^4, 10 dígitos · trade = ^1, 9 dígitos\n// (a veces con UN 0 de padding). Formato desconocido = conservador: SIN PE —\n// adjuntar un PE a una STO es el peor bug de negocio; omitirlo se ve en la UI.\nconst ordNorm = String(req.order_number || '').trim().replace(/^0(?=\\d)/, '');\nconst order_kind = /^4\\d{9}$/.test(ordNorm) ? 'sto' : (/^1\\d{8}$/.test(ordNorm) ? 'trade' : 'desconocido');\n\n// CO (aplica a trade Y STO, ZIP+PDF juntos cuando se puede):\n//   la fila de certificados_origen GANA (file_ids directos, determinístico);\n//   el PDF degrada a la búsqueda Drive por orden (cubre los convertidos a mano\n//   {orden}_CO.pdf que no están en la tabla); el ZIP se llama {certificado}.zip\n//   (la orden NO está en el nombre ni en el XML) → SOLO resoluble por tabla.\nconst co = row('GET certificados_origen');\nconst afCoZip = (co && co.zip_drive_id)\n  ? { tipo: 'co_zip', file_id: co.zip_drive_id, name: co.certificado_numero ? co.certificado_numero + '.zip' : null, mime: 'application/zip' }\n  : null;\nconst afCoPdf = (co && co.pdf_drive_id)\n  ? { tipo: 'co_pdf', file_id: co.pdf_drive_id, name: co.pdf_nombre || null, mime: 'application/pdf' }\n  : foundFile('Buscar CO PDF', 'co_pdf');\n// PE: SOLO trade. Una STO JAMÁS adjunta PE — para STO (y desconocido) el tipo\n// ni se busca ni se lista como faltante (no aplica).\nconst afPE = order_kind === 'trade' ? foundFile('Buscar PE', 'pe') : null;\n\n// ---- SEG (§5.4, plancompleto B): incoterm CIP/CIF requiere Certificado de\n// Seguro ({orden}_SEG en Drive). El incoterm sale del último control BL.\n// Falta → ALERTA (attachments_missing + seg_alerta) — NUNCA bloquea el envío\n// (decisión de John: \"les va a marcar si está o no está\").\nconst incoterm = String((bl && bl.factura_extract && bl.factura_extract.incoterm) || '').toUpperCase().slice(0, 3);\nconst requiere_seg = incoterm === 'CIP' || incoterm === 'CIF';\nconst afSEG = requiere_seg ? foundFile('Buscar SEG', 'seg') : null;\n\nconst attachments_found = [afBL, afFC, afPL, afCoZip, afCoPdf, afPE, afSEG].filter(Boolean);\nconst expectedDocs = [['bl_draft', afBL], ['factura', afFC], ['packing_list', afPL], ['co_zip', afCoZip], ['co_pdf', afCoPdf]];\nif (order_kind === 'trade') expectedDocs.push(['pe', afPE]);\nif (requiere_seg) expectedDocs.push(['seg', afSEG]);\nconst attachments_missing = expectedDocs.filter(([, f]) => !f).map(([t]) => t);\nconst seg_alerta = (requiere_seg && !afSEG)\n  ? 'CIP/CIF sin certificado de seguro en Drive (' + String(req.order_number) + '_SEG)'\n  : null;\n\n// ---- helpers ----\nconst pick = (...xs) => { for (const x of xs) { if (x !== undefined && x !== null && String(x).trim() !== '') return x; } return null; };\nconst norm = (s) => String(s || '').replace(/\\s+/g, ' ').trim().toUpperCase();\n// normKey: contrato ÚNICO de claves del directorio — misma función que \"Armar\n// fila Mailing\" (CBL); [̀-ͯ] = los diacríticos combinables del espejo.\nconst normKey = (s) => String(s || '')\n  .toUpperCase()\n  .normalize('NFKD').replace(/[̀-ͯ]/g, '')\n  .replace(/[^A-Z0-9 ]/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\nconst digits = (s) => String(s || '').replace(/\\D/g, '');\nconst OWN = 'expoarpbb@ssbint.com';\nconst cleanEmails = (arr) => {\n  const seen = new Set(); const out = [];\n  for (const e of (Array.isArray(arr) ? arr : [arr])) {\n    const v = String(e || '').trim().toLowerCase();\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v)) continue;\n    if (v === OWN) continue;\n    if (!seen.has(v)) { seen.add(v); out.push(v); }\n  }\n  return out;\n};\nconst nowIso = new Date().toISOString();\nconst hoyBA = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });\nconst fmtD = (s) => (s && /^\\d{4}-\\d{2}-\\d{2}/.test(String(s)))\n  ? `${String(s).slice(8, 10)}/${String(s).slice(5, 7)}/${String(s).slice(0, 4)}` : '—';\nconst esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\n\n// ---- identidad de la orden (mailing_orders manda; control BL como fallback) ----\nconst order_number = req.order_number;\nconst m = mo || {};\n// contacts_extracted se necesita ACÁ (antes que en destinatarios): el notify de\n// la orden decide qué fila del directorio manda (§5.3 — exacta > comodín '').\n// Fallback para filas viejas sin columna poblada: normKey del notify del BA.\nconst ce = (m.contacts_extracted && typeof m.contacts_extracted === 'object') ? m.contacts_extracted : {};\nconst orderNotifyKey = String(m.notify_key || '').trim() || normKey(ce.notify && ce.notify.name);\nconst ct = cts.find((c) => (c.notify_key || '') === orderNotifyKey)\n  || cts.find((c) => (c.notify_key || '') === '') || null;\nconst cliente = pick(m.ship_to_name, m.sold_to_name);\nconst vessel = pick(m.vessel, bl && bl.vessel);\nconst voyage = pick(m.voyage, bl && bl.voyage);\nconst pol = pick(m.pol, bl && bl.pol);\nconst pod = pick(m.pod, bl && bl.pod);\nconst booking_no = pick(m.booking_no, bl && bl.booking_no);\nconst bl_number = pick(m.bl_number, bl && bl.bl_number);\n// ATD (Batch B): fecha REAL de zarpe confirmada en mailing_orders.atd — null =\n// sin zarpe confirmado (el gate del front no deja enviar, pero este nodo degrada\n// elegante igual: el send puede llegar por vías no gateadas, ej. test directo).\nconst atd = (m.atd && /^\\d{4}-\\d{2}-\\d{2}/.test(String(m.atd))) ? String(m.atd).slice(0, 10) : null;\n\n// ---- PLANCOMPLETO B: sello (regla 16) · roleo (§5.2) · días libres · naviera ----\n// Sello vigente = fila NO anulada de control_bl_sellos cuyo bl_file_id es\n// EXACTAMENTE el del último control (regla X): reprocesar el BL invalida solo.\nconst sellos = allRows('GET sellos');\nconst sello_vigente = (bl && bl.bl_file_id)\n  ? (sellos.find((s) => s && s.bl_file_id === bl.bl_file_id) || null) : null;\n\n// Roleo por exclusión: roleo informado y SIN control POSTERIOR ⇒ el BL vigente\n// es del buque viejo — se bloquea el envío hasta reprocesar el BL nuevo.\n// (timestamps ISO del mismo formato → comparación lexicográfica, como etd/eta)\nconst roleo_pendiente = !!(m.roleo_at && (!bl || String(bl.created_at) < String(m.roleo_at)));\n\n// Días libres en destino (detention_freetime) — mapeos VERIFICADOS EN VIVO\n// 2026-07-15 contra select distinct de supplier/country y puertos.pais; los\n// MISMOS mapas van inline en la URL del nodo \"GET detention\" (mantener espejados):\n//   carrier→supplier: MAERSK→MAERSK · SEALAND→MAERSK (marca del grupo Maersk) ·\n//   LOG-IN→LOG-IN LOGISTICA INTERMODAL S.A. · MERCOSUL→CMA CGM (grupo CMA CGM) ·\n//   HAPAG-LLOYD→HAPAG LLOYD (sin guión en la tabla).\nconst DET_SUPPLIER = { 'MAERSK': 'MAERSK', 'SEALAND': 'MAERSK', 'LOG-IN': 'LOG-IN LOGISTICA INTERMODAL S.A.', 'MERCOSUL': 'CMA CGM', 'HAPAG-LLOYD': 'HAPAG LLOYD' };\nconst DET_COUNTRY = { 'Brasil': 'BRAZIL', 'Chile': 'CHILE', 'Perú': 'PERU', 'Argentina': 'ARGENTINA', 'Colombia': 'COLOMBIA', 'México': 'MEXICO', 'Estados Unidos': 'UNITED STATES', 'España': 'SPAIN', 'India': 'INDIA', 'Vietnam': 'VIETNAM', 'China': 'CHINA (EAST/NORTH/SOUTH)' };\nconst pais_destino = (row('GET puertos pais') || {}).pais || null;\nconst det = row('GET detention');\nconst det_dias = det\n  ? (det.combined_days != null ? Number(det.combined_days)\n    : ((det.demurrage_days != null || det.detention_days != null)\n      ? (Number(det.demurrage_days) || 0) + (Number(det.detention_days) || 0) : null))\n  : null;\n// Sin match (o fila sin días) → null y el bloque del mail se OMITE — jamás rompe.\nconst dias_libres = (det && det_dias != null) ? {\n  dias: det_dias,\n  combined: det.combined_days != null,\n  per_diem_dry_usd: det.per_diem_dry_usd != null ? Number(det.per_diem_dry_usd) : null,\n  per_diem_reefer_usd: det.per_diem_reefer_usd != null ? Number(det.per_diem_reefer_usd) : null,\n  supplier: DET_SUPPLIER[String(pick(m.carrier) || '').toUpperCase().trim()] || null,\n  country: DET_COUNTRY[String(pais_destino || '').trim()] || null,\n  pais_destino,\n} : null;\n\n// Bloque de contacto de la naviera en destino (mailing_naviera_destino — el\n// contenido lo cargan John/Naara: confiado, con sanitizado suave anti-<script>).\nconst navRow = row('GET naviera destino');\nconst naviera_html = (navRow && navRow.contacto_html)\n  ? String(navRow.contacto_html)\n      .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, '')\n      .replace(/<\\s*\\/?\\s*script[^>]*>/gi, '')\n  : null;\n\n// ---- schedule por tiers (schedRaw ya viene filtrado pod + activo + disponible) ----\n// Dedup por clave natural: con \"GET mailing_contacts\" en limit=2 el nodo\n// \"GET schedules pod\" corre una vez POR ITEM del directorio y \"Agg schedules\"\n// concatena — sin esto los candidates del picker saldrían duplicados.\nconst seenSched = new Set();\nconst rows = schedRaw.filter((r) => r && r.buque).map((r) => ({ ...r, B: norm(r.buque) }))\n  .filter((r) => {\n    const k = [r.naviera, r.B, r.puerto_origen, r.puerto_destino, r.mes_etd, r.etd, r.eta].join('|');\n    if (seenSched.has(k)) return false;\n    seenSched.add(k);\n    return true;\n  });\nconst V = norm(vessel), VY = norm(voyage);\nlet match = null, matched_by = 'sin-match', schedNote = null;\nconst ovrDb = (m.schedule_override && typeof m.schedule_override === 'object') ? m.schedule_override : null;\nif (ovrDb && ovrDb.buque) {\n  match = rows.find((r) => r.B === norm(ovrDb.buque) && r.naviera === ovrDb.naviera\n    && r.puerto_origen === ovrDb.puerto_origen && r.puerto_destino === ovrDb.puerto_destino\n    && r.mes_etd === ovrDb.mes_etd) || null;\n  if (match) matched_by = 'override';\n  else schedNote = 'schedule_override apunta a una vela que ya no está activa+disponible — repetir el pick';\n}\nif (!match && V) {\n  match = rows.find((r) => r.B === norm(V + ' ' + VY)) || null;\n  if (match) matched_by = 'T1';\n  if (!match && digits(VY)) {\n    match = rows.find((r) => r.B.startsWith(V + ' ') && digits(r.B.split(' ').pop()) === digits(VY)) || null;\n    if (match) matched_by = 'T2';\n  }\n  if (!match) {\n    const fut = rows.filter((r) => r.B.startsWith(V + ' ') && String(r.etd) >= hoyBA)\n      .sort((a, b) => (String(a.etd) < String(b.etd) ? -1 : 1));\n    if (fut.length) { match = fut[0]; matched_by = 'T3'; }\n  }\n}\nconst natKey = (r) => ({ naviera: r.naviera, buque: r.buque, puerto_origen: r.puerto_origen, puerto_destino: r.puerto_destino, mes_etd: r.mes_etd });\nconst schedule = match\n  ? { matched_by, etd: String(match.etd), eta: String(match.eta), ...natKey(match), note: schedNote }\n  : {\n      matched_by: 'sin-match', etd: null, eta: null, note: schedNote,\n      candidates: rows.filter((r) => String(r.etd) >= hoyBA)\n        .sort((a, b) => (String(a.etd) < String(b.etd) ? -1 : 1)).slice(0, 12)\n        .map((r) => ({ ...natKey(r), etd: String(r.etd), eta: String(r.eta) })),\n    };\n\n// ---- destinatarios: override → directorio confirmado → propuesta BA ----\n// 3 estados por (cliente, email) — contrato migrations/2026-07-05-mailing-contacts-3-estados:\n//   confirmado = to/cc del directorio (confirmed=true) · bloqueado = blocked_emails\n//   nuevo = DERIVADO: contacts_extracted − confirmados − bloqueados (no se persiste)\nconst ov = req.overrides || {};\nconst blocked = cleanEmails((ct && (ct.blocked_emails || ct.rejected_emails)) || []);\nconst confirmadosDir = (ct && ct.confirmed === true)\n  ? cleanEmails([...(ct.to_emails || []), ...(ct.cc_emails || [])]) : [];\n\n// propuesta del BA (siempre computada: alimenta el diff de nuevos aunque el\n// origen del envío sea el directorio o un override; `ce` viene de la sección\n// identidad — también resuelve el notify del directorio)\nconst propTo = cleanEmails([...(ce.partner_emails || []), ce.document_recip && ce.document_recip.email]);\nconst propCc = cleanEmails([ce.notify && ce.notify.email, ce.shipping_recip && ce.shipping_recip.email])\n  .filter((e) => !propTo.includes(e));\nconst propuesta = [...propTo, ...propCc];\n\nlet to = [], cc = [], source;\nif (Array.isArray(ov.to) && cleanEmails(ov.to).length) {\n  to = cleanEmails(ov.to); cc = cleanEmails(ov.cc || []); source = 'override';\n} else if (ct && ct.confirmed === true) {\n  to = cleanEmails(ct.to_emails); cc = cleanEmails(ct.cc_emails); source = 'directorio';\n} else {\n  to = propTo.slice(); cc = propCc.slice(); source = 'propuesta-ba';\n}\n\n// FILTRO DURO — bloqueado es el ÚLTIMO filtro y gana sobre TODO origen (incluso\n// un email que por error esté también en confirmados): jamás sale, ni en test.\nconst universo = [...to, ...cc, ...propuesta];\nto = to.filter((e) => !blocked.includes(e));\ncc = cc.filter((e) => !blocked.includes(e));\nconst bloqueados_excluidos = blocked.filter((e) => universo.includes(e));\nconst nuevos = propuesta.filter((e) => !confirmadosDir.includes(e) && !blocked.includes(e));\n\nconst sendable_real = source !== 'propuesta-ba' && to.length > 0;\n\n// ---- TEST_MODE: dos llaves + tercera red ----\nlet effective_test = true; const test_reasons = [];\nif (req.lock_test_mode) test_reasons.push('candado TEST_MODE del workflow (llave 1) — ON');\nelse if (req.request_test_mode) test_reasons.push('test_mode del request (llave 2)');\nelse if (!sendable_real) test_reasons.push('destinatarios no confirmados en mailing_contacts (tercera red)');\nelse effective_test = false;\n\n// ---- subject + body (Batch B ATD-gate — template EXACTO aprobado en STOP 1;\n//      sin producto/cantidad; el SLA interno JAMÁS aparece en el mail) ----\nconst buqueViaje = [vessel, voyage].filter(Boolean).join(' ');\n// tránsito estimado = ETA − ATD en días CORRIDOS (date-only, Date.UTC puro);\n// solo si hay ambas fechas y ATD ≤ ETA — si no, la tabla muestra \"—\", nunca rompe.\nconst dUTC = (s) => { const p = String(s).split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); };\nconst transit_days = (atd && schedule.eta && atd <= String(schedule.eta))\n  ? Math.round((dUTC(schedule.eta) - dUTC(atd)) / 86400000) : null;\n// Segmentos faltantes se OMITEN del subject (sin ATD → sin \"Zarpe\")\nconst subject_real = ['Documentación de embarque · Orden ' + order_number,\n  buqueViaje || null, atd ? 'Zarpe ' + fmtD(atd) : null].filter(Boolean).join(' · ');\nconst trow = (k, v) => `<tr><td style=\"padding:5px 12px 5px 0;color:#666;font-size:13px;white-space:nowrap;\">${esc(k)}</td><td style=\"padding:5px 0;font-size:13px;\"><b>${esc(v || '—')}</b></td></tr>`;\n// Labels humanos de la documentación adjunta; tipo desconocido → filename fallback\nconst DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', co_zip: 'Certificado de Origen — digital (ZIP)', co_pdf: 'Certificado de Origen (PDF)', pe: 'Permiso de Exportación (PE)', seg: 'Certificado de Seguro (SEG)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };\n// Adjuntos extra manuales (§5.5): ya validados por \"Validar request\" (máx 3,\n// mime whitelist, ≤4MB). Passthrough al root (los adjunta \"Unir binarios\") y\n// a la lista del mail con sufijo \"(adjunto manual)\".\nconst extra_attachments = Array.isArray(req.extra_attachments) ? req.extra_attachments : [];\nconst adjLi = attachments_found.map((f) => `<li style=\"font-size:13px;\">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('')\n  + extra_attachments.map((a) => `<li style=\"font-size:13px;\">${esc(a.name)} (adjunto manual)</li>`).join('');\nconst testBanner = effective_test\n  ? `<p style=\"background:#fff3cd;border:1px solid #e0c860;padding:8px 12px;font-size:12px;color:#7a5d00;\">[MODO TEST] Envío real iría a: ${esc(to.join(', ') || 'SIN DESTINATARIOS CONFIRMADOS')}${cc.length ? ' — CC: ' + esc(cc.join(', ')) : ''}</p>` : '';\n// Párrafo narrativo SOLO con zarpe confirmado + buque (tono de servicio, no bot)\nconst parrafoZarpe = (atd && vessel)\n  ? `<p>El buque <b>${esc(buqueViaje)}</b> zarpó${pol ? ' de ' + esc(pol) : ''} el <b>${fmtD(atd)}</b>${pod ? ' con destino a ' + esc(pod) : ''}.${schedule.eta ? ` Arribo estimado: <b>${fmtD(schedule.eta)}</b>${transit_days != null ? ` (tránsito estimado ${transit_days} días)` : ''}.` : ''}</p>\\n`\n  : '';\n\n// ---- bloques nuevos del template v2 (cada uno se OMITE entero si no aplica) ----\nconst diasLibresHtml = dias_libres ? `<p style=\"margin:14px 0 4px;\"><b>Días libres en destino</b></p>\n<table style=\"border-collapse:collapse;margin:6px 0 10px;\">\n${trow('Días libres', dias_libres.dias + ' días' + (dias_libres.combined ? '' : ' (demurrage + detention)'))}${dias_libres.per_diem_dry_usd != null ? trow('Per diem dry', 'USD ' + dias_libres.per_diem_dry_usd + ' / día') : ''}${dias_libres.per_diem_reefer_usd != null ? trow('Per diem reefer', 'USD ' + dias_libres.per_diem_reefer_usd + ' / día') : ''}\n</table>` : '';\nconst navieraHtml = naviera_html ? `<p style=\"margin:14px 0 4px;\"><b>Contacto de la naviera en destino</b></p>\n<div style=\"font-size:13px;margin:4px 0 10px;\">${naviera_html}</div>` : '';\nconst segAvisoHtml = seg_alerta\n  ? `<p style=\"font-size:12px;color:#8a6d00;margin:10px 0 0;\">El Certificado de Seguro (SEG) de esta operación se enviará por separado.</p>` : '';\n\n// Template v2 (item 35) — email-safe ESTRICTO: tablas anidadas + estilos inline,\n// width fijo 640 (Outlook ignora max-width y no banca flex/grid). testBanner y\n// la degradación sin-ATD del v1 quedan intactos.\nconst body_html = `<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0;padding:0;background:#f4f5f7;\"><tr><td align=\"center\" style=\"padding:18px 8px;\">\n<table role=\"presentation\" width=\"640\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:640px;background:#ffffff;border:1px solid #e2e6ea;\">\n<tr><td style=\"background:#0f4c5c;padding:14px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;\">SSB International — Documentación de exportación</td></tr>\n<tr><td style=\"padding:20px 24px;font-family:Arial,Helvetica,sans-serif;color:#222222;font-size:13px;line-height:1.55;\">\n${testBanner}<p style=\"margin-top:0;\">Estimados,</p>\n<p>Les enviamos la documentación de embarque correspondiente a la orden <b>${esc(order_number)}</b>${cliente ? ' (' + esc(cliente) + ')' : ''}.</p>\n${parrafoZarpe}<p style=\"margin-bottom:4px;\">Detalle de la orden:</p>\n<table style=\"border-collapse:collapse;margin:6px 0 10px;\">\n${trow('Orden', order_number)}${trow('Booking', booking_no)}${trow('BL', bl_number)}${trow('Buque / Viaje', buqueViaje)}${trow('Ruta', [pol, pod].filter(Boolean).join(' → '))}${trow('Zarpe (ATD)', atd ? fmtD(atd) : null)}${trow('Arribo est.', schedule.eta ? fmtD(schedule.eta) : null)}${trow('Tránsito est.', transit_days != null ? transit_days + ' días' : null)}\n</table>\n${adjLi ? `<p style=\"margin-bottom:4px;\">Documentación adjunta:</p><ul style=\"margin-top:4px;padding-left:20px;\">${adjLi}</ul>` : ''}${segAvisoHtml}${diasLibresHtml}${navieraHtml}<p>Quedamos a disposición ante cualquier consulta.</p>\n<p style=\"margin-bottom:0;\">Saludos cordiales,<br><b>SSB International</b> — Equipo de Exportaciones</p>\n</td></tr>\n<tr><td style=\"background:#f4f5f7;border-top:1px solid #e2e6ea;padding:10px 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a919b;\">SSB International · Equipo de Exportaciones · expoarpbb@ssbint.com</td></tr>\n</table></td></tr></table>`;\n\n// Expo SIEMPRE en copia del envío real (item 28): cleanEmails filtra la casilla\n// propia A PROPÓSITO en todos los orígenes — acá se agrega explícita, DESPUÉS\n// de todo filtro. En TEST no hace falta (el To ya es expo).\nconst gmail = effective_test\n  ? { to: OWN, cc: '', subject: `[TEST → real: ${to.join(', ') || 'SIN DESTINATARIOS'}] ${subject_real}`, body_html }\n  : { to: to.join(', '), cc: [...new Set([...cc, OWN])].join(', '), subject: subject_real, body_html };\n\n// ---- bloqueos de send (best-effort, sin lock transaccional) ----\nconst block = [];\nif (req.req_errors.length) block.push(...req.req_errors);\nif (!mo) block.push('orden no asentada en mailing_orders (correr el Control BL primero)');\n// GATE regla 16 (O6): sin sello humano VIGENTE sobre el último control no se\n// envía documentación — aplica también en TEST (más seguro). Sin control directo\n// el bloqueo es el mismo, con la letra clara de qué falta.\nif (!bl) block.push('sin control BL para la orden — regla 16: correr el Control BL, revisarlo y sellarlo antes de enviar');\nelse if (!sello_vigente) block.push('control BL sin revisar — regla 16: marcarlo como Revisado en Control BL antes de enviar');\n// Roleo por exclusión (§5.2): roleo informado sin control posterior = el BL que\n// tenemos es del buque viejo — jamás se manda documentación vieja.\nif (roleo_pendiente) block.push('orden roleada (' + (m.roleo_from_vessel || '¿buque?') + ' → ' + (m.roleo_to_vessel || '¿buque?') + ') — pendiente de BL nuevo: descargar el BL del nuevo buque, reprocesarlo y sellarlo');\nif (schedule.matched_by === 'sin-match') block.push('sin schedule: confirmar vela vía confirm_schedule (picker) antes de enviar');\nif (mo && m.status === 'ENVIADO' && m.sent_test_mode === false && !ov.resend) block.push('ya hubo envío REAL (guard doble-click) — overrides.resend=true para reenviar');\nif (!effective_test && !to.length) block.push('sin destinatarios reales');\n\n// ---- payloads de acciones ----\nlet sc_payload = null, cs_payload = null; const action_errors = [];\nif (req.action === 'save_contacts') {\n  if (!mo) action_errors.push('save_contacts requiere la orden asentada (aporta las claves ship/sold)');\n  else {\n    const c = req.contacts || {};\n    // Partición server-side: los 3 conjuntos quedan disjuntos y BLOCKED GANA —\n    // un email bloqueado se saca de to/cc aunque el request lo traiga en ambos.\n    const scBlocked = cleanEmails(c.blocked_emails || c.rejected_emails);\n    const scTo = cleanEmails(c.to_emails).filter((e) => !scBlocked.includes(e));\n    const scCc = cleanEmails(c.cc_emails).filter((e) => !scBlocked.includes(e) && !scTo.includes(e));\n    sc_payload = {\n      ship_to_key: m.ship_to_key, sold_to_key: m.sold_to_key || '',\n      // §5.3: el guardado hereda el notify de la ORDEN — la fila que nace/actualiza\n      // es la (ship,sold,notify) que este envío usa ('' = comodín del cliente).\n      notify_key: orderNotifyKey,\n      notify_name: m.notify_name || (ce.notify && ce.notify.name) || null,\n      ship_to_name: m.ship_to_name, sold_to_name: m.sold_to_name,\n      to_emails: scTo, cc_emails: scCc,\n      blocked_emails: scBlocked,\n      source: c.source === 'manual' ? 'manual' : 'ba',\n      confirmed: c.confirmed !== false,\n      notes: c.notes ? String(c.notes).slice(0, 500) : null,\n      updated_by: req.triggered_by, updated_at: nowIso,\n    };\n    if (!sc_payload.to_emails.length) action_errors.push('save_contacts sin to_emails válidos (¿todos bloqueados?)');\n  }\n}\nif (req.action === 'confirm_schedule') {\n  const k = ov.schedule || {};\n  const live = rows.find((r) => r.B === norm(k.buque) && r.naviera === k.naviera\n    && r.puerto_origen === k.puerto_origen && r.puerto_destino === k.puerto_destino && r.mes_etd === k.mes_etd);\n  if (!live) action_errors.push('confirm_schedule: la vela elegida no existe activa+disponible en schedules_master (validación server-side)');\n  else cs_payload = { schedule_override: { ...natKey(live), chosen_by: req.triggered_by || 'webhook', chosen_at: nowIso }, updated_at: nowIso };\n}\n\n// ---- ruta + respuesta ----\nlet route = 'respond';\nif (!req.req_errors.length && !action_errors.length) {\n  if (req.action === 'send' && !block.length) route = 'send';\n  else if (req.action === 'save_contacts') route = 'save_contacts';\n  else if (req.action === 'confirm_schedule') route = 'confirm_schedule';\n}\nconst response = {\n  ok: !req.req_errors.length && !action_errors.length,\n  action: req.action, order_number, encontrada: !!mo,\n  order_kind, // trade | sto | desconocido — el front NO re-deriva (badge + checklist PE)\n  cliente, carrier: pick(m.carrier), vessel, voyage, pol, pod, booking_no, bl_number,\n  invoice_no: pick(m.invoice_no), status_actual: mo ? m.status : null,\n  schedule,\n  recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },\n  test_mode_efectivo: effective_test, test_reasons,\n  send_blocked: block.length > 0, block_reasons: block,\n  // file_id expuesto (Batch B): el chip-bar del front abre el PDF embebido de Drive\n  attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing },\n  // ---- PLANCOMPLETO B: señales nuevas para el front ----\n  notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },\n  control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },\n  roleo: { at: m.roleo_at || null, from_vessel: m.roleo_from_vessel || null, to_vessel: m.roleo_to_vessel || null, to_etd: m.roleo_to_etd || null, pendiente_bl: roleo_pendiente },\n  dias_libres,\n  seg_alerta,\n  gmail_preview: { to: gmail.to, cc: gmail.cc, subject: gmail.subject },\n  errors: [...req.req_errors, ...action_errors],\n  body_html,\n};\n\nreturn { json: {\n  route, order_number, response, gmail,\n  recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },\n  schedule, attachments_found, attachments_missing,\n  extra_attachments, // §5.5: \"Unir binarios\" los adjunta como binarios extra0..2\n  atd, // Batch B: \"Evaluar envío\" lo snapshotea en mailing_sends.atd_at_send\n  effective_test, triggered_by: req.triggered_by,\n  sc_payload, cs_payload,\n} };\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2420,
+    0
+   ],
+   "id": "194f0f56-d94e-45cb-b051-4743adb4e5e6",
+   "name": "Resolver Mailing"
+  },
+  {
+   "parameters": {
+    "mode": "expression",
+    "numberOutputs": 4,
+    "output": "={{ ['respond','send','save_contacts','confirm_schedule'].indexOf($json.route) }}"
+   },
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    2640,
+    0
+   ],
+   "id": "b3d1a84a-0c4d-47e8-b7aa-21c0ffe01377",
+   "name": "Switch acción"
+  },
+  {
+   "parameters": {
+    "jsCode": "/**\n * NODO Code — \"Preparar descargas\" (Mailing T2) · Run Once for All Items\n * Emite un item por adjunto encontrado (el Download corre por item).\n * Sin adjuntos: emite un item marcador para que la cadena hacia Gmail no muera\n * (un nodo n8n sin input no ejecuta y el send quedaría sin respuesta).\n */\nconst r = $('Resolver Mailing').first().json;\nconst files = Array.isArray(r.attachments_found) ? r.attachments_found : [];\nif (!files.length) return [{ json: { sin_adjuntos: true } }];\nreturn files.map((f) => ({ json: f }));\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2860,
+    160
+   ],
+   "id": "f0000287-a536-4d4f-895b-15fa3c9e02a0",
+   "name": "Preparar descargas"
+  },
+  {
+   "parameters": {
+    "operation": "download",
+    "fileId": {
+     "__rl": true,
+     "value": "={{ $json.file_id }}",
+     "mode": "id"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    3080,
+    160
+   ],
+   "id": "7ec6f35d-e8a0-40df-a37c-11c03e30a83a",
+   "name": "Descargar adjunto",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "jsCode": "/**\n * NODO Code — \"Unir binarios\" (Mailing T2) · Run Once for All Items\n * Colapsa los N items del Download (1 binario c/u en `data`) en UN item con\n * binarios attachment_0..N-1 para el Gmail (property con lista separada por coma).\n * Items sin binario (download fallido con onError:continue, o el marcador\n * sin_adjuntos) se saltean — el faltante ya está reportado por el Resolver.\n * PLANCOMPLETO B (§5.5): suma los adjuntos extra manuales del request como\n * binarios base64 extra0..2 — el Gmail adjunta TODOS los binarios del item\n * (attachmentsBinary = Object.keys($binary), verificado en su parámetro).\n */\nconst rv = $('Resolver Mailing').first().json;\nconst found = rv.attachments_found || [];\nconst binary = {};\nconst adjuntos = [];\nlet i = 0;\nfor (const it of $input.all()) {\n  if (!it.binary || !it.binary.data) continue;\n  const key = 'attachment_' + i++;\n  binary[key] = it.binary.data;\n  const fname = it.binary.data.fileName || (it.json && it.json.name) || key;\n  const meta = found.find((f) => f.name === fname) || {};\n  adjuntos.push({ tipo: meta.tipo || null, name: fname, key });\n}\n// extras manuales: ya validados por \"Validar request\" (máx 3, mime whitelist,\n// ≤4MB total) y pasados por el root del Resolver — base64 directo a binario.\nconst extras = Array.isArray(rv.extra_attachments) ? rv.extra_attachments : [];\nextras.slice(0, 3).forEach((a, idx) => {\n  const key = 'extra' + idx;\n  binary[key] = { data: a.data_b64, mimeType: a.mime, fileName: a.name };\n  adjuntos.push({ tipo: 'extra_manual', name: a.name, key });\n});\nreturn [{ json: { adjuntos_descargados: adjuntos, n: adjuntos.length }, binary }];\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3300,
+    160
+   ],
+   "id": "e8c44c90-bf6f-4e0b-93ce-7d5e0b7fdecf",
+   "name": "Unir binarios"
+  },
+  {
+   "parameters": {
+    "sendTo": "={{ $('Resolver Mailing').first().json.gmail.to }}",
+    "subject": "={{ $('Resolver Mailing').first().json.gmail.subject }}",
+    "message": "={{ $('Resolver Mailing').first().json.gmail.body_html }}",
+    "options": {
+     "appendAttribution": false,
+     "ccList": "={{ $('Resolver Mailing').first().json.gmail.cc }}",
+     "attachmentsUi": {
+      "attachmentsBinary": [
+       {
+        "property": "={{ Object.keys($binary || {}).join(',') }}"
+       }
+      ]
+     }
+    }
+   },
+   "type": "n8n-nodes-base.gmail",
+   "typeVersion": 2.1,
+   "position": [
+    3520,
+    160
+   ],
+   "id": "f9757d84-24e9-4cd1-bc6f-61e15cb7f3fa",
+   "name": "Gmail Enviar",
+   "credentials": {
+    "gmailOAuth2": {
+     "id": "wWZzmUj5MQLrECH0",
+     "name": "Gmail account 3"
+    }
+   },
+   "onError": "continueRegularOutput",
+   "webhookId": "a7588112-40f0-4431-ae57-053df6208fab"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * NODO Code — \"Evaluar envío\" (Mailing T2) · Run Once for Each Item\n * Corre DESPUÉS del Gmail (onError: continueRegularOutput): decide ok/error por\n * presencia de message id, y arma los 3 payloads downstream:\n *   - patch_payload  → PATCH mailing_orders (status ENVIADO) — SOLO si ok\n *   - send_log_payload → INSERT mailing_sends (auditoría, ok o error)\n *   - response → respuesta del webhook\n * to/cc del log = lo efectivamente ENVIADO (en test: expoarpbb); el subject\n * [TEST → real: …] preserva la intención. etd/eta = snapshot strings YYYY-MM-DD.\n * atd_at_send (Batch B): snapshot del ATD vigente al enviar — congela el SLA\n * histórico ante correcciones posteriores; NULL-safe si el send llega sin ATD.\n */\nconst r = $('Resolver Mailing').first().json;\nconst u = $('Unir binarios').first().json || {};\nconst g = $json || {};\nconst ok = !!g.id;\nconst nowIso = new Date().toISOString();\nconst splitList = (s) => String(s || '').split(',').map((x) => x.trim()).filter(Boolean);\n\nconst send_log_payload = {\n  order_number: r.order_number,\n  mode: 'send',\n  test_mode: r.effective_test,\n  to_emails: splitList(r.gmail.to),\n  cc_emails: splitList(r.gmail.cc),\n  subject: r.gmail.subject,\n  body_html: r.gmail.body_html,\n  etd: r.schedule.etd || null,\n  eta: r.schedule.eta || null,\n  atd_at_send: r.atd || null,\n  schedule_matched_by: r.schedule.matched_by,\n  attachments: (r.attachments_found || []).map((f) => ({ tipo: f.tipo, name: f.name, file_id: f.file_id })),\n  gmail_message_id: g.id || null,\n  status: ok ? 'ok' : 'error',\n  error: ok ? null : String((g.error && (g.error.message || JSON.stringify(g.error))) || 'Gmail sin message id'),\n  triggered_by: r.triggered_by,\n};\nconst patch_payload = { status: 'ENVIADO', sent_at: nowIso, sent_test_mode: r.effective_test, updated_at: nowIso };\nconst response = {\n  ok, action: 'send', order_number: r.order_number,\n  test_mode: r.effective_test,\n  gmail_message_id: g.id || null,\n  enviado_a: r.gmail.to, cc: r.gmail.cc, subject: r.gmail.subject,\n  adjuntos: (u.adjuntos_descargados || []).map((a) => a.name),\n  adjuntos_faltantes: r.attachments_missing || [],\n  schedule: { matched_by: r.schedule.matched_by, etd: r.schedule.etd, eta: r.schedule.eta },\n  destinatarios_reales: r.recipients,\n  error: ok ? null : send_log_payload.error,\n};\nreturn { json: { ok, order_number: r.order_number, send_log_payload, patch_payload, response } };\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3740,
+    160
+   ],
+   "id": "0bdd85d7-4e24-46e2-a9cd-0a042d8dce23",
+   "name": "Evaluar envío"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "strict",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "cond-ok",
+       "leftValue": "={{ $json.ok }}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    3960,
+    160
+   ],
+   "id": "caaab7f5-793f-41fe-bbf7-dd23a4ab433d",
+   "name": "IF envío ok"
+  },
+  {
+   "parameters": {
+    "method": "PATCH",
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_orders?order_number=eq.' + encodeURIComponent($json.order_number) }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.patch_payload) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    4180,
+    80
+   ],
+   "id": "0ef83b36-9200-4f05-b354-56473f51a562",
+   "name": "PATCH estado ENVIADO",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "=https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_sends",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($('Evaluar envío').first().json.send_log_payload) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    4400,
+    160
+   ],
+   "id": "6d90e554-90ac-4fef-b069-d6e3f670006f",
+   "name": "INSERT mailing_sends",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "=https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_contacts?on_conflict=ship_to_key,sold_to_key,notify_key",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Prefer",
+       "value": "resolution=merge-duplicates,return=representation"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.sc_payload) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2860,
+    320
+   ],
+   "id": "17278290-4f97-4a68-9c1a-95dd6cb742d2",
+   "name": "Upsert contactos",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "method": "PATCH",
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_orders?order_number=eq.' + encodeURIComponent($json.order_number) }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.cs_payload) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2860,
+    480
+   ],
+   "id": "41c9737a-b526-45e4-8d08-f295caca29dd",
+   "name": "PATCH schedule_override",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * NODO Code — \"Armar respuesta\" (Mailing T2) · Run Once for Each Item\n * Punto de convergencia de TODAS las ramas antes del Respond to Webhook.\n * Detecta por isExecuted qué rama corrió y normaliza $json.response.\n */\nconst has = (n) => { try { return $(n).isExecuted; } catch (e) { return false; } };\nconst first = (n) => { try { return $(n).first().json; } catch (e) { return null; } };\nconst esError = (j) => !!(j && j.code && j.message && !j.order_number && !j.id);\n\nlet response = null;\nif (has('Evaluar envío')) {\n  response = (first('Evaluar envío') || {}).response || null;\n} else if (has('Upsert contactos')) {\n  const c = first('Upsert contactos');\n  response = esError(c)\n    ? { ok: false, action: 'save_contacts', error: c.message, detail: c }\n    : { ok: true, action: 'save_contacts', contact: c };\n} else if (has('PATCH schedule_override')) {\n  const o = first('PATCH schedule_override');\n  response = esError(o)\n    ? { ok: false, action: 'confirm_schedule', error: o.message, detail: o }\n    : { ok: true, action: 'confirm_schedule', order: o };\n}\nif (!response) response = ($json && $json.response) || (first('Resolver Mailing') || {}).response\n  || { ok: false, error: 'sin respuesta compuesta' };\nreturn { json: { response } };\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    4620,
+    0
+   ],
+   "id": "4d1b103a-1f21-4b6b-8126-e873975ed4fe",
+   "name": "Armar respuesta"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json.response) }}",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.1,
+   "position": [
+    4840,
+    0
+   ],
+   "id": "2ba1485b-7086-47ca-97dd-09ee9bc2e8ec",
+   "name": "Responder"
+  },
+  {
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/certificados_origen?select=certificado_numero,zip_drive_id,pdf_drive_id,pdf_nombre,estado&estado=eq.generado&order=created_at.desc&limit=1&orden=eq.' + encodeURIComponent($('Validar request').first().json.order_number) }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2200,
+    180
+   ],
+   "id": "a1f2c0d1-0001-4c0e-9d0e-0a0b0c0d0e01",
+   "name": "GET certificados_origen",
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number }}",
+    "limit": 1,
+    "filter": {
+     "driveId": {
+      "__rl": true,
+      "value": "0AKuox28BE9ytUk9PVA",
+      "mode": "id"
+     },
+     "folderId": {
+      "__rl": true,
+      "value": "1_PwyBl9R826hjn4IGYgJvgE20fEIaQaL",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2420,
+    180
+   ],
+   "id": "a1f2c0d1-0002-4c0e-9d0e-0a0b0c0d0e02",
+   "name": "Buscar CO PDF",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number }}",
+    "limit": 1,
+    "filter": {
+     "driveId": {
+      "__rl": true,
+      "value": "0AKuox28BE9ytUk9PVA",
+      "mode": "id"
+     },
+     "folderId": {
+      "__rl": true,
+      "value": "1DC2J-59vndNKNvBxw6EA5tZTGtVHzrwX",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2640,
+    180
+   ],
+   "id": "a1f2c0d1-0003-4c0e-9d0e-0a0b0c0d0e03",
+   "name": "Buscar PE",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   },
+   "alwaysOutputData": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "id": "pcb-get-sellos-0001",
+   "name": "GET sellos",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2200,
+    -200
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/control_bl_sellos?select=bl_file_id,sellado_by,sellado_at&order_number=eq.' + encodeURIComponent($('Validar request').first().json.order_number) + '&anulado_at=is.null&order=sellado_at.desc&limit=5' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   }
+  },
+  {
+   "id": "pcb-get-puertos-0001",
+   "name": "GET puertos pais",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2420,
+    -200
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/puertos?select=pais&nombre=eq.' + encodeURIComponent(($('GET mailing_orders').first().json.pod) || ($('GET control BL (latest)').first().json.pod) || '∅') + '&limit=1' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   }
+  },
+  {
+   "id": "pcb-get-detention-0001",
+   "name": "GET detention",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2640,
+    -200
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/detention_freetime?select=combined_days,demurrage_days,detention_days,per_diem_dry_usd,per_diem_reefer_usd&tipo=eq.DESTINATION&supplier=eq.' + encodeURIComponent((({ 'MAERSK': 'MAERSK', 'SEALAND': 'MAERSK', 'LOG-IN': 'LOG-IN LOGISTICA INTERMODAL S.A.', 'MERCOSUL': 'CMA CGM', 'HAPAG-LLOYD': 'HAPAG LLOYD' })[String(($('GET mailing_orders').first().json.carrier) || '').toUpperCase().trim()]) || '∅') + '&country=eq.' + encodeURIComponent((({ 'Brasil': 'BRAZIL', 'Chile': 'CHILE', 'Perú': 'PERU', 'Argentina': 'ARGENTINA', 'Colombia': 'COLOMBIA', 'México': 'MEXICO', 'Estados Unidos': 'UNITED STATES', 'España': 'SPAIN', 'India': 'INDIA', 'Vietnam': 'VIETNAM', 'China': 'CHINA (EAST/NORTH/SOUTH)' })[String(($('GET puertos pais').first().json.pais) || '').trim()]) || '∅') + '&limit=1' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   }
+  },
+  {
+   "id": "pcb-get-naviera-0001",
+   "name": "GET naviera destino",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2860,
+    -200
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "url": "={{ 'https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/mailing_naviera_destino?select=contacto_html&activo=is.true&naviera=eq.' + encodeURIComponent(String(($('GET mailing_orders').first().json.carrier) || '∅').toUpperCase().trim()) + '&pais_destino=eq.' + encodeURIComponent(($('GET puertos pais').first().json.pais) || '∅') + '&limit=1' }}",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "options": {}
+   },
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   }
+  },
+  {
+   "id": "pcb-buscar-seg-0001",
+   "name": "Buscar SEG",
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    3080,
+    -200
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "resource": "fileFolder",
+    "queryString": "={{ $('Validar request').first().json.order_number + '_SEG' }}",
+    "limit": 1,
+    "filter": {
+     "driveId": {
+      "__rl": true,
+      "value": "0AKuox28BE9ytUk9PVA",
+      "mode": "id"
+     },
+     "whatToSearch": "files"
+    },
+    "options": {
+     "fields": [
+      "id",
+      "name",
+      "webViewLink",
+      "mimeType"
+     ]
+    }
+   },
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Webhook Mailing": {
+   "main": [
+    [
+     {
+      "node": "Config (TEST_MODE)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Config (TEST_MODE)": {
+   "main": [
+    [
+     {
+      "node": "Validar request",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Validar request": {
+   "main": [
+    [
+     {
+      "node": "GET mailing_orders",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET mailing_orders": {
+   "main": [
+    [
+     {
+      "node": "GET control BL (latest)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET control BL (latest)": {
+   "main": [
+    [
+     {
+      "node": "GET mailing_contacts",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET mailing_contacts": {
+   "main": [
+    [
+     {
+      "node": "GET schedules pod",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET schedules pod": {
+   "main": [
+    [
+     {
+      "node": "Agg schedules",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Agg schedules": {
+   "main": [
+    [
+     {
+      "node": "Buscar BL Draft",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar BL Draft": {
+   "main": [
+    [
+     {
+      "node": "Buscar Factura",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar Factura": {
+   "main": [
+    [
+     {
+      "node": "Buscar Packing List",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar Packing List": {
+   "main": [
+    [
+     {
+      "node": "GET certificados_origen",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Resolver Mailing": {
+   "main": [
+    [
+     {
+      "node": "Switch acción",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Switch acción": {
+   "main": [
+    [
+     {
+      "node": "Armar respuesta",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Preparar descargas",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Upsert contactos",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "PATCH schedule_override",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar descargas": {
+   "main": [
+    [
+     {
+      "node": "Descargar adjunto",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Descargar adjunto": {
+   "main": [
+    [
+     {
+      "node": "Unir binarios",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Unir binarios": {
+   "main": [
+    [
+     {
+      "node": "Gmail Enviar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gmail Enviar": {
+   "main": [
+    [
+     {
+      "node": "Evaluar envío",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Evaluar envío": {
+   "main": [
+    [
+     {
+      "node": "IF envío ok",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IF envío ok": {
+   "main": [
+    [
+     {
+      "node": "PATCH estado ENVIADO",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "INSERT mailing_sends",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "PATCH estado ENVIADO": {
+   "main": [
+    [
+     {
+      "node": "INSERT mailing_sends",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "INSERT mailing_sends": {
+   "main": [
+    [
+     {
+      "node": "Armar respuesta",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Upsert contactos": {
+   "main": [
+    [
+     {
+      "node": "Armar respuesta",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "PATCH schedule_override": {
+   "main": [
+    [
+     {
+      "node": "Armar respuesta",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Armar respuesta": {
+   "main": [
+    [
+     {
+      "node": "Responder",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET certificados_origen": {
+   "main": [
+    [
+     {
+      "node": "Buscar CO PDF",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar CO PDF": {
+   "main": [
+    [
+     {
+      "node": "Buscar PE",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar PE": {
+   "main": [
+    [
+     {
+      "node": "GET sellos",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET sellos": {
+   "main": [
+    [
+     {
+      "node": "GET puertos pais",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET puertos pais": {
+   "main": [
+    [
+     {
+      "node": "GET detention",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET detention": {
+   "main": [
+    [
+     {
+      "node": "GET naviera destino",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "GET naviera destino": {
+   "main": [
+    [
+     {
+      "node": "Buscar SEG",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Buscar SEG": {
+   "main": [
+    [
+     {
+      "node": "Resolver Mailing",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1"
+ }
+}

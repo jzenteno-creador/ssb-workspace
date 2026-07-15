@@ -15,6 +15,8 @@
  * bloque combinado "Ship-to / Consignee"; reuso battle-tested, evita drift de keys).
  * Claves de directorio: normKey() — contrato único con el workflow de envío
  * (README migrations/2026-07-05-mailing-mvp).
+ * PLANCOMPLETO A/B (§5.3): suma notify_key/notify_name — tercera dimensión de
+ * la clave del directorio (migración 2026-07-14-plancompleto-a-notify-contactos).
  */
 const COMP = 'COMPARADOR - BL vs Aduana vs Booking';
 let c;
@@ -85,6 +87,10 @@ const row = {
   pod: pick((kf.pod || {}).BL, bl.pod, ba.pod),
   ship_to_key: normKey(consignee.name) || null,
   sold_to_key: normKey(sold.name) || '',
+  // §5.3 (plancompleto A/B): el notify de la orden — tercera dimensión de la
+  // clave del directorio de contactos ('' = sin notify especial → comodín).
+  notify_key: normKey((notify && notify.name) || ''),
+  notify_name: pick(notify.name),
   ship_to_name: pick(consignee.name),
   sold_to_name: pick(sold.name),
   invoice_no: pick(fc.invoice_no),

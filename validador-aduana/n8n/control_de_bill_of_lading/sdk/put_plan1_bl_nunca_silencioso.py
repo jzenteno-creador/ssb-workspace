@@ -15,6 +15,12 @@ Transforms sobre WVt6gvghL2nFVbt6 (pin pre: 9b85ae3c-…):
   T6 (FIX 6): "Armar fila Control BL" (espejo code_armar_fila_control_bl.js) deja de
               mandar email_sent/email_sent_at en el payload → un re-run no pisa el estado
               de envío → de-dup real: 1 mail por (order_number, bl_file_id).
+  T7 (PLANCOMPLETO A/B, §5.3): "Armar fila Mailing" (espejo code_armar_fila_mailing.js)
+              suma notify_key/notify_name al payload del upsert a mailing_orders —
+              tercera dimensión del directorio de contactos. Requiere la migración
+              migrations/2026-07-14-plancompleto-a-notify-contactos APLICADA
+              (sin ella el POST devuelve 400 y el onError continue lo deja pasar,
+              mismo modo best-effort de siempre — pero el asiento NO se escribe).
 
 Iron Law: pin versionId pre, 64→67 nodos, drift SOLO en targets, conexiones = diff
 planificado exacto, creds pre+2 (supabaseApi en Claim y Revertir), deactivate→PUT→
@@ -45,12 +51,13 @@ SUPA_CRED = {"id": "aQoShf0TVYyf2lrt", "name": "Supabase account ssb workspace"}
 N_PERSISTIR = "Persistir Control BL"
 N_PLANTILLA = "code  - plantilla HTML"
 N_ARMAR_CBL = "Armar fila Control BL"
+N_ARMAR_MAIL = "Armar fila Mailing"
 N_SEND      = "Send a message"
 N_CLAIM     = "Claim envío (email_sent)"
 N_IF        = "IF claim ganado"
 N_REVERT    = "Revertir claim (mail falló)"
 # Nodos editados en su lugar (drift permitido) + nodos nuevos:
-TARGETS   = {N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_SEND}
+TARGETS   = {N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_ARMAR_MAIL, N_SEND}
 NEW_NODES = {N_CLAIM, N_IF, N_REVERT}
 
 def api_key():
@@ -81,7 +88,7 @@ def apply_transforms(pre):
     nodes = copy.deepcopy(pre["nodes"])
     conns = copy.deepcopy(pre["connections"])
     by_name = {n["name"]: n for n in nodes}
-    for req_node in (N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_SEND):
+    for req_node in (N_PERSISTIR, N_PLANTILLA, N_ARMAR_CBL, N_ARMAR_MAIL, N_SEND):
         if req_node not in by_name: sys.exit(f"ABORT: nodo '{req_node}' no existe en pre")
 
     # ---- T1: Persistir Control BL → httpRequest UPSERT (misma id/nombre/posición/cred)
@@ -121,6 +128,12 @@ def apply_transforms(pre):
     if "email_sent:" in code_armar:
         sys.exit("ABORT T6: el espejo code_armar_fila_control_bl.js todavía asigna email_sent")
     by_name[N_ARMAR_CBL]["parameters"]["jsCode"] = code_armar
+
+    # ---- T7 (plancompleto A/B): Armar fila Mailing suma notify_key/notify_name
+    code_armar_mail = open(SDK + "code_armar_fila_mailing.js", encoding="utf-8").read()
+    if "notify_key" not in code_armar_mail:
+        sys.exit("ABORT T7: el espejo code_armar_fila_mailing.js no trae notify_key (¿versión vieja?)")
+    by_name[N_ARMAR_MAIL]["parameters"]["jsCode"] = code_armar_mail
 
     # ---- T4: recableado + nodos nuevos
     # La cadena nueva del envío vive en y=-368 (fila propia — no pisa Detectar

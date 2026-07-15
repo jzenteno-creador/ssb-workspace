@@ -6,7 +6,8 @@
  *   Validar request | GET mailing_orders | GET control BL (latest) |
  *   GET mailing_contacts | Agg schedules | Buscar BL Draft | Buscar Factura |
  *   Buscar Packing List | GET certificados_origen | Buscar CO PDF | Buscar PE |
- *   Config (TEST_MODE)
+ *   GET sellos | GET puertos pais | GET detention | GET naviera destino |
+ *   Buscar SEG | Config (TEST_MODE)
  *
  * Responsabilidades (composición ÚNICA preview/send):
  *   1. Destinatarios: override request → mailing_contacts confirmado →
@@ -25,6 +26,13 @@
  *      subject sin segmento Zarpe, sin párrafo narrativo, tabla con "—" — nunca rompe.
  *   6. Guard best-effort anti doble-click: status ENVIADO real bloquea salvo
  *      overrides.resend=true (sin lock transaccional, asumido).
+ *   7. PLANCOMPLETO B (2026-07-15): notify como tercera dimensión del directorio
+ *      (fila exacta > comodín ''), gate regla 16 (sello vigente sobre el último
+ *      control o no se envía), roleo por exclusión (roleo_at sin control posterior
+ *      bloquea), bloque "Días libres en destino" (detention_freetime), bloque de
+ *      contacto de naviera en destino (mailing_naviera_destino), SEG obligatorio
+ *      informativo para CIP/CIF (alerta, NO bloquea) y adjuntos extra manuales
+ *      (passthrough al root para "Unir binarios" + lista del mail).
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -38,9 +46,19 @@ const row = (nodeName) => {
     return (j && typeof j === 'object' && Object.keys(j).length) ? j : null;
   } catch (e) { return null; }
 };
+// como row() pero devuelve TODOS los items del nodo (try/catch → []): los GET
+// con limit>1 (mailing_contacts exacta+comodín, sellos) llegan como items múltiples.
+const allRows = (nodeName) => {
+  try {
+    return $(nodeName).all().map((it) => it && it.json)
+      .filter((j) => j && typeof j === 'object' && Object.keys(j).length);
+  } catch (e) { return []; }
+};
 const mo = row('GET mailing_orders');
 const bl = row('GET control BL (latest)');
-const ct = row('GET mailing_contacts');
+// hasta 2 filas del directorio: (ship,sold,notify exacto) + comodín '' — la
+// elección (ct) se hace más abajo, cuando ya está resuelto el notify de la orden.
+const cts = allRows('GET mailing_contacts');
 const aggJ = row('Agg schedules') || {};
 const schedRaw = Array.isArray(aggJ.data) ? aggJ.data : [];
 
@@ -76,14 +94,34 @@ const afCoPdf = (co && co.pdf_drive_id)
 // ni se busca ni se lista como faltante (no aplica).
 const afPE = order_kind === 'trade' ? foundFile('Buscar PE', 'pe') : null;
 
-const attachments_found = [afBL, afFC, afPL, afCoZip, afCoPdf, afPE].filter(Boolean);
+// ---- SEG (§5.4, plancompleto B): incoterm CIP/CIF requiere Certificado de
+// Seguro ({orden}_SEG en Drive). El incoterm sale del último control BL.
+// Falta → ALERTA (attachments_missing + seg_alerta) — NUNCA bloquea el envío
+// (decisión de John: "les va a marcar si está o no está").
+const incoterm = String((bl && bl.factura_extract && bl.factura_extract.incoterm) || '').toUpperCase().slice(0, 3);
+const requiere_seg = incoterm === 'CIP' || incoterm === 'CIF';
+const afSEG = requiere_seg ? foundFile('Buscar SEG', 'seg') : null;
+
+const attachments_found = [afBL, afFC, afPL, afCoZip, afCoPdf, afPE, afSEG].filter(Boolean);
 const expectedDocs = [['bl_draft', afBL], ['factura', afFC], ['packing_list', afPL], ['co_zip', afCoZip], ['co_pdf', afCoPdf]];
 if (order_kind === 'trade') expectedDocs.push(['pe', afPE]);
+if (requiere_seg) expectedDocs.push(['seg', afSEG]);
 const attachments_missing = expectedDocs.filter(([, f]) => !f).map(([t]) => t);
+const seg_alerta = (requiere_seg && !afSEG)
+  ? 'CIP/CIF sin certificado de seguro en Drive (' + String(req.order_number) + '_SEG)'
+  : null;
 
 // ---- helpers ----
 const pick = (...xs) => { for (const x of xs) { if (x !== undefined && x !== null && String(x).trim() !== '') return x; } return null; };
 const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim().toUpperCase();
+// normKey: contrato ÚNICO de claves del directorio — misma función que "Armar
+// fila Mailing" (CBL); [̀-ͯ] = los diacríticos combinables del espejo.
+const normKey = (s) => String(s || '')
+  .toUpperCase()
+  .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^A-Z0-9 ]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const OWN = 'expoarpbb@ssbint.com';
 const cleanEmails = (arr) => {
@@ -106,6 +144,13 @@ const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</
 // ---- identidad de la orden (mailing_orders manda; control BL como fallback) ----
 const order_number = req.order_number;
 const m = mo || {};
+// contacts_extracted se necesita ACÁ (antes que en destinatarios): el notify de
+// la orden decide qué fila del directorio manda (§5.3 — exacta > comodín '').
+// Fallback para filas viejas sin columna poblada: normKey del notify del BA.
+const ce = (m.contacts_extracted && typeof m.contacts_extracted === 'object') ? m.contacts_extracted : {};
+const orderNotifyKey = String(m.notify_key || '').trim() || normKey(ce.notify && ce.notify.name);
+const ct = cts.find((c) => (c.notify_key || '') === orderNotifyKey)
+  || cts.find((c) => (c.notify_key || '') === '') || null;
 const cliente = pick(m.ship_to_name, m.sold_to_name);
 const vessel = pick(m.vessel, bl && bl.vessel);
 const voyage = pick(m.voyage, bl && bl.voyage);
@@ -118,8 +163,65 @@ const bl_number = pick(m.bl_number, bl && bl.bl_number);
 // elegante igual: el send puede llegar por vías no gateadas, ej. test directo).
 const atd = (m.atd && /^\d{4}-\d{2}-\d{2}/.test(String(m.atd))) ? String(m.atd).slice(0, 10) : null;
 
+// ---- PLANCOMPLETO B: sello (regla 16) · roleo (§5.2) · días libres · naviera ----
+// Sello vigente = fila NO anulada de control_bl_sellos cuyo bl_file_id es
+// EXACTAMENTE el del último control (regla X): reprocesar el BL invalida solo.
+const sellos = allRows('GET sellos');
+const sello_vigente = (bl && bl.bl_file_id)
+  ? (sellos.find((s) => s && s.bl_file_id === bl.bl_file_id) || null) : null;
+
+// Roleo por exclusión: roleo informado y SIN control POSTERIOR ⇒ el BL vigente
+// es del buque viejo — se bloquea el envío hasta reprocesar el BL nuevo.
+// (timestamps ISO del mismo formato → comparación lexicográfica, como etd/eta)
+const roleo_pendiente = !!(m.roleo_at && (!bl || String(bl.created_at) < String(m.roleo_at)));
+
+// Días libres en destino (detention_freetime) — mapeos VERIFICADOS EN VIVO
+// 2026-07-15 contra select distinct de supplier/country y puertos.pais; los
+// MISMOS mapas van inline en la URL del nodo "GET detention" (mantener espejados):
+//   carrier→supplier: MAERSK→MAERSK · SEALAND→MAERSK (marca del grupo Maersk) ·
+//   LOG-IN→LOG-IN LOGISTICA INTERMODAL S.A. · MERCOSUL→CMA CGM (grupo CMA CGM) ·
+//   HAPAG-LLOYD→HAPAG LLOYD (sin guión en la tabla).
+const DET_SUPPLIER = { 'MAERSK': 'MAERSK', 'SEALAND': 'MAERSK', 'LOG-IN': 'LOG-IN LOGISTICA INTERMODAL S.A.', 'MERCOSUL': 'CMA CGM', 'HAPAG-LLOYD': 'HAPAG LLOYD' };
+const DET_COUNTRY = { 'Brasil': 'BRAZIL', 'Chile': 'CHILE', 'Perú': 'PERU', 'Argentina': 'ARGENTINA', 'Colombia': 'COLOMBIA', 'México': 'MEXICO', 'Estados Unidos': 'UNITED STATES', 'España': 'SPAIN', 'India': 'INDIA', 'Vietnam': 'VIETNAM', 'China': 'CHINA (EAST/NORTH/SOUTH)' };
+const pais_destino = (row('GET puertos pais') || {}).pais || null;
+const det = row('GET detention');
+const det_dias = det
+  ? (det.combined_days != null ? Number(det.combined_days)
+    : ((det.demurrage_days != null || det.detention_days != null)
+      ? (Number(det.demurrage_days) || 0) + (Number(det.detention_days) || 0) : null))
+  : null;
+// Sin match (o fila sin días) → null y el bloque del mail se OMITE — jamás rompe.
+const dias_libres = (det && det_dias != null) ? {
+  dias: det_dias,
+  combined: det.combined_days != null,
+  per_diem_dry_usd: det.per_diem_dry_usd != null ? Number(det.per_diem_dry_usd) : null,
+  per_diem_reefer_usd: det.per_diem_reefer_usd != null ? Number(det.per_diem_reefer_usd) : null,
+  supplier: DET_SUPPLIER[String(pick(m.carrier) || '').toUpperCase().trim()] || null,
+  country: DET_COUNTRY[String(pais_destino || '').trim()] || null,
+  pais_destino,
+} : null;
+
+// Bloque de contacto de la naviera en destino (mailing_naviera_destino — el
+// contenido lo cargan John/Naara: confiado, con sanitizado suave anti-<script>).
+const navRow = row('GET naviera destino');
+const naviera_html = (navRow && navRow.contacto_html)
+  ? String(navRow.contacto_html)
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<\s*\/?\s*script[^>]*>/gi, '')
+  : null;
+
 // ---- schedule por tiers (schedRaw ya viene filtrado pod + activo + disponible) ----
-const rows = schedRaw.filter((r) => r && r.buque).map((r) => ({ ...r, B: norm(r.buque) }));
+// Dedup por clave natural: con "GET mailing_contacts" en limit=2 el nodo
+// "GET schedules pod" corre una vez POR ITEM del directorio y "Agg schedules"
+// concatena — sin esto los candidates del picker saldrían duplicados.
+const seenSched = new Set();
+const rows = schedRaw.filter((r) => r && r.buque).map((r) => ({ ...r, B: norm(r.buque) }))
+  .filter((r) => {
+    const k = [r.naviera, r.B, r.puerto_origen, r.puerto_destino, r.mes_etd, r.etd, r.eta].join('|');
+    if (seenSched.has(k)) return false;
+    seenSched.add(k);
+    return true;
+  });
 const V = norm(vessel), VY = norm(voyage);
 let match = null, matched_by = 'sin-match', schedNote = null;
 const ovrDb = (m.schedule_override && typeof m.schedule_override === 'object') ? m.schedule_override : null;
@@ -163,8 +265,8 @@ const confirmadosDir = (ct && ct.confirmed === true)
   ? cleanEmails([...(ct.to_emails || []), ...(ct.cc_emails || [])]) : [];
 
 // propuesta del BA (siempre computada: alimenta el diff de nuevos aunque el
-// origen del envío sea el directorio o un override)
-const ce = (m.contacts_extracted && typeof m.contacts_extracted === 'object') ? m.contacts_extracted : {};
+// origen del envío sea el directorio o un override; `ce` viene de la sección
+// identidad — también resuelve el notify del directorio)
 const propTo = cleanEmails([...(ce.partner_emails || []), ce.document_recip && ce.document_recip.email]);
 const propCc = cleanEmails([ce.notify && ce.notify.email, ce.shipping_recip && ce.shipping_recip.email])
   .filter((e) => !propTo.includes(e));
@@ -209,33 +311,68 @@ const subject_real = ['Documentación de embarque · Orden ' + order_number,
   buqueViaje || null, atd ? 'Zarpe ' + fmtD(atd) : null].filter(Boolean).join(' · ');
 const trow = (k, v) => `<tr><td style="padding:5px 12px 5px 0;color:#666;font-size:13px;white-space:nowrap;">${esc(k)}</td><td style="padding:5px 0;font-size:13px;"><b>${esc(v || '—')}</b></td></tr>`;
 // Labels humanos de la documentación adjunta; tipo desconocido → filename fallback
-const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', co_zip: 'Certificado de Origen — digital (ZIP)', co_pdf: 'Certificado de Origen (PDF)', pe: 'Permiso de Exportación (PE)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
-const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('');
+const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', co_zip: 'Certificado de Origen — digital (ZIP)', co_pdf: 'Certificado de Origen (PDF)', pe: 'Permiso de Exportación (PE)', seg: 'Certificado de Seguro (SEG)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
+// Adjuntos extra manuales (§5.5): ya validados por "Validar request" (máx 3,
+// mime whitelist, ≤4MB). Passthrough al root (los adjunta "Unir binarios") y
+// a la lista del mail con sufijo "(adjunto manual)".
+const extra_attachments = Array.isArray(req.extra_attachments) ? req.extra_attachments : [];
+const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('')
+  + extra_attachments.map((a) => `<li style="font-size:13px;">${esc(a.name)} (adjunto manual)</li>`).join('');
 const testBanner = effective_test
   ? `<p style="background:#fff3cd;border:1px solid #e0c860;padding:8px 12px;font-size:12px;color:#7a5d00;">[MODO TEST] Envío real iría a: ${esc(to.join(', ') || 'SIN DESTINATARIOS CONFIRMADOS')}${cc.length ? ' — CC: ' + esc(cc.join(', ')) : ''}</p>` : '';
 // Párrafo narrativo SOLO con zarpe confirmado + buque (tono de servicio, no bot)
 const parrafoZarpe = (atd && vessel)
   ? `<p>El buque <b>${esc(buqueViaje)}</b> zarpó${pol ? ' de ' + esc(pol) : ''} el <b>${fmtD(atd)}</b>${pod ? ' con destino a ' + esc(pod) : ''}.${schedule.eta ? ` Arribo estimado: <b>${fmtD(schedule.eta)}</b>${transit_days != null ? ` (tránsito estimado ${transit_days} días)` : ''}.` : ''}</p>\n`
   : '';
-const body_html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#222;max-width:640px;">
-${testBanner}<p>Estimados,</p>
+
+// ---- bloques nuevos del template v2 (cada uno se OMITE entero si no aplica) ----
+const diasLibresHtml = dias_libres ? `<p style="margin:14px 0 4px;"><b>Días libres en destino</b></p>
+<table style="border-collapse:collapse;margin:6px 0 10px;">
+${trow('Días libres', dias_libres.dias + ' días' + (dias_libres.combined ? '' : ' (demurrage + detention)'))}${dias_libres.per_diem_dry_usd != null ? trow('Per diem dry', 'USD ' + dias_libres.per_diem_dry_usd + ' / día') : ''}${dias_libres.per_diem_reefer_usd != null ? trow('Per diem reefer', 'USD ' + dias_libres.per_diem_reefer_usd + ' / día') : ''}
+</table>` : '';
+const navieraHtml = naviera_html ? `<p style="margin:14px 0 4px;"><b>Contacto de la naviera en destino</b></p>
+<div style="font-size:13px;margin:4px 0 10px;">${naviera_html}</div>` : '';
+const segAvisoHtml = seg_alerta
+  ? `<p style="font-size:12px;color:#8a6d00;margin:10px 0 0;">El Certificado de Seguro (SEG) de esta operación se enviará por separado.</p>` : '';
+
+// Template v2 (item 35) — email-safe ESTRICTO: tablas anidadas + estilos inline,
+// width fijo 640 (Outlook ignora max-width y no banca flex/grid). testBanner y
+// la degradación sin-ATD del v1 quedan intactos.
+const body_html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;background:#f4f5f7;"><tr><td align="center" style="padding:18px 8px;">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;background:#ffffff;border:1px solid #e2e6ea;">
+<tr><td style="background:#0f4c5c;padding:14px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;">SSB International — Documentación de exportación</td></tr>
+<tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;color:#222222;font-size:13px;line-height:1.55;">
+${testBanner}<p style="margin-top:0;">Estimados,</p>
 <p>Les enviamos la documentación de embarque correspondiente a la orden <b>${esc(order_number)}</b>${cliente ? ' (' + esc(cliente) + ')' : ''}.</p>
 ${parrafoZarpe}<p style="margin-bottom:4px;">Detalle de la orden:</p>
 <table style="border-collapse:collapse;margin:6px 0 10px;">
 ${trow('Orden', order_number)}${trow('Booking', booking_no)}${trow('BL', bl_number)}${trow('Buque / Viaje', buqueViaje)}${trow('Ruta', [pol, pod].filter(Boolean).join(' → '))}${trow('Zarpe (ATD)', atd ? fmtD(atd) : null)}${trow('Arribo est.', schedule.eta ? fmtD(schedule.eta) : null)}${trow('Tránsito est.', transit_days != null ? transit_days + ' días' : null)}
 </table>
-${adjLi ? `<p style="margin-bottom:4px;">Documentación adjunta:</p><ul style="margin-top:4px;">${adjLi}</ul>` : ''}
-<p>Quedamos a disposición ante cualquier consulta.</p>
-<p>Saludos cordiales,<br><b>SSB International</b> — Equipo de Exportaciones</p></div>`;
+${adjLi ? `<p style="margin-bottom:4px;">Documentación adjunta:</p><ul style="margin-top:4px;padding-left:20px;">${adjLi}</ul>` : ''}${segAvisoHtml}${diasLibresHtml}${navieraHtml}<p>Quedamos a disposición ante cualquier consulta.</p>
+<p style="margin-bottom:0;">Saludos cordiales,<br><b>SSB International</b> — Equipo de Exportaciones</p>
+</td></tr>
+<tr><td style="background:#f4f5f7;border-top:1px solid #e2e6ea;padding:10px 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a919b;">SSB International · Equipo de Exportaciones · expoarpbb@ssbint.com</td></tr>
+</table></td></tr></table>`;
 
+// Expo SIEMPRE en copia del envío real (item 28): cleanEmails filtra la casilla
+// propia A PROPÓSITO en todos los orígenes — acá se agrega explícita, DESPUÉS
+// de todo filtro. En TEST no hace falta (el To ya es expo).
 const gmail = effective_test
   ? { to: OWN, cc: '', subject: `[TEST → real: ${to.join(', ') || 'SIN DESTINATARIOS'}] ${subject_real}`, body_html }
-  : { to: to.join(', '), cc: cc.join(', '), subject: subject_real, body_html };
+  : { to: to.join(', '), cc: [...new Set([...cc, OWN])].join(', '), subject: subject_real, body_html };
 
 // ---- bloqueos de send (best-effort, sin lock transaccional) ----
 const block = [];
 if (req.req_errors.length) block.push(...req.req_errors);
 if (!mo) block.push('orden no asentada en mailing_orders (correr el Control BL primero)');
+// GATE regla 16 (O6): sin sello humano VIGENTE sobre el último control no se
+// envía documentación — aplica también en TEST (más seguro). Sin control directo
+// el bloqueo es el mismo, con la letra clara de qué falta.
+if (!bl) block.push('sin control BL para la orden — regla 16: correr el Control BL, revisarlo y sellarlo antes de enviar');
+else if (!sello_vigente) block.push('control BL sin revisar — regla 16: marcarlo como Revisado en Control BL antes de enviar');
+// Roleo por exclusión (§5.2): roleo informado sin control posterior = el BL que
+// tenemos es del buque viejo — jamás se manda documentación vieja.
+if (roleo_pendiente) block.push('orden roleada (' + (m.roleo_from_vessel || '¿buque?') + ' → ' + (m.roleo_to_vessel || '¿buque?') + ') — pendiente de BL nuevo: descargar el BL del nuevo buque, reprocesarlo y sellarlo');
 if (schedule.matched_by === 'sin-match') block.push('sin schedule: confirmar vela vía confirm_schedule (picker) antes de enviar');
 if (mo && m.status === 'ENVIADO' && m.sent_test_mode === false && !ov.resend) block.push('ya hubo envío REAL (guard doble-click) — overrides.resend=true para reenviar');
 if (!effective_test && !to.length) block.push('sin destinatarios reales');
@@ -253,6 +390,10 @@ if (req.action === 'save_contacts') {
     const scCc = cleanEmails(c.cc_emails).filter((e) => !scBlocked.includes(e) && !scTo.includes(e));
     sc_payload = {
       ship_to_key: m.ship_to_key, sold_to_key: m.sold_to_key || '',
+      // §5.3: el guardado hereda el notify de la ORDEN — la fila que nace/actualiza
+      // es la (ship,sold,notify) que este envío usa ('' = comodín del cliente).
+      notify_key: orderNotifyKey,
+      notify_name: m.notify_name || (ce.notify && ce.notify.name) || null,
       ship_to_name: m.ship_to_name, sold_to_name: m.sold_to_name,
       to_emails: scTo, cc_emails: scCc,
       blocked_emails: scBlocked,
@@ -291,6 +432,12 @@ const response = {
   send_blocked: block.length > 0, block_reasons: block,
   // file_id expuesto (Batch B): el chip-bar del front abre el PDF embebido de Drive
   attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing },
+  // ---- PLANCOMPLETO B: señales nuevas para el front ----
+  notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
+  control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },
+  roleo: { at: m.roleo_at || null, from_vessel: m.roleo_from_vessel || null, to_vessel: m.roleo_to_vessel || null, to_etd: m.roleo_to_etd || null, pendiente_bl: roleo_pendiente },
+  dias_libres,
+  seg_alerta,
   gmail_preview: { to: gmail.to, cc: gmail.cc, subject: gmail.subject },
   errors: [...req.req_errors, ...action_errors],
   body_html,
@@ -300,6 +447,7 @@ return { json: {
   route, order_number, response, gmail,
   recipients: { source, to, cc, sendable_real, nuevos, bloqueados_excluidos },
   schedule, attachments_found, attachments_missing,
+  extra_attachments, // §5.5: "Unir binarios" los adjunta como binarios extra0..2
   atd, // Batch B: "Evaluar envío" lo snapshotea en mailing_sends.atd_at_send
   effective_test, triggered_by: req.triggered_by,
   sc_payload, cs_payload,
