@@ -21,6 +21,7 @@
 | Push a master → deploy front+api | ✅ | 07-15 ~19:00 | Fable / Fable | FF `89c021f..b1bc1ed` (26 commits: 24 plan + N8 `52797d3` + harness FIX1 `b1bc1ed`); deploy verificado: prod sirve `fc_link` ×4 (age 0); `/api/seguimiento`+`/api/mailing` 401 sin auth, `/api/schema` 405 a GET | smokes |
 | Smokes post-deploy — técnico | ✅ | 07-15 ~19:00 | Sonnet (ad9981…) / Fable veredicto + cross-check propio | carga 200, 0 pageerrors en TODA la sesión, canario 2 exacto, 7 solapas OK (401/42501 solo de tablas solo-auth bajo anon, esperados), N8 en vivo (118979709 → 6 tabs habilitados / 118963137 → Factura disabled con tooltip genérico), 8 módulos JS 200, `/api` ×3 deployadas y gateadas (401/405 propios, cross-check independiente de Fable) | — |
 | Smokes funcionales (John) | ⏳ | — | John | con login real: vacaciones + seguimiento post-migración (última milla E/G), sello regla 16, botón reprocesar (estrena `N8N_CBL_FORM_URL`) | John |
+| Fix 500 reprocesar por form | ✅ | 07-16 ~00:05 | Fable / Fable (verify local, sin disparo real) | `9f71b97`: urlencoded→FormData multipart en `api/seguimiento.js` (FormTriggerV2 asserta multipart ANTES de leer campos; 7/7 execs 33255–33270 muertos en nodo 1, 0 efectos, sin mail); echo-server PASS (boundary + field-0) | smoke real John (dispara control + mail a expoarpbb, orden a su elección) |
 | TEST_MODE → real (mailing) | ⏳ | — | — | — | gate propio John |
 
 ### Apéndice I — Desvíos descubiertos durante el go-live
