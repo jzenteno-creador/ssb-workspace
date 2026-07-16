@@ -36,6 +36,11 @@ Tras el fix multipart, John reprocesó una orden y no apareció re-procesada. El
 (`32 creadas·7 completadas·2 existían`) es de otra acción (CO), no del reproceso. **Pedido:** confirmar si el
 reproceso ejecuta de verdad o falla. No dar por hecho que anda solo por estar deployado. *(Define el scope de A.2.)*
 
+**✅ RESUELTO (EXPLORE 16-07):** el reproceso SÍ corre — execution 33284 (orden 4010675569) completa en
+success (67s), upserteó `bl_controls` y escribió `mailing_orders`. Lo que fallaba era el FEEDBACK (backend
+corta a 8s, toast neutro, upsert invisible en la UI) → ese es exactamente el scope de A.2. No hay tanda
+para A.1: quedó respondido.
+
 ### A.2 · Mejorar el feedback del reproceso
 El toast de confirmación es efímero y poco claro: el usuario no sabe si el reproceso corrió y puede clickear
 de más. **Pedido:** estado persistente "reprocesando…", confirmación clara de inicio/fin, y botón deshabilitado
@@ -80,7 +85,7 @@ Hoy la lógica no distingue marítimo de terrestre. Reglas:
 - **KPI de plazo: terrestre = ATD + 1 día hábil · marítimo = ATD + 4 días corridos.**
 - En terrestre, "zarpe" debería llamarse/derivarse como **"inicia tránsito"** para que la columna ATD→LÍMITE tenga sentido.
 - Depende de que B.1 esté resuelto (si el modo está mal, el KPI por modo no sirve).
-- `[DECISIÓN]` "inicia tránsito": ¿solo label en la UI, o también un cambio en el modelo de datos?
+- **DECISIÓN CERRADA (John):** "inicia tránsito" = solo label en la UI, sin cambio en el modelo de datos.
 
 ### B.3 · Indicador visual marítimo/terrestre por bandera de país destino
 Agregar la banderita del país de destino, como ya se hace en la solapa Schedule. Reemplaza o complementa el texto MOT actual.
@@ -129,11 +134,16 @@ zarpe realmente quedó asentado y por qué Seguimiento no lo refleja. Posible bu
 ### D.1 · Analizar el workflow
 **Pedido:** que Fable analice el workflow (usar el JSON subido como referencia).
 
+**✅ RESUELTO (EXPLORE 16-07):** workflow mapeado completo (41 nodos): IMAP → clasificador (12 tipos) →
+Switch → 9 uploads a Drive + LOG/MATRIZ Sheets + mail "factura sin permiso". Punto de captura para D.2
+identificado (nodos `set meta (*)` ya llevan orderNumber+tipo+link). Hallazgos no pedidos: OCR con key
+demo (→ D.4), bookings ZCB3 sin registro, 3 nodos huérfanos.
+
 ### D.2 · Integrar la disponibilidad documental al aplicativo
 Lo que más suma: **ver qué documentos están disponibles por orden** en el app (Factura, Packing List, etc.).
 - Los nodos de Sheets/matriz **no se usan** y son reemplazables.
 - **Se mantiene** el nodo de mail: es la alerta de "factura sin permiso cargado". **No reemplazarlo.**
-- `[DECISIÓN]` ¿La disponibilidad documental alimenta la solapa Seguimiento, o es una superficie propia?
+- **DECISIÓN CERRADA (John):** la disponibilidad documental alimenta la solapa Seguimiento (no es superficie propia).
 
 ### D.3 · Control de Factura contra Permiso
 Agregar al flujo un control de la factura contra el permiso que tiene cargado.
@@ -157,7 +167,11 @@ que D.2 → conviene resolverlo en el mismo PUT.)*
 Hoy el estado "CO ¿sin definir?" (Cert. Origen, en Seguimiento) **no se puede cambiar — no hay forma de configurarlo**.
 **Pedido:** una solapa de administración/configuración para estas cuestiones, empezando por poder definir si una orden
 lleva certificado de origen.
-- `[DECISIÓN]` ¿Qué otras configuraciones entran en esta solapa además de la de CO?
+- **DECISIÓN CERRADA (John, 16-07 noche): alcance = SOLO configuración de CO por ahora.** Override de
+  `mot` por orden, carga de contactos de navieras destino (`mailing_naviera_destino`) y toggle TEST_MODE
+  del mailing quedan como **candidatos futuros**, a revisar cuando la base (tanda 4) esté estable.
+  Motivo: John prioriza cerrar la vertebración de la base primero y sumar el resto de configs sobre esa
+  base ya estable.
 
 ---
 
@@ -209,9 +223,9 @@ UI change gate obligatorio.
 1. ~~B.7 split marítimo/terrestre~~ → **CERRADA**: dos solapas, tanda Seguimiento, sin depender del PLAN 2.
 2. ~~B.2 "inicia tránsito"~~ → **CERRADA**: solo label de UI.
 3. ~~D.2 disponibilidad documental~~ → **CERRADA**: dentro de Seguimiento.
-4. **E.1 — ABIERTA:** ¿qué config entra en la solapa admin además del flag de CO? Candidatos propuestos:
-   corrección de `mot` por orden (red de seguridad de B.1) · carga de `mailing_naviera_destino` desde la
-   app · toggle TEST_MODE del mailing.
+4. ~~E.1 alcance solapa admin~~ → **CERRADA (16-07 noche)**: SOLO configuración de CO por ahora. Override
+   de `mot`, carga de `mailing_naviera_destino` y toggle TEST_MODE = candidatos futuros, a revisar
+   post-estabilización de la base.
 5. **G.2 — nuevas (para su tanda, no bloquean la base):** ¿`atd` cubre ETD? · ¿qué es `shipment_no`? ·
    ¿saludo personalizado con sold-to?
 6. **GO pendientes de esta ronda:** (a) GO visual del mockup del grafo → recién ahí se toca la app;
@@ -245,7 +259,8 @@ UI change gate obligatorio.
 - Supabase: `xkppkzfxgtfsmfooozsm` · n8n: `jzenteno.app.n8n.cloud`
 - CBL `WVt6gvghL2nFVbt6` (versionId `69f11831`) · Mailing `kh6TORgRg9R1Shj1` (versionId `bce090d2`) · Gmail→Drive `pBN4Wd1lcTSHNkFg`
 - Prod: `ssb-workspace.vercel.app` (Vercel auto-deploy en push a master). Netlify desactivado.
-- MD canónico del plan: `RESULTADO_PLANCOMPLETO_2026-07-14.md`.
+- MD canónico del plan: **ESTE doc** (`PLAN-INPUT-FABLE_pedidos_2026-07-16.md`). La tabla GO-LIVE del
+  plan ANTERIOR (ya en prod) vive en `docs/handoff/RESULTADO_PLANCOMPLETO_2026-07-14.md`.
 
 ---
 
@@ -261,7 +276,7 @@ UI change gate obligatorio.
 | **5 · D.2 + D.4** | Tabla `documentos_orden` (FK a la vertebral) + PUT Gmail→Drive (captura en nodos set-meta, reemplaza Sheets; **mantiene** el mail factura-sin-permiso) + chips reales en Seguimiento (cierra B.8 de raíz + gap booking ZCB3) + **D.4 fix OCR en el mismo PUT** | PUT Iron Law + migración. Depende de 4 |
 | **6 · G.2 mail** | Template nuevo sobre el guide de John + columnas mail en `mailing_orders` (`eta`, `incoterm`, `freight_term`, `shipment_no`) + mapeo puerto→ciudad/país + sistema de banderas + checklist alimentado por D.2 (+ N30 To/CC si John confirma) | PUT mailing + gate TEST_MODE→real. Depende de 4 (y de 5 para el checklist) |
 | **7 · D.3 factura vs permiso** | Control exacto FOB/flete/seguro/total + `orden_productos` (persiste PRODUCTO → alimenta el bloque nuevo del mail) | El más grande — diseño propio aparte. Depende de 4 |
-| **8 · E.1 solapa admin** | Scope ABIERTO (decisión John) | — |
+| **8 · E.1 solapa admin** | SOLO flag de CO por orden (decisión CERRADA 16-07 noche); `mot` override / contactos navieras / toggle TEST_MODE = candidatos futuros post-base estable | Front + action API; gate propio |
 
 ---
 
@@ -281,6 +296,8 @@ UI change gate obligatorio.
 | 2026-07-16 noche | Dirección de base: orden como columna vertebral; scope delegado a Fable → elegida **mínima-plus** (promover `seguimiento_ordenes`, FKs+trigger, legacy `operaciones` fuera) | Dirección de John + censo vivo: superset estricto, 0 huérfanos, universo legacy disjunto |
 | 2026-07-16 noche | +H.1 grafo enriquecido como herramienta del GO de base; mockup estático entregado | Pedido de John |
 | 2026-07-16 noche | Master plan re-secuenciado en 9 tandas (0–8); E.1 queda ABIERTA; montado este control de cambios | Ronda de refinamiento |
+| 2026-07-16 noche | E.1 CERRADA: alcance = SOLO config de CO; `mot` override, contactos navieras y toggle TEST_MODE quedan como candidatos futuros | John prioriza estabilizar la vertebración de la base antes de sumar el resto de configs |
+| 2026-07-16 noche | QC del plan: PINS corregido (el MD canónico es ESTE doc, no RESULTADO_PLANCOMPLETO) · tags [DECISIÓN] residuales de B.2/D.2 limpiados · A.1 y D.1 marcados RESUELTOS en su sección | Control de calidad de John sobre el MD; GO a las 3 correcciones |
 
 ---
 
