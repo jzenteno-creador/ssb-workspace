@@ -1,9 +1,14 @@
-# TANDA BASE — Vertebral de órdenes · Propuesta de esquema (design-first)
+# TANDA BASE — Vertebral de órdenes + tablas de referencia · Propuesta de esquema (design-first)
 ### ssb-workspace · 2026-07-16 · Fable 5 ultracode · **NO APLICADO — espera GO de John**
 
 > Entregable del ítem "base de datos" del plan (`PLAN-INPUT-FABLE_pedidos_2026-07-16.md`).
 > Regla de proceso: rollback escrito ANTES de aplicar; nada toca prod sin GO explícito.
 > Mockup visual del antes/después: `docs/mockups/grafo-enriquecido-mockup.html` (modo «Propuesta T4»).
+>
+> **Dos partes** (ronda de cierre 16-07): **PARTE A (§1–§8)** — la vertebral: promover
+> `seguimiento_ordenes` y colgar las satélites de documentación. **PARTE B (§9–§13)** — las tablas de
+> REFERENCIA (países / navieras / detention): la orden NO cuelga de ellas, RESUELVE contra ellas por sus
+> dimensiones (su naviera, su destino). Ambas design-first, un solo GO o por partes, como prefiera John.
 
 ---
 
@@ -208,8 +213,9 @@ checksum del output antes/después). Si preferís, se difiere — la tanda base 
 |---|---|---|
 | `documentos_orden` (disponibilidad documental D.2 — mata B.8 de raíz y el checklist estático del mail) | D.2 | FK → `seguimiento_ordenes` |
 | `orden_productos` (datos de PRODUCTO extraídos de factura/permiso — D.3 y bloque nuevo del mail G.2) | D.3 | FK → `seguimiento_ordenes` |
-| Columnas mail en `mailing_orders`: `eta`, `incoterm`, `freight_term`, `shipment_no` (guide G.2) | G.2 | ya cuelga |
-| Contactos naviera / free days (bloques SHIPPING LINE y FREE DAYS del guide) | G.2/N30 | `navieras` / config |
+| Columnas mail en `mailing_orders`: `etd`, `eta`, `incoterm`, `freight_term`, `shipment_no` (guide G.2) | G.2 | ya cuelga |
+| **Free days del mail** → resueltos por la PARTE B de esta tanda (`v_orden_freetime`, §12) | T4.b ✓ | referencia |
+| Contactos naviera en destino (bloque SHIPPING LINE) — BLOQUEADO: `mailing_naviera_destino` vacía (dato de Naara) | G.2/N30 | referencia (naviera×país) |
 
 ## 8 · Plan de verificación post-apply (cuando haya GO)
 
@@ -219,3 +225,205 @@ checksum del output antes/después). Si preferís, se difiere — la tanda base 
 4. `v_operacion_estado` devuelve exactamente las mismas 190 filas (count + spot-check).
 5. Canario GoTrue del front sigue en 2; solapa Seguimiento carga normal.
 6. Grafo de Estructura DB (tras Actualizar) muestra las 4 aristas nuevas — la evaluación visual del "después" que pediste.
+
+---
+
+# PARTE B — TABLAS DE REFERENCIA *(ronda de cierre 16-07)*
+
+## 9 · Principio de modelado: por-orden (1:N) vs por-dimensión (referencia)
+
+Dirección de John con un matiz crítico que este diseño respeta a rajatabla: **detention NO cuelga del
+número de orden**. Una orden no tiene su propia fila de free time — RESUELVE contra la tabla de
+referencia por sus atributos: `orden → (su naviera, su destino) → busca en referencia`. La regla "todo
+cuelga de la orden" aplica a las entidades de documentación; las de referencia se conectan por dimensión.
+
+| Clase | Tablas | Cómo se conectan a la orden |
+|---|---|---|
+| **Cuelgan de la orden** (FK a `seguimiento_ordenes`, 1:N o 1:1) | `bl_controls`, `mailing_orders` (+`mailing_sends`), `certificados_origen`, `control_bl_sellos`, `documentos_orden` (D.2), `orden_productos` (D.3) | FK directa por `order_number` (Parte A) |
+| **Referencia** (por dimensión — la orden NUNCA tiene fila propia acá) | `navieras` (+alias), `puertos` (+alias), **`paises` (+alias, NUEVA)**, `detention_freetime` (naviera×país), `mailing_naviera_destino` (naviera×país, vacía), `tarifas_*`, `recargos_efa`, `schedules_master` | La orden ancla sus DIMENSIONES (`naviera_id`, `pod_puerto_id` en `mailing_orders`) y resuelve por JOIN |
+| **Legacy fuera de alcance** | `operaciones`, `contenedores`, logs, backup | §1 — proyecto diferido |
+
+La cadena completa del free time queda: **orden → naviera_id + pod_puerto_id → puerto.pais_iso →
+`detention_freetime`(naviera_id, pais_iso)**. La granularidad país-vs-puerto que señalaste se resuelve
+con `puertos.pais_iso` (el dato `puertos.pais` YA existe como texto — solo se normaliza).
+
+## 10 · Evidencia (censo vivo 2026-07-16 — define el trabajo real)
+
+- `detention_freetime`: 1.441 filas, **34 suppliers distintos, solo 2 resuelven** contra `navieras`(5)/alias(7)
+  hoy (MAERSK, CMA CGM). Incluye forwarders (DSV, DHL, Expeditors, DP World) además de navieras puras.
+- **`LOG-IN` — el carrier de 59/79 órdenes de `mailing_orders` — NO resuelve**: detention lo tiene como
+  "LOG-IN LOGISTICA INTERMODAL S.A.". El seed de alias es obligatorio, no opcional.
+- **Países en 2 idiomas sin match:** `detention_freetime.country` = 103 etiquetas EN UPPER ("BRAZIL",
+  "UNITED STATES") con **variantes-hub** ("CHINA (SHANGHAI DIT HUB)", "SAUDI ARABIA (JUBAIL ONLY)",
+  "U.A.E DPW Hub"); `puertos.pais` = 11 en español ("Brasil", "Estados Unidos"). Cero match textual directo.
+- Variantes-hub duplican país en 5 casos: China ×2, Malaysia ×2, Saudi ×2, Singapore ×2, U.A.E ×2 (ver
+  regla de ambigüedad en §12).
+- `mailing_orders.pod`: **10/10 valores resuelven** contra `puertos`/`puertos_alias` — la cadena puerto
+  está limpia hoy.
+
+## 11 · DDL propuesto — Parte B (apply-b.sql) — NO APLICADO
+
+Todo ADITIVO y nullable: la solapa Detention sigue leyendo `supplier`/`country` texto (intacta), y
+`upload_detention.py` sigue funcionando sin cambios (los triggers resuelven las FKs solos; lo no resuelto
+queda NULL y VISIBLE — jamás bloquea el upload).
+
+```sql
+-- ── B0 · pre-flight: censo de resolución (los números de §10 deben reproducirse) ──
+
+-- ── B1 · países + alias (NUEVAS — únicas tablas nuevas de la tanda) ──
+CREATE TABLE public.paises (
+  iso2       text PRIMARY KEY CHECK (iso2 ~ '^[A-Z]{2}$'),
+  nombre_es  text NOT NULL,
+  nombre_en  text NOT NULL,
+  flag_emoji text                     -- sirve a B.3 (banderas Seguimiento) y al template del mail (T6)
+);
+CREATE TABLE public.paises_alias (
+  alias     text PRIMARY KEY,         -- SIEMPRE en UPPER; cubre EN, ES y variantes-hub
+  pais_iso  text NOT NULL REFERENCES public.paises(iso2)
+);
+-- Lección default-privileges (caso real vac_* 2026-07-15): todo objeto nuevo nace escribible:
+REVOKE INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
+  ON public.paises, public.paises_alias FROM anon, authenticated;
+ALTER TABLE public.paises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.paises_alias ENABLE ROW LEVEL SECURITY;
+CREATE POLICY paises_read ON public.paises FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY paises_alias_read ON public.paises_alias FOR SELECT TO anon, authenticated USING (true);
+
+-- SEED (mecánico, Sonnet, en la implementación): países ISO-3166 presentes hoy (~100) +
+-- alias desde los textos VIVOS: las 103 etiquetas EN de detention (variantes-hub → mismo iso2)
+-- y los 11 nombres ES de puertos. Verificación: 0 etiquetas vivas sin alias.
+
+-- ── B2 · puertos → país normalizado (la columna texto `pais` NO se toca) ──
+ALTER TABLE public.puertos ADD COLUMN IF NOT EXISTS pais_iso text REFERENCES public.paises(iso2);
+UPDATE public.puertos p SET pais_iso = a.pais_iso
+  FROM public.paises_alias a WHERE a.alias = upper(p.pais) AND p.pais_iso IS NULL;
+-- criterio: 31/31 puertos con pais_iso NOT NULL post-backfill (el seed cubre los 11 nombres)
+
+-- ── B3 · seed navieras + normalización de detention_freetime ──
+-- SEED (lista explícita, versionada en la migración — el rollback la borra por lista):
+--   INSERT en navieras (nombre, activo=true) de los ~32 suppliers de detention que faltan
+--   + navieras_alias con el texto exacto del Excel por cada uno
+--   + alias 'LOG-IN' → naviera "LOG-IN LOGISTICA INTERMODAL S.A." (cierra el gap del 75% de órdenes)
+ALTER TABLE public.detention_freetime
+  ADD COLUMN IF NOT EXISTS naviera_id uuid REFERENCES public.navieras(id),
+  ADD COLUMN IF NOT EXISTS pais_iso   text REFERENCES public.paises(iso2);
+
+CREATE OR REPLACE FUNCTION public.resolve_detention_dims()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  SELECT COALESCE(
+    (SELECT n.id FROM public.navieras n WHERE upper(n.nombre) = upper(NEW.supplier)),
+    (SELECT a.naviera_id FROM public.navieras_alias a WHERE upper(a.alias) = upper(NEW.supplier))
+  ) INTO NEW.naviera_id;
+  SELECT pa.pais_iso INTO NEW.pais_iso
+    FROM public.paises_alias pa WHERE pa.alias = upper(NEW.country);
+  RETURN NEW;   -- no resuelto ⇒ NULL visible; el upload del Excel JAMÁS se bloquea
+END $$;
+REVOKE EXECUTE ON FUNCTION public.resolve_detention_dims() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER trg_resolve_dims BEFORE INSERT OR UPDATE OF supplier, country
+  ON public.detention_freetime FOR EACH ROW EXECUTE FUNCTION public.resolve_detention_dims();
+
+-- backfill de las 1.441 filas existentes (mismos joins que el trigger):
+UPDATE public.detention_freetime d SET
+  naviera_id = COALESCE(
+    (SELECT n.id FROM public.navieras n WHERE upper(n.nombre) = upper(d.supplier)),
+    (SELECT a.naviera_id FROM public.navieras_alias a WHERE upper(a.alias) = upper(d.supplier))),
+  pais_iso = (SELECT pa.pais_iso FROM public.paises_alias pa WHERE pa.alias = upper(d.country));
+-- criterio: 100% naviera_id y pais_iso NOT NULL (el seed cubre los 34 suppliers y 103 países)
+
+-- ── B4 · mailing_orders ancla sus dimensiones (la orden resuelve, no cuelga) ──
+ALTER TABLE public.mailing_orders
+  ADD COLUMN IF NOT EXISTS naviera_id    uuid REFERENCES public.navieras(id),
+  ADD COLUMN IF NOT EXISTS pod_puerto_id uuid REFERENCES public.puertos(id);
+
+CREATE OR REPLACE FUNCTION public.resolve_orden_dims()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  SELECT COALESCE(
+    (SELECT n.id FROM public.navieras n WHERE upper(n.nombre) = upper(NEW.carrier)),
+    (SELECT a.naviera_id FROM public.navieras_alias a WHERE upper(a.alias) = upper(NEW.carrier))
+  ) INTO NEW.naviera_id;
+  SELECT COALESCE(
+    (SELECT p.id FROM public.puertos p WHERE upper(p.nombre) = upper(NEW.pod)),
+    (SELECT pa.puerto_id FROM public.puertos_alias pa WHERE upper(pa.alias) = upper(NEW.pod))
+  ) INTO NEW.pod_puerto_id;
+  RETURN NEW;   -- carrier/pod nuevos sin alias ⇒ NULL visible, el workflow CBL jamás se corta
+END $$;
+REVOKE EXECUTE ON FUNCTION public.resolve_orden_dims() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER trg_resolve_dims BEFORE INSERT OR UPDATE OF carrier, pod
+  ON public.mailing_orders FOR EACH ROW EXECUTE FUNCTION public.resolve_orden_dims();
+-- (convive con trg_ensure_orden de la Parte A: mismo evento, orden alfabético, sin dependencia entre sí)
+
+UPDATE public.mailing_orders m SET
+  naviera_id = COALESCE(
+    (SELECT n.id FROM public.navieras n WHERE upper(n.nombre) = upper(m.carrier)),
+    (SELECT a.naviera_id FROM public.navieras_alias a WHERE upper(a.alias) = upper(m.carrier))),
+  pod_puerto_id = COALESCE(
+    (SELECT p.id FROM public.puertos p WHERE upper(p.nombre) = upper(m.pod)),
+    (SELECT pa.puerto_id FROM public.puertos_alias pa WHERE upper(pa.alias) = upper(m.pod)));
+-- criterio: 79/79 con naviera_id y pod_puerto_id NOT NULL (LOG-IN entra por el alias del seed; pods ya dan 10/10)
+
+-- ── B5 · vista consumible para el bloque FREE DAYS del mail (T6) ──
+CREATE OR REPLACE VIEW public.v_orden_freetime AS
+SELECT m.order_number,
+       n.nombre  AS naviera,
+       p.nombre  AS puerto,
+       p.pais_iso,
+       d.country AS detention_label,     -- conserva la etiqueta original (incluye variantes-hub)
+       d.tipo, d.combined_days, d.demurrage_days, d.detention_days,
+       d.per_diem_dry_usd, d.per_diem_reefer_usd
+FROM public.mailing_orders m
+JOIN public.navieras  n ON n.id = m.naviera_id
+JOIN public.puertos   p ON p.id = m.pod_puerto_id
+JOIN public.detention_freetime d ON d.naviera_id = m.naviera_id AND d.pais_iso = p.pais_iso;
+-- Lección vac_*: las vistas simples son auto-updatables ⇒ revocar writes SIEMPRE:
+REVOKE INSERT, UPDATE, DELETE, REFERENCES, TRIGGER, TRUNCATE
+  ON public.v_orden_freetime FROM anon, authenticated;
+
+-- ── B6 · PostgREST ──
+NOTIFY pgrst, 'reload schema';
+```
+
+## 12 · Regla de ambigüedad de zonas-hub (decisión de diseño, Fable)
+
+5 países tienen MÚLTIPLES filas de freetime por zona/hub (China, Malaysia, Saudi, Singapore, U.A.E).
+`v_orden_freetime` devuelve TODAS las filas del par (naviera, país); el consumidor (mail T6) aplica la
+regla default: **preferir la fila cuya etiqueta no tiene sufijo de hub**; si el país solo tiene filas
+zonificadas (caso China), se requiere mapeo puerto→zona — **refinamiento futuro documentado**, no
+bloquea: el tráfico real actual es LATAM (Brasil/Perú/Chile/Argentina), donde no existen zonas. Cero
+decisiones nuevas para John.
+
+## 13 · Rollback Parte B (rollback-b.sql) + riesgos añadidos
+
+```sql
+DROP VIEW IF EXISTS public.v_orden_freetime;
+DROP TRIGGER IF EXISTS trg_resolve_dims ON public.mailing_orders;
+DROP TRIGGER IF EXISTS trg_resolve_dims ON public.detention_freetime;
+DROP FUNCTION IF EXISTS public.resolve_orden_dims();
+DROP FUNCTION IF EXISTS public.resolve_detention_dims();
+ALTER TABLE public.mailing_orders     DROP COLUMN IF EXISTS naviera_id, DROP COLUMN IF EXISTS pod_puerto_id;
+ALTER TABLE public.detention_freetime DROP COLUMN IF EXISTS naviera_id, DROP COLUMN IF EXISTS pais_iso;
+ALTER TABLE public.puertos            DROP COLUMN IF EXISTS pais_iso;
+DELETE FROM public.navieras_alias WHERE alias IN (/* lista explícita del seed, versionada en la migración */);
+DELETE FROM public.navieras       WHERE nombre IN (/* lista explícita del seed */);
+DROP TABLE IF EXISTS public.paises_alias;
+DROP TABLE IF EXISTS public.paises;
+NOTIFY pgrst, 'reload schema';
+```
+
+| # | Riesgo | Mitigación |
+|---|--------|------------|
+| R7 | El seed de navieras mete forwarders (DSV, DHL, Expeditors…) en la tabla | Deliberado: son proveedores del Excel de detention y la entidad los necesita para resolver. Depuración/tipado (`naviera` vs `forwarder`) = candidato futuro, no bloquea |
+| R8 | Ambigüedad de zonas-hub en 5 países | Regla default de §12; tráfico real actual (LATAM) sin zonas; mapeo puerto→zona como refinamiento futuro |
+| R9 | Excel nuevo trae supplier/country sin alias | Trigger deja NULL (visible), el upload NUNCA falla; query de huérfanos en la verificación y alias que se agrega a mano |
+| R10 | Objetos nuevos nacen escribibles por `authenticated` (default privileges) y las vistas simples son auto-updatables | REVOKE explícito en `paises`, `paises_alias` y `v_orden_freetime` dentro del apply (lección vac_* 2026-07-15) |
+| R11 | Romper la solapa Detention | Cero cambios a columnas existentes ni al front: todo aditivo; la solapa sigue leyendo `supplier`/`country` texto. Su migración a campos normalizados = gate propio futuro |
+
+**Verificación añadida (Parte B):** 31/31 puertos con `pais_iso` · 1.441/1.441 filas de detention con
+ambas FKs resueltas · 79/79 mailing_orders con `naviera_id`+`pod_puerto_id` · `v_orden_freetime` devuelve
+filas para una orden real (ej. LOG-IN/SANTOS → free days de BRAZIL) · solapa Detention renderiza idéntica.
+
+**Qué destraba / qué NO:** ✅ el bloque "días libres" del template T6 (fuente: `v_orden_freetime`).
+❌ NO destraba el bloque "contacto de la línea marítima": sale de `mailing_naviera_destino`, que sigue
+VACÍA (dato pendiente de Naara). Cuando llegue ese dato, la tabla se normaliza igual que detention
+(naviera_id + pais_iso) — diseño reservado, sin DDL hasta entonces.

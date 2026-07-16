@@ -14,6 +14,10 @@
 > (orden como vertebral — tanda propia), G.2 con diseño guía de John, +2 ítems nuevos (D.4 OCR,
 > H.1 grafo). Master plan por tandas y CONTROL DE CAMBIOS al final de este doc. Propuesta de esquema:
 > `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` · mockup: `docs/mockups/grafo-enriquecido-mockup.html`.
+>
+> **Ronda de cierre 16-07 (2ª noche):** QC aprobado, E.1 y las 3 decisiones de G.2 CERRADAS (**cero
+> `[DECISIÓN]` abiertas en todo el plan**), T4 expandida con tablas de REFERENCIA (detention / navieras /
+> puerto→país), +PAT de Supabase en SEGURIDAD. Próxima sesión: implementación por tandas, GO de John por tanda.
 
 ---
 
@@ -197,8 +201,14 @@ TEST_MODE, bindings.
 - Caveats técnicos del guide: 2 emails ofuscados por Cloudflare (`data-cfemail`) a limpiar; banderas AR/PE
   dibujadas a mano, no parametrizables → sistema real de banderas por país; tokens declarados pero no
   usados (`origin_country`, `dest_country`, `carrier_web`).
-- `[DECISIÓN]` ¿`atd` cubre el slot ETD del guide o va columna `etd` aparte? · ¿qué es `shipment_no`? ·
-  ¿saludo personalizado con `sold_to_name` en vez de "Dear Customer"?
+- **DECISIONES CERRADAS (John, 16-07 cierre) — G.2 queda sin `[DECISIÓN]` abiertas:**
+  - **ETD y ATD: el template lleva AMBOS campos** (no se reemplaza uno por otro). Motivo de dominio: a
+    veces la documentación se envía ANTES de tener el ATD confirmado → el mail muestra ETD y ATD según
+    disponibilidad. (`etd` = columna nueva en `mailing_orders`; `atd` ya existe.)
+  - **`shipment_no` = la referencia SAP de la orden.** En SAP la orden tiene la terna Order / Delivery /
+    Shipment — `shipment_no` es el Shipment de esa terna.
+  - **Saludo GENÉRICO ("Estimados,").** El nombre de la empresa destinataria (a quién se envía) va en el
+    ASUNTO del mail, no en el saludo.
 
 ---
 
@@ -247,7 +257,10 @@ UI change gate obligatorio.
 
 ## SEGURIDAD (acciones pendientes)
 
-- **⚠️ REVOCAR el PAT `claude-code-golive`** — quedó expuesto en el chat del go-live. Hacelo ya.
+- **⚠️ DOS tokens A REVOCAR (acción de John, no de CC — registrarlos acá NO los revoca: siguen VIVOS
+  hasta que John los dé de baja):**
+  1. PAT de GitHub **`claude-code-golive`** — quedó expuesto en el chat del go-live.
+  2. PAT de Supabase (canal DB del go-live) — **`~/.supabase/access-token`**.
 - Higiene de grants de vacaciones (micro-migración de revoke).
 - `SUPABASE_DB_PASSWORD` del `.env` es un JWT, no la password de DB.
 - `console.log('[TT]…')` en `tt-dow` queda en prod.
@@ -272,9 +285,9 @@ UI change gate obligatorio.
 | **1 · Front chico** | B.1-fix selector transporte en alta por lote · G.1 filtro mailing (~5 líneas, patrón de control-bl) · C.1 wording (con la semántica real de C.2) · A.2-front (estado "reprocesando…" POR ORDEN + poll al fin real + botón bloqueado el tiempo correcto) · B.8-interim (chip "s/d" ≠ "falta") | Bajo riesgo, gates individuales |
 | **2 · n8n CBL** | A.3 Maersk 10A (schema+prompt+comparador backward-compatible; gate con BL real 118833340) · A.2-resend (bypass del claim `email_sent` en reproceso) | PUTs Iron Law al CBL |
 | **3 · Seguimiento por modo** | B.7 dos solapas (CERRADA) · B.2 label "inicia tránsito" + KPI (terrestre ATD+1 hábil / marítimo ATD+4 corridos — toca `deadline_envio` de la vista) · B.3 banderas · B.4 Sold-to/Ship-to (la data YA existe en `mailing_orders`) · B.5 responsive · B.6 export Excel | Front + migración de vista; mockups previos |
-| **4 · BASE vertebral** | H.1 grafo enriquecido en la app (mockup YA entregado, falta GO visual) · DDL vertebral: FKs + trigger ensure-parent (`TANDA-BASE_vertebral-ordenes_2026-07-16.md`) · opcional: endurecer `v_operacion_estado` (§5 del doc) | Design-first: GO sobre el doc; DDL main thread. **Puede adelantarse** — no depende de 1–3 |
+| **4 · BASE vertebral + referencia** | **(a) Vertebral:** H.1 grafo enriquecido en la app (mockup YA entregado, falta GO visual) · DDL: FKs + trigger ensure-parent · opcional: endurecer `v_operacion_estado`. **(b) Referencia** *(cierre 16-07)*: `paises`+alias · seed navieras (34 suppliers detention, alias LOG-IN) · FKs+triggers resolutores en `detention_freetime` (naviera_id, pais_iso) y `mailing_orders` (naviera_id, pod_puerto_id) — **la orden RESUELVE contra referencia por dimensión, NO cuelga**. Todo en `TANDA-BASE_vertebral-ordenes_2026-07-16.md` | Design-first: GO sobre el doc; DDL main thread. **Puede adelantarse** — no depende de 1–3. Solapa Detention intacta (cambios aditivos) |
 | **5 · D.2 + D.4** | Tabla `documentos_orden` (FK a la vertebral) + PUT Gmail→Drive (captura en nodos set-meta, reemplaza Sheets; **mantiene** el mail factura-sin-permiso) + chips reales en Seguimiento (cierra B.8 de raíz + gap booking ZCB3) + **D.4 fix OCR en el mismo PUT** | PUT Iron Law + migración. Depende de 4 |
-| **6 · G.2 mail** | Template nuevo sobre el guide de John + columnas mail en `mailing_orders` (`eta`, `incoterm`, `freight_term`, `shipment_no`) + mapeo puerto→ciudad/país + sistema de banderas + checklist alimentado por D.2 (+ N30 To/CC si John confirma) | PUT mailing + gate TEST_MODE→real. Depende de 4 (y de 5 para el checklist) |
+| **6 · G.2 mail** | Template nuevo sobre el guide de John + columnas mail en `mailing_orders` (`etd`, `eta`, `incoterm`, `freight_term`, `shipment_no`) + mapeo puerto→ciudad/país + sistema de banderas + checklist alimentado por D.2 (+ N30 To/CC si John confirma). **Días libres: DESTRABADO por T4.b** (fuente = detention conectada) · **contacto de la línea marítima sigue BLOQUEADO** (`mailing_naviera_destino` vacía — dato de Naara) | PUT mailing + gate TEST_MODE→real. Depende de 4 (y de 5 para el checklist) |
 | **7 · D.3 factura vs permiso** | Control exacto FOB/flete/seguro/total + `orden_productos` (persiste PRODUCTO → alimenta el bloque nuevo del mail) | El más grande — diseño propio aparte. Depende de 4 |
 | **8 · E.1 solapa admin** | SOLO flag de CO por orden (decisión CERRADA 16-07 noche); `mot` override / contactos navieras / toggle TEST_MODE = candidatos futuros post-base estable | Front + action API; gate propio |
 
@@ -298,6 +311,9 @@ UI change gate obligatorio.
 | 2026-07-16 noche | Master plan re-secuenciado en 9 tandas (0–8); E.1 queda ABIERTA; montado este control de cambios | Ronda de refinamiento |
 | 2026-07-16 noche | E.1 CERRADA: alcance = SOLO config de CO; `mot` override, contactos navieras y toggle TEST_MODE quedan como candidatos futuros | John prioriza estabilizar la vertebración de la base antes de sumar el resto de configs |
 | 2026-07-16 noche | QC del plan: PINS corregido (el MD canónico es ESTE doc, no RESULTADO_PLANCOMPLETO) · tags [DECISIÓN] residuales de B.2/D.2 limpiados · A.1 y D.1 marcados RESUELTOS en su sección | Control de calidad de John sobre el MD; GO a las 3 correcciones |
+| 2026-07-16 cierre | +SEGURIDAD: PAT de Supabase (`~/.supabase/access-token`) como 2º token a revocar — ambos siguen vivos hasta que John los baje | Pendiente real del handoff del go-live que no estaba en el MD (hallazgo del QC) |
+| 2026-07-16 cierre | G.2: 3 decisiones CERRADAS — ETD y ATD ambos (según disponibilidad) · `shipment_no` = Shipment de la terna SAP Order/Delivery/Shipment · saludo genérico "Estimados," + empresa destinataria en el ASUNTO | Decisión de John; el plan queda sin [DECISIÓN] abiertas |
+| 2026-07-16 cierre | T4 expandida a "vertebral + referencia": `paises`+alias, seed navieras, FKs+triggers resolutores en `detention_freetime` y `mailing_orders`; distinción explícita por-orden (1:N) vs referencia (por dimensión). Destraba días libres de T6; contacto naviera sigue bloqueado (`mailing_naviera_destino` vacía) | Dirección de arquitectura de John + censo vivo: 34 suppliers/solo 2 resuelven, LOG-IN (75% de órdenes) sin alias, países EN vs ES sin match, pods 10/10 OK |
 
 ---
 

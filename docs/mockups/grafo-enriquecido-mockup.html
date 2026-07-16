@@ -174,11 +174,37 @@ const DATA_T4 = (() => {
     [['id','uuid',true],['order_number','text',false,true],['producto','text'],['ncm_posicion','text'],
      ['cantidad','numeric'],['unidad','text'],['fob_usd','numeric'],['fuente','text'],
      ['created_at','timestamptz']], 'fk_orden_productos__D3');
+  // ── PARTE B (cierre 16-07): tablas de referencia — la orden RESUELVE por dimensión, no cuelga ──
+  const addCol = (tbl, name, type, fkT, fkC) =>
+    T[tbl].columns.push({ name, type, nullable:true, isPk:false, fk: fkT ? { table:fkT, column:fkC } : null });
+  const addRel = (name, ft, fc, tt, tc) =>
+    d.relations.push({ name, from:{ table:ft, column:fc }, to:{ table:tt, column:tc } });
+  d.tables.push({ name:'paises', kind:'table', rls:true, rows:null, columns:[
+    { name:'iso2', type:'text', nullable:false, isPk:true, fk:null },
+    { name:'nombre_es', type:'text', nullable:false, isPk:false, fk:null },
+    { name:'nombre_en', type:'text', nullable:false, isPk:false, fk:null },
+    { name:'flag_emoji', type:'text', nullable:true, isPk:false, fk:null } ]});
+  d.tables.push({ name:'paises_alias', kind:'table', rls:true, rows:null, columns:[
+    { name:'alias', type:'text', nullable:false, isPk:true, fk:null },
+    { name:'pais_iso', type:'text', nullable:false, isPk:false, fk:{ table:'paises', column:'iso2' } } ]});
+  addRel('fk_paises_alias','paises_alias','pais_iso','paises','iso2');
+  addCol('puertos','pais_iso','text','paises','iso2');
+  addRel('fk_puertos_pais','puertos','pais_iso','paises','iso2');
+  addCol('detention_freetime','naviera_id','uuid','navieras','id');
+  addRel('fk_detention_naviera','detention_freetime','naviera_id','navieras','id');
+  addCol('detention_freetime','pais_iso','text','paises','iso2');
+  addRel('fk_detention_pais','detention_freetime','pais_iso','paises','iso2');
+  addCol('mailing_orders','naviera_id','uuid','navieras','id');
+  addRel('fk_mailing_naviera','mailing_orders','naviera_id','navieras','id');
+  addCol('mailing_orders','pod_puerto_id','uuid','puertos','id');
+  addRel('fk_mailing_pod_puerto','mailing_orders','pod_puerto_id','puertos','id');
   // marcadores para el estilo "propuesto" (dashed teal)
   d.proposed = {
-    tables: ['documentos_orden','orden_productos'],
+    tables: ['documentos_orden','orden_productos','paises','paises_alias'],
     relations: ['fk_bl_controls_orden','fk_mailing_orders_orden','fk_certificados_origen_orden',
-                'fk_control_bl_sellos_orden','fk_documentos_orden__D2','fk_orden_productos__D3'],
+                'fk_control_bl_sellos_orden','fk_documentos_orden__D2','fk_orden_productos__D3',
+                'fk_paises_alias','fk_puertos_pais','fk_detention_naviera','fk_detention_pais',
+                'fk_mailing_naviera','fk_mailing_pod_puerto'],
   };
   return d;
 })();
@@ -190,12 +216,13 @@ const ZONES = [
             'certificados_origen','control_bl_sellos','documentos_orden','orden_productos',
             'seguimiento_co_config','mailing_contacts','mailing_naviera_destino'] },
   { id:'ref', title:'REFERENCIA / TARIFAS', row:0, x:920, cols:3,
-    tables:['navieras','puertos','tarifas_maritimas','navieras_alias','puertos_alias','recargos_efa',
+    tables:['navieras','puertos','paises','navieras_alias','puertos_alias','paises_alias',
+            'detention_freetime','tarifas_maritimas','recargos_efa',
             'tarifas_terrestres','tarifas_terrestres_carriers'] },
   { id:'vac', title:'VACACIONES', row:1, x:0, cols:2,
     tables:['vac_employees','vac_requests','vac_balance_adjustments','vac_holidays'] },
   { id:'otros', title:'DATOS SUELTOS / LOGS', row:1, x:620, cols:2,
-    tables:['schedules_master','detention_freetime','configuracion','patrones_aprendidos',
+    tables:['schedules_master','configuracion','patrones_aprendidos',
             'tarifas_maritimas_log','tarifas_terrestres_log','bl_controls_dupes_backup_plan1'] },
   { id:'vistas', title:'VISTAS', row:1, x:1240, cols:2, viewsZone:true, tables:[] },
 ];
