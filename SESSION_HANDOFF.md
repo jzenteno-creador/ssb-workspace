@@ -1,37 +1,47 @@
-# Handoff de sesión — 2026-07-14 · ssb-workspace · BREAK (cierre refactor + tanda limpieza + fix vacaciones)
+# Handoff de sesión — 2026-07-16 · ssb-workspace · GO-LIVE PLAN COMPLETO CERRADO + fix 500 reprocesar
 
-## HECHO
+## Resumen
 
-- **Cierre formal del refactor de modularización** (`4680eb7`): números finales (index.html 19.185→5.060, −73,6%; js/ 14.813 líneas; 24 gates) y **GATE F ABANDONADO** con evidencia 8e (15/20 módulos consumen 26 símbolos clásicos pelados, ~479 usos; beneficio 0 sin bundler). Los 3 clásicos (`helpers`/`supabase-client`/`auth`) son PERMANENTES.
-- **Tanda chore/limpieza-2026-07 EN PROD** (`b3ec811`+`d295225`+`fcc4e1c`): bugs de reset de ambos chats cerrados (welcome cacheado + reset delegado) · `applyDetFilter` muerta borrada · `passCarrierEquipo` unifica el predicado triplicado · `togC` escapado (patrón nuevo) · legacy Netlify eliminado (−892 líneas, gate grep 0 consumidores) · 30 branches mergeadas borradas (`-d`, 0 fallos) · harness `put_mailing_docs_fix1.py` rescatado a `~/.claude/harness/`.
-- **BUG-VAC-FORM-ADJUSTMENTS CERRADO** (`0bfe086`, en prod): el form Cargar de Vacaciones usaba `days_remaining ?? annual` ignorando `vac_balance_adjustments` → un ajuste negativo mostraba más saldo del real. Ahora usa `computeRealAvailable()` con ajustes — 4º consumidor de la misma fuente de verdad que el stats strip. Re-derivado de `203265d` (el único contenido vivo de `fix/dashboard-critical-bugs`; los otros 3 fixes ya estaban re-implementados en master, verificado código a código).
-- **Docs/registro:** `tarifa-schedule-bugs.md` al día (WIA/AGENT-RESET, EFA-MATCHCARRIER, BUG-1 y VAC-FORM-ADJUSTMENTS cerrados; BUG-CHAT-RACE-RESET registrado abierto; nota de esc()+onclick corregida). Regla de handlers inline subida al CLAUDE.md del repo (`ee4cd8d`).
-- **Limpieza final:** `fix/dashboard-critical-bugs` e `integration/smoke` borradas con `-D` (veredicto TIRAR cerrado, orden de John). Dev-servers locales (:8888 y :8899) abajo.
+Sesión reabierta tras cierre accidental (Ctrl+Z) con el GO de John ya dado. Se cerró el GO-LIVE del PLAN COMPLETO: commit del fix N8 (visor Factura/PE), env `N8N_CBL_FORM_URL` en Vercel, push a master (26 commits, deploy verificado) y smoke técnico post-deploy APROBADO (Sonnet evidencia / Fable veredicto). Después, en caliente: diagnóstico del HTTP 500 al reprocesar BL por form (causa: FormTriggerV2 exige multipart y `api/seguimiento.js` mandaba urlencoded) y fix aplicado + deployado. **master = `99e34c9`, todo en prod.**
 
-## DECISIONES FIRMADAS (no re-litigar)
+## Cambios realizados
 
-- **GATE F ABANDONADO** — asimetría clásico/módulo pasa a regla PERMANENTE de la arquitectura.
-- **Datos en handlers inline:** `onclick="fn(${esc(JSON.stringify(v))})"` sin comillas envolventes — esc() solo cubre el boundary HTML; el atributo se decodifica ANTES de compilar el JS. En CLAUDE.md del repo, sección reglas duras.
-- **"Cherry-pick only" MURIÓ con el refactor:** las branches pre-refactor tocan un index.html que ya no existe → re-derivación o descarte, no hay rescate.
-- **Headers de módulo = contrato**, se actualizan con cada fix.
-- **Saldos de vacaciones con ajustes que se vean raros = tema de DATOS** que John corrige en la próxima tanda de mejoras — **NO es deuda de código, NO tocar.**
+- `js/features/control-bl.js` (`52797d3`): fix N8 — tabs Factura/PE del visor habilitados vía proyecciones PostgREST `fc_link`/`pe_link` (solo strings, no el JSONB); tooltip genérico.
+- `validador-aduana/.../sdk/put_plancompleto_mailing_fix1.py` (`b1bc1ed`): harness FIX1 del mailing versionado (Iron Law; ya aplicado en vivo el 07-15).
+- `api/seguimiento.js` (`9f71b97`): `handleReprocesarBl` urlencoded→`FormData` multipart nativo con `field-0` (FormTriggerV2 asserta multipart ANTES de leer campos).
+- `docs/handoff/RESULTADO_PLANCOMPLETO_2026-07-14.md` (`c5a2a60`, `99e34c9`): tabla GO-LIVE cerrada fila por fila + Apéndices (desvío FIX1 commiteado, deuda console.log tt-dow).
+- `.gitignore`: `+.vercel +.env*` (side-effect de `vercel link`, benigno).
+- Env Vercel: `N8N_CBL_FORM_URL` Encrypted en Production+Preview (`npx vercel`, valor confirmado por John y validado contra el webhookId del Form Trigger vivo).
+- `~/.claude/CLAUDE.md` (claude-config `8985360`): 5 lecciones (Vercel CLI vía npx, Form Trigger multipart, default privileges Supabase, n8n-cli `--mode full --json`, `alwaysOutputData` en GETs best-effort).
 
-## ESTADO
+## Decisiones tomadas
 
-- **Prod (Vercel): master = `0bfe086`.** Working tree limpio, sin commits locales pendientes. Canario GoTrue = 2. Smokes: headless completo + manual de John (tanda) + gate del fix vacaciones aprobado con push.
-- **Branches locales: quedan SOLO 2** (+ master): `fix/coordinated-filters` (FEATURE leave-one-out ×3 solapas, 93 líneas, nunca mergeada — decisión de producto pendiente) y `fix/efa-guard-mailing-putfix1` (contiene `f163281`, dirty-guard del modal EFA, +28 líneas — re-derivación pendiente; su harness ya está rescatado).
-- Pendiente menor de John: smoke en prod de los chats (2 min, ciclo doble "Nueva consulta" + click en sugerencia post-reset).
+- **Vercel por CLI con login existente; PROHIBIDO leer `auth.json` directo** (regla explícita de John; el clasificador además lo bloquea).
+- **Fix del 500 del lado front/api, NO PUT al workflow** — el workflow está sano; el consumer hablaba mal. Alternativa webhook-plano descartada.
+- Harness FIX1 viajó en el push como commit aparte (`git revert b1bc1ed` lo saca quirúrgico si molesta).
+- CLAUDE.md del proyecto NO se tocó (John aprobó solo el global).
+- Pins vigentes NO van a CLAUDE.md (rotan): viven en la tabla GO-LIVE y en memoria.
 
-## PENDIENTES ABIERTOS PARA EL PLAN GRANDE (sin fixes sueltos)
+## Estado actual
 
-1. **Seguridad:** F1 auth Bearer + rate limit en `/api/chat` y `/api/chat-workspace` + sacar service_role de chat-workspace · F2 LIMIT server-side · F3 hooks de regresión · XSS menor (`data-v`/`hl` en autocomplete.js).
-2. **Bugs:** BUG-CHAT-RACE-RESET (token de generación) · portar render XSS-safe (createElement/textContent) de workspace-ia al agente.
-3. **Features a re-derivar:** filtros coordinados leave-one-out ×3 solapas (decisión producto) · dirty-guard EFA `f163281` sobre `js/features/efa.js`.
-4. **Go-live (gates propios):** Mailing TEST_MODE → real (3 pasos) · Cert-Origen fase mailing (n8n `kh6TORgRg9R1Shj1`).
-5. **Limpieza mayor:** 5 createClient (canario 2→0, gate propio) · CSS ~2.400 líneas sin mapear + 2 islas NO-TOUCH · stubs del agente · migrar `validador-aduana/` a módulo de 1ª clase · saneo selC/selE duplicado en los 2 loaders de tarifas.
-6. **UX:** responsive Fase C (Detention + Admin BID en teléfono) · `prompt()` en bidBulkAction · audit-trail.
-7. **Datos (John, no código):** corrección de saldos de vacaciones con ajustes.
+- **Todo el PLAN COMPLETO + PLAN 1 en prod:** 5 migraciones, 2 PUTs n8n (pins CBL `69f11831` · Mailing `bce090d2`), backfill (huérfanos 82→0), front+api deployados.
+- Smoke técnico post-deploy: canario GoTrue=2, 0 pageerrors, 7 solapas OK, N8 verificado en vivo con datos reales, `/api` ×3 gateadas (401/405 propios).
+- Reproceso por form: fix multipart deployado y verificado por echo-server local (request sale `multipart/form-data` + boundary + `field-0`). Los 7 executions fallidos (33255–33270) murieron en el nodo 1 con CERO efectos (sin escritura, sin mail).
+- TEST_MODE del mailing sigue ON.
 
-## PRÓXIMO PASO
+## Próximos pasos
 
-**La próxima sesión entra con el plan ya diseñado.** Flujo definido: John trae el relevamiento de mejoras de los operarios → Claude web define el plan (despejando dudas con John) → el plan se pega a Claude Code → CC hace su propio EXPLORE → PLAN → IMPLEMENT con multiagentes sobre el repo completo. No arrancar nada antes de recibir ese plan.
+1. **John — smoke real del reproceso**: botón reprocesar con orden a elección → dispara control completo (~1-2 min, 5 extractores IA) y **manda mail real a expoarpbb**. Si falla, el execution nuevo en n8n ya va a mostrar el payload.
+2. **John — smokes funcionales con login real**: vacaciones + seguimiento post-migración (última milla E/G), sello regla 16 en mailing.
+3. Gate TEST_MODE→real del mailing (3 pasos, gate propio).
+4. N30 espera confirmación de la regla To/CC (PUT quirúrgico al mailing + front chico).
+5. Datos (John, no código): email de Mariano (consultor), contactos navieras en destino (Naara → `mailing_naviera_destino`), decisión planilla BRASIL 118979709, orden 17ª y orden …311.
+
+## Contexto no obvio
+
+- **Los 7 intentos fallidos del form eran TODOS el mismo assert multipart** — no era Maersk ni data de la orden: el workflow nunca llegó a leer el payload (`executionTime: 0ms` en el nodo, orden ausente del execution).
+- `docs/` NO se sirve en prod Vercel (404) — no sirve como marcador de deploy; `vercel inspect` tampoco expone el commit sha (atribuir por timestamp).
+- `n8n-cli executions get --mode full --save` guarda SOLO metadata → usar `--mode full --json > archivo`.
+- Fuente de verdad del avance entre sesiones: tabla GO-LIVE de `docs/handoff/RESULTADO_PLANCOMPLETO_2026-07-14.md` (actualizada al minuto).
+- Deuda menor nueva: `console.log('[TT] …')` de tt-dow visible en prod — para la próxima tanda.
+- El PAT de Supabase en `~/.supabase/access-token` (canal DB del go-live) sigue pendiente de REVOCAR al cierre definitivo — chequear con John.
