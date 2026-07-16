@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>Shipping Documents</title>
+  <!--[if mso]>
+  <style type="text/css">
+    table, td { border-collapse: collapse; }
+    .mso-fix { font-family: Arial, sans-serif !important; }
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    /* Client resets */
+    body,table,td,a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+    table,td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { -ms-interpolation-mode:bicubic; border:0; outline:none; text-decoration:none; }
+    body { margin:0; padding:0; width:100% !important; height:100% !important; }
+    a { text-decoration:none; }
+    /* Mobile */
+    @media only screen and (max-width:620px){
+      .container { width:100% !important; }
+      .px { padding-left:18px !important; padding-right:18px !important; }
+      .stack { display:block !important; width:100% !important; }
+      .stack-gap { height:8px !important; }
+    }
+  </style>
+</head>
+<!--
+  ============================================================================
+  SSB INTERNATIONAL — SHIPPING DOCUMENTS EMAIL  (template: "Slim & Structured")
+  Table-based, inline styles, 600px, web-safe fonts. Ready for Outlook / Gmail.
+  ----------------------------------------------------------------------------
+  VARIABLE FIELDS (search these tokens and bind your data):
+    {{subject}} {{preheader}}
+    {{order_no}} {{shipment_no}} {{booking_no}} {{bl_no}}
+    {{vessel_voyage}} {{incoterm}} {{freight}}
+    {{origin_city}} {{origin_country}} {{dest_city}} {{dest_country}}
+    {{etd}} {{eta}} {{transit}}
+    {{documents[]}}  (repeat the checklist rows)
+    {{carrier_name}} {{carrier_email}} {{carrier_web}}
+    {{free_days_dry}} {{free_days_reefer}}
+    {{contact_email}} {{company_web}}
+  Colors: navy #0C2340 · cyan #1C9BD9 · orange #F26A21 · tint #EEF4FA
+  ============================================================================
+-->
+<body style="margin:0; padding:0; background-color:#E7ECF2;">
+
+  <!-- Preheader (hidden preview text) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#E7ECF2; opacity:0;">
+    Shipping documents for Order 118959513 &#8212; WIELAND 627N, Buenos Aires &#8594; Callao.<!--{{preheader}}-->
+    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#E7ECF2;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+
+        <!-- ============ EMAIL CARD (600px) ============ -->
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#ffffff; border:1px solid #DCE6F0; border-radius:14px; overflow:hidden;">
+
+          <!-- HEADER -->
+          <tr>
+            <td class="px" style="padding:20px 28px 15px; border-bottom:2px solid #0C2340;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="left" valign="middle" style="font-family:Arial,Helvetica,sans-serif;">
+                    <span style="font-size:24px; font-weight:bold; color:#0C2340; letter-spacing:-1px;">SSB</span><span style="font-size:9px; color:#F26A21; vertical-align:super;">&#9642;</span>
+                    <div style="font-size:8px; letter-spacing:3px; color:#0C2340; font-weight:bold; margin-top:2px;">INTERNATIONAL</div>
+                  </td>
+                  <td align="right" valign="middle" style="font-family:Arial,Helvetica,sans-serif;">
+                    <div style="font-size:14px; font-weight:bold; color:#0C2340; letter-spacing:0.4px;">SHIPPING DOCUMENTS</div>
+                    <div style="font-size:9px; letter-spacing:2.5px; color:#93A3B4; font-weight:bold; margin-top:3px;">EXPORT DOCUMENTATION</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- REFERENCE BAR -->
+          <tr>
+            <td class="px" style="background-color:#EEF4FA; padding:9px 28px; font-family:Arial,Helvetica,sans-serif; font-size:11.5px; color:#33475A; letter-spacing:0.3px; font-weight:bold;">
+              ORDER 118959513<!--{{order_no}}--><span style="color:#1C9BD9; padding:0 8px;">&#183;</span>WIELAND 627N<!--{{vessel_voyage}}--><span style="color:#1C9BD9; padding:0 8px;">&#183;</span>BUENOS AIRES &#8594; CALLAO<!--{{origin_city}} &#8594; {{dest_city}}-->
+            </td>
+          </tr>
+
+          <!-- GREETING -->
+          <tr>
+            <td class="px" style="padding:18px 28px 4px; font-family:Arial,Helvetica,sans-serif; font-size:13px; color:#3A4A5A; line-height:1.6;">
+              Dear Customer,<br />
+              Please find attached the documentation corresponding to the following shipment.
+            </td>
+          </tr>
+
+          <!-- ROUTE -->
+          <tr>
+            <td class="px" style="padding:14px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <!-- origin -->
+                  <td valign="middle" style="font-family:Arial,Helvetica,sans-serif; white-space:nowrap;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="middle" style="padding-right:9px;">
+                        <!-- AR flag -->
+                        <table role="presentation" width="24" cellpadding="0" cellspacing="0" border="0" style="width:24px; border:1px solid #C9D6E3; border-radius:12px; overflow:hidden;">
+                          <tr><td height="8" style="height:8px; background-color:#7CB4E3; font-size:0; line-height:0;">&nbsp;</td></tr>
+                          <tr><td height="8" align="center" valign="middle" style="height:8px; background-color:#ffffff; font-size:7px; line-height:8px; color:#F6B40E;">&#9679;</td></tr>
+                          <tr><td height="8" style="height:8px; background-color:#7CB4E3; font-size:0; line-height:0;">&nbsp;</td></tr>
+                        </table>
+                      </td>
+                      <td valign="middle" style="font-size:12.5px; font-weight:bold; color:#0C2340;">Buenos Aires<!--{{origin_city}}--></td>
+                    </tr></table>
+                  </td>
+                  <!-- connector -->
+                  <td valign="middle" style="padding:0 12px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td height="1" style="height:1px; font-size:0; line-height:0; border-top:1px dashed #C4D2E0;">&nbsp;</td>
+                    </tr></table>
+                  </td>
+                  <!-- destination -->
+                  <td valign="middle" align="right" style="font-family:Arial,Helvetica,sans-serif; white-space:nowrap;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                      <td valign="middle" style="font-size:12.5px; font-weight:bold; color:#0C2340; padding-right:9px;">Callao<!--{{dest_city}}--></td>
+                      <td valign="middle">
+                        <!-- PE flag -->
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #C9D6E3; border-radius:12px; overflow:hidden;">
+                          <tr>
+                            <td width="8" height="22" style="width:8px; height:22px; background-color:#D91023; font-size:0; line-height:0;">&nbsp;</td>
+                            <td width="8" height="22" style="width:8px; height:22px; background-color:#ffffff; font-size:0; line-height:0;">&nbsp;</td>
+                            <td width="8" height="22" style="width:8px; height:22px; background-color:#D91023; font-size:0; line-height:0;">&nbsp;</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- KPI ROW -->
+          <tr>
+            <td class="px" style="padding:4px 28px 6px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4EAF1; border-radius:9px;">
+                <tr>
+                  <td width="33.33%" style="padding:11px 14px; font-family:Arial,Helvetica,sans-serif;">
+                    <div style="font-size:9px; letter-spacing:1.5px; color:#8494A4; font-weight:bold;">ETD</div>
+                    <div style="font-size:15px; color:#0C2340; font-weight:bold; margin-top:3px;">06/07/2026<!--{{etd}}--></div>
+                  </td>
+                  <td width="33.33%" style="padding:11px 14px; border-left:1px solid #E4EAF1; font-family:Arial,Helvetica,sans-serif;">
+                    <div style="font-size:9px; letter-spacing:1.5px; color:#8494A4; font-weight:bold;">ETA</div>
+                    <div style="font-size:15px; color:#0C2340; font-weight:bold; margin-top:3px;">07/08/2026<!--{{eta}}--></div>
+                  </td>
+                  <td width="33.34%" style="padding:11px 14px; border-left:1px solid #E4EAF1; font-family:Arial,Helvetica,sans-serif;">
+                    <div style="font-size:9px; letter-spacing:1.5px; color:#8494A4; font-weight:bold;">TRANSIT</div>
+                    <div style="font-size:15px; color:#0C2340; font-weight:bold; margin-top:3px;">32 days<!--{{transit}}--></div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- SHIPMENT DETAILS -->
+          <tr>
+            <td class="px" style="padding:14px 28px 2px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr>
+                <td width="3" style="width:3px; background-color:#1C9BD9; font-size:0; line-height:0;">&nbsp;</td>
+                <td style="padding-left:8px; font-size:11px; font-weight:bold; letter-spacing:1.3px; color:#0C2340; white-space:nowrap;">SHIPMENT DETAILS</td>
+              </tr></table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="stack" width="48%" valign="top">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0; border-bottom:1px solid #EEF3F8;">Order</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0; border-bottom:1px solid #EEF3F8;">118959513<!--{{order_no}}--></td></tr>
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0; border-bottom:1px solid #EEF3F8;">Shipment</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0; border-bottom:1px solid #EEF3F8;">48390883<!--{{shipment_no}}--></td></tr>
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0;">Booking</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0;">272050392<!--{{booking_no}}--></td></tr>
+                    </table>
+                  </td>
+                  <td class="stack-gap" width="4%" style="font-size:0; line-height:0;">&nbsp;</td>
+                  <td class="stack" width="48%" valign="top">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0; border-bottom:1px solid #EEF3F8;">Bill of Lading</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0; border-bottom:1px solid #EEF3F8;">272050392<!--{{bl_no}}--></td></tr>
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0; border-bottom:1px solid #EEF3F8;">Incoterm</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0; border-bottom:1px solid #EEF3F8;">FOB<!--{{incoterm}}--></td></tr>
+                      <tr><td align="left" style="font-size:11.5px; color:#7D8C9C; padding:6px 0;">Freight</td><td align="right" style="font-size:12px; color:#0C2340; font-weight:bold; padding:6px 0;">Prepaid<!--{{freight}}--></td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- ATTACHED DOCUMENTS -->
+          <tr>
+            <td class="px" style="padding:14px 28px 2px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr>
+                <td width="3" style="width:3px; background-color:#1C9BD9; font-size:0; line-height:0;">&nbsp;</td>
+                <td style="padding-left:8px; font-size:11px; font-weight:bold; letter-spacing:1.3px; color:#0C2340; white-space:nowrap;">ATTACHED DOCUMENTS</td>
+              </tr></table>
+              <!-- {{documents[]}} — repeat rows as needed -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td class="stack" width="50%" valign="top">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Bill of Lading</td></tr>
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Packing List</td></tr>
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Certificate of Analysis *</td></tr>
+                    </table>
+                  </td>
+                  <td class="stack" width="50%" valign="top">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Commercial Invoice</td></tr>
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Certificate of Origin *</td></tr>
+                      <tr><td valign="middle" style="padding:3px 0; font-size:13px; color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px; font-size:12px; color:#33424F;">Order Detail (ORUS)</td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-family:Arial,Helvetica,sans-serif; font-size:10.5px; color:#9BABBB; margin-top:8px;">* if applicable</div>
+            </td>
+          </tr>
+
+          <!-- CARRIER + FREE DAYS -->
+          <tr>
+            <td class="px" style="padding:14px 28px 4px; font-family:Arial,Helvetica,sans-serif;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC; border:1px solid #E9EFF6; border-radius:9px; margin-bottom:8px;">
+                <tr>
+                  <td style="padding:11px 15px;">
+                    <span style="font-size:10px; font-weight:bold; letter-spacing:1px; color:#8494A4;">SHIPPING LINE</span>
+                    <span style="font-size:13px; font-weight:bold; color:#0C2340; padding-left:12px;">MAERSK<!--{{carrier_name}}--></span>
+                    <span style="color:#C4D2E0; padding:0 8px;">&#183;</span>
+                    <span style="font-size:12px; color:#5A6A7A;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2b3a0fcb7aaa2bda0a692bfb3b7a0a1b9fcb1bdbf">[email&#160;protected]</a><!--{{carrier_email}}--></span>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC; border:1px solid #E9EFF6; border-radius:9px;">
+                <tr>
+                  <td style="padding:11px 15px;">
+                    <span style="font-size:10px; font-weight:bold; letter-spacing:1px; color:#8494A4;">FREE DAYS</span>
+                    <span style="font-size:12.5px; font-weight:bold; color:#0C2340; padding-left:12px;">DRY 7<!--{{free_days_dry}}--></span>
+                    <span style="color:#C4D2E0; padding:0 8px;">&#183;</span>
+                    <span style="font-size:12.5px; font-weight:bold; color:#0C2340;">REEFER 5<!--{{free_days_reefer}}--></span>
+                    <span style="color:#C4D2E0; padding:0 8px;">&#183;</span>
+                    <span style="font-size:11.5px; color:#8494A4;">charges apply from the day after ETA</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td class="px" style="padding:16px 28px; border-top:1px solid #E4EAF1;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td width="3" valign="top" style="width:3px; background-color:#1C9BD9; font-size:0; line-height:0;">&nbsp;</td>
+                <td valign="top" style="padding-left:12px; font-family:Arial,Helvetica,sans-serif;">
+                  <div style="font-size:12px; font-weight:bold; color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div>
+                  <div style="font-size:11.5px; color:#5A6A7A; margin-top:4px;">
+                    <a href="/cdn-cgi/l/email-protection#85e0fdf5eae4f7f5e7e7c5f6f6e7ecebf1abe6eae8" style="color:#1C9BD9; text-decoration:none;"><span class="__cf_email__" data-cfemail="4e2b363e212f3c3e2c2c0e3d3d2c27203a602d2123">[email&#160;protected]</span></a><!--{{contact_email}}-->
+                    <span style="color:#C4D2E0;"> &#183; </span>
+                    <a href="https://ssbint.com/es" style="color:#1C9BD9; text-decoration:none;">ssbint.com/es</a><!--{{company_web}}-->
+                  </div>
+                  <div style="font-size:10px; color:#9BABBB; margin-top:8px; line-height:1.5;">This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.</div>
+                </td>
+              </tr></table>
+            </td>
+          </tr>
+
+        </table>
+        <!-- ============ /EMAIL CARD ============ -->
+
+      </td>
+    </tr>
+  </table>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
