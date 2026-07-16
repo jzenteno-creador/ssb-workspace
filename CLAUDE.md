@@ -48,6 +48,8 @@ python3 upload_detention.py <archivo.xlsx>
 
 No hay suite de tests. Verificación = smoke test visual en navegador (ver "Verificación de cambios de UI" en el CLAUDE.md global) + `security-review` sobre el diff cuando hay interpolación de HTML.
 
+Censo/queries read-only a Supabase desde local: `.env` (`SUPABASE_DB_PASSWORD` = service_role JWT, nombre legacy) + `curl POST $SUPABASE_URL/rest/v1/rpc/execute_readonly_query` — UN statement, empieza con SELECT (sin WITH/CTE), sin `;`, keywords de escritura bloqueadas hasta en aliases.
+
 ## Mapa de la app — 14 módulos (rail lateral)
 
 La nav es un **rail lateral fijo** estilo Flight Deck (2026-07-04): `<nav class="tab-bar">` fixed left 64px icon-only + tooltip, expandible a 228px vía botón pin (persistido en `localStorage['ssb-rail-pinned']`, solo ≥1101px), y drawer off-canvas ≤700px con hamburguesa en topbar. La clase `.tab-bar` se conserva a propósito: la referencia el anti-bypass de auth. Constant-dark en ambos temas (vars `--rail-*` + hex fijos — nunca vars que flipen en `body.light`).
@@ -95,6 +97,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **los agentes text-to-SQL** (chat IA) → `docs/modules/agentes-text-to-sql.md` (guardrail de seguridad: `api/CLAUDE.md`, se auto-carga bajo `api/**`)
 - tocás **el workflow Schedule Excel→Supabase** → `docs/integrations/n8n-schedule-excel.md`
 - tocás **`scripts/claude-processor/`** → `scripts/claude-processor/README.md`
+- tocás **el plan de pedidos / tandas 0–8 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4, NO aplicado)
 - **antes de commitear cambios de UI** → `docs/dev/smoke-headless.md`
 
 ## Reglas — NO HACER
