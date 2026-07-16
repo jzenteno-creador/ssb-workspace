@@ -784,12 +784,18 @@ async function handleReprocesarBl(res, body, userEmail) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 8000);
   try {
-    // Mismo shape que el POST probado históricamente contra este form: field-0=<orden>
-    // (el nodo "Seleccionar BL draft" lee la orden en forma defensiva, cualquier key sirve).
+    // El Form Trigger V2 de n8n EXIGE multipart/form-data: cualquier otro
+    // Content-Type muere con AssertionError en el nodo ANTES de leer campos
+    // (HTTP 500; caso real 2026-07-15, execs 33255–33270 con urlencoded).
+    // FormData nativo → undici setea el multipart con boundary solo; NO
+    // agregar Content-Type manual. field-0 = nombre real del input del form
+    // (los campos del Form Trigger van indexados, y "Seleccionar BL draft"
+    // lee la orden en forma defensiva, cualquier key sirve).
+    const fd = new FormData();
+    fd.append('field-0', order);
     const fRes = await fetch(formUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ 'field-0': order }).toString(),
+      body: fd,
       signal: ctrl.signal,
     });
     clearTimeout(t);
