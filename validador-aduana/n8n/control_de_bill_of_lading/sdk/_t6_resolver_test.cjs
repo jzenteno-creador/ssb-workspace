@@ -41,6 +41,10 @@ const NODES = {
   'GET orden_productos': [
     { product_key: '374366', description: 'DOWLEX™ NG2045B Polyethylene Resin', grade: 'NG2045B', embalaje: '25 KG Bags', net_kg: 81000, gross_kg: 82620, bags: 3240, pallets: 54, line_count: 3 },
   ],
+  // D.3 alerta: control persistido — REVISAR sintético para probar la señal
+  'GET controles_factura_pe': [
+    { overall_result: 'REVISAR', checks: { fob: 'OK', flete: 'OK', seguro: 'REVISAR', total: 'REVISAR', incoterm: 'OK', permiso_ref: 'OK' }, pe_numero: '26003EC03001622D' },
+  ],
   'Config (TEST_MODE)': [{ TEST_MODE: true }],
 };
 
@@ -100,6 +104,11 @@ ok(JSON.stringify(r.attachments.to_follow) === JSON.stringify(['Packing List', '
 ok(body.includes('>PRODUCT<') && body.includes('DOWLEX'), 'bloque PRODUCT presente');
 ok(body.includes('81,000 kg net') && body.includes('3,240 bags') && body.includes('54 pallets'), 'cantidades formateadas EN');
 ok(Array.isArray(r.productos) && r.productos.length === 1, 'response.productos aditivo');
+// D.3 alerta — señal al front, jamás al mail ni a los bloqueos
+ok(r.control_fcpe && r.control_fcpe.overall_result === 'REVISAR', 'response.control_fcpe expone REVISAR');
+ok(!body.includes('Permiso') || body.includes('Export Permit'), 'la alerta FC-PE NO viaja en el mail al cliente');
+ok(!(r.block_reasons || []).some((b) => /factura|permiso|fc-pe|fcpe/i.test(b)), 'block_reasons SIN FC-PE (avisa, no bloquea)');
+
 ok(r.control_revisado.vigente === true, 'sello vigente detectado');
 ok(Array.isArray(r.attachments.found) && r.attachments.found.length === 2, 'attachments.found = 2');
 

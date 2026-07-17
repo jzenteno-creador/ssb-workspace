@@ -459,6 +459,15 @@
       const sb = slaBadge(_row);
       if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
     }
+    // D.3 alerta (decisión John 17-07): el control factura↔permiso AVISA, NO
+    // bloquea — warning visible si el resultado persistido es REVISAR.
+    if(_preview && _preview.control_fcpe && _preview.control_fcpe.overall_result === 'REVISAR'){
+      const ck = _preview.control_fcpe.checks || {};
+      const malos = Object.keys(ck).filter(k => ck[k] === 'REVISAR');
+      const w = el('p','mail-note','⚠ Control Factura ↔ Permiso: REVISAR (' + (malos.join(', ') || 'ver detalle') + ') — controlar antes de enviar. No bloquea el envío.');
+      w.style.color = 'var(--mail-warn)';
+      c.appendChild(w);
+    }
     // dias_libres/seg_alerta: diagnóstico adicional del resolver (bloque naviera /
     // _SEG) — se muestran SOLO si vienen (deploy desfasado = sin línea, no rompe).
     if(_preview && (_preview.dias_libres != null || _preview.seg_alerta)){

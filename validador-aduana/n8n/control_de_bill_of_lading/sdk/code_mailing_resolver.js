@@ -49,6 +49,10 @@
  *  10. T7/D.3 (G.2): bloque PRODUCT alimentado por orden_productos (espejo de
  *      la última factura controlada, rama D.3 del CBL) — descripción + kg
  *      netos + bags + pallets por producto; sin filas se omite entero.
+ *  11. D.3 alerta (decisión John 17-07): el control factura↔permiso AVISA para
+ *      que se controle pero NO BLOQUEA envíos — response.control_fcpe expone
+ *      el resultado persistido (controles_factura_pe) y el front lo muestra
+ *      como advertencia; JAMÁS entra en block_reasons ni en el mail al cliente.
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -424,6 +428,15 @@ if (dias_libres && dias_libres.per_diem_dry_usd != null) perDiem.push('DRY USD '
 if (dias_libres && dias_libres.per_diem_reefer_usd != null) perDiem.push('REEFER USD ' + dias_libres.per_diem_reefer_usd + '/day');
 const freeDaysHtml = dias_libres ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;${AR}"><span style="font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">FREE DAYS AT DESTINATION</span><span style="font-size:12.5px;font-weight:bold;color:#0C2340;padding-left:12px;">${esc(dias_libres.dias + ' days')}</span>${perDiem.map((b) => `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="font-size:11px;color:#5A6A7A;">${esc(b)}</span>`).join('')}</td></tr></table></td></tr>` : '';
 
+// D.3 alerta (item 11 del header): resultado persistido del control FC-PE —
+// 1 fila por orden (upsert), row() alcanza. Solo señal al FRONT, jamás al mail.
+const fcpeRow = row('GET controles_factura_pe');
+const control_fcpe = fcpeRow ? {
+  overall_result: fcpeRow.overall_result || null,
+  checks: (fcpeRow.checks && typeof fcpeRow.checks === 'object') ? fcpeRow.checks : {},
+  pe_numero: fcpeRow.pe_numero || null,
+} : null;
+
 // Contacto de la naviera en destino (mailing_naviera_destino, la cargan
 // John/Naara) — P·6: se enciende solo cuando la tabla tenga filas.
 const navieraBox = naviera_html ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">CARRIER CONTACT AT DESTINATION</div><div style="${AR}font-size:12px;color:#33424F;margin-top:4px;">${naviera_html}</div></td></tr></table></td></tr>` : '';
@@ -532,6 +545,8 @@ const response = {
   attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing, to_follow: docs_to_follow },
   // T7/D.3 (aditivo): productos del mail — el front puede ignorarlo
   productos: prodRows.map((p) => ({ description: p.description, grade: p.grade, net_kg: p.net_kg, bags: p.bags, pallets: p.pallets })),
+  // D.3 alerta (aditivo): AVISA, NO bloquea — el front lo pinta como warning
+  control_fcpe,
   // ---- PLANCOMPLETO B: señales nuevas para el front ----
   notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
   control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },
