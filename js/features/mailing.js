@@ -1333,6 +1333,15 @@
     // quedaría pegado colándose en la próxima navegación a otro módulo.
     const _po = window.__segPendingOrder;
     window.__segPendingOrder = null;
+    // G.1 pulido (T1·11): el filtro se aplica ANTES del fetch — al primer paint la
+    // lista ya está acotada a la orden (sin el ~1s de espera); si había data en
+    // caché se re-renderiza ya mismo y el fetch solo refresca
+    if(typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+      const qi0 = $('mail-q');
+      if(qi0) qi0.value = _po;
+      _q = _po;
+      if(_loaded) renderMaster();
+    }
     if(_loading) return;
     _loading = true;
     try {
@@ -1350,11 +1359,9 @@
       // por PK antes de rendirse (mismo espíritu que el fallback de búsqueda de
       // control-bl, adaptado — Mailing no tiene un modo de búsqueda genérico).
       if(typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
-        // G.1: llegar desde una orden deja la lista FILTRADA a esa orden (patrón
-        // control-bl), no solo seleccionada — limpiar el buscador restaura la lista
+        // G.1: la lista queda FILTRADA a la orden (el filtro ya se seteó arriba,
+        // pre-fetch); acá solo se selecciona o se resuelve el caso sin fila
         const qi = $('mail-q');
-        if(qi) qi.value = _po;
-        _q = _po;
         if(_orders.some(r => r.order_number === _po)){
           selectOrder(_po); // selectOrder re-renderiza el master ya filtrado
         } else {
