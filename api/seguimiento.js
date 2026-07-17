@@ -44,7 +44,10 @@ const MIN_FECHA = '2020-01-01';
 const ORDEN_NORM_RE = /^[1-9]\d{6,11}$/; // ESPEJO exacto del CHECK seguimiento_orden_formato
 const MOTS = new Set(['maritimo', 'terrestre']);
 const REQUIERE_CO_VALS = new Set(['auto', 'requerido', 'no_requerido']);
-const ADMIN_ACTIONS = new Set(['anular_alta', 'co_config_list', 'co_config_upsert', 'co_config_toggle', 'anular_sello']);
+// T8/E.1 (2026-07-17): set_requiere_co pasa a ADMIN — la definición de CO vive en
+// la solapa Administración (gate visual admin) y el server acompaña; era EMPLOYEE
+// con CERO consumidores front. Si algún flujo operario lo necesita, se relaja acá.
+const ADMIN_ACTIONS = new Set(['anular_alta', 'co_config_list', 'co_config_upsert', 'co_config_toggle', 'anular_sello', 'set_requiere_co']);
 // PLANCOMPLETO TANDA E — decisión §5.7 ("una tabla, una regla"): seguimiento_co_config
 // generaliza de CO-only a documento en {CO,PE,SEG,COA}. Ver migrations/2026-07-15-plancompleto-e-seguimiento/.
 const CO_CONFIG_DOCUMENTOS = new Set(['CO', 'PE', 'SEG', 'COA']);

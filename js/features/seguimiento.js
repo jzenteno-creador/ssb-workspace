@@ -466,7 +466,9 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     co_config_conflicto: { cls:'conf', icon:'#i-alert',  txt:() => 'Reglas de CO contradictorias',        action:null },
     co_revisar:          { cls:'conf', icon:'#i-alert',  txt:() => '¿CO a Perú? Confirmar',               action:null },
     co_pendiente:        { cls:'warn', icon:'#i-stamp',  txt:() => 'Falta generar el CO',                 action:(r) => deepLink(r.order_number, 'cert-origen') },
-    co_sin_definir:      { cls:'info', icon:null,        txt:() => '¿Lleva CO? Definilo',                  action:null },
+    // T8/E.1: la definición de CO ya tiene superficie propia (solapa Administración,
+    // solo admins) — deep-link para admins; a un operario le explica dónde vive.
+    co_sin_definir:      { cls:'info', icon:null,        txt:() => '¿Lleva CO? Definilo',                  action:(r) => { if(window.__ssbAuth && window.__ssbAuth.isAdmin) deepLink(r.order_number, 'admin-co'); else ssbToast('La definición de CO la hace un admin en la solapa Administración.', 'info'); } },
     co_inesperado:       { cls:'info', icon:'#i-stamp',  txt:() => 'Hay CO pero figura "no requiere"',     action:null },
     co_error_reciente:   { cls:'warn', icon:'#i-alert',  txt:() => 'La regeneración del CO falló',         action:(r) => deepLink(r.order_number, 'cert-origen') },
     envio_vencido:       { cls:'bad',  icon:'#i-alert',  txt:(r) => 'Vencida hace ' + diasDesde(r.deadline_envio) + ' días', action:(r) => deepLink(r.order_number, 'mailing') },

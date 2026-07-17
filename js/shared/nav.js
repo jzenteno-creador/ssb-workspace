@@ -27,7 +27,7 @@ async function switchTab(name) {
     // typeof: si tt-dow.js todavía no cargó, no revienta la navegación.
     if(window.__ttDiscardAll) window.__ttDiscardAll();
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','control-bl','mailing','cert-origen','schema'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','control-bl','mailing','cert-origen','schema','admin-co'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -51,6 +51,7 @@ async function switchTab(name) {
   if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
   if(name==='cert-origen' && window.loadCertOrigen){ window.loadCertOrigen(); }
   if(name==='schema' && window.loadSchema){ window.loadSchema(); }
+  if(name==='admin-co' && window.loadAdminCo){ window.loadAdminCo(); }
 }
 
 // ── RAIL: pin (expandir/colapsar) + drawer móvil ──

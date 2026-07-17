@@ -27,3 +27,6 @@ import './features/schedule-rt.js';
 import './features/tarifas.js';
 import './features/efa.js';
 import './features/admin-bid.js';
+
+// E.1/T8 (2026-07-17): solapa Administración — solo flag CO
+import './features/admin-co.js';

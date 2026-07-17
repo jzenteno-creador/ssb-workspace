@@ -3045,6 +3045,58 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
   #panel-seguimiento .seg-chip{transition:none}
 }
 
+/* ═══════════ ADMINISTRACIÓN (E.1/T8) — isla .adm-* ═══════════ */
+#panel-admin-co{
+  --adm-surface:#1e293b; --adm-line:rgba(255,255,255,.08); --adm-line-strong:rgba(255,255,255,.16);
+  --adm-ink-faint:#6b7488;
+}
+body.light #panel-admin-co{ --adm-surface:#FFFFFF; --adm-line:#E7E4DD; --adm-line-strong:#D9D5CC; --adm-ink-faint:#9C988F }
+#panel-admin-co #adm-root{max-width:1100px;margin:0 auto;width:100%;min-width:0;padding:4px 0}
+#panel-admin-co .adm-head h1{font-size:25px;font-weight:800;letter-spacing:-.025em;margin:0}
+#panel-admin-co .adm-sub{font-size:var(--fs-md);color:var(--muted);margin:4px 0 16px;line-height:1.5}
+#panel-admin-co .adm-toolbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+#panel-admin-co .adm-qbox{display:flex;align-items:center;gap:7px;background:var(--adm-surface);border:1px solid var(--adm-line-strong);border-radius:9px;padding:8px 12px;min-width:290px;color:var(--muted)}
+#panel-admin-co .adm-qbox input{flex:1;border:0;background:transparent;color:var(--text);font-family:var(--font);font-size:var(--fs-md);outline:none}
+#panel-admin-co .adm-toggle{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--muted);cursor:pointer;user-select:none}
+#panel-admin-co .adm-stats{display:flex;gap:12px;font-size:var(--fs-sm);color:var(--muted);margin-left:auto;flex-wrap:wrap}
+#panel-admin-co .adm-stat--warn{color:var(--amber);font-weight:700}
+#panel-admin-co .adm-stat--ovr{color:var(--purple);font-weight:700}
+#panel-admin-co .adm-tablewrap{overflow-x:auto;border:1px solid var(--adm-line);border-radius:11px;background:var(--adm-surface)}
+#panel-admin-co .adm-table{width:100%;min-width:860px;border-collapse:collapse;font-size:var(--fs-md)}
+#panel-admin-co .adm-table th{text-align:left;font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--adm-line-strong)}
+#panel-admin-co .adm-table td{padding:11px 14px;border-bottom:1px solid var(--adm-line);vertical-align:top}
+#panel-admin-co .adm-table tbody tr:last-child td{border-bottom:0}
+#panel-admin-co .adm-mono{font-family:var(--mono);font-weight:700}
+#panel-admin-co .adm-ship{font-weight:600}
+#panel-admin-co .adm-sold{font-size:var(--fs-xs);color:var(--adm-ink-faint);margin-top:2px}
+#panel-admin-co .adm-audit{font-size:var(--fs-xs);color:var(--adm-ink-faint);margin-top:5px}
+#panel-admin-co .adm-motivo{font-style:italic;margin-top:2px}
+#panel-admin-co .adm-actions{white-space:nowrap;text-align:right}
+#panel-admin-co .adm-btn{font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text);background:transparent;border:1px solid var(--adm-line-strong);border-radius:8px;padding:6px 13px;cursor:pointer}
+#panel-admin-co .adm-btn--primary{color:#fff;background:var(--blue);border-color:var(--blue)}
+#panel-admin-co .adm-btn[disabled]{opacity:.6;cursor:default}
+#panel-admin-co .adm-link-danger{display:block;margin:6px 0 0 auto;border:0;background:transparent;color:var(--red);font-family:var(--font);font-size:var(--fs-xs);cursor:pointer;padding:0;text-decoration:underline}
+#panel-admin-co .adm-editor-row td{background:var(--faint)}
+#panel-admin-co .adm-editor{max-width:620px;padding:6px 2px}
+#panel-admin-co .adm-ed-label{font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+#panel-admin-co .adm-seg{display:inline-flex;border:1px solid var(--adm-line-strong);border-radius:9px;overflow:hidden;background:var(--adm-surface)}
+#panel-admin-co .adm-seg-btn{font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--muted);background:transparent;border:0;padding:8px 15px;cursor:pointer}
+#panel-admin-co .adm-seg-btn + .adm-seg-btn{border-left:1px solid var(--adm-line-strong)}
+#panel-admin-co .adm-seg-btn.is-on{background:var(--blue-lt);color:var(--blue)}
+#panel-admin-co .adm-seg-btn[data-val="requerido"].is-on{background:var(--green-bg);color:var(--green)}
+#panel-admin-co .adm-seg-btn[data-val="no_requerido"].is-on{background:var(--red-bg);color:var(--red)}
+#panel-admin-co .adm-motivo-ta{width:100%;max-width:600px;font-family:var(--font);font-size:var(--fs-md);color:var(--text);background:var(--adm-surface);border:1px solid var(--adm-line-strong);border-radius:8px;padding:8px 10px;resize:vertical}
+#panel-admin-co .adm-motivo-ta[disabled]{opacity:.5}
+#panel-admin-co .adm-err{color:var(--red);font-size:var(--fs-sm);margin-top:8px}
+#panel-admin-co .adm-ed-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;max-width:600px}
+#panel-admin-co .adm-empty{padding:34px 20px;text-align:center;color:var(--muted);border:1px dashed var(--adm-line-strong);border-radius:11px}
+#panel-admin-co .adm-roadmap{margin-top:30px}
+#panel-admin-co .adm-roadmap h2{font-size:var(--fs-md);font-weight:700;color:var(--muted);margin:0 0 10px}
+#panel-admin-co .adm-roadmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+#panel-admin-co .adm-card-locked{border:1px solid var(--adm-line);border-radius:11px;background:var(--adm-surface);padding:13px 15px;opacity:.62;cursor:not-allowed}
+#panel-admin-co .adm-card-locked .adm-card-title{display:flex;align-items:center;gap:7px;font-weight:700;font-size:var(--fs-md);margin-bottom:5px}
+#panel-admin-co .adm-card-locked p{margin:0;font-size:var(--fs-sm);color:var(--muted);line-height:1.5}
+
 /* ═══════════ ESTRUCTURA DB — solapa ═══════════ */
 #panel-schema .sch-root{max-width:980px;margin:0 auto;width:100%;min-width:0}
 #panel-schema .sch-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -3201,6 +3253,8 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
     <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
     <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   </defs>
 </svg>
@@ -3376,6 +3430,8 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     </div>
   </div>
   <button class="tab-btn" id="tab-schema" onclick="switchTab('schema')" aria-label="Estructura DB"><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
+  <!-- E.1/T8: Administración — solo admins (gate cosmético .ssb-admin-only; el server re-valida) -->
+  <button class="tab-btn ssb-admin-only" id="tab-admin-co" onclick="switchTab('admin-co')" aria-label="Administración"><svg class="ic" aria-hidden="true"><use href="#i-sliders"/></svg><span class="tab-lbl">Administración</span></button>
   <div class="rail-spacer" aria-hidden="true"></div>
   <button class="rail-pin" id="rail-pin" type="button" aria-label="Expandir menú" aria-pressed="false" title="Expandir/colapsar menú"><svg class="ic" aria-hidden="true"><use href="#i-panel-left"/></svg><span class="tab-lbl">Colapsar menú</span></button>
 </nav>
@@ -4701,6 +4757,10 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
   </div>
 </div>
 <!-- ═══════════ FIN TAB: SEGUIMIENTO ═══════════ -->
+
+<!-- ═══════════ TAB: ADMINISTRACIÓN (E.1/T8 — solo flag CO; resto = candidatos futuros) ═══════════ -->
+<div class="tab-panel ssb-admin-only" id="panel-admin-co"><div id="adm-root"></div></div>
+<!-- ═══════════ FIN TAB: ADMINISTRACIÓN ═══════════ -->
 
 <!-- ═══════════ TAB: ESTRUCTURA DB ═══════════ -->
 <div class="tab-panel" id="panel-schema">
