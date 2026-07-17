@@ -1,41 +1,58 @@
-# Handoff de sesión — 2026-07-17 (CIERRE FINAL) · ssb-workspace · PLAN PEDIDOS CERRADO — TODO VERIFICADO
+# Handoff de sesión — 2026-07-17 (2ª sesión) · ssb-workspace · PLAN BACKLOG LOG-IN R1-R12 CERRADO — SIN IMPLEMENTAR
 
 ## HECHO
 
-- **R2·J Seguimiento TERRESTRE en prod** (merge `f228f5a`): columna "Inicia tránsito → límite" (+1 hábil), desplegable con TRANSPORTE — CRT/MIC (archivos reales del clasificador) y DOCUMENTOS con CRT en lugar de BL, badge "sin Control BL — no aplica en terrestre", PE "no aplica — orden STO". Smoke headless 20/20.
-- **Banderita país destino en Mailing** (mismo merge): "· Brasil" texto → IMG flagcdn junto a POL→POD (`ensurePaisMapM()`, alt=nombre del país, degrade a texto).
-- **SMOKES DE JOHN — TODOS APROBADOS 17-07**: banderita (mail real CON banderas + web) · Seguimiento Terrestre · B.1 alta por lote (T1·2) · G.1 filtro Mailing (T1·4) · Admin CO guardado (T8·3). Asentado en MD + changelog como VERIFICADO POR JOHN.
-- Harness PUT T5 Gmail→Drive versionado · PINS del MD corregidos (estaban stale) · handoff previo enviado por webhook.
+- **EXPLORE multiagente del backlog R1-R12** (inspección Log-In 13/07): 8 agentes (CBL / Mailing / Gmail→Drive / app / Supabase / docs + 3 verificadores adversariales; 62 claims confirmados, 1 refutado) + 4 verificaciones dirigidas (bulk regex, notify BL, ETD, precisión volúmenes).
+- **Pins VIVOS confirmados contra dump**: CBL `WVt6gvghL2nFVbt6` = **`9f69b166`** (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = **`943bbc15`** (36, TEST_MODE ON — 3 capas) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = **`b8d997d6`** (43). El pin `8a2d0de9` del brief NO existe.
+- **PLAN atómico consolidado** con todas las decisiones de John incorporadas. **CERO bloqueantes. NADA implementado, cero commits de código.**
+- Memoria: `backlog-login-2026-07-17.md` (hechos verificados, no re-derivar).
 
-## DECISIONES
+## DECISIONES (John, firmadas 17-07)
 
-- **TEST_MODE del mailing FUERA del tracking de pendientes**: sigue ON; el flip a real es acción operativa EXCLUSIVA de John cuando dé por terminado el producto. Los PUTs siguen asserteándolo `true`. (Nota reescrita en ARRASTRES del MD; T6·5 ya no es un STOP abierto.)
-- **P·2 cerrado**: el "PAT GitHub claude-code-golive" no existía como PAT — nada que revocar. P·3 pasa a "CONFIRMAR que el PAT de Supabase quedó revocado".
-- **T3·4 obsoleto**: la UI de sub-solapas fue reemplazada por los dos ítems del rail (R2·F/R2·J); su contenido quedó cubierto por los smokes aprobados.
-- **PS·1 registrado como PRIMER ítem de la próxima sesión (NO ejecutado)**: nombre del cliente en el CUERPO del mail — a quién se VENDE (Sold-to), a quién se ENVÍA (Ship-to) y el Notify; hoy el nombre va solo en el ASUNTO. Es PUT Iron Law al resolver del mailing; los 3 nombres + `party_dirs` (R2·I) ya viajan en la fila — es solo template.
+- **R9 bulk**: detección = `isBulk` EXISTENTE (`RE_BULK /\b(BULK|BLK)\b/i` sobre `bl.goods_block_raw` — ya matchea 708683 "5 BULK OF 40 HC"). Regla: **unitario FOB/kg idéntico** PE↔FC (prop.: |Δu| ≤ 0.005 USD/kg) + **REVISAR solo si `kg_fc > kg_pe × 1.04`** (exceso; under-shipment OK). No-bulk exacto. BL↔FC sin cambio. Regla en AMBOS sitios: COMPARADOR + T7 `k_fob`.
+- **R8**: fix de unidades (BA `volume_cd3` llega en m³, el comparador dividía ÷1000) + **tolerancia fija |ΔM3| < 1.0**. NO redondeo por lado (artefacto 45.9/46.1). Sin banda %.
+- **R1**: notify se PUEBLA en todas las marítimas — fuente `bl_extract.notify` (112/112 poblado, línea 1 = nombre) → `notify_name` → `contacts_extracted.notify` → si nada "⚠ SIN NOTIFY" marcado. **Control discrepancia notify (118762005 RFORNE on-behalf) NO se toca** — fix operativo, no de código.
+- **R2**: bloque Log-In a PT, copy aprobado: *"Favor entrar em contato com a Login para retirar o BL original."* (las 11 LOGIN_LINES oficiales NO se tocan).
+- **R3c**: SÍ mostrar número de ítem. **R6/R7/R10/R11**: plan aprobado como estaba. **TEST_MODE ON toda la tanda.**
 
-## HALLAZGOS
+## PENDIENTE POR WORKSTREAM (orden de ejecución)
 
-- `v_operacion_estado` NO es legible por anon (42501) → smokes headless de Seguimiento SIEMPRE con route-intercept de PostgREST y fixtures (receta `scratchpad/smoke_r2j_flag.cjs`, fixture base `vop_row.json`).
-- Los PINS del MD se desactualizan si los PUTs no los tocan — corregidos y asentados.
+### A · Mailing — tier: Sonnet edita, Fable revisa+PUT
+(pin pre `943bbc15`, nodo `Resolver Mailing` 194f0f56; espejo `code_mailing_resolver.js`; derivar PUT de `put_r2_3ab_resolver.py`, assert TEST_MODE true pre/post)
 
-## ESTADO
+1. **PUT-M1 · R2**: solo `LOGIN_HEAD` ES→PT. Smoke: send test → bloque 100% PT.
+2. **PUT-M2 · R1**: bloque Partes (Sold-to/Ship-to/Notify + party_dirs, labels PACKS en/es/pt, cadena notify c/ marca). Subject intacto. Smoke: 4010746690 + una sin notify_name.
 
-- **CÓDIGO: NADA pendiente de las tandas** — T0–T8 + R2 completas, en prod (`ssb-workspace.vercel.app` = master `f228f5a`) y verificadas por John.
-- **Pins n8n vivos**: CBL `WVt6gvghL2nFVbt6` = `9f69b166` (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = `943bbc15` (36 nodos, TEST_MODE ON) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = `b8d997d6`.
-- **PENDIENTE DE JOHN (no-código)**: P·7 credencial OCR (→ mini-PUT cierra D.4) · confirmar PAT de Supabase revocado · contactos/textos Maersk y Hapag (bloque del mail) · N30 regla To/CC · 15 REVISAR FC-PE (operativo, familia CIP) · partner_emails 4010671114.
-- **FUTURO REGISTRADO (no ejecutar)**: **PS·1 nombre del cliente en cuerpo del mail (próxima sesión)** · R2·H control CO vs Factura (Chile ≠ Mercosur, patrón D.3) · "aprobado" por documento · control del CRT (contenido) · candidatos E.1 (mot override, contactos navieras, toggle TEST_MODE) · N26 roleo · N11 Drive→Matrix.
-- **Deuda menor de código nunca agendada** (sección SEGURIDAD del MD, no urgente): revoke grants vacaciones · `console.log('[TT]')` en tt-dow · P·4 tipado navieras/forwarders.
+### B · CBL extracción — tier: Fable
+(pin encadenado desde `9f69b166`; Iron Law; reproceso = smoke de trigger)
+
+3. **PUT-C1 · R6**: Parser PE regla 9 + Ejemplo 2 — ANTES leer PDF PE 118762005 (dónde vive 129.17 vs 2880.04) + validar contra 2-3 PEs CIP OK del backfill T7. Smoke: reproceso 118762005 → seguro 129.17.
+4. **PUT-C4 · R3b**: Parser Factura regla 11 `material` (layout `0099237508` de 729002; fallback determinístico regex SOLO si el prompt no alcanza). Smoke: reproceso 4010729002; regresión 4010726911.
+
+### C · CBL comparador — tier: Fable
+(nodo COMPARADOR 76143b4d + T7 `t7-armar-fcpe-01`; espejos `_comparador.js` / `iny_aduana.js` / `code_armar_productos_fcpe.js`; gates bulk B/C/D + prefix4 + decisión #1 INTACTOS)
+
+5. **PUT-C2 · R7**: `buildCompareEquipos` — agregar filas aduana por container (suma neto/bruto); bultos ambiguo en multi-renglón → NODATA (parse cruzado 18/204 en `parseBultosAduana`/iny_aduana). Smoke: reproceso 118762005 → MSBU8784391 OK 27000/27540 + regresión single-product.
+6. **PUT-C3 · R8**: normalización escala + |ΔM3| < 1.0 (cubre LOG-IN y MAERSK por vivir en comparador). Smoke: mismo reproceso 118762005 → sin flag Vol (verifica C2+C3 juntos).
+7. **PUT-C5 · R9**: bulk-aware FOB en COMPARADOR + T7 (isBulk espejado en T7 vía `goods_block_raw`). Smoke: reproceso 708683 → sin flag; regresión 708684/735878/735880/735883/735888 + una no-bulk.
+
+### D · App — tier: Fable mockup/review, Sonnet scaffolding
+(rama nueva desde master; GATE UI: mockup aprobado antes de código; smokes headless con fixtures PostgREST — anon no lee `v_operacion_estado`)
+
+8. **R3 panel por ítem**: `seguimiento.js` `buildDetailRow` (:576-614) lee `bl_controls.factura_extract->'items'` (fila-por-ítem: Ítem/GMID/Producto/Cantidad/Origen), fallback a `orden_productos` si items viejos. NO tocar `orden_productos` ni sus 2 writers espejo ni bloque PRODUCT del mail. Cohorte 13/07 sin origen/item → backfill = reprocesar las que interesen.
+9. **R10**: (a) smoke reproceso 118828656 — PE manual YA a convención en Drive (`26003EC03001409G_118828656_PE.pdf`), debería tomarlo (`doc_pe = pe_extract IS NOT NULL`); ojo re-manda mail interno a expoarpbb; (b) hint UX "Reprocesar BL re-busca los documentos en Drive" cuando un doc falta; (c) OPCIONAL DIFERIDO: PUT CBL para asentar `documentos_orden`.
+10. **R12 ETD + roleo**: migración vista (+`etd` desde `mailing_orders` 105/105; evaluar `roleo_to_etd`) → mockup (col ETD a la IZQUIERDA de ATD, sort, badge "a rolear" = sin ATD ∧ etd vencida [5 casos hoy] + `roleo_*`) → gate John → `seguimiento.js`.
+11. **R11 visor lado a lado**: mockup PRIMERO → split `#cbl-viewer`, refactor singleton `_cblActiveDoc` → estado por pane, CSS namespaced `cbl-split-*`, isla existente y overrides por orden NO-TOUCH; de paso corregir stale `control-bl.js:939` + `control-bl.md`.
 
 ## PRÓXIMO PASO
 
-1. **Próxima sesión entra por PS·1** (nombre del cliente en el cuerpo del mail): leer memoria `plan-pedidos-2026-07-16` + sección PRÓXIMA SESIÓN del MD canónico → PUT Iron Law al mailing (pin pre `943bbc15`, assert TEST_MODE true).
-2. Cuando John entregue la credencial OCR (P·7): mini-PUT al Gmail→Drive para cablear el nodo (cierra D.4).
-3. E2E del clasificador con la próxima factura real: llega solo — solo verificar `orden_productos` cuando entre un mail con factura.
+1. Entrar por **Workstream A (PUT-M1 · R2, el más chico)** — GO de John por workstream o total.
+2. Smokes de reproceso agrupados al final de cada workstream para minimizar mails a expoarpbb (118762005 verifica C1+C2+C3 de una).
 
 ## Contexto no obvio
 
-- Gotcha mailing resolver: GETs downstream de mailing_contacts corren POR ITEM → todo `allRows()` nuevo DEDUPLICA.
-- Harnesses PUT derivados de a2fix exigen `--apply` explícito (sin flag = dry-run exit 0) — verificar SIEMPRE el estado vivo tras un PUT.
-- Smoke headless: playwright global `~/.npm-global/lib/node_modules/playwright` + `executablePath` `~/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome`; server de gates `python3 -m http.server 8899`.
-- El template del handoff vive en `/mnt/c/Users/jzenteno/.claude/templates/` (el `~/.claude/templates/` de WSL no existe).
+- Trampas registradas: clon huérfano `'Clasificar Documento y renombrar pdf1'` en Gmail→Drive (jamás grep-por-nombre) · GETs del mailing corren POR ITEM (dedup `allRows`) · harness: familia a2fix exige `--apply`, `r2_*` ejecutan sin flag · reproceso en modo form SIEMPRE re-manda el mail de control.
+- Harness activo = `ssb-workspace/validador-aduana/n8n/control_de_bill_of_lading/sdk/` (56 put_*.py; el repo hermano `validador-aduanal` está CONGELADO sin los PUTs de julio).
+- R3: la extracción de factura YA es por ítem con `origen`+`item` (prompt Y schema, marcador R2-ORIGEN 17-07) — el colapso es de `orden_productos` + panel Seguimiento; el cohorte 13/07 pre-data el cambio de prompt.
+- Espejos SDK se actualizan en el MISMO commit que su PUT (regla espejada).
+- Dumps del EXPLORE (wf_cbl/wf_mailing/wf_gmaildrive.json + evidencia_supabase.md) en scratchpad de la sesión — regenerables con `n8n-cli workflows get <id> --json`.
