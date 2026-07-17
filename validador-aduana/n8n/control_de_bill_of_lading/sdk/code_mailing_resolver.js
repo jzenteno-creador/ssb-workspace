@@ -53,6 +53,14 @@
  *      que se controle pero NO BLOQUEA envíos — response.control_fcpe expone
  *      el resultado persistido (controles_factura_pe) y el front lo muestra
  *      como advertencia; JAMÁS entra en block_reasons ni en el mail al cliente.
+ *  12. R2·D (2026-07-17): IDIOMA del mail por país DESTINO — Brasil→pt,
+ *      Latinoamérica hispana→es, resto (incl. USA)→en. Packs L completos
+ *      (asunto, saludo, secciones, checklist, FREE DAYS, cierre, confidencial).
+ *      El TEST banner sigue en ES (es interno, desaparece en real).
+ *  13. R2·E (2026-07-17): contactos LOG-IN al pie — SOLO carrier LOG-IN, texto
+ *      TEXTUAL de John (verbatim, en portugués — es el texto oficial de la
+ *      naviera). REEMPLAZA el concepto P·6: el bloque mailing_naviera_destino
+ *      salió del template (Maersk/Hapag se suman cuando John tenga casillas).
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -237,14 +245,25 @@ const flagImg = (iso, name) => (iso && /^[A-Za-z]{2}$/.test(String(iso)))
 const dest_flag = flagImg(ppj.pais_iso, dest_country);
 const ORIGIN_COUNTRY = 'Argentina', ORIGIN_FLAG = flagImg('ar', 'Argentina');
 
-// Bloque de contacto de la naviera en destino (mailing_naviera_destino — el
-// contenido lo cargan John/Naara: confiado, con sanitizado suave anti-<script>).
-const navRow = row('GET naviera destino');
-const naviera_html = (navRow && navRow.contacto_html)
-  ? String(navRow.contacto_html)
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<\s*\/?\s*script[^>]*>/gi, '')
-  : null;
+// R2·E: el bloque mailing_naviera_destino SALIÓ del template (concepto
+// reemplazado por los contactos fijos por naviera — hoy solo LOG-IN). El nodo
+// "GET naviera destino" sigue en el grafo sin consumo (se re-evalúa cuando
+// lleguen las casillas de Maersk/Hapag).
+
+// ---- R2·D: idioma del mail por país DESTINO ----
+// iso del embed puertos→paises; fallback por NOMBRE para filas sin iso.
+const ES_LATAM_ISO = ['AR','BO','CL','CO','CR','CU','DO','EC','SV','GT','HN','MX','NI','PA','PY','PE','UY','VE'];
+const ES_LATAM_NOM = ['ARGENTINA','BOLIVIA','CHILE','COLOMBIA','COSTA RICA','CUBA','REPUBLICA DOMINICANA','REPÚBLICA DOMINICANA','ECUADOR','EL SALVADOR','GUATEMALA','HONDURAS','MEXICO','MÉXICO','NICARAGUA','PANAMA','PANAMÁ','PARAGUAY','PERU','PERÚ','URUGUAY','VENEZUELA'];
+const _isoDest = String(ppj.pais_iso || '').toUpperCase().trim();
+const _nomDest = String(pais_destino || '').toUpperCase().trim();
+const MAIL_LANG = (_isoDest === 'BR' || _nomDest === 'BRASIL' || _nomDest === 'BRAZIL') ? 'pt'
+  : (ES_LATAM_ISO.includes(_isoDest) || ES_LATAM_NOM.includes(_nomDest)) ? 'es' : 'en';
+const PACKS = {
+  en: { subj:'Shipping Documents · Order', sailed:'Sailed', hdr1:'SHIPPING DOCUMENTS', hdr2:'EXPORT DOCUMENTATION', greet:'Dear Customer,', intro:'Please find attached the documentation corresponding to the following shipment.', kEtd:'ETD', kAtd:'SAILED (ATD)', kEta:'ETA', kTr:'TRANSIT', days:'days', sec1:'SHIPMENT DETAILS', lOrder:'Order', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Freight', secP:'PRODUCT', kgNet:'kg net', bagsW:'bags', palletsW:'pallets', secD:'ATTACHED DOCUMENTS', dFC:'Commercial Invoice', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificate of Origin — digital (ZIP)', dCOp:'Certificate of Origin (PDF)', dPE:'Export Permit (PE)', dSEG:'Insurance Certificate (SEG)', dCOO:'Certificate of Origin (COO)', dCRT:'CRT (Waybill)', follow:'(to follow)', manual:'(manual)', noDocs:'No documents attached yet.', segN:'The Insurance Certificate (SEG) for this shipment will be sent separately.', secF:'FREE DAYS AT DESTINATION', perDay:'/day', close:'Should you have any questions, please do not hesitate to contact us.', conf:'This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.', pre:'Shipping documents for Order' },
+  es: { subj:'Documentación de embarque · Orden', sailed:'Zarpe', hdr1:'DOCUMENTACIÓN DE EMBARQUE', hdr2:'DOCUMENTACIÓN DE EXPORTACIÓN', greet:'Estimados,', intro:'Adjuntamos la documentación correspondiente al siguiente embarque.', kEtd:'ETD', kAtd:'ZARPE (ATD)', kEta:'ETA', kTr:'TRÁNSITO', days:'días', sec1:'DETALLE DEL EMBARQUE', lOrder:'Orden', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Flete', secP:'PRODUCTO', kgNet:'kg netos', bagsW:'bolsas', palletsW:'pallets', secD:'DOCUMENTACIÓN ADJUNTA', dFC:'Factura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origen — digital (ZIP)', dCOp:'Certificado de Origen (PDF)', dPE:'Permiso de Exportación (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origen (COO)', dCRT:'CRT (Carta de Porte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Aún sin documentos adjuntos.', segN:'El Certificado de Seguro (SEG) de este embarque se enviará por separado.', secF:'DÍAS LIBRES EN DESTINO', perDay:'/día', close:'Quedamos a disposición ante cualquier consulta.', conf:'Este correo y sus adjuntos son confidenciales y de uso exclusivo del destinatario. Si lo recibió por error, por favor avísenos y elimínelo.', pre:'Documentación de embarque de la orden' },
+  pt: { subj:'Documentação de embarque · Pedido', sailed:'Embarque', hdr1:'DOCUMENTAÇÃO DE EMBARQUE', hdr2:'DOCUMENTAÇÃO DE EXPORTAÇÃO', greet:'Prezados,', intro:'Segue em anexo a documentação referente ao seguinte embarque.', kEtd:'ETD', kAtd:'EMBARQUE (ATD)', kEta:'ETA', kTr:'TRÂNSITO', days:'dias', sec1:'DETALHES DO EMBARQUE', lOrder:'Pedido', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Frete', secP:'PRODUTO', kgNet:'kg líquidos', bagsW:'sacos', palletsW:'paletes', secD:'DOCUMENTOS ANEXOS', dFC:'Fatura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origem — digital (ZIP)', dCOp:'Certificado de Origem (PDF)', dPE:'Permissão de Exportação (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origem (COO)', dCRT:'CRT (Conhecimento de Transporte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Ainda sem documentos anexos.', segN:'O Certificado de Seguro (SEG) deste embarque será enviado separadamente.', secF:'DIAS LIVRES NO DESTINO', perDay:'/dia', close:'Permanecemos à disposição para qualquer esclarecimento.', conf:'Este e-mail e seus anexos são confidenciais e de uso exclusivo do destinatário. Se recebido por engano, por favor nos avise e apague a mensagem.', pre:'Documentação de embarque do pedido' },
+};
+const L = PACKS[MAIL_LANG];
 
 // ---- schedule por tiers (schedRaw ya viene filtrado pod + activo + disponible) ----
 // Dedup por clave natural: con "GET mailing_contacts" en limit=2 el nodo
@@ -359,11 +378,11 @@ const freight_show = m.freight_term
   ? String(m.freight_term).charAt(0).toUpperCase() + String(m.freight_term).slice(1).toLowerCase() : null;
 const shipment_no = pick(m.shipment_no);
 // Segmentos faltantes se OMITEN del subject (sin ATD → sin "Sailed")
-const subject_real = ['Shipping Documents · Order ' + order_number, cliente || null,
-  buqueViaje || null, atd ? 'Sailed ' + fmtD(atd) : null].filter(Boolean).join(' · ');
+const subject_real = [L.subj + ' ' + order_number, cliente || null,
+  buqueViaje || null, atd ? L.sailed + ' ' + fmtD(atd) : null].filter(Boolean).join(' · ');
 
 // Labels humanos EN de la documentación adjunta; tipo desconocido → filename
-const DOC_LBL = { bl_draft: 'Bill of Lading', factura: 'Commercial Invoice', packing_list: 'Packing List', co_zip: 'Certificate of Origin — digital (ZIP)', co_pdf: 'Certificate of Origin (PDF)', pe: 'Export Permit (PE)', seg: 'Insurance Certificate (SEG)', coo: 'Certificate of Origin (COO)', crt: 'CRT (Waybill)' };
+const DOC_LBL = { bl_draft: L.dBL, factura: L.dFC, packing_list: L.dPL, co_zip: L.dCOz, co_pdf: L.dCOp, pe: L.dPE, seg: L.dSEG, coo: L.dCOO, crt: L.dCRT };
 // Adjuntos extra manuales (§5.5): ya validados por "Validar request" (máx 3,
 // mime whitelist, ≤4MB). Passthrough al root (los adjunta "Unir binarios") y
 // a la lista del mail con sufijo "(manual)".
@@ -385,25 +404,25 @@ const endPt = (flag, city, country, right) => `<td valign="middle" align="${righ
 const regTipos = new Set(allRows('GET documentos_orden').map((r) => String(r.tipo || '')));
 const attTipos = new Set(attachments_found.map((f) => f.tipo));
 const REG_MAP = [
-  { reg: ['factura'], att: ['factura'], label: 'Commercial Invoice' },
-  { reg: ['packing_maritimo', 'packing_terrestre'], att: ['packing_list'], label: 'Packing List' },
-  { reg: ['permiso_exportacion'], att: ['pe'], label: 'Export Permit (PE)', onlyTrade: true },
-  { reg: ['crt'], att: ['crt'], label: 'CRT (Waybill)' },
+  { reg: ['factura'], att: ['factura'], label: L.dFC },
+  { reg: ['packing_maritimo', 'packing_terrestre'], att: ['packing_list'], label: L.dPL },
+  { reg: ['permiso_exportacion'], att: ['pe'], label: L.dPE, onlyTrade: true },
+  { reg: ['crt'], att: ['crt'], label: L.dCRT },
 ];
 const docs_to_follow = REG_MAP
   .filter((mp) => !mp.onlyTrade || order_kind === 'trade')
   .filter((mp) => mp.reg.some((t) => regTipos.has(t)) && !mp.att.some((t) => attTipos.has(t)))
   .map((mp) => mp.label);
 const docNames = attachments_found.map((f) => DOC_LBL[f.tipo] || f.name || f.tipo)
-  .concat(extra_attachments.map((a) => a.name + ' (manual)'));
+  .concat(extra_attachments.map((a) => a.name + ' ' + L.manual));
 const docRow = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#33424F;">${esc(t)}</td></tr>`;
-const docRowPend = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#B9C6D2;">&#9675;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#8494A4;">${esc(t)} <span style="font-size:10px;color:#9BABBB;">(to follow)</span></td></tr>`;
+const docRowPend = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#B9C6D2;">&#9675;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#8494A4;">${esc(t)} <span style="font-size:10px;color:#9BABBB;">${esc(L.follow)}</span></td></tr>`;
 // filas combinadas (✓ primero, luego pendientes) repartidas en 2 columnas
 const docRowsAll = docNames.map((t) => docRow(t)).concat(docs_to_follow.map((t) => docRowPend(t)));
 const docMid = Math.ceil(docRowsAll.length / 2);
 const docsCol = (arr) => `<td width="50%" valign="top"><table role="presentation" cellpadding="0" cellspacing="0" border="0">${arr.join('')}</table></td>`;
-const segNote = seg_alerta ? `<div style="${AR}font-size:10.5px;color:#8a6d00;margin-top:8px;">The Insurance Certificate (SEG) for this shipment will be sent separately.</div>` : '';
-const docsHtml = (docRowsAll.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead('ATTACHED DOCUMENTS')}${docRowsAll.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docRowsAll.slice(0, docMid))}${docsCol(docRowsAll.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">No documents attached yet.</div>`}${segNote}</td></tr>` : '';
+const segNote = seg_alerta ? `<div style="${AR}font-size:10.5px;color:#8a6d00;margin-top:8px;">${esc(L.segN)}</div>` : '';
+const docsHtml = (docRowsAll.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead(esc(L.secD))}${docRowsAll.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docRowsAll.slice(0, docMid))}${docsCol(docRowsAll.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">${esc(L.noDocs)}</div>`}${segNote}</td></tr>` : '';
 
 // PRODUCT (T7/D.3): orden_productos = espejo de la última factura controlada.
 // Descripción + cantidades por producto; sin filas → el bloque se omite entero.
@@ -420,18 +439,18 @@ const prodRows = allRows('GET orden_productos').filter((p) => {
 const nfEN = (n) => (n == null ? null : Number(n).toLocaleString('en-US'));
 const prodLine = (p) => {
   const bits = [];
-  if (p.net_kg != null) bits.push(nfEN(p.net_kg) + ' kg net');
-  if (p.bags != null) bits.push(nfEN(p.bags) + ' bags');
-  if (p.pallets != null) bits.push(nfEN(p.pallets) + ' pallets');
+  if (p.net_kg != null) bits.push(nfEN(p.net_kg) + ' ' + L.kgNet);
+  if (p.bags != null) bits.push(nfEN(p.bags) + ' ' + L.bagsW);
+  if (p.pallets != null) bits.push(nfEN(p.pallets) + ' ' + L.palletsW);
   return `<div style="${AR}font-size:12px;color:#33424F;margin-top:4px;"><span style="font-weight:bold;color:#0C2340;">${esc(pick(p.description, p.grade, p.product_key) || '—')}</span>${p.embalaje ? ` <span style="color:#8494A4;">(${esc(p.embalaje)})</span>` : ''}${bits.length ? `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="color:#5A6A7A;">${esc(bits.join(' · '))}</span>` : ''}</div>`;
 };
-const productHtml = prodRows.length ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">PRODUCT</div>${prodRows.map(prodLine).join('')}</td></tr></table></td></tr>` : '';
+const productHtml = prodRows.length ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">${esc(L.secP)}</div>${prodRows.map(prodLine).join('')}</td></tr></table></td></tr>` : '';
 
 // FREE DAYS (v_orden_freetime) — se omite entero sin dato, jamás rompe
 const perDiem = [];
-if (dias_libres && dias_libres.per_diem_dry_usd != null) perDiem.push('DRY USD ' + dias_libres.per_diem_dry_usd + '/day');
-if (dias_libres && dias_libres.per_diem_reefer_usd != null) perDiem.push('REEFER USD ' + dias_libres.per_diem_reefer_usd + '/day');
-const freeDaysHtml = dias_libres ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;${AR}"><span style="font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">FREE DAYS AT DESTINATION</span><span style="font-size:12.5px;font-weight:bold;color:#0C2340;padding-left:12px;">${esc(dias_libres.dias + ' days')}</span>${perDiem.map((b) => `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="font-size:11px;color:#5A6A7A;">${esc(b)}</span>`).join('')}</td></tr></table></td></tr>` : '';
+if (dias_libres && dias_libres.per_diem_dry_usd != null) perDiem.push('DRY USD ' + dias_libres.per_diem_dry_usd + L.perDay);
+if (dias_libres && dias_libres.per_diem_reefer_usd != null) perDiem.push('REEFER USD ' + dias_libres.per_diem_reefer_usd + L.perDay);
+const freeDaysHtml = dias_libres ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;${AR}"><span style="font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">${esc(L.secF)}</span><span style="font-size:12.5px;font-weight:bold;color:#0C2340;padding-left:12px;">${esc(dias_libres.dias + ' ' + L.days)}</span>${perDiem.map((b) => `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="font-size:11px;color:#5A6A7A;">${esc(b)}</span>`).join('')}</td></tr></table></td></tr>` : '';
 
 // D.3 alerta (item 11 del header): resultado persistido del control FC-PE —
 // 1 fila por orden (upsert), row() alcanza. Solo señal al FRONT, jamás al mail.
@@ -444,30 +463,50 @@ const control_fcpe = fcpeRow ? {
 
 // Contacto de la naviera en destino (mailing_naviera_destino, la cargan
 // John/Naara) — P·6: se enciende solo cuando la tabla tenga filas.
-const navieraBox = naviera_html ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">CARRIER CONTACT AT DESTINATION</div><div style="${AR}font-size:12px;color:#33424F;margin-top:4px;">${naviera_html}</div></td></tr></table></td></tr>` : '';
+// R2·E: contactos LOG-IN al pie — SOLO cuando el carrier es LOG-IN. Texto
+// TEXTUAL de John (verbatim, portugués: es el texto oficial de la naviera —
+// NO traducir aunque el mail vaya en otro idioma). Emails clickeables sin
+// alterar el texto. Maersk/Hapag: se suman cuando John tenga las casillas.
+const isLogin = /^LOG\s*-?\s*IN/i.test(String(pick(m.carrier) || '').trim());
+const LOGIN_HEAD = 'Favor de entrar en contacto con Login para retirar el BL original.';
+const LOGIN_LINES = [
+  'Atendimento Booking, alterações, Tracking e informações: atendimento.longocurso@loginlogistica.com.br',
+  'Documentação (importação e exportação Brasil):  doc.longocurso@loginlogistica.com.br',
+  'Faturamento: faturamento.longocurso@loginlogistica.com.br',
+  'Recibo e dúvidas sobre o pagto:  duvidaspagamento@loginlogistica.com.br',
+  'Demurrage e Detention: servico.adicional@loginlogistica.com.br',
+  'Carta Protesto: faltas.avarias@loginlogistica.com.br',
+  'Cadastro de equipamento, lacre, 2° lacre, retirada e devolução de equipamento:',
+  'Equipamento Sul: equipamento.sul@loginlogistica.com.br - 47 8890-2668 – Erick Dimas',
+  'Equipamento Sudeste: equipamento.sudeste@loginlogistica.com.br - 13 99204-3342 – Mariane.Moraes',
+  'Equipamento Nordeste: equipamento.nordeste@loginlogistica.com.br – 85 99105.7868 – Ricardo Barbosa',
+  'Equipamento Norte: equipamento.mao@loginlogistica.com.br - 92 8511-5816 – Joiciane Rocha',
+];
+const mailify = (txt) => esc(txt).replace(/([\w.+-]+@[\w.-]+\.\w+)/g, '<a href="mailto:$1" style="color:#1C9BD9;text-decoration:none;">$1</a>');
+const loginBlockHtml = isLogin ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:12px 15px;"><div style="${AR}font-size:12px;font-weight:bold;color:#0C2340;margin-bottom:6px;">${esc(LOGIN_HEAD)}</div>${LOGIN_LINES.map((l) => `<div style="${AR}font-size:11.5px;color:#33424F;margin-top:3px;">&#183;&nbsp;&nbsp;${mailify(l)}</div>`).join('')}</td></tr></table></td></tr>` : '';
 
 const refBar = ['ORDER ' + esc(String(order_number)), buqueViaje ? esc(buqueViaje) : null,
   (pol || pod) ? esc([pol, pod].filter(Boolean).join(' → ')) : null].filter(Boolean).join(SEP);
 
-const body_html = `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#E7ECF2;">Shipping documents for Order ${esc(String(order_number))}${buqueViaje ? ' — ' + esc(buqueViaje) : ''}${(pol && pod) ? ', ' + esc(pol + ' → ' + pod) : ''}.</div>
+const body_html = `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#E7ECF2;">${esc(L.pre)} ${esc(String(order_number))}${buqueViaje ? ' — ' + esc(buqueViaje) : ''}${(pol && pod) ? ', ' + esc(pol + ' → ' + pod) : ''}.</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;background-color:#E7ECF2;"><tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:#ffffff;border:1px solid #DCE6F0;border-radius:14px;overflow:hidden;">
 <tr><td style="padding:20px 28px 15px;border-bottom:2px solid #0C2340;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td align="left" valign="middle" style="${AR}"><span style="font-size:24px;font-weight:bold;color:#0C2340;letter-spacing:-1px;">SSB</span><span style="font-size:9px;color:#F26A21;vertical-align:super;">&#9642;</span><div style="font-size:8px;letter-spacing:3px;color:#0C2340;font-weight:bold;margin-top:2px;">INTERNATIONAL</div></td>
-<td align="right" valign="middle" style="${AR}"><div style="font-size:14px;font-weight:bold;color:#0C2340;letter-spacing:0.4px;">SHIPPING DOCUMENTS</div><div style="font-size:9px;letter-spacing:2.5px;color:#93A3B4;font-weight:bold;margin-top:3px;">EXPORT DOCUMENTATION</div></td>
+<td align="right" valign="middle" style="${AR}"><div style="font-size:14px;font-weight:bold;color:#0C2340;letter-spacing:0.4px;">${esc(L.hdr1)}</div><div style="font-size:9px;letter-spacing:2.5px;color:#93A3B4;font-weight:bold;margin-top:3px;">${esc(L.hdr2)}</div></td>
 </tr></table></td></tr>
 <tr><td style="background-color:#EEF4FA;padding:9px 28px;${AR}font-size:11.5px;color:#33475A;letter-spacing:0.3px;font-weight:bold;">${refBar}</td></tr>
-<tr><td style="padding:18px 28px 4px;${AR}font-size:13px;color:#3A4A5A;line-height:1.6;">${testBanner}Dear Customer,<br />Please find attached the documentation corresponding to the following shipment.</td></tr>
+<tr><td style="padding:18px 28px 4px;${AR}font-size:13px;color:#3A4A5A;line-height:1.6;">${testBanner}${esc(L.greet)}<br />${esc(L.intro)}</td></tr>
 <tr><td style="padding:14px 28px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${endPt(ORIGIN_FLAG, pol, ORIGIN_COUNTRY, false)}<td valign="middle" style="padding:0 12px;" width="100%"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" style="height:1px;font-size:0;line-height:0;border-top:1px dashed #C4D2E0;">&nbsp;</td></tr></table></td>${endPt(dest_flag, pod, dest_country, true)}</tr></table></td></tr>
-<tr><td style="padding:4px 28px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4EAF1;border-radius:9px;"><tr>${kpi('ETD', etd_plan ? fmtD(etd_plan) : null, true)}${kpi('SAILED (ATD)', atd ? fmtD(atd) : null)}${kpi('ETA', eta_eff ? fmtD(eta_eff) : null)}${kpi('TRANSIT', transit_days != null ? transit_days + ' days' : null)}</tr></table></td></tr>
-<tr><td style="padding:14px 28px 2px;">${secHead('SHIPMENT DETAILS')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow('Order', order_number)}${drow('Shipment', shipment_no)}${drow('Booking', booking_no, true)}</table></td>
+<tr><td style="padding:4px 28px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4EAF1;border-radius:9px;"><tr>${kpi(esc(L.kEtd), etd_plan ? fmtD(etd_plan) : null, true)}${kpi(esc(L.kAtd), atd ? fmtD(atd) : null)}${kpi(esc(L.kEta), eta_eff ? fmtD(eta_eff) : null)}${kpi(esc(L.kTr), transit_days != null ? transit_days + ' ' + L.days : null)}</tr></table></td></tr>
+<tr><td style="padding:14px 28px 2px;">${secHead(esc(L.sec1))}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow(L.lOrder, order_number)}${drow(L.lShip, shipment_no)}${drow(L.lBook, booking_no, true)}</table></td>
 <td width="4%" style="font-size:0;line-height:0;">&nbsp;</td>
-<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow('Bill of Lading', bl_number)}${drow('Incoterm', incoterm_show)}${drow('Freight', freight_show, true)}</table></td>
+<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow(L.lBl, bl_number)}${drow(L.lInc, incoterm_show)}${drow(L.lFr, freight_show, true)}</table></td>
 </tr></table></td></tr>
-${productHtml}${docsHtml}${freeDaysHtml}${navieraBox}
-<tr><td style="padding:16px 28px 4px;${AR}font-size:12.5px;color:#3A4A5A;line-height:1.6;">Should you have any questions, please do not hesitate to contact us.</td></tr>
-<tr><td style="padding:12px 28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4EAF1;"><tr><td style="padding-top:14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="3" valign="top" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td valign="top" style="padding-left:12px;${AR}"><div style="font-size:12px;font-weight:bold;color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div><div style="font-size:11.5px;color:#5A6A7A;margin-top:4px;"><a href="mailto:expoarpbb@ssbint.com" style="color:#1C9BD9;text-decoration:none;">expoarpbb@ssbint.com</a><span style="color:#C4D2E0;"> &#183; </span><a href="https://ssbint.com/es" style="color:#1C9BD9;text-decoration:none;">ssbint.com/es</a></div><div style="font-size:10px;color:#9BABBB;margin-top:8px;line-height:1.5;">This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.</div></td></tr></table></td></tr></table></td></tr>
+${productHtml}${docsHtml}${freeDaysHtml}${loginBlockHtml}
+<tr><td style="padding:16px 28px 4px;${AR}font-size:12.5px;color:#3A4A5A;line-height:1.6;">${esc(L.close)}</td></tr>
+<tr><td style="padding:12px 28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4EAF1;"><tr><td style="padding-top:14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="3" valign="top" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td valign="top" style="padding-left:12px;${AR}"><div style="font-size:12px;font-weight:bold;color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div><div style="font-size:11.5px;color:#5A6A7A;margin-top:4px;"><a href="mailto:expoarpbb@ssbint.com" style="color:#1C9BD9;text-decoration:none;">expoarpbb@ssbint.com</a><span style="color:#C4D2E0;"> &#183; </span><a href="https://ssbint.com/es" style="color:#1C9BD9;text-decoration:none;">ssbint.com/es</a></div><div style="font-size:10px;color:#9BABBB;margin-top:8px;line-height:1.5;">${esc(L.conf)}</div></td></tr></table></td></tr></table></td></tr>
 </table></td></tr></table>`;
 
 // Expo SIEMPRE en copia del envío real (item 28): cleanEmails filtra la casilla
@@ -552,6 +591,8 @@ const response = {
   productos: prodRows.map((p) => ({ description: p.description, grade: p.grade, net_kg: p.net_kg, bags: p.bags, pallets: p.pallets })),
   // D.3 alerta (aditivo): AVISA, NO bloquea — el front lo pinta como warning
   control_fcpe,
+  // R2·D (aditivo): idioma resuelto del mail — el front puede mostrarlo
+  mail_lang: MAIL_LANG,
   // ---- PLANCOMPLETO B: señales nuevas para el front ----
   notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
   control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },

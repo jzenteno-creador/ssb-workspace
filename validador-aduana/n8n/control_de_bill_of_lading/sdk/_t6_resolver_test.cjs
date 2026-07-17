@@ -67,29 +67,29 @@ const ok = (cond, label) => { console.log((cond ? '  ✓ ' : '  ✗ ') + label);
 
 console.log('SUBJECT:', subj);
 ok(subj.startsWith('[TEST → real:'), 'subject con prefijo TEST (lock ON)');
-ok(subj.includes('Shipping Documents · Order 118833340'), 'subject EN + orden');
+ok(subj.includes('Documentação de embarque · Pedido 118833340'), 'subject PT (destino Brasil) + orden');
 ok(subj.includes('ASIBRAS'), 'empresa en el asunto');
-ok(subj.includes('Sailed 14/07/2026'), 'Sailed con ATD');
+ok(subj.includes('Embarque 14/07/2026'), 'segmento de zarpe PT con ATD');
 ok(out.route === 'respond' && r.send_blocked, 'preview → respond, send bloqueado (sin schedule)');
 ok(out.gmail.to === 'expoarpbb@ssbint.com', 'TEST: To = expoarpbb');
 
-ok(body.includes('SHIPPING DOCUMENTS') && body.includes('EXPORT DOCUMENTATION'), 'header guía');
-ok(body.includes('Dear Customer,'), 'saludo genérico');
+ok(body.includes('DOCUMENTAÇÃO DE EMBARQUE') && body.includes('DOCUMENTAÇÃO DE EXPORTAÇÃO'), 'header guía en PT');
+ok(body.includes('Prezados,'), 'saludo genérico PT');
 ok(body.includes('[MODO TEST]'), 'testBanner presente');
 ok(body.includes('flagcdn.com/24x18/ar.png') && body.includes('flagcdn.com/24x18/br.png'), 'banderas flagcdn AR + BR (img, no emoji)');
 ok(body.includes('alt="Brazil"') && body.includes('alt="Argentina"'), 'alt = nombre del país (fallback presentable, jamás "BR" pelado)');
 ok(!body.includes('🇦🇷') && !body.includes('🇧🇷'), 'cero emoji de bandera en el body');
 ok(body.includes('BRAZIL') || body.includes('Brazil'), 'país destino');
-ok(body.includes('>ETD<') && body.includes('SAILED (ATD)') && body.includes('>ETA<') && body.includes('>TRANSIT<'), 'KPI ETD+ATD+ETA+TRANSIT');
+ok(body.includes('>ETD<') && body.includes('EMBARQUE (ATD)') && body.includes('>ETA<') && body.includes('>TRÂNSITO<'), 'KPI PT ETD+ATD+ETA+TRÂNSITO');
 ok(body.includes('13/07/2026') && body.includes('14/07/2026') && body.includes('17/07/2026'), 'fechas ETD/ATD/ETA');
-ok(body.includes('3 days'), 'tránsito 3 días (14→17)');
+ok(body.includes('3 dias'), 'tránsito 3 dias PT (14→17)');
 ok(body.includes('>Shipment<') && body.includes('48378497'), 'Shipment (T6·1)');
 ok(body.includes('>Incoterm<') && body.includes('>CPT<'), 'Incoterm');
-ok(body.includes('>Freight<') && body.includes('>Prepaid<'), 'Freight title-case');
-ok(body.includes('ATTACHED DOCUMENTS') && body.includes('Bill of Lading') && body.includes('Commercial Invoice'), 'checklist adjuntos EN');
-ok(body.includes('FREE DAYS AT DESTINATION') && body.includes('21 days'), 'FREE DAYS con fila PLANA (no hub) — P·5');
-ok(!body.includes('14 days') && !body.includes('USD 50'), 'variante hub descartada');
-ok(body.includes('DRY USD 35/day') && body.includes('REEFER USD 10/day'), 'per diem dry/reefer');
+ok(body.includes('>Frete<') && body.includes('>Prepaid<'), 'Frete (PT) + Prepaid title-case');
+ok(body.includes('DOCUMENTOS ANEXOS') && body.includes('Bill of Lading') && body.includes('Fatura Comercial'), 'checklist adjuntos PT');
+ok(body.includes('DIAS LIVRES NO DESTINO') && body.includes('21 dias'), 'FREE DAYS PT con fila PLANA (no hub) — P·5');
+ok(!body.includes('14 dias') && !body.includes('USD 50'), 'variante hub descartada');
+ok(body.includes('DRY USD 35/dia') && body.includes('REEFER USD 10/dia'), 'per diem dry/reefer PT');
 ok(!body.includes('SHIPPING LINE'), 'SHIPPING LINE excluido (P·6)');
 ok(!body.includes('CARRIER CONTACT'), 'bloque naviera omitido (sin filas)');
 ok(!/cdn-cgi|data-cfemail|__cf_email__|<script/i.test(body), 'sin artefactos cf-email ni scripts');
@@ -97,15 +97,38 @@ ok(body.includes('mailto:expoarpbb@ssbint.com') && body.includes('ssbint.com/es'
 ok(!/SLA|sla_/i.test(body), 'SLA interno ausente');
 ok(r.dias_libres && r.dias_libres.dias === 21 && r.dias_libres.pais_destino === 'Brasil', 'response.dias_libres contrato');
 // T6·3 — checklist con fuente documentos_orden
-ok(body.includes('(to follow)'), 'to-follow presente');
-ok(body.includes('Packing List') && body.includes('Export Permit (PE)'), 'packing + PE listados como to-follow');
-ok((body.match(/Commercial Invoice/g) || []).length === 1, 'factura adjunta NO duplicada como to-follow');
+ok(body.includes('(a enviar)'), 'to-follow presente (PT)');
+ok(body.includes('Packing List') && body.includes('Permissão de Exportação (PE)'), 'packing + PE listados como to-follow (PT)');
+ok((body.match(/Fatura Comercial/g) || []).length === 1, 'factura adjunta NO duplicada como to-follow');
 ok(!body.includes('ZCB1') && !body.includes('booking_advice'), 'booking ZCB1 (interno) excluido');
-ok(JSON.stringify(r.attachments.to_follow) === JSON.stringify(['Packing List', 'Export Permit (PE)']), 'response.attachments.to_follow');
+ok(JSON.stringify(r.attachments.to_follow) === JSON.stringify(['Packing List', 'Permissão de Exportação (PE)']), 'response.attachments.to_follow (PT)');
 // T7/D.3 — bloque PRODUCT
-ok(body.includes('>PRODUCT<') && body.includes('DOWLEX'), 'bloque PRODUCT presente');
-ok(body.includes('81,000 kg net') && body.includes('3,240 bags') && body.includes('54 pallets'), 'cantidades formateadas EN');
+ok(body.includes('>PRODUTO<') && body.includes('DOWLEX'), 'bloque PRODUTO (PT) presente');
+ok(body.includes('81,000 kg líquidos') && body.includes('3,240 sacos') && body.includes('54 paletes'), 'cantidades formateadas PT');
 ok(Array.isArray(r.productos) && r.productos.length === 1, 'response.productos aditivo');
+// R2·D — idioma + R2·E — Log-In
+ok(r.mail_lang === 'pt', 'mail_lang=pt para Brasil');
+ok(!body.includes('loginlogistica'), 'carrier MAERSK → SIN bloque Log-In');
+{
+  const moLI = { ...mo, carrier: 'LOG-IN' };
+  NODES['GET mailing_orders'] = [moLI];
+  const outLI = new Function('$', 'console', code)($, console).json;
+  const bLI = outLI.response.body_html;
+  ok(bLI.includes('Favor de entrar en contacto con Login para retirar el BL original.'), 'Log-In: encabezado TEXTUAL');
+  ok(bLI.includes('atendimento.longocurso@loginlogistica.com.br') && bLI.includes('92 8511-5816 – Joiciane Rocha'), 'Log-In: contactos verbatim (primero y último)');
+  ok((bLI.match(/mailto:[\w.]+@loginlogistica/g) || []).length >= 10, 'Log-In: emails clickeables');
+  NODES['GET mailing_orders'] = [mo];
+}
+{
+  // idioma: Perú→es · USA→en (unit del selector, mismos stubs)
+  NODES['GET puertos pais'] = [{ pais: 'Perú', pais_iso: 'PE', paises: { nombre_en: 'Peru', flag_emoji: '' } }];
+  const outES = new Function('$', 'console', code)($, console).json;
+  ok(outES.response.mail_lang === 'es' && outES.response.body_html.includes('Estimados,'), 'Perú → es (Estimados,)');
+  NODES['GET puertos pais'] = [{ pais: 'Estados Unidos', pais_iso: 'US', paises: { nombre_en: 'United States', flag_emoji: '' } }];
+  const outEN = new Function('$', 'console', code)($, console).json;
+  ok(outEN.response.mail_lang === 'en' && outEN.response.body_html.includes('Dear Customer,'), 'USA → en (Dear Customer,)');
+  NODES['GET puertos pais'] = [{ pais: 'Brasil', pais_iso: 'BR', paises: { nombre_en: 'Brazil', flag_emoji: '🇧🇷' } }];
+}
 // D.3 alerta — señal al front, jamás al mail ni a los bloqueos
 ok(r.control_fcpe && r.control_fcpe.overall_result === 'REVISAR', 'response.control_fcpe expone REVISAR');
 ok(!body.includes('Permiso') || body.includes('Export Permit'), 'la alerta FC-PE NO viaja en el mail al cliente');
