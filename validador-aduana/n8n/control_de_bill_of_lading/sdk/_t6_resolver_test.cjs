@@ -37,6 +37,10 @@ const NODES = {
     { tipo: 'packing_maritimo', file_name: '48378632_118833340_PL.pdf' },
     { tipo: 'permiso_exportacion', file_name: '26003EC03001622D_118833340_PE.pdf' },
   ],
+  // T7/D.3: espejo real de orden_productos para 118833340
+  'GET orden_productos': [
+    { product_key: '374366', description: 'DOWLEX™ NG2045B Polyethylene Resin', grade: 'NG2045B', embalaje: '25 KG Bags', net_kg: 81000, gross_kg: 82620, bags: 3240, pallets: 54, line_count: 3 },
+  ],
   'Config (TEST_MODE)': [{ TEST_MODE: true }],
 };
 
@@ -92,6 +96,10 @@ ok(body.includes('Packing List') && body.includes('Export Permit (PE)'), 'packin
 ok((body.match(/Commercial Invoice/g) || []).length === 1, 'factura adjunta NO duplicada como to-follow');
 ok(!body.includes('ZCB1') && !body.includes('booking_advice'), 'booking ZCB1 (interno) excluido');
 ok(JSON.stringify(r.attachments.to_follow) === JSON.stringify(['Packing List', 'Export Permit (PE)']), 'response.attachments.to_follow');
+// T7/D.3 — bloque PRODUCT
+ok(body.includes('>PRODUCT<') && body.includes('DOWLEX'), 'bloque PRODUCT presente');
+ok(body.includes('81,000 kg net') && body.includes('3,240 bags') && body.includes('54 pallets'), 'cantidades formateadas EN');
+ok(Array.isArray(r.productos) && r.productos.length === 1, 'response.productos aditivo');
 ok(r.control_revisado.vigente === true, 'sello vigente detectado');
 ok(Array.isArray(r.attachments.found) && r.attachments.found.length === 2, 'attachments.found = 2');
 

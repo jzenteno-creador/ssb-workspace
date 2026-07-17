@@ -46,6 +46,9 @@
  *      orden que no viaja en este mail va "(to follow)" — solo tipos
  *      client-facing (factura/packing/PE/CRT; booking ZCB1 y "otros" jamás),
  *      PE gateado por order_kind (una STO nunca lista PE).
+ *  10. T7/D.3 (G.2): bloque PRODUCT alimentado por orden_productos (espejo de
+ *      la última factura controlada, rama D.3 del CBL) — descripción + kg
+ *      netos + bags + pallets por producto; sin filas se omite entero.
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -393,6 +396,28 @@ const docsCol = (arr) => `<td width="50%" valign="top"><table role="presentation
 const segNote = seg_alerta ? `<div style="${AR}font-size:10.5px;color:#8a6d00;margin-top:8px;">The Insurance Certificate (SEG) for this shipment will be sent separately.</div>` : '';
 const docsHtml = (docRowsAll.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead('ATTACHED DOCUMENTS')}${docRowsAll.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docRowsAll.slice(0, docMid))}${docsCol(docRowsAll.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">No documents attached yet.</div>`}${segNote}</td></tr>` : '';
 
+// PRODUCT (T7/D.3): orden_productos = espejo de la última factura controlada.
+// Descripción + cantidades por producto; sin filas → el bloque se omite entero.
+// DEDUP OBLIGATORIO por product_key: "GET mailing_contacts" viene en limit=2 y
+// los GET downstream corren una vez POR ITEM y concatenan (mismo fenómeno que
+// obligó el dedup de schedules, caso real: producto ×4 en el preview 17-07).
+const prodSeen = new Set();
+const prodRows = allRows('GET orden_productos').filter((p) => {
+  const k = String(p.product_key || '') + '|' + String(p.description || '');
+  if (prodSeen.has(k)) return false;
+  prodSeen.add(k);
+  return true;
+});
+const nfEN = (n) => (n == null ? null : Number(n).toLocaleString('en-US'));
+const prodLine = (p) => {
+  const bits = [];
+  if (p.net_kg != null) bits.push(nfEN(p.net_kg) + ' kg net');
+  if (p.bags != null) bits.push(nfEN(p.bags) + ' bags');
+  if (p.pallets != null) bits.push(nfEN(p.pallets) + ' pallets');
+  return `<div style="${AR}font-size:12px;color:#33424F;margin-top:4px;"><span style="font-weight:bold;color:#0C2340;">${esc(pick(p.description, p.grade, p.product_key) || '—')}</span>${p.embalaje ? ` <span style="color:#8494A4;">(${esc(p.embalaje)})</span>` : ''}${bits.length ? `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="color:#5A6A7A;">${esc(bits.join(' · '))}</span>` : ''}</div>`;
+};
+const productHtml = prodRows.length ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">PRODUCT</div>${prodRows.map(prodLine).join('')}</td></tr></table></td></tr>` : '';
+
 // FREE DAYS (v_orden_freetime) — se omite entero sin dato, jamás rompe
 const perDiem = [];
 if (dias_libres && dias_libres.per_diem_dry_usd != null) perDiem.push('DRY USD ' + dias_libres.per_diem_dry_usd + '/day');
@@ -422,7 +447,7 @@ const body_html = `<div style="display:none;max-height:0;overflow:hidden;font-si
 <td width="4%" style="font-size:0;line-height:0;">&nbsp;</td>
 <td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow('Bill of Lading', bl_number)}${drow('Incoterm', incoterm_show)}${drow('Freight', freight_show, true)}</table></td>
 </tr></table></td></tr>
-${docsHtml}${freeDaysHtml}${navieraBox}
+${productHtml}${docsHtml}${freeDaysHtml}${navieraBox}
 <tr><td style="padding:16px 28px 4px;${AR}font-size:12.5px;color:#3A4A5A;line-height:1.6;">Should you have any questions, please do not hesitate to contact us.</td></tr>
 <tr><td style="padding:12px 28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4EAF1;"><tr><td style="padding-top:14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="3" valign="top" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td valign="top" style="padding-left:12px;${AR}"><div style="font-size:12px;font-weight:bold;color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div><div style="font-size:11.5px;color:#5A6A7A;margin-top:4px;"><a href="mailto:expoarpbb@ssbint.com" style="color:#1C9BD9;text-decoration:none;">expoarpbb@ssbint.com</a><span style="color:#C4D2E0;"> &#183; </span><a href="https://ssbint.com/es" style="color:#1C9BD9;text-decoration:none;">ssbint.com/es</a></div><div style="font-size:10px;color:#9BABBB;margin-top:8px;line-height:1.5;">This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.</div></td></tr></table></td></tr></table></td></tr>
 </table></td></tr></table>`;
@@ -505,6 +530,8 @@ const response = {
   send_blocked: block.length > 0, block_reasons: block,
   // file_id expuesto (Batch B): el chip-bar del front abre el PDF embebido de Drive
   attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing, to_follow: docs_to_follow },
+  // T7/D.3 (aditivo): productos del mail — el front puede ignorarlo
+  productos: prodRows.map((p) => ({ description: p.description, grade: p.grade, net_kg: p.net_kg, bags: p.bags, pallets: p.pallets })),
   // ---- PLANCOMPLETO B: señales nuevas para el front ----
   notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
   control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },
