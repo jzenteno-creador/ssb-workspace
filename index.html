@@ -2934,7 +2934,7 @@ body.light #panel-seguimiento{
 
 /* ── Tabla semáforo ── */
 #panel-seguimiento .seg-tablewrap{overflow-x:auto;border:1px solid var(--seg-line);border-radius:14px;background:var(--seg-surface);box-shadow:var(--seg-shadow)}
-#panel-seguimiento table.seg-table{border-collapse:collapse;width:100%;min-width:1120px;font-size:var(--fs-md)}
+#panel-seguimiento table.seg-table{border-collapse:collapse;width:100%;min-width:1220px;font-size:var(--fs-md)} /* T3: +Sold-to → 13 columnas */
 #panel-seguimiento .seg-table th{font-size:var(--fs-2xs);letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint);text-align:left;padding:10px 8px;border-bottom:1px solid var(--seg-line-strong);background:var(--seg-surface-2);white-space:nowrap}
 #panel-seguimiento .seg-table th.sort{cursor:pointer;user-select:none}
 #panel-seguimiento .seg-table th.sort:hover{color:var(--seg-ink-soft)}
@@ -3015,6 +3015,22 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
 #panel-seguimiento .seg-mod-body{padding:18px 22px 22px}
 #panel-seguimiento .seg-field{margin-bottom:13px}
 #panel-seguimiento .seg-field label{display:block;font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft);margin-bottom:5px}
+/* T3 (B.7): sub-solapas Marítimo/Terrestre — split del seguimiento por mot */
+#panel-seguimiento .seg-subtabs{display:inline-flex;border:1px solid var(--seg-line-strong);border-radius:11px;overflow:hidden;background:var(--seg-surface);margin-bottom:14px;width:max-content}
+#panel-seguimiento .seg-subtab{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:0;background:transparent;color:var(--seg-ink-soft);font-family:var(--font);font-size:var(--fs-md);font-weight:600;cursor:pointer}
+#panel-seguimiento .seg-subtab + .seg-subtab{border-left:1px solid var(--seg-line-strong)}
+#panel-seguimiento .seg-subtab.is-on{background:var(--faint);color:var(--seg-ink)}
+#panel-seguimiento .seg-subtab.is-on .ic{color:var(--blue)}
+#panel-seguimiento .seg-subtab .cnt{font-size:var(--fs-2xs);font-weight:700;background:var(--seg-line);color:var(--seg-ink-soft);border-radius:999px;padding:1px 8px}
+#panel-seguimiento .seg-subtab.is-on .cnt{background:var(--blue-lt);color:var(--blue)}
+/* T3 (B.3/B.4/B.6): bandera flagcdn · triangulación · export */
+#panel-seguimiento .seg-flag{display:inline-block;vertical-align:middle;margin-right:5px;border-radius:2px}
+#panel-seguimiento tr.seg-triang-row td{background:linear-gradient(90deg, rgba(245,166,35,.09), transparent 60%)}
+#panel-seguimiento tr.seg-triang-row td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
+#panel-seguimiento .triang-note{display:flex;align-items:center;gap:4px;font-size:var(--fs-2xs);color:var(--amber);font-weight:700;margin-top:2px}
+#panel-seguimiento .triang-note .ic{width:11px;height:11px}
+#panel-seguimiento .seg-btn--xls{border-color:var(--green-bd);color:var(--green)}
+#panel-seguimiento .seg-btn--xls:hover{background:var(--green-bg)}
 /* B.1-fix: segmentado transporte del lote (namespace seg- propio — el .sch-seg
    de Estructura DB está scoped a #panel-schema y no aplica acá) */
 #panel-seguimiento .seg-motseg{display:inline-flex;border:1px solid var(--seg-line-strong);border-radius:9px;overflow:hidden;background:var(--seg-surface)}
@@ -4664,9 +4680,8 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
           <option value="limpias">limpias</option>
         </select>
       </div>
-      <div class="seg-f"><label for="seg-f-mot">Transporte</label>
-        <select id="seg-f-mot"><option value="">todos</option><option value="maritimo">marítimo</option><option value="terrestre">terrestre</option></select>
-      </div>
+      <!-- T3 (B.7): el filtro Transporte se RETIRÓ — redundante con las sub-solapas
+           Marítimo/Terrestre (mockup aprobado 17-07, tachado ahí mismo) -->
       <div class="seg-f"><label for="seg-f-kind">Tipo</label>
         <select id="seg-f-kind"><option value="">todos</option><option value="trade">TRADE</option><option value="sto">STO</option><option value="otro">Otro</option></select>
       </div>

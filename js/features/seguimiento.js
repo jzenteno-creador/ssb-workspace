@@ -55,8 +55,13 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   let _sortK = 'dl', _sortDir = 1;
   // soldto (item 49): filtro nuevo por sold_to_name (v3) — undefined/vacío en TODAS
   // las filas si la vista todavía es v2 → el select queda con solo "todos" (degrade).
-  let _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
+  // T3 (B.7): el filtro mot MURIÓ — lo reemplazan las sub-solapas (_activeMode).
+  let _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
   let _showArch = false;
+  let _activeMode = 'maritimo';   // T3 (B.7): sub-solapa activa — split de TODO el panel por mot
+  // T3 (B.3): país → iso2 para banderas flagcdn (nombre_es de paises, T4.b);
+  // null hasta el primer load — sin mapa no hay bandera, jamás rompe.
+  let _paisMap = null;
 
   // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
@@ -81,6 +86,37 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
   function mkBadge(variant, txt){ return el('span', 'seg-bdg seg-bdg--' + variant, txt); }
 
+  // T3 (B.3): bandera flagcdn keyed por iso2 (paises.nombre_es → iso2, _paisMap).
+  // MISMO mecanismo que Detention/Schedule — NUNCA emoji (Windows los degrada al
+  // código crudo "BR", bug real del mail 17-07). createElement, sin innerHTML.
+  function segFlag(paisEs){
+    if(!_paisMap || !paisEs) return null;
+    const iso = _paisMap.get(String(paisEs).toUpperCase().trim());
+    if(!iso) return null;
+    const img = document.createElement('img');
+    img.src = 'https://flagcdn.com/16x12/' + String(iso).toLowerCase() + '.png';
+    img.width = 16; img.height = 12;
+    img.alt = paisEs; img.title = paisEs;
+    img.className = 'seg-flag';
+    img.loading = 'lazy';
+    return img;
+  }
+  async function ensurePaisMap(){
+    if(_paisMap) return;
+    const s = supa(); if(!s) return;
+    try {
+      // nombre_es Y nombre_en: pais_destino viene en ES ('Brasil') pero
+      // pais_destino_final puede venir en EN ('BRAZIL', del chain detention).
+      const { data, error } = await s.from('paises').select('iso2, nombre_es, nombre_en');
+      if(error || !data) return;   // sin mapa no hay banderas — degrade silencioso
+      _paisMap = new Map();
+      for(const p of data){
+        if(p.nombre_es) _paisMap.set(String(p.nombre_es).toUpperCase().trim(), p.iso2);
+        if(p.nombre_en) _paisMap.set(String(p.nombre_en).toUpperCase().trim(), p.iso2);
+      }
+    } catch(_){ /* degrade */ }
+  }
+
   // Molde stateMsg de Control BL — card de ERROR con botón Reintentar (≠ vacío silencioso).
   function stateMsg(icon, title, body, retry){
     const wrap = el('div','seg-state');
@@ -96,11 +132,27 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return wrap;
   }
 
+  // T3 (B.2): bucket TERRESTRE contra deadline_envio de la vista (inicia tránsito
+  // +1 día hábil, vie→lun — T3·1 ya aplicado). JAMÁS ssbSlaBucket acá: ese es
+  // ATD+4 corridos y lo comparte mailing (helpers.js NO se toca).
+  function terrBucket(r){
+    if(r.first_real_send_at) return null;                       // cumplida
+    const ini = r.inicia_transito ? String(r.inicia_transito).slice(0, 10) : null;
+    if(!ini) return 'espera';
+    const hoy = hoyBA();
+    if(ini > hoy) return 'futuro';
+    const dl = r.deadline_envio ? String(r.deadline_envio).slice(0, 10) : null;
+    if(!dl) return 'espera';
+    if(hoy > dl) return 'vencida';
+    if(hoy === dl) return 'porvencer';
+    return 'enfecha';
+  }
+
   // ── Derivados por fila (SIEMPRE en el front, nunca ::date server) ──
   function computeRow(r){
     return {
       archived: !!r.archivada_at,
-      bucket: ssbSlaBucket(r.atd, r.first_real_send_at),
+      bucket: r.mot === 'terrestre' ? terrBucket(r) : ssbSlaBucket(r.atd, r.first_real_send_at),
       alerts: Array.isArray(r.alertas) ? r.alertas : [],
     };
   }
@@ -178,7 +230,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
         return;
       }
       if(wrap && !_loaded) wrap.innerHTML = skelCardsHtml('Cargando seguimiento');
-      const { data, error } = await s.from('v_operacion_estado').select('*');
+      // T3 (B.3): mapa país→iso2 para banderas — en paralelo con la vista;
+      // si falla, degrade sin banderas (jamás bloquea la tabla).
+      const [{ data, error }] = await Promise.all([
+        s.from('v_operacion_estado').select('*'),
+        ensurePaisMap(),
+      ]);
       if(error){
         console.error('seguimiento:load', error);
         if(wrap){ wrap.textContent = ''; wrap.appendChild(stateMsg('#i-alert','No se pudo cargar', error.message || 'Error de consulta a la base.', () => window.loadSeguimiento())); }
@@ -226,18 +283,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     renderTriage();
     renderClean();
     renderTable();
-    updateBadge();
+    updateBadge();        // GLOBAL a propósito: el badge del rail suma AMBOS modos
+    updateDocLegend();    // T3: leyenda por sub-solapa activa
   }
 
   function renderTriage(){
     const box = $('seg-triage'); if(!box) return;
-    const active = computeAll().filter(x => !x.c.archived);
+    // T3 (B.7): el triage cuenta SOLO la sub-solapa activa — chips coherentes con
+    // la tabla visible (el badge del rail sigue siendo global, ver updateBadge).
+    const active = computeAll().filter(x => !x.c.archived && x.r.mot === _activeMode);
     const nVencidas  = active.filter(x => x.c.bucket === 'vencida').length;
     // "por vencer" (O3, John en el crudo: "no sé si tiene tanto sentido... le
     // cambiaría este filtro") deja de ser chip/filtro seleccionable — queda como
     // conteo informativo dentro del grupo de envío, ver mkGroup(info) abajo.
     const nPorVencer = active.filter(x => x.c.bucket === 'porvencer').length;
-    const nPendEnvio = active.filter(x => x.r.mot === 'maritimo' && !x.r.first_real_send_at).length;
+    const nPendEnvio = active.filter(x => !x.r.first_real_send_at).length;
     const nGi        = active.filter(x => x.c.alerts.includes('despacho_pendiente')).length;
     const nCo        = active.filter(x => x.c.alerts.includes('co_sin_definir')).length;
     const nRoleadas  = active.filter(x => x.c.alerts.includes('roleo_pendiente_bl')).length; // O4/item 14
@@ -282,7 +342,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
 
   function renderClean(){
     const box = $('seg-clean'); if(!box) return;
-    const active = computeAll().filter(x => !x.c.archived);
+    // T3 (B.7): mismo scope que el triage — la sub-solapa activa
+    const active = computeAll().filter(x => !x.c.archived && x.r.mot === _activeMode);
     const bad = active.filter(x => x.c.bucket === 'vencida' || x.c.bucket === 'porvencer' || x.c.alerts.includes('despacho_pendiente') || x.c.alerts.includes('co_sin_definir'));
     while(box.firstChild) box.removeChild(box.firstChild);
     if(bad.length){ box.style.display = 'none'; return; }
@@ -290,7 +351,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     box.appendChild(svgUse('#i-check'));
     box.appendChild(document.createTextNode(' Sin pendientes hoy'));
     const pending = active
-      .filter(x => x.r.mot === 'maritimo' && !x.r.first_real_send_at && x.r.deadline_envio)
+      .filter(x => !x.r.first_real_send_at && x.r.deadline_envio)
       .map(x => x.r)
       .sort((a, b) => a.deadline_envio < b.deadline_envio ? -1 : (a.deadline_envio > b.deadline_envio ? 1 : 0));
     if(pending.length){
@@ -301,7 +362,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   function syncFilterSelects(){
-    const map = { urgencia:'seg-f-urgencia', mot:'seg-f-mot', kind:'seg-f-kind', co:'seg-f-co', cliente:'seg-f-cliente', soldto:'seg-f-soldto' };
+    // T3: seg-f-mot murió con las sub-solapas (B.7)
+    const map = { urgencia:'seg-f-urgencia', kind:'seg-f-kind', co:'seg-f-co', cliente:'seg-f-cliente', soldto:'seg-f-soldto' };
     for(const k in map){ const s = $(map[k]); if(s && s.value !== _filters[k]) s.value = _filters[k]; }
   }
 
@@ -325,11 +387,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(fa === 'alertas'){ if(!(x.c.alerts.length > 0)) return false; }
     else if(fa === 'limpias'){ if(x.c.alerts.length > 0 || x.c.bucket === 'vencida') return false; }
     else if(fa === 'vencidas'){ if(x.c.bucket !== 'vencida') return false; }
-    else if(fa === 'pendenvio'){ if(!(x.r.mot === 'maritimo' && !x.r.first_real_send_at)) return false; }
+    else if(fa === 'pendenvio'){ if(x.r.first_real_send_at) return false; }
     else if(fa === 'gi'){ if(!x.c.alerts.includes('despacho_pendiente')) return false; }
     else if(fa === 'co'){ if(!x.c.alerts.includes('co_sin_definir')) return false; }
     else if(fa === 'roleo'){ if(!x.c.alerts.includes('roleo_pendiente_bl')) return false; } // item 14/O4
-    if(_filters.mot && x.r.mot !== _filters.mot) return false;
+    // T3 (B.7): la sub-solapa activa ES el filtro de transporte (reemplaza _filters.mot)
+    if((x.r.mot || 'maritimo') !== _activeMode) return false;
     if(_filters.kind && x.r.order_kind !== _filters.kind) return false;
     if(_filters.co && x.r.co_requerimiento !== _filters.co) return false;
     if(_filters.cliente && x.r.ship_to_name !== _filters.cliente) return false;
@@ -505,21 +568,40 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return td;
   }
 
+  // T3 (B.2): fechas terrestres anotadas con día de semana (el límite hábil
+  // vie→lun solo se entiende viendo el día) — date-only, cálculo UTC puro.
+  const DOW_AB = ['dom','lun','mar','mié','jue','vie','sáb'];
+  function fmtDMdow(iso){
+    if(!iso) return '—';
+    const s = String(iso).slice(0, 10);
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return '—';
+    const dow = DOW_AB[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+    return m[3] + '/' + m[2] + ' (' + dow + ')';
+  }
+
   function dlCell(r, c){
     const td = el('td','seg-dl');
-    if(r.mot === 'terrestre'){ td.appendChild(el('span','seg-faint','no aplica')); return td; }
+    const terr = r.mot === 'terrestre';
+    const fIni = terr ? fmtDMdow : fmtDM;                      // terrestre lleva día de semana
+    const ini = terr ? r.inicia_transito : r.atd;              // qué fecha "arranca el reloj"
     if(c.bucket === null){ td.appendChild(document.createTextNode('cumplida')); return td; }
-    if(!r.atd || c.bucket === 'espera'){ td.appendChild(el('span','seg-faint','esperando zarpe')); return td; }
-    td.appendChild(document.createTextNode(fmtDM(r.atd) + ' '));
+    if(!ini || c.bucket === 'espera'){
+      td.appendChild(el('span','seg-faint', terr ? 'esperando inicio de tránsito' : 'esperando zarpe'));
+      return td;
+    }
+    td.appendChild(document.createTextNode(fIni(ini) + ' '));
     td.appendChild(el('span','arr','→'));
     td.appendChild(document.createTextNode(' '));
     let label, variant;
-    if(c.bucket === 'vencida'){ label = 'venció ' + fmtDM(r.deadline_envio); variant = 'bad'; }
-    else if(c.bucket === 'porvencer'){ label = 'vence ' + fmtDM(r.deadline_envio); variant = 'warn'; }
-    else if(c.bucket === 'futuro'){ label = 'ATD futuro · revisar'; variant = 'warn'; }
-    else { label = 'límite ' + fmtDM(r.deadline_envio); variant = 'info'; } // enfecha
+    if(c.bucket === 'vencida'){ label = 'venció ' + fIni(r.deadline_envio); variant = 'bad'; }
+    else if(c.bucket === 'porvencer'){ label = 'vence ' + fIni(r.deadline_envio); variant = 'warn'; }
+    else if(c.bucket === 'futuro'){ label = terr ? 'inicio futuro · revisar' : 'ATD futuro · revisar'; variant = 'warn'; }
+    else { label = 'límite ' + fIni(r.deadline_envio); variant = 'info'; } // enfecha
     const b = mkBadge(variant, label);
-    b.title = 'ATD ' + fmtDM(r.atd) + ' · límite ' + fmtDM(r.deadline_envio) + ' (ATD+' + SLA_DAYS + ' corridos)';
+    b.title = terr
+      ? ('Inicia tránsito ' + fIni(ini) + ' · límite ' + fIni(r.deadline_envio) + ' (+1 día hábil; vie→lun)')
+      : ('ATD ' + fmtDM(r.atd) + ' · límite ' + fmtDM(r.deadline_envio) + ' (ATD+' + SLA_DAYS + ' corridos)');
     td.appendChild(b);
     return td;
   }
@@ -580,27 +662,43 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     tdOrden.appendChild(el('div','seg-kind', (r.order_kind || '—') + ' · ' + (r.mot || '—')));
     tr.appendChild(tdOrden);
 
-    // Cliente (item h) — ship_to como principal; sold_to (v3) como sub-línea SOLO
-    // si difiere; notify (v3) en el title. Degrade natural: undefined → nada extra.
-    const tdCli = el('td','seg-cliente');
+    // T3 (B.4): Ship-to y Sold-to como DOS columnas + triangulación resaltada
+    // (fila ámbar cuando difieren — mismo criterio string exacto preexistente).
+    const triang = !!(r.ship_to_name && r.sold_to_name && r.sold_to_name !== r.ship_to_name);
+    if(triang) tr.classList.add('seg-triang-row');
+    const tdShip = el('td','seg-cliente');
     if(r.ship_to_name){
-      tdCli.appendChild(document.createTextNode(r.ship_to_name));
-      if(r.sold_to_name && r.sold_to_name !== r.ship_to_name){
-        const sub = el('div', null, 'sold-to: ' + r.sold_to_name);
-        sub.style.fontSize = 'var(--fs-2xs)';
-        sub.style.color = 'var(--seg-ink-faint)';
-        tdCli.appendChild(sub);
+      tdShip.appendChild(document.createTextNode(r.ship_to_name));
+      if(triang){
+        const note = el('div','triang-note');
+        note.appendChild(svgUse('#i-alert'));
+        note.appendChild(document.createTextNode('triangulación'));
+        note.title = 'Ship-to ≠ Sold-to: la mercadería viaja a un destinatario distinto del comprador.';
+        tdShip.appendChild(note);
       }
-      if(r.notify_name) tdCli.title = 'Notify: ' + r.notify_name;
+      if(r.notify_name) tdShip.title = 'Notify: ' + r.notify_name;
     } else {
-      tdCli.appendChild(el('span','seg-faint','— sin asiento mailing'));
+      tdShip.appendChild(el('span','seg-faint','— sin asiento mailing'));
     }
-    tr.appendChild(tdCli);
+    tr.appendChild(tdShip);
+    const tdSold = el('td','seg-cliente');
+    tdSold.appendChild(r.sold_to_name ? document.createTextNode(r.sold_to_name) : el('span','seg-faint','—'));
+    tr.appendChild(tdSold);
 
+    // T3 (B.3): bandera flagcdn por país destino — AMBOS modos (murió el
+    // "— (terrestre)"); sin pod/país o sin match en paises → degrade sin bandera.
     const tdDest = el('td');
-    if(r.mot === 'terrestre'){ tdDest.appendChild(el('span','seg-faint','— (terrestre)')); }
-    else if(r.pod){ tdDest.appendChild(document.createTextNode(r.pod + ' ')); tdDest.appendChild(el('span','seg-faint','· ' + (r.pais_destino || '—'))); }
-    else { tdDest.appendChild(el('span','seg-faint','—')); }
+    const paisTxt = r.pais_destino_final || r.pais_destino;
+    const flag = segFlag(r.pais_destino_final) || segFlag(r.pais_destino);
+    if(flag) tdDest.appendChild(flag);
+    if(r.pod){
+      tdDest.appendChild(document.createTextNode(r.pod + ' '));
+      tdDest.appendChild(el('span','seg-faint','· ' + (paisTxt || '—')));
+    } else if(paisTxt){
+      tdDest.appendChild(document.createTextNode(paisTxt));
+    } else {
+      tdDest.appendChild(el('span','seg-faint','—'));
+    }
     tr.appendChild(tdDest);
 
     // GI (item 45): "GI pendiente de confirmación" reemplaza el término técnico
@@ -631,24 +729,99 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return tr;
   }
 
-  const COLS = [
+  // T3: COLS pasa a colsFor(mode) — split Ship-to/Sold-to (B.4) + label de plazo
+  // por modo (B.2). SLA_DAYS sigue consumido PELADO (regla asimetría — jamás window.).
+  const colsFor = (mode) => [
     { label:'Orden', sortKey:'orden' },
-    { label:'Cliente', sortKey:'cliente' },
+    { label:'Ship-to', sortKey:'cliente' },
+    { label:'Sold-to', sortKey:null },
     { label:'Destino', sortKey:null },
     { label:'Good Issue', sortKey:'gi', title:'Good Issue = despacho físico de planta (GI)' },
     { label:'Control BL', sortKey:null },
     { label:'Cert. Origen', sortKey:null },
     { label:'Docs', sortKey:null },
     { label:'Progreso', sortKey:null, title:'GI → Control → CO → Zarpe → Envío — verde = cumplido, gris = pendiente (no es error)' },
-    { label:'ATD → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
+    mode === 'terrestre'
+      ? { label:'Inicia tránsito → límite', sortKey:'dl', title:'Inicio de tránsito real → límite de envío (+1 día hábil; vie→lun)' }
+      : { label:'Zarpe (ATD) → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
     { label:'Envío', sortKey:null },
     { label:'Alertas', sortKey:null },
     { label:'Ir a', sortKey:null },
   ];
 
+  // T3 (B.7): sub-solapas Marítimo/Terrestre — inyección runtime idempotente
+  // (molde ensureSoldToFilterUI), arriba del tablewrap. Cambiar de modo NO pisa
+  // el resto de los filtros (a diferencia del select viejo, que se reseteaba).
+  function ensureModeSubtabs(){
+    let cont = $('seg-subtabs');
+    if(!cont){
+      const wrap = $('seg-tablewrap'); if(!wrap || !wrap.parentNode) return;
+      cont = el('div','seg-subtabs'); cont.id = 'seg-subtabs';
+      cont.setAttribute('role','group'); cont.setAttribute('aria-label','Transporte');
+      for(const [mode, icon, lbl] of [['maritimo','#i-ship','Marítimo'], ['terrestre','#i-truck','Terrestre']]){
+        const b = el('button','seg-subtab');
+        b.type = 'button'; b.dataset.mode = mode;
+        b.appendChild(svgUse(icon, 'ic ic-sm'));
+        b.appendChild(el('span', null, lbl));
+        b.appendChild(el('span','cnt','0'));
+        b.onclick = () => { if(_activeMode === mode) return; _activeMode = mode; renderAll(); };
+        cont.appendChild(b);
+      }
+      wrap.parentNode.insertBefore(cont, wrap);
+    }
+    const act = computeAll().filter(x => !x.c.archived);
+    cont.querySelectorAll('.seg-subtab').forEach(b => {
+      b.classList.toggle('is-on', b.dataset.mode === _activeMode);
+      const n = act.filter(x => (x.r.mot || 'maritimo') === b.dataset.mode).length;
+      const cnt = b.querySelector('.cnt'); if(cnt) cnt.textContent = String(n);
+    });
+  }
+
+  // T3 (B.6): exporta la vista VISIBLE (filtros + sub-solapa activa) — 1 hoja,
+  // 1:1 con las columnas de la tabla aplanadas a texto. XLSX es global CDN.
+  function exportVisibleXlsx(){
+    if(typeof XLSX === 'undefined'){ ssbToast('El módulo de Excel (XLSX) no cargó — recargá la página.', 'error'); return; }
+    const visible = sortRows(computeAll().filter(passesFilters));
+    if(!visible.length){ ssbToast('Nada para exportar con los filtros actuales.', 'info'); return; }
+    const terr = _activeMode === 'terrestre';
+    const rows = visible.map(({ r, c }) => ({
+      'Orden': r.order_number,
+      'Tipo': r.order_kind || '',
+      'Ship-to': r.ship_to_name || '',
+      'Sold-to': r.sold_to_name || '',
+      'Triangulación': (r.ship_to_name && r.sold_to_name && r.ship_to_name !== r.sold_to_name) ? 'sí' : '',
+      'Destino': [r.pod, r.pais_destino_final || r.pais_destino].filter(Boolean).join(' · '),
+      'Good Issue': r.despacho_at || '',
+      'Control BL': r.overall_result || '',
+      'Cert. Origen': r.co_estado === 'generado' ? 'generado' : (r.co_requerimiento || ''),
+      [terr ? 'Inicia tránsito' : 'Zarpe (ATD)']: (terr ? r.inicia_transito : r.atd) || '',
+      'Límite envío': r.deadline_envio || '',
+      'Estado plazo': c.bucket === null ? 'cumplida' : (c.bucket || ''),
+      'Envío real': r.first_real_send_at ? String(r.first_real_send_at).slice(0, 10) : '',
+      'Alertas': c.alerts.join(', '),
+      'Archivada': c.archived ? 'sí' : '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, terr ? 'Terrestre' : 'Marítimo');
+    XLSX.writeFile(wb, 'seguimiento_' + _activeMode + '_' + hoyBA() + '.xlsx');
+  }
+  function ensureExportBtn(){
+    if($('seg-xls-btn')) return;
+    const refresh = $('seg-refresh-btn'); if(!refresh || !refresh.parentNode) return;
+    const b = el('button','seg-btn seg-btn--xls');
+    b.type = 'button'; b.id = 'seg-xls-btn';
+    b.appendChild(svgUse('#i-file-spread'));
+    b.appendChild(document.createTextNode(' Exportar Excel'));
+    b.title = 'Exporta la vista visible (sub-solapa + filtros) a .xlsx';
+    b.onclick = exportVisibleXlsx;
+    refresh.parentNode.insertBefore(b, refresh.nextSibling);
+  }
+
   function renderTable(){
     const wrap = $('seg-tablewrap'); if(!wrap) return;
     syncFilterSelects();
+    ensureModeSubtabs();
     const all = computeAll();
     const visible = sortRows(all.filter(passesFilters));
     updateCount(all.length, visible.length);
@@ -658,6 +831,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       wrap.appendChild(stateMsg('#i-search','Sin operaciones','Todavía no hay filas en seguimiento_ordenes.', null));
       return;
     }
+    const COLS = colsFor(_activeMode);
     const table = el('table','seg-table');
     const thead = el('thead'); const trh = el('tr');
     for(const col of COLS){
@@ -967,7 +1141,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const legend = $('seg-legend'); if(!legend) return;
     while(legend.firstChild) legend.removeChild(legend.firstChild);
     legend.appendChild(el('b', null, 'Docs:'));
-    legend.appendChild(document.createTextNode(' BL Conocimiento de Embarque (según el último control) · FC Factura · PL Packing List (se verifica al enviar) · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · CRT doc. de exportación terrestre · COA futuro (ppal. trade) — '));
+    // T3 (B.7): leyenda por sub-solapa — el set documental difiere por modo.
+    legend.appendChild(document.createTextNode(_activeMode === 'terrestre'
+      ? ' FC Factura (satélites terrestres aún no integrados) · PL Packing List · CRT doc. de exportación terrestre (reemplaza al BL — el Control BL no aplica en este modo) — '
+      : ' BL Conocimiento de Embarque (según el último control) · FC Factura · PL Packing List · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · COA futuro (ppal. trade) — '));
     const ital = el('span', null, 'punteado = aún sin dato en el sistema');
     ital.style.fontStyle = 'italic';
     legend.appendChild(ital);
@@ -1030,18 +1207,20 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     $('seg-gi-open-btn')?.addEventListener('click', () => openGiModal(null));
     $('seg-arch-toggle')?.addEventListener('change', (e) => { _showArch = e.target.checked; renderAll(); });
 
-    for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-mot','mot'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente'],['seg-f-soldto','soldto']]){
+    // T3: seg-f-mot murió (sub-solapas B.7) — retirado del markup y del loop
+    for(const [id, key] of [['seg-f-urgencia','urgencia'],['seg-f-kind','kind'],['seg-f-co','co'],['seg-f-cliente','cliente'],['seg-f-soldto','soldto']]){
       $(id)?.addEventListener('change', (e) => { _filters[key] = e.target.value; renderAll(); });
     }
+    ensureExportBtn();   // T3 (B.6)
     // buscador de orden: input+debounce (NO change) — molde #mail-q. No se suma a
     // syncFilterSelects (solo <select>): re-escribir su .value en cada render podría
     // pisar lo que el usuario está tipeando si otro filtro dispara renderAll() antes
     // de que el debounce corra (lección "no tocar inputs con focus en re-renders").
     $('seg-f-q')?.addEventListener('input', debounce((e) => { _filters.q = e.target.value; renderAll(); }, 250));
     $('seg-clear')?.addEventListener('click', () => {
-      _filters = { urgencia:'', mot:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
+      _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
       const qEl = $('seg-f-q'); if(qEl) qEl.value = '';
-      renderAll();
+      renderAll();   // la sub-solapa activa NO se resetea — es navegación, no filtro
     });
 
     // Modal
