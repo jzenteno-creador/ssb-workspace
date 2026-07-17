@@ -1144,7 +1144,7 @@
     actualizada:   ['ok',   'ATD confirmado'],
     pisada:        ['warn', 'pisada (tenía otro ATD)'],
     sin_cambio:    ['mut',  'sin cambio (ya tenía ese ATD)'],
-    no_encontrada: ['err',  'no asentada por el Control BL'],
+    no_encontrada: ['err',  'sin fila en Mailing — la orden no pasó por el Control BL (reprocesar el BL la asienta)'],
     conflicto:     ['err',  'fechas contradictorias'],
     invalida:      ['err',  'rechazada por el server'],
     error:         ['err',  'falló la escritura'],
@@ -1186,9 +1186,9 @@
       // Pre-check LOCAL (el server valida de nuevo al confirmar)
       for(const r of p.listas){
         const known = _orders.find(o => o.order_number === r.orden);
-        const estado = !known ? ['warn', 'no está en la lista cargada — el server decide']
+        const estado = !known ? ['warn', 'sin fila en Mailing — la orden no pasó por el Control BL (el server la va a omitir; no es un error del pegado)']
           : known.atd && known.atd !== r.atd ? ['warn', 'ya tiene ATD ' + fmtD(known.atd) + ' → se pisaría con ' + fmtD(r.atd)]
-          : known.atd === r.atd ? ['mut', 'ya tiene exactamente este ATD']
+          : known.atd === r.atd ? ['mut', 'ya tiene exactamente este ATD — sin cambios']
           : ['ok', 'lista para confirmar'];
         rowT(r.orden, fmtD(r.atd), estado[0], estado[1]);
       }
@@ -1350,8 +1350,13 @@
       // por PK antes de rendirse (mismo espíritu que el fallback de búsqueda de
       // control-bl, adaptado — Mailing no tiene un modo de búsqueda genérico).
       if(typeof _po === 'string' && /^\d{7,12}$/.test(_po)){
+        // G.1: llegar desde una orden deja la lista FILTRADA a esa orden (patrón
+        // control-bl), no solo seleccionada — limpiar el buscador restaura la lista
+        const qi = $('mail-q');
+        if(qi) qi.value = _po;
+        _q = _po;
         if(_orders.some(r => r.order_number === _po)){
-          selectOrder(_po);
+          selectOrder(_po); // selectOrder re-renderiza el master ya filtrado
         } else {
           const s = supa();
           let found = null;
@@ -1361,8 +1366,14 @@
               if(!error && data) found = data;
             } catch(e){ console.error('[mailing] deep-link fetch:', e.message); }
           }
-          if(found){ _orders = [found, ..._orders]; renderMaster(); selectOrder(_po); }
-          else ssbToast('La orden ' + _po + ' no está asentada en Mailing todavía.', 'warning');
+          if(found){ _orders = [found, ..._orders]; selectOrder(_po); }
+          else {
+            // sin fila en Mailing: no dejar al usuario varado en una lista vacía filtrada
+            if(qi) qi.value = '';
+            _q = '';
+            renderMaster();
+            ssbToast('La orden ' + _po + ' no está asentada en Mailing todavía.', 'warning');
+          }
         }
       }
     } finally { _loading = false; }

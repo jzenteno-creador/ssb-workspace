@@ -103,7 +103,7 @@ async function handleConfirmAtd(res, body, userEmail, supaUrl, supaKey) {
   const nowIso = new Date().toISOString();
   const patches = aEscribir.map(async ([order, atd]) => {
     if (!existentes.has(order))
-      return { order_number: order, status: 'no_encontrada', detail: 'no asentada por el Control BL' };
+      return { order_number: order, status: 'no_encontrada', detail: 'sin fila en Mailing — la orden no pasó por el Control BL' };
     const old = existentes.get(order);
     if (old === atd) return { order_number: order, status: 'sin_cambio', atd };
     try {
@@ -268,7 +268,7 @@ async function handleInformarRoleo(res, body, userEmail, supaUrl, supaKey) {
     } catch (e) {
       return { order_number: order, status: 'error', detalle: 'no se pudo leer la orden: ' + e.message };
     }
-    if (!row) return { order_number: order, status: 'no_encontrada', detalle: 'no asentada en mailing_orders' };
+    if (!row) return { order_number: order, status: 'no_encontrada', detalle: 'sin fila en Mailing — no pasó por el Control BL' };
 
     let toVessel = toVesselIn;
     let toEtd = toEtdIn;
