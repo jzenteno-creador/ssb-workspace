@@ -420,7 +420,10 @@
     item('Booking', _row.booking_no);
     item('BL', _row.bl_number);
     item('Buque / Viaje', [_row.vessel, _row.voyage].filter(Boolean).join(' '));
-    item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → '));
+    // R2-3b: país junto al puerto destino (confirmación visual — pais_destino
+    // del resolver, resuelto por la vertebral puerto→país)
+    item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → ')
+      + ((_preview && _preview.pais_destino) ? ' · ' + _preview.pais_destino : ''));
     item('Factura', _row.invoice_no);
     item('Zarpe (ATD)', _row.atd ? fmtD(_row.atd) : '— sin confirmar');
     dl.style.marginTop = '12px';
@@ -522,10 +525,23 @@
     const notifyKey = notifyObj ? notifyObj.key : (_row.notify_key != null ? _row.notify_key : undefined);
     const dims = el('dl','mail-meta-grid');
     dims.style.marginBottom = '10px';
-    const dimItem = (k, v) => { const w = el('div'); w.appendChild(el('dt', null, k)); w.appendChild(el('dd', null, v || '—')); dims.appendChild(w); };
-    dimItem('Ship-to', _row.ship_to_name);
-    dimItem('Sold-to', _row.sold_to_name);
-    dimItem('Notify', notifyName || (notifyKey === '' ? 'sin notify especial (comodín)' : (notifyKey === undefined ? '— (pendiente del workflow)' : '—')));
+    // R2-3a: dirección completa por parte (fuente dura = Booking Advice, vía
+    // party_dirs del resolver) — sub-línea bajo cada nombre; sin dato, nada.
+    const pdirs = (_preview && _preview.party_dirs && typeof _preview.party_dirs === 'object') ? _preview.party_dirs : {};
+    const dimItem = (k, v, dir) => {
+      const w = el('div'); w.appendChild(el('dt', null, k));
+      const dd = el('dd', null, v || '—');
+      if(dir){
+        const sub = el('div', null, dir);
+        sub.style.cssText = 'font-size:11px;color:var(--mail-ink-faint,#6b7488);font-weight:400;margin-top:2px;line-height:1.4';
+        sub.title = 'Domicilio según Booking Advice (fuente confirmatoria)';
+        dd.appendChild(sub);
+      }
+      w.appendChild(dd); dims.appendChild(w);
+    };
+    dimItem('Ship-to', _row.ship_to_name, pdirs.ship_to);
+    dimItem('Sold-to', _row.sold_to_name, pdirs.sold_to);
+    dimItem('Notify', notifyName || (notifyKey === '' ? 'sin notify especial (comodín)' : (notifyKey === undefined ? '— (pendiente del workflow)' : '—')), pdirs.notify);
     c.appendChild(dims);
 
     const status = el('p','mail-status-line');

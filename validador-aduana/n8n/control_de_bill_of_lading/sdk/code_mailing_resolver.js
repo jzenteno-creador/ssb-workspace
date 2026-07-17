@@ -593,6 +593,14 @@ const response = {
   control_fcpe,
   // R2·D (aditivo): idioma resuelto del mail — el front puede mostrarlo
   mail_lang: MAIL_LANG,
+  // R2-3a/3b (aditivos): direcciones del BA por parte + país del POD — el
+  // front las muestra en destinatarios y junto al puerto (confirmación visual)
+  party_dirs: {
+    ship_to: pick(ce.consignee && ce.consignee.address),
+    sold_to: pick(ce.sold_to && ce.sold_to.address),
+    notify: pick(ce.notify && ce.notify.address),
+  },
+  pais_destino,
   // ---- PLANCOMPLETO B: señales nuevas para el front ----
   notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
   control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOCKUP · Seguimiento TERRESTRE — fase 2, mismo patrón con diferencias del modo · ssb-workspace</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface2:#161e2b; --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.16); --ink:#e2e8f0; --ink-soft:#94a3b8; --ink-faint:#6b7488;
+    --blue:#5b9bf5; --blue-bg:#1d2742; --green:#34d399; --green-bg:rgba(52,211,153,.12);
+    --amber:#f5a623; --red:#f87171; --red-bg:rgba(248,113,113,.12);
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace; --font:-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5}
+  .note-banner{background:#3b2f14;border-bottom:1px solid #8a6d00;color:#ffd970;padding:9px 18px;font-size:12.5px}
+  .layout{display:flex;min-height:100vh}
+  .rail{width:225px;flex:none;background:#0b1120;border-right:1px solid var(--line);padding:14px 10px}
+  .rail h4{font-size:10px;letter-spacing:2px;color:var(--ink-faint);margin:12px 8px 6px}
+  .ritem{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;color:var(--ink-soft);font-size:13px}
+  .ritem svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ritem.on{background:var(--blue-bg);color:var(--blue);font-weight:600}
+  .ritem .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 7px}
+  .main{flex:1;min-width:0;padding:20px 22px}
+  h1{font-size:23px;letter-spacing:-.02em}
+  .sub{color:var(--ink-soft);font-size:12.5px;margin:2px 0 14px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:9px;padding:8px 14px;cursor:pointer}
+  .btn--primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn--xls{color:var(--green);border-color:rgba(52,211,153,.4)}
+  .dif{outline:2px dashed var(--amber);outline-offset:3px;border-radius:4px;padding:0 2px}
+  .tablewrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  table.main-t{border-collapse:collapse;width:100%;min-width:1100px;font-size:13px}
+  .main-t th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);padding:10px 11px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+  .main-t th.hl{color:var(--amber)}
+  .main-t td{padding:10px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  .mono{font-family:var(--mono)} .faint{color:var(--ink-faint)}
+  .kind{font-size:10px;color:var(--ink-faint);letter-spacing:.4px}
+  .bdg{display:inline-block;font-size:11px;font-weight:700;border-radius:7px;padding:2px 9px;border:1px solid transparent;white-space:nowrap}
+  .bdg--ok{background:var(--green-bg);color:var(--green);border-color:rgba(52,211,153,.35)}
+  .bdg--warn{background:rgba(245,166,35,.10);color:var(--amber);border-color:rgba(245,166,35,.4)}
+  .bdg--bad{background:var(--red-bg);color:var(--red);border-color:rgba(248,113,113,.4)}
+  .bdg--mut{background:rgba(255,255,255,.05);color:var(--ink-soft);border-color:var(--line-strong)}
+  .flagimg{vertical-align:middle;margin-right:5px;border-radius:2px}
+  .chev{width:26px;height:26px;border-radius:7px;border:1px solid var(--line-strong);background:transparent;color:var(--ink-soft);cursor:pointer;font-size:12px;line-height:1}
+  tr.open .chev{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  tr.detail-row>td{background:var(--surface2);padding:0;border-bottom:1px solid var(--line-strong)}
+  tr.detail-row.hide{display:none}
+  .detail{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px 18px}
+  .detail .dcard--docs{grid-column:1 / -1}
+  @media (min-width:1500px){ .detail{grid-template-columns:1.1fr 1fr 1fr} .detail .dcard--docs{grid-column:auto} }
+  @media (max-width:1100px){ .detail{grid-template-columns:1fr} }
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .dcard h5{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:1.4px;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .dcard h5 .src{margin-left:auto;font-size:9px;color:var(--ink-faint);text-transform:none;font-weight:400}
+  .dcard table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:0}
+  .dcard th{text-align:left;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);padding:7px 12px;border-bottom:1px solid var(--line)}
+  .dcard td{padding:7px 12px;border-bottom:1px solid var(--line)}
+  .dcard tr:last-child td{border-bottom:0}
+  .origen-ok{color:var(--green);font-weight:700}
+  .dfoot{padding:8px 14px;font-size:11px;color:var(--ink-faint);border-top:1px solid var(--line)}
+  .notes{margin:24px 0 60px;background:var(--surface2);border:1px solid var(--line-strong);border-radius:12px;padding:15px 20px;max-width:1200px}
+  .notes h3{font-size:14px;margin-bottom:8px}
+  .notes li{margin:6px 0 6px 18px;font-size:12.5px;color:var(--ink-soft)}
+  .notes b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="note-banner"><b>MOCKUP TERRESTRE — GO GATE · FASE 2.</b> Mismo patrón que el marítimo YA EN PROD, con las <b>diferencias del transporte terrestre</b> marcadas en punteado ámbar. Las diferencias son donde se puede errar — revisalas una por una. Nada toca prod hasta tu OK.</div>
+<div class="layout">
+  <nav class="rail">
+    <h4>DOCUMENTACIÓN</h4>
+    <div class="ritem"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Control BL</div>
+    <div class="ritem"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>Mailing</div>
+    <div class="ritem"><svg viewBox="0 0 24 24"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0"/><path d="M4 18l-1-5h18l-1 5"/><path d="M12 13V7l7 4"/></svg>Seguimiento Marítimo<span class="badge">7</span></div>
+    <div class="ritem on"><svg viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>Seguimiento Terrestre<span class="badge">2</span></div>
+    <div class="ritem"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5"/></svg>Cert. Origen</div>
+  </nav>
+
+  <main class="main">
+    <h1>Seguimiento Terrestre</h1>
+    <p class="sub">Torre de control de las órdenes terrestres (camión). Mismo patrón que el marítimo — con las diferencias del modo: <b class="dif">inicia tránsito</b> en vez de zarpe, <b class="dif">CRT</b> en vez de BL, <b class="dif">sin Control BL</b>.</p>
+    <div class="toolbar">
+      <button class="btn">☑ ver archivadas</button>
+      <button class="btn">⟳ Actualizar</button>
+      <button class="btn btn--xls">▤ Exportar Excel</button>
+      <button class="btn btn--primary">+ Despacho de planta</button>
+      <span class="faint" style="font-size:11px">el alta acá nace TERRESTRE (sin selector — igual que marítimo nace marítimo)</span>
+    </div>
+
+    <div class="tablewrap">
+      <table class="main-t">
+        <thead><tr>
+          <th></th><th>Orden</th><th>Ship-to</th><th>Sold-to</th><th>Destino</th><th>Despacho planta</th><th>Docs</th><th class="hl"><span class="dif">Inicia tránsito → límite</span></th><th>Envío</th><th>Alertas</th><th>Ir a</th>
+        </tr></thead>
+        <tbody>
+          <!-- fila ABIERTA -->
+          <tr class="open">
+            <td><button class="chev" onclick="tg(this)">▾</button></td>
+            <td><div class="mono"><b>4010671114</b></div><div class="kind">STO</div></td>
+            <td>DOW BRASIL SUDESTE</td><td class="faint">DOW BRASIL SUDESTE</td>
+            <td><img class="flagimg" src="https://flagcdn.com/16x12/br.png" width="16" height="12" alt="Brasil">GUARUJÁ <span class="faint">· Brasil</span></td>
+            <td>15/07</td>
+            <td><span class="bdg bdg--warn">2/3</span></td>
+            <td>15/07 (mié) → <span class="bdg bdg--warn">límite 16/07 (jue)</span></td>
+            <td><span class="bdg bdg--mut">pendiente</span></td>
+            <td><span class="faint">✓ ok · seguimiento manual</span></td>
+            <td class="faint">✉</td>
+          </tr>
+          <tr class="detail-row"><td colspan="11">
+            <div class="detail">
+              <div class="dcard"><h5>▦ PRODUCTO — FACTURA<span class="src">orden_productos — MISMA fuente que marítimo (es de la factura, no del modo)</span></h5>
+                <table><thead><tr><th>Ítem</th><th>GMID</th><th>Producto</th><th>Cantidad</th><th>Origen</th></tr></thead>
+                <tbody><tr><td class="mono">1</td><td class="mono">411099</td><td>ELITE™ 5400G Enhanced PE Resin</td><td>27.000 kg <span class="faint">· 1.080 bolsas</span></td><td><span class="origen-ok">🇦🇷 ARGENTINA</span></td></tr></tbody></table>
+              </div>
+              <div class="dcard"><h5>▣ <span class="dif">TRANSPORTE — CRT / MIC</span><span class="src">reemplaza a CONTENEDORES: acá no hay BL ni control</span></h5>
+                <table><thead><tr><th>Documento</th><th>Nº / archivo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr><td>CRT (Carta de Porte)</td><td class="mono faint">AR722-0042231_4010671114_CRT.pdf ⎘</td><td><span class="bdg bdg--ok">capturado en Drive</span></td></tr>
+                  <tr><td>MIC/DTA</td><td class="mono faint">—</td><td><span class="bdg bdg--mut">sin dato</span></td></tr>
+                </tbody></table>
+                <div class="dfoot">nº y archivo del clasificador (OCR ya lo nombra) · el CONTROL sobre el CRT es fase futura — acá solo captura/presencia</div>
+              </div>
+              <div class="dcard dcard--docs"><h5>▤ DOCUMENTOS PARA EL ENVÍO<span style="margin-left:8px" class="bdg bdg--mut"><span class="dif">sin Control BL — no aplica en terrestre</span></span><span class="src">documentos_orden</span></h5>
+                <table><thead><tr><th>Documento</th><th>Presencia</th><th>Archivo</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="dif">CRT (Carta de Porte)</span> <span class="faint">— reemplaza al BL</span></td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">AR722-0042231_4010671114_CRT.pdf ⎘</td></tr>
+                  <tr><td>FC (Factura Comercial)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">58900_4010671114_FC.pdf ⎘</td></tr>
+                  <tr><td>PL (Packing List)</td><td><span class="bdg bdg--bad">falta</span></td><td class="faint">—</td></tr>
+                  <tr><td>CO (Cert. de Origen)</td><td><span class="bdg bdg--mut">según regla</span></td><td class="faint">origen AR → requiere, salvo excepción (regla ya viva)</td></tr>
+                  <tr><td class="faint">PE (Permiso de Exportación)</td><td><span class="bdg bdg--mut">no aplica</span></td><td class="faint">orden STO — el PE es solo trade (misma regla que marítimo)</td></tr>
+                </tbody></table>
+                <div class="dfoot">badge de la tabla = n/m sobre CRT + FC + PL (+CO si la regla lo pide) · sin estado de Control BL: el encabezado lo dice explícito</div>
+              </div>
+            </div>
+          </td></tr>
+
+          <!-- fila cerrada -->
+          <tr>
+            <td><button class="chev" onclick="tg(this)">▸</button></td>
+            <td><div class="mono"><b>4010685221</b></div><div class="kind">STO</div></td>
+            <td>DOW QUIMICA CHILE</td><td class="faint">DOW QUIMICA CHILE</td>
+            <td><img class="flagimg" src="https://flagcdn.com/16x12/cl.png" width="16" height="12" alt="Chile">SANTIAGO <span class="faint">· Chile</span></td>
+            <td>17/07</td>
+            <td><span class="bdg bdg--warn">1/3</span></td>
+            <td>17/07 (vie) → <span class="bdg bdg--info" style="background:var(--blue-bg);color:var(--blue);border-color:rgba(91,155,245,.4)">límite 20/07 (lun)</span></td>
+            <td><span class="bdg bdg--mut">pendiente</span></td>
+            <td><span class="bdg bdg--warn">GI pend. conf.</span></td>
+            <td class="faint">✉</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="notes">
+      <h3>Notas para John — las DIFERENCIAS vs marítimo (lo demás es el mismo patrón ya aprobado)</h3>
+      <li><b>1 · Columna de fecha:</b> <b>"Inicia tránsito → límite"</b> (el camión sale de planta = mismo día) con día de semana anotado y límite +1 día hábil (vie→lun) — lógica de T3 ya viva. NO hay "Zarpe (ATD)".</li>
+      <li><b>2 · Sin Control BL:</b> ni columna en la tabla ni estado en el desplegable — el encabezado de documentos lo dice explícito ("no aplica en terrestre"). El control sobre el CRT queda a futuro (registrado).</li>
+      <li><b>3 · Desplegable — sección TRANSPORTE (CRT/MIC):</b> reemplaza a CONTENEDORES. Muestra el CRT capturado (nº + archivo del clasificador, que ya lo nombra por OCR) y el MIC si está. Solo captura/presencia — sin cruce.</li>
+      <li><b>4 · Documentos para el envío:</b> <b>CRT en lugar de BL</b> · FC · PL · CO según la regla de origen (ya viva) · PE marcado "no aplica" para STO (la mayoría del terrestre). El badge n/m de la tabla cuenta CRT+FC+PL (+CO si aplica).</li>
+      <li><b>5 · PRODUCTO:</b> idéntico a marítimo — la fuente es la factura, no el modo.</li>
+      <li><b>6 · Despacho de planta:</b> el alta acá nace TERRESTRE (sin selector), simétrico al marítimo.</li>
+      <li><b>7 · Columnas:</b> sin Cert. Origen / Progreso (mismo criterio aprobado en marítimo). Sin columna Control BL (dif. del modo). ¿Algo más que quieras distinto acá?</li>
+    </div>
+  </main>
+</div>
+<script>
+  function tg(btn){
+    const tr = btn.closest('tr');
+    const det = tr.nextElementSibling;
+    const open = det.classList.contains('hide');
+    det.classList.toggle('hide', !open);
+    tr.classList.toggle('open', open);
+    btn.textContent = open ? '▾' : '▸';
+  }
+</script>
+</body>
+</html>

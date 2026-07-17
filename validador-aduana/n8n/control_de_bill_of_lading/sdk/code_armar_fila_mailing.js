@@ -103,9 +103,11 @@ const row = {
   incoterm: pick(ba.incoterm, fc.incoterm),
   freight_term: pick((bl.freight || {}).ocean_freight_kind),
   contacts_extracted: {
-    consignee: { name: pick(consignee.name), tax_id: pick(consignee.tax_id) },
-    sold_to: { name: pick(sold.name) },
-    notify: { name: pick(notify.name), email: cleanOne(notify.email) },
+    // R2-3a (2026-07-17): la DIRECCIÓN ya venía extraída del BA (address_str del
+    // parser Booking) — ahora VIAJA al asiento (fuente dura confirmatoria, John).
+    consignee: { name: pick(consignee.name), tax_id: pick(consignee.tax_id), address: pick(consignee.address_str) },
+    sold_to: { name: pick(sold.name), address: pick(sold.address_str) },
+    notify: { name: pick(notify.name), email: cleanOne(notify.email), address: pick(notify.address_str) },
     document_recip: { name: pick(docR.name), email: cleanOne(docR.email) },
     shipping_recip: { name: pick(shipR.name), email: cleanOne(shipR.email) },
     partner_emails: cleanEmails(ba.partner_emails),
