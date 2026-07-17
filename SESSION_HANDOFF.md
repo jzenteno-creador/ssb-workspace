@@ -1,45 +1,41 @@
-# Handoff de sesión — 2026-07-16 (2ª sesión) · ssb-workspace · PLAN PEDIDOS CERRADO PARA IMPLEMENTAR
+# Handoff de sesión — 2026-07-17 (CIERRE FINAL) · ssb-workspace · PLAN PEDIDOS CERRADO — TODO VERIFICADO
 
-## Resumen
+## HECHO
 
-Sesión arrancada como "status de Claude" durante el incidente 529 de Anthropic: la sesión original del plan quedó trabada reintentando, se rescataron sus 2 prompts del transcript local (`~/.claude/projects/.../5e8eeb91….jsonl`) y se continuó acá con ultracode. Se cerró el ciclo completo del plan de pedidos en 3 rondas: refinamiento (master plan 9 tandas + propuesta vertebral + mockup grafo), QC de John (E.1 + 3 inconsistencias), y cierre (G.2 cerradas + T4 expandida con tablas de referencia). **El plan queda CERRADO: 18 ítems, 9 tandas, CERO decisiones abiertas. 3 commits en `feat/plan1-bl-nunca-silencioso`, SIN push. Prod intacta (cero DDL, cero PUT).**
+- **R2·J Seguimiento TERRESTRE en prod** (merge `f228f5a`): columna "Inicia tránsito → límite" (+1 hábil), desplegable con TRANSPORTE — CRT/MIC (archivos reales del clasificador) y DOCUMENTOS con CRT en lugar de BL, badge "sin Control BL — no aplica en terrestre", PE "no aplica — orden STO". Smoke headless 20/20.
+- **Banderita país destino en Mailing** (mismo merge): "· Brasil" texto → IMG flagcdn junto a POL→POD (`ensurePaisMapM()`, alt=nombre del país, degrade a texto).
+- **SMOKES DE JOHN — TODOS APROBADOS 17-07**: banderita (mail real CON banderas + web) · Seguimiento Terrestre · B.1 alta por lote (T1·2) · G.1 filtro Mailing (T1·4) · Admin CO guardado (T8·3). Asentado en MD + changelog como VERIFICADO POR JOHN.
+- Harness PUT T5 Gmail→Drive versionado · PINS del MD corregidos (estaban stale) · handoff previo enviado por webhook.
 
-## Cambios realizados
+## DECISIONES
 
-- `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (`f89478f`,`36b9ef2`,`e6c849b`): MD canónico completo — decisiones cerradas (B.7, A.2, B.2, D.2, E.1=solo CO, G.2×3), +D.4 (OCR key demo), +G.2 (guide mail), +H.1 (grafo), master plan tandas 0–8, CONTROL DE CAMBIOS (tabla fecha+motivo), SEGURIDAD con 2 PATs a revocar, A.1/D.1 marcados RESUELTOS.
-- `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (`f89478f`,`e6c849b`): propuesta de esquema T4, **NO aplicada**. Parte A: promover `seguimiento_ordenes` como vertebral (FKs NOT VALID→VALIDATE + trigger ensure-parent — cero PUTs n8n). Parte B: referencia (`paises`+alias nuevas, seed navieras, FKs+triggers resolutores en `detention_freetime` y `mailing_orders`). DDL + rollback escritos para ambas partes.
-- `docs/mockups/grafo-enriquecido-mockup.html` (`f89478f`,`e6c849b`): mockup H.1 — Cytoscape 3.30.2 (misma lib/SRI que la app), schema real embebido, modos «Schema HOY»/«Propuesta T4» (incluye Parte B), smoke headless verde.
-- `docs/context/SSB Shipping Docs Email (produccion).html` (`f89478f`): guide de John para G.2, versionado.
-- Memoria: `plan-pedidos-2026-07-16.md` actualizada (estado cerrado + GOs pendientes).
+- **TEST_MODE del mailing FUERA del tracking de pendientes**: sigue ON; el flip a real es acción operativa EXCLUSIVA de John cuando dé por terminado el producto. Los PUTs siguen asserteándolo `true`. (Nota reescrita en ARRASTRES del MD; T6·5 ya no es un STOP abierto.)
+- **P·2 cerrado**: el "PAT GitHub claude-code-golive" no existía como PAT — nada que revocar. P·3 pasa a "CONFIRMAR que el PAT de Supabase quedó revocado".
+- **T3·4 obsoleto**: la UI de sub-solapas fue reemplazada por los dos ítems del rail (R2·F/R2·J); su contenido quedó cubierto por los smokes aprobados.
+- **PS·1 registrado como PRIMER ítem de la próxima sesión (NO ejecutado)**: nombre del cliente en el CUERPO del mail — a quién se VENDE (Sold-to), a quién se ENVÍA (Ship-to) y el Notify; hoy el nombre va solo en el ASUNTO. Es PUT Iron Law al resolver del mailing; los 3 nombres + `party_dirs` (R2·I) ya viajan en la fila — es solo template.
 
-## Decisiones tomadas
+## HALLAZGOS
 
-- **Scope base "mínima-plus" (Fable, delegado por John):** `seguimiento_ordenes` ES la vertebral (censo vivo: superset estricto, 0 huérfanos en todas las satélites; data limpia). NO tabla `ordenes` nueva; NO retrofit de `operaciones`/`contenedores` (universo legacy DISJUNTO — 18 po del 2026-04-01, validador; se difiere al proyecto multi-tenancy).
-- **Ensure-parent por TRIGGER en DB, no por nodos n8n:** cubre todos los writers sin PUTs; filas auto-creadas marcadas `alta_source='auto:<tabla>'` (visible ≠ silencioso).
-- **Referencia por dimensión, NO por orden (matiz de John):** detention no cuelga del order_number; la orden resuelve `→ (naviera_id, pod_puerto_id) → puerto.pais_iso → detention_freetime`. Todo aditivo: solapa Detention y `upload_detention.py` intactos.
-- **Regla zonas-hub (Fable, §12 del doc):** ante múltiples filas de freetime por país (China/MY/SA/SG/AE), preferir la sin sufijo de hub; mapeo puerto→zona = refinamiento futuro. Tráfico real LATAM sin ambigüedad.
-- **G.2 (John):** ETD y ATD ambos en el template (según disponibilidad) · `shipment_no` = Shipment de la terna SAP Order/Delivery/Shipment · saludo genérico "Estimados," + empresa destinataria en el ASUNTO.
-- **E.1 (John):** solo config de CO; `mot` override / contactos navieras / toggle TEST_MODE = candidatos futuros post-base estable.
+- `v_operacion_estado` NO es legible por anon (42501) → smokes headless de Seguimiento SIEMPRE con route-intercept de PostgREST y fixtures (receta `scratchpad/smoke_r2j_flag.cjs`, fixture base `vop_row.json`).
+- Los PINS del MD se desactualizan si los PUTs no los tocan — corregidos y asentados.
 
-## Estado actual
+## ESTADO
 
-- Plan canónico con trazabilidad completa (changelog) y sin `[DECISIÓN]` abiertas — listo para implementar por tanda.
-- Mockup del grafo servido en `http://localhost:8899/docs/mockups/grafo-enriquecido-mockup.html` (server de gates puede estar caído en sesión nueva → re-levantar `python3 -m http.server 8899 --bind 127.0.0.1`).
-- Branch `feat/plan1-bl-nunca-silencioso` = `e6c849b` (3 commits nuevos sin push; John decide push/merge).
+- **CÓDIGO: NADA pendiente de las tandas** — T0–T8 + R2 completas, en prod (`ssb-workspace.vercel.app` = master `f228f5a`) y verificadas por John.
+- **Pins n8n vivos**: CBL `WVt6gvghL2nFVbt6` = `9f69b166` (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = `943bbc15` (36 nodos, TEST_MODE ON) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = `b8d997d6`.
+- **PENDIENTE DE JOHN (no-código)**: P·7 credencial OCR (→ mini-PUT cierra D.4) · confirmar PAT de Supabase revocado · contactos/textos Maersk y Hapag (bloque del mail) · N30 regla To/CC · 15 REVISAR FC-PE (operativo, familia CIP) · partner_emails 4010671114.
+- **FUTURO REGISTRADO (no ejecutar)**: **PS·1 nombre del cliente en cuerpo del mail (próxima sesión)** · R2·H control CO vs Factura (Chile ≠ Mercosur, patrón D.3) · "aprobado" por documento · control del CRT (contenido) · candidatos E.1 (mot override, contactos navieras, toggle TEST_MODE) · N26 roleo · N11 Drive→Matrix.
+- **Deuda menor de código nunca agendada** (sección SEGURIDAD del MD, no urgente): revoke grants vacaciones · `console.log('[TT]')` en tt-dow · P·4 tipado navieras/forwarders.
 
-## Próximos pasos
+## PRÓXIMO PASO
 
-1. **John — 3 GOs:** (a) visual del mockup del grafo → recién ahí se implementa H.1 en la app; (b) esquema T4 Parte A/B (junto o separado) → recién ahí DDL en prod; (c) tanda 0 (backfill C.2 + B.1).
-2. **Próxima sesión = IMPLEMENTACIÓN por tanda** (orden sugerido: 0 → 1 → …; T4 puede adelantarse, no depende de 1–3). Entrar por memoria `plan-pedidos-2026-07-16` + MD canónico.
-3. **John — revocar los DOS PATs** (GitHub `claude-code-golive` + Supabase `~/.supabase/access-token`) — siguen vivos.
-4. Push/merge de la rama cuando John lo decida.
+1. **Próxima sesión entra por PS·1** (nombre del cliente en el cuerpo del mail): leer memoria `plan-pedidos-2026-07-16` + sección PRÓXIMA SESIÓN del MD canónico → PUT Iron Law al mailing (pin pre `943bbc15`, assert TEST_MODE true).
+2. Cuando John entregue la credencial OCR (P·7): mini-PUT al Gmail→Drive para cablear el nodo (cierra D.4).
+3. E2E del clasificador con la próxima factura real: llega solo — solo verificar `orden_productos` cuando entre un mail con factura.
 
 ## Contexto no obvio
 
-- **Rescate de sesiones trabadas por 529:** los prompts quedan grabados en `~/.claude/projects/<proyecto>/<uuid>.jsonl` al submit — se extraen con python y se continúa en otra sesión sin perder nada. La sesión trabada era `5e8eeb91` (John la cerró).
-- **Canal de censo local a Supabase:** `.env` del repo (`SUPABASE_DB_PASSWORD` = service_role JWT, nombre legacy) + `curl POST /rest/v1/rpc/execute_readonly_query`. Reglas de la RPC: UN statement, empieza con SELECT (sin WITH), sin `;`, keywords de escritura bloqueadas hasta en aliases.
-- **LOG-IN (75% de las órdenes) NO resuelve contra `navieras`** hoy — detention lo tiene como "LOG-IN LOGISTICA INTERMODAL S.A."; el seed de alias de T4.b es obligatorio. Países: detention en EN UPPER (103, con variantes-hub), puertos en ES (11) — cero match textual, por eso `paises`+alias.
-- **Días libres del mail (T6): destrabado por T4.b** (`v_orden_freetime`); **contacto de línea marítima: BLOQUEADO** (`mailing_naviera_destino` vacía — dato de Naara). No dar por destrabado lo segundo.
-- **Smoke headless de mockups:** MCP Playwright sigue roto en este WSL → `playwright-core` (instalado en el scratchpad) + `executablePath` a `~/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome` (receta en `docs/dev/smoke-headless.md`).
-- El `DATA_T4` del mockup se construye en runtime clonando el snapshot real embebido — al implementar H.1 en la app, la data viene de `/api/schema` que YA devuelve todo (columnas/tipos/PK/FK campo a campo): es 100% render.
+- Gotcha mailing resolver: GETs downstream de mailing_contacts corren POR ITEM → todo `allRows()` nuevo DEDUPLICA.
+- Harnesses PUT derivados de a2fix exigen `--apply` explícito (sin flag = dry-run exit 0) — verificar SIEMPRE el estado vivo tras un PUT.
+- Smoke headless: playwright global `~/.npm-global/lib/node_modules/playwright` + `executablePath` `~/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome`; server de gates `python3 -m http.server 8899`.
 - El template del handoff vive en `/mnt/c/Users/jzenteno/.claude/templates/` (el `~/.claude/templates/` de WSL no existe).
