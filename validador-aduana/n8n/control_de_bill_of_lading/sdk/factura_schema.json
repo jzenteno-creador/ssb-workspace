@@ -1,0 +1,199 @@
+{
+  "type": "object",
+  "properties": {
+    "factura_extract": {
+      "type": "object",
+      "properties": {
+        "invoice_no": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "internal_doc_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "order_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incoterm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "incoterm_place": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "country": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shipping_permit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sold_to": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tax": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "tax"
+          ]
+        },
+        "ship_to": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tax": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "tax"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "material": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "grade": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bags": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "net_kg": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "gross_kg": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "item": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "origen": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "grade",
+              "description"
+            ]
+          }
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "net": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "gross": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "invoice_amount": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "net",
+            "gross",
+            "invoice_amount"
+          ]
+        },
+        "freight_usd": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "sold_to",
+        "ship_to",
+        "incoterm",
+        "internal_doc_number",
+        "items",
+        "totals"
+      ]
+    }
+  },
+  "required": [
+    "factura_extract"
+  ]
+}

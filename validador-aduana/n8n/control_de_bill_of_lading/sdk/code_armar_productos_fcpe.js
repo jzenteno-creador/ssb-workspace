@@ -86,6 +86,8 @@ for (const it of items) {
     order_number: String(order_number || ''), product_key: key,
     description: null, grade: null, material_code: null, ncm_code: null, embalaje: null,
     net_kg: null, gross_kg: null, bags: null, pallets: null, line_count: 0,
+    // R2·C (2026-07-17): origen por ítem (dispara la regla CO) + nros de línea
+    origen: null, item_nos: [],
     invoice_no: pick(fc && fc.invoice_no), source_link: pick(fc && fc.source_link),
     updated_at: new Date().toISOString(),
   };
@@ -94,13 +96,16 @@ for (const it of items) {
   acc.material_code = acc.material_code || pick(it.material);
   acc.ncm_code = acc.ncm_code || pick(it.product_code);
   acc.embalaje = acc.embalaje || pick(it.embalaje);
+  acc.origen = acc.origen || pick(it.origen);
+  const itemNo = numSafe(it.item);
+  if (itemNo != null && !acc.item_nos.includes(itemNo)) acc.item_nos.push(itemNo);
   const add = (f, v) => { const n = numSafe(v); if (n != null) acc[f] = (acc[f] || 0) + n; };
   add('net_kg', it.net_kg); add('gross_kg', it.gross_kg);
   add('bags', it.bags); add('pallets', it.pallets);
   acc.line_count += 1;
   byKey.set(key, acc);
 }
-const productos = skip ? [] : [...byKey.values()];
+const productos = skip ? [] : [...byKey.values()].map((p) => ({ ...p, item_nos: p.item_nos.slice().sort((a, b) => a - b) }));
 
 // ---- control FC-PE (reglas §1.3) ----
 const fob_fc = fc ? numSafe(fc.fob_usd) : null;
