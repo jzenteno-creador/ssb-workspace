@@ -718,23 +718,47 @@
   // reanudar el poll si quedaron pendientes de una sesión previa (reload/corte)
   if(Object.keys(reprocAll()).length) reprocEnsureTimer();
 
+  // Ajuste A.2-front (smoke John 17-07): el botón reacciona EN EL ACTO del click
+  // — spinner + "Enviando…" + disabled ANTES del await (el ~1s hasta el toast
+  // hacía dudar y provocaba doble click). Ante fallo se restaura verbatim el
+  // contenido original (sin interpolación nueva: es el propio innerHTML previo).
+  function reprocBtnBusy(btn){
+    btn.dataset.orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('is-busy');
+    btn.textContent = '';
+    btn.appendChild(svgUse('#i-refresh'));
+    btn.appendChild(document.createTextNode('Enviando…'));
+  }
+  function reprocBtnRestore(btn){
+    btn.classList.remove('is-busy');
+    if(btn.dataset.orig != null){ btn.innerHTML = btn.dataset.orig; delete btn.dataset.orig; }
+    btn.disabled = false;
+  }
+
   async function cblReprocesar(orderNumber, btn){
-    if(btn) btn.disabled = true;
+    if(btn){
+      if(btn.disabled) return;      // anti doble-click duro (además del disabled visual)
+      reprocBtnBusy(btn);
+    }
     try {
       const data = await cblApiSeguimiento({ action: 'reprocesar_bl', order_number: orderNumber });
       const r = data.result || {};
       if(r.status === 'disparado'){
         reprocMark(orderNumber);
-        if(btn) reprocDecorate(btn, orderNumber);
+        if(btn){
+          btn.classList.remove('is-busy');
+          reprocDecorate(btn, orderNumber);   // pasa a "Reprocesando…" (estado persistente)
+        }
         cblShowReprocBanner(orderNumber);
         ssbToast('Solicitud enviada ✓ — el control corre en n8n (~1-2 min); aviso acá al terminar.', 'success');
       } else {
         ssbToast(r.detail || 'Reproceso: respuesta inesperada del server (' + (r.status || '—') + ').', 'info');
-        if(btn) btn.disabled = false;
+        if(btn) reprocBtnRestore(btn);
       }
     } catch(e){
       ssbToast('No se pudo disparar el reproceso: ' + (e.message || 'error de red'), 'error');
-      if(btn) btn.disabled = false;
+      if(btn) reprocBtnRestore(btn);
     }
   }
 

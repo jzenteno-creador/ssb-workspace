@@ -2586,6 +2586,11 @@ body.light #panel-control-bl{
 
 /* ── Reprocesar / issue-row / mini ── */
 #panel-control-bl .cbl-reprocess{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--cbl-rev);background:var(--cbl-rev-bg);border:1px solid var(--cbl-rev-bd);border-radius:9px;padding:7px 13px;cursor:pointer;margin-top:9px}
+/* A.2-front (ajuste smoke John 17-07): feedback INMEDIATO al click — el ícono
+   gira mientras se envía la solicitud (el guard A9 lo anula con reduced-motion) */
+#panel-control-bl .cbl-reprocess.is-busy{opacity:.75;cursor:default}
+#panel-control-bl .cbl-reprocess.is-busy .ic{animation:cbl-spin .8s linear infinite}
+@keyframes cbl-spin{to{transform:rotate(360deg)}}
 #panel-control-bl .cbl-reprocess .ic{width:14px;height:14px}
 #panel-control-bl .cbl-reprocess.solid{color:#fff;background:var(--cbl-accent);border-color:var(--cbl-accent)}
 /* ── Sello "control revisado" (tanda 1.5.c) ── */
