@@ -55,6 +55,12 @@ const email_to = Array.isArray(tpl.email_to)
 const row = {
   // claves / identidad
   order_number, booking_no, bl_number, carrier, vessel, voyage, pol, pod,
+  // A2-FIX (2026-07-17): created_at = momento de ESTE control. En el primer
+  // insert coincide con el default; en un re-control (upsert merge-duplicates)
+  // REFRESCA el timestamp → bl_controlado_at deja de quedarse viejo en la UI
+  // (era el "no se actualizó la web" del reproceso) y habilita el poll de
+  // A.2-front (fin real = created_at > startedAt del click).
+  created_at: new Date().toISOString(),
   // resultado
   overall_result,
   ok_count:      intOr0(cnt.OK),
