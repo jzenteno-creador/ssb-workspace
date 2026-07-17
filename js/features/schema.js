@@ -66,7 +66,11 @@
     box.textContent = '';
     if(!_data || !_data.counts) return;
     const c = _data.counts;
-    const pairs = [[c.tables,'tablas'],[c.views,'vistas'],[c.columns,'columnas'],[c.relations,'FKs']];
+    // islas: tablas sin FK in/out (mismo criterio que la leyenda del grafo)
+    const linked = new Set();
+    for(const r of (_data.relations || [])){ linked.add(r.from.table); linked.add(r.to.table); }
+    const islas = (_data.tables || []).filter(t => t.kind === 'table' && !linked.has(t.name)).length;
+    const pairs = [[c.tables,'tablas'],[c.views,'vistas'],[c.columns,'columnas'],[c.relations,'FKs'],[islas,'islas']];
     for(const [n, lbl] of pairs){
       if(n == null) continue;
       box.appendChild(el('span','badge badge--pill badge--neutral', n + ' ' + lbl));
@@ -236,12 +240,21 @@
     });
   }
 
-  // ── vista GRAFO — Cytoscape lazy por CDN (solo paga quien la abre) ──
+  // ── vista GRAFO — ER enriquecido (H.1, port 1:1 del mockup aprobado
+  //    docs/mockups/grafo-enriquecido-mockup.html) — Cytoscape lazy por CDN ──
+  // Compound nodes (tabla = header + filas de columnas estructurales + stub
+  // expandible), edges campo→campo, zonas semánticas con layout preset
+  // determinístico, panel de detalle y leyenda. El canvas es CONSTANT-DARK en
+  // ambos temas (look aprobado del mockup, mismo criterio que el rail) → estilo
+  // constante, sin probe de tokens ni re-style por cambio de tema.
   const CY_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js';
   let _view = 'lista';
   let _cy = null;
   let _cyLib = null;
-  let _pinned = null;
+  let _gOpen = new Set();     // tablas con TODAS las columnas visibles en el grafo
+  let _showViews = false;     // toggle "Vistas"
+  let _gPinned = null;        // nombre de tabla fijada (highlight + panel)
+  const _REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   function loadCyLib(){
     if(window.cytoscape) return Promise.resolve();
@@ -258,126 +271,151 @@
     return _cyLib;
   }
 
-  // colores desde el design system: tokens del tema + probe de badge (nada hardcodeado)
-  function probeColor(cls, prop){
-    const p = document.createElement('span');
-    p.className = cls;
-    p.style.position = 'absolute'; p.style.visibility = 'hidden';
-    document.body.appendChild(p);
-    const val = getComputedStyle(p)[prop];
-    p.remove();
-    return val;
-  }
-  function graphColors(){
-    const cs = getComputedStyle(document.body);
-    const tok = (n, fb) => (cs.getPropertyValue(n) || '').trim() || fb;
-    return {
-      text: tok('--text', '#e2e8f0'),
-      surface: tok('--surface', '#1e293b'),
-      teal: tok('--teal', '#2dd4bf'),
-      view: probeColor('badge badge--purple', 'color'),
-      edge: tok('--muted', '#64748b'),
-    };
-  }
-  function cyStyle(c){
-    return [
-      { selector: 'node', style: { shape: 'round-rectangle', width: 'label', height: 'label', padding: '7px', 'background-color': c.surface, 'border-width': 1.5, 'border-color': c.teal, label: 'data(id)', color: c.text, 'font-size': 11, 'font-family': 'ui-monospace,SFMono-Regular,Menlo,monospace', 'text-valign': 'center', 'text-halign': 'center' } },
-      { selector: 'node[kind = "view"]', style: { 'border-color': c.view, 'border-style': 'dashed' } },
-      { selector: 'edge', style: { width: 1.5, 'line-color': c.edge, 'target-arrow-color': c.edge, 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'arrow-scale': 1 } },
-      { selector: 'node.sch-hl', style: { 'border-width': 3 } },
-      { selector: 'edge.sch-hl', style: { width: 2.4, 'line-color': c.teal, 'target-arrow-color': c.teal } },
-      { selector: '.sch-dim', style: { opacity: 0.15 } },
-    ];
-  }
+  // Zonas semánticas (del mockup aprobado). Tablas reales que no figuren en
+  // ninguna lista caen automáticamente en 'otros' (catch-all: una tabla nueva
+  // en la DB jamás desaparece del grafo). Las vistas van a su propia zona.
+  const ZONES = [
+    { id:'orden', title:'DOMINIO ORDEN', row:0, x:0, cols:3,
+      tables:['seguimiento_ordenes','operaciones','mailing_orders','bl_controls','contenedores','mailing_sends',
+              'certificados_origen','control_bl_sellos','documentos_orden','orden_productos',
+              'seguimiento_co_config','mailing_contacts','mailing_naviera_destino'] },
+    { id:'ref', title:'REFERENCIA / TARIFAS', row:0, x:920, cols:3,
+      tables:['navieras','puertos','paises','navieras_alias','puertos_alias','paises_alias',
+              'detention_freetime','tarifas_maritimas','recargos_efa',
+              'tarifas_terrestres','tarifas_terrestres_carriers'] },
+    { id:'vac', title:'VACACIONES', row:1, x:0, cols:2,
+      tables:['vac_employees','vac_requests','vac_balance_adjustments','vac_holidays'] },
+    { id:'otros', title:'DATOS SUELTOS / LOGS', row:1, x:620, cols:2,
+      tables:['schedules_master','configuracion','patrones_aprendidos',
+              'tarifas_maritimas_log','tarifas_terrestres_log','bl_controls_dupes_backup_plan1'] },
+    { id:'vistas', title:'VISTAS', row:1, x:1240, cols:2, viewsZone:true, tables:[] },
+  ];
+  const COL_W = 236, ROW_H = 20, HEAD_H = 24, T_GAP_Y = 26, T_GAP_X = 30, ZONE_TOP = 70;
 
-  function graphElements(){
-    const linked = new Set();
-    for(const r of (_data.relations || [])){ linked.add(r.from.table); linked.add(r.to.table); }
-    return {
-      nodes: (_data.tables || []).map(t => ({ data: { id: t.name, kind: t.kind }, classes: linked.has(t.name) ? 'linked' : 'isolated' })),
-      edges: (_data.relations || []).map(r => ({ data: { id: 'fk:' + r.name, source: r.from.table, target: r.to.table } })), // prefijo: un FK homónimo de tabla no puede colisionar ids
-    };
+  const byName = () => Object.fromEntries((_data.tables || []).map(t => [t.name, t]));
+  const linkedSet = () => { const s = new Set(); for(const r of (_data.relations || [])){ s.add(r.from.table); s.add(r.to.table); } return s; };
+  const fkTargets = () => { const s = new Set(); for(const r of (_data.relations || [])) s.add(r.to.table + '.' + r.to.column); return s; };
+
+  function structuralCols(t, targets){
+    return (t.columns || []).filter(c => c.isPk || c.fk || targets.has(t.name + '.' + c.name));
+  }
+  function visibleCols(t, targets){
+    if(_gOpen.has(t.name)) return t.columns || [];
+    const st = structuralCols(t, targets);
+    return st.length ? st : (t.columns || []).slice(0, 2); // sin PK/FK: mostrar 2 primeras
+  }
+  function shortType(t){
+    return String(t || '').replace('timestamp with time zone','timestamptz').replace('timestamp without time zone','timestamp')
+            .replace('character varying','varchar').replace('double precision','float8');
   }
 
-  // Layout compuesto y DETERMINÍSTICO: cose (arranque fijo en círculo alfabético,
-  // randomize:false) sobre el componente conectado + grilla ordenada para las
-  // tablas sin FKs. Angosto (<700px): grilla debajo en vez de a la derecha.
-  function layoutGraph(cy, W, H){
-    const narrow = W < 700;
-    const coseBox = narrow ? { x1: 20, y1: 20, x2: W - 20, y2: Math.round(H * 0.6) }
-                           : { x1: 40, y1: 40, x2: Math.round(W * 0.58), y2: H - 40 };
+  function buildElements(){
+    const els = [], targets = fkTargets(), linked = linkedSet(), names = byName();
 
-    const conNodes = cy.nodes('.linked').sort((a, b) => a.id().localeCompare(b.id()));
-    const cxc = (coseBox.x1 + coseBox.x2) / 2, cyc = (coseBox.y1 + coseBox.y2) / 2;
-    const rad = Math.max(60, Math.min(coseBox.x2 - coseBox.x1, coseBox.y2 - coseBox.y1) / 2 - 40);
-    conNodes.forEach((n, i) => {
-      const ang = (2 * Math.PI * i) / Math.max(1, conNodes.length);
-      n.position({ x: cxc + rad * Math.cos(ang), y: cyc + rad * Math.sin(ang) });
-    });
+    // catch-all: tablas reales sin zona asignada → 'otros'
+    const assigned = new Set(ZONES.flatMap(z => z.tables));
+    const extra = (_data.tables || []).filter(t => t.kind === 'table' && !assigned.has(t.name)).map(t => t.name);
+    const zones = ZONES.map(z => z.id === 'otros' ? { ...z, tables: z.tables.concat(extra) } : z);
 
-    const isolated = cy.nodes('.isolated').sort((a, b) => a.id().localeCompare(b.id()));
-    const cols = narrow ? 2 : 3;
-    const gx = narrow ? 20 : Math.round(W * 0.64);
-    const gy = narrow ? coseBox.y2 + 70 : 70;
-    const cellW = narrow ? Math.round((W - 40) / cols) : 190;
-    const cellH = narrow ? 52 : 74;
-    isolated.forEach((n, i) => {
-      n.position({ x: gx + (i % cols) * cellW + cellW / 2, y: gy + Math.floor(i / cols) * cellH });
-    });
-    isolated.lock();
+    const zoneRows = [...new Set(zones.map(z => z.row))].sort();
+    let yBase = ZONE_TOP;
+    for(const zr of zoneRows){
+      let rowMaxY = yBase;
+      for(const z of zones.filter(z => z.row === zr)){
+        const zNames = z.viewsZone ? (_data.tables || []).filter(t => t.kind !== 'table').map(t => t.name) : z.tables;
+        const tabs = zNames.map(n => names[n]).filter(Boolean)
+          .filter(t => (t.kind === 'table') !== !!z.viewsZone);
+        if(z.viewsZone && !_showViews) continue;
+        if(!tabs.length) continue;
 
-    const layout = cy.elements('.linked, edge').layout({
-      name: 'cose', animate: false, fit: false, randomize: false,
-      boundingBox: coseBox,
-      nodeRepulsion: 2000000, idealEdgeLength: 150, edgeElasticity: 100,
-      nestingFactor: 5, gravity: 25, numIter: 2500, initialTemp: 1200,
-      coolingFactor: 0.96, minTemp: 1.0, nodeOverlap: 40, componentSpacing: 200,
-    });
-    layout.one('layoutstop', () => { isolated.unlock(); resolveOverlaps(cy); cy.fit(undefined, 30); });
-    layout.run();
-  }
+        els.push({ data:{ id:'zone:' + z.id, label:z.title }, position:{ x:z.x + (z.cols * (COL_W + T_GAP_X)) / 2 - T_GAP_X / 2, y:yBase - 58 }, classes:'zone', locked:true, grabbable:false, selectable:false });
 
-  // Resolución determinística de solapamientos post-cose: cose modela nodos como
-  // puntos y los labels anchos (hasta ~200px) se pisan en cajas chicas. Empuja
-  // cada par solapado por el eje de menor penetración; los aislados (grilla ya
-  // sin solapes) actúan como obstáculos fijos y nunca se mueven.
-  function resolveOverlaps(cy){
-    const PAD = 6;
-    const nodes = cy.nodes().sort((a, b) => a.id().localeCompare(b.id()));
-    for(let pass = 0; pass < 80; pass++){
-      let moved = false;
-      for(let i = 0; i < nodes.length; i++){
-        for(let j = i + 1; j < nodes.length; j++){
-          const a = nodes[i], b = nodes[j];
-          if(a.hasClass('isolated') && b.hasClass('isolated')) continue;
-          const ba = a.boundingBox(), bb = b.boundingBox();
-          const ox = Math.min(ba.x2, bb.x2) - Math.max(ba.x1, bb.x1) + PAD;
-          const oy = Math.min(ba.y2, bb.y2) - Math.max(ba.y1, bb.y1) + PAD;
-          if(ox <= 0 || oy <= 0) continue;
-          moved = true;
-          const pa = a.position(), pb = b.position();
-          const fA = a.hasClass('isolated') ? 0 : (b.hasClass('isolated') ? 1 : 0.5);
-          const fB = b.hasClass('isolated') ? 0 : (a.hasClass('isolated') ? 1 : 0.5);
-          const sign = (v) => (v > 0 ? 1 : v < 0 ? -1 : -1);
-          if(ox < oy){
-            const s = sign(pa.x - pb.x);
-            if(fA) a.position({ x: pa.x + s * ox * fA, y: pa.y });
-            if(fB) b.position({ x: pb.x - s * ox * fB, y: pb.y });
-          } else {
-            const s = sign(pa.y - pb.y);
-            if(fA) a.position({ x: pa.x, y: pa.y + s * oy * fA });
-            if(fB) b.position({ x: pb.x, y: pb.y - s * oy * fB });
+        const colY = new Array(z.cols).fill(yBase);
+        tabs.forEach((t) => {
+          const ci = colY.indexOf(Math.min(...colY));
+          const x = z.x + ci * (COL_W + T_GAP_X);
+          let y = colY[ci];
+          const vis = visibleCols(t, targets);
+          const hidden = (t.columns || []).length - vis.length;
+          const isla = t.kind === 'table' && !linked.has(t.name);
+          const tclasses = ['tbl', isla ? 'isla' : '', t.kind !== 'table' ? 'vista' : ''].join(' ').trim();
+
+          els.push({ data:{ id:'tbl:' + t.name, tname:t.name }, classes:tclasses });
+          els.push({ data:{ id:'hd:' + t.name, parent:'tbl:' + t.name, tname:t.name,
+            label:t.name + (t.rows != null ? '  ·  ~' + t.rows : '') }, position:{ x, y }, classes:'hd' + (isla ? ' hd-isla' : '') + (t.kind !== 'table' ? ' hd-vista' : '') });
+          y += HEAD_H;
+
+          for(const c of vis){
+            const cls = ['row', c.isPk ? 'pk' : '', c.fk ? 'fk' : ''].join(' ').trim();
+            els.push({ data:{ id:'col:' + t.name + '.' + c.name, parent:'tbl:' + t.name, tname:t.name,
+              label:c.name + '  ·  ' + shortType(c.type) }, position:{ x, y }, classes:cls });
+            y += ROW_H;
           }
-        }
+          if(hidden > 0){
+            els.push({ data:{ id:'stub:' + t.name, parent:'tbl:' + t.name, tname:t.name,
+              label:'+ ' + hidden + ' columnas…' }, position:{ x, y }, classes:'stub' });
+            y += ROW_H;
+          }
+          colY[ci] = y + T_GAP_Y;
+        });
+        rowMaxY = Math.max(rowMaxY, ...colY);
       }
-      if(!moved) return; // convergió
+      yBase = rowMaxY + 100;
     }
-    console.warn('schema graph: resolveOverlaps cortó por tope de pasadas con solapes pendientes');
+
+    // edges campo→campo (fallback al header si la columna no está visible)
+    const nodeIds = new Set(els.map(e => e.data.id));
+    for(const r of (_data.relations || [])){
+      const s = 'col:' + r.from.table + '.' + r.from.column, d = 'col:' + r.to.table + '.' + r.to.column;
+      const src = nodeIds.has(s) ? s : 'hd:' + r.from.table;
+      const dst = nodeIds.has(d) ? d : 'hd:' + r.to.table;
+      if(!nodeIds.has(src) || !nodeIds.has(dst)) continue;
+      els.push({ data:{ id:'fk:' + r.name, source:src, target:dst,
+        label:r.from.column + ' → ' + r.to.table + '.' + r.to.column }, classes:'rel' });
+    }
+    return els;
   }
+
+  // estilo CONSTANTE (valores del mockup aprobado — canvas dark en ambos temas)
+  const GSTYLE = [
+    { selector:'node.tbl', style:{ shape:'round-rectangle', 'background-color':'#16202e', 'background-opacity':.92,
+        'border-width':1.5, 'border-color':'#334155', 'padding':'6px', label:'' } },
+    { selector:'node.tbl.isla', style:{ 'border-color':'#f59e0b', 'border-style':'dashed', 'border-width':2 } },
+    { selector:'node.tbl.vista', style:{ 'border-color':'#c084fc', 'border-style':'dashed' } },
+    { selector:'node.hd', style:{ shape:'round-rectangle', width:COL_W - 16, height:HEAD_H - 6,
+        'background-color':'#134e4a', 'border-width':0, label:'data(label)', color:'#e2e8f0',
+        'font-size':11, 'font-weight':700, 'font-family':'ui-monospace,SFMono-Regular,Menlo,monospace',
+        'text-valign':'center', 'text-halign':'center', 'text-max-width':COL_W - 28, 'text-wrap':'ellipsis' } },
+    { selector:'node.hd-isla', style:{ 'background-color':'#3b2a08' } },
+    { selector:'node.hd-vista', style:{ 'background-color':'#3b2a5e' } },
+    { selector:'node.row', style:{ shape:'round-rectangle', width:COL_W - 16, height:ROW_H - 4,
+        'background-color':'#0f172a', 'border-width':1, 'border-color':'rgba(255,255,255,0.06)',
+        label:'data(label)', color:'#cbd5e1', 'font-size':9.5,
+        'font-family':'ui-monospace,SFMono-Regular,Menlo,monospace',
+        'text-valign':'center', 'text-halign':'center', 'text-max-width':COL_W - 30, 'text-wrap':'ellipsis' } },
+    { selector:'node.row.pk', style:{ 'background-color':'#2f2410', 'border-color':'#f59e0b', color:'#fbbf24' } },
+    { selector:'node.row.fk', style:{ 'background-color':'#0e2a2a', 'border-color':'#2dd4bf', color:'#5eead4' } },
+    { selector:'node.stub', style:{ shape:'round-rectangle', width:COL_W - 16, height:ROW_H - 4,
+        'background-color':'#121a28', 'border-width':0, label:'data(label)', color:'#64748b',
+        'font-size':9.5, 'font-family':'ui-monospace,SFMono-Regular,Menlo,monospace',
+        'text-valign':'center', 'text-halign':'center' } },
+    { selector:'node.zone', style:{ shape:'rectangle', 'background-opacity':0, 'border-width':0,
+        label:'data(label)', color:'#334155', 'font-size':20, 'font-weight':800,
+        'text-valign':'center', 'text-halign':'center' } },
+    { selector:'edge.rel', style:{ width:1.6, 'line-color':'#475569', 'target-arrow-color':'#475569',
+        'target-arrow-shape':'triangle', 'curve-style':'bezier', 'control-point-step-size':60,
+        'arrow-scale':.9, label:'', 'font-size':9, 'font-family':'ui-monospace,Menlo,monospace',
+        color:'#2dd4bf', 'text-background-color':'#0b1220', 'text-background-opacity':.9, 'text-background-padding':'2px' } },
+    { selector:'.hl', style:{ 'border-width':2.5 } },
+    { selector:'edge.hl', style:{ width:2.6, 'line-color':'#2dd4bf', 'target-arrow-color':'#2dd4bf', label:'data(label)' } },
+    { selector:'.dim', style:{ opacity:.13 } },
+  ];
 
   function renderGraphState(msg, retryFn){
-    const box = $('sch-graph'); if(!box) return;
+    const box = $('sch-cy'); if(!box) return;
     box.textContent = '';
+    const lg = $('sch-legend'); if(lg) lg.hidden = true;
+    closeDetail();
     const st = el('div','sch-graph-state');
     st.appendChild(el('p', null, msg));
     if(retryFn){
@@ -391,13 +429,35 @@
 
   function destroyGraph(){
     if(_cy){ try { _cy.destroy(); } catch(_){} _cy = null; }
-    _pinned = null;
-    const box = $('sch-graph'); if(box) box.textContent = '';
+    _gPinned = null;
+    closeDetail();
+    const lg = $('sch-legend'); if(lg) lg.hidden = true;
+    const box = $('sch-cy'); if(box) box.textContent = '';
+  }
+
+  // monta (o re-monta) la instancia sobre #sch-cy; keepViewport conserva zoom/pan
+  // (expandir/colapsar una tabla no te mueve el mapa — patrón del mockup)
+  function mountCy(keepViewport){
+    const box = $('sch-cy'); if(!box) return;
+    const vp = keepViewport && _cy ? { zoom:_cy.zoom(), pan:_cy.pan() } : null;
+    if(_cy){ try { _cy.destroy(); } catch(_){} _cy = null; }
+    box.textContent = '';
+    _cy = window.cytoscape({
+      container: box,
+      elements: buildElements(),
+      style: GSTYLE,
+      layout: { name: 'preset' }, // posiciones ya calculadas en buildElements — determinístico
+      autoungrabify: true,        // zoom + pan sí; drag de nodos no
+      wheelSensitivity: 0.2,
+    });
+    if(vp){ _cy.zoom(vp.zoom); _cy.pan(vp.pan); } else { _cy.fit(undefined, 40); }
+    wireGraphInteractions(_cy);
+    const lg = $('sch-legend'); if(lg) lg.hidden = false;
   }
 
   let _gGen = 0; // token de generación: mata continuaciones stale (toggle rápido / refresh durante carga del CDN)
   async function renderGraph(){
-    const box = $('sch-graph');
+    const box = $('sch-cy');
     if(!box || !_data) return;
     const gen = ++_gGen;
     destroyGraph();
@@ -405,21 +465,11 @@
     try { await loadCyLib(); }
     catch(e){ if(gen === _gGen) renderGraphState(e.message, () => renderGraph()); return; }
     if(gen !== _gGen || _view !== 'grafo' || !_data) return; // superado por otro render o cambio de vista
-    // solapa oculta (switchTab con el CDN en vuelo): la caja mide 0x0 y el layout
+    // solapa oculta (switchTab con el CDN en vuelo): la caja mide 0x0 y el fit
     // revienta — diferir; loadSchema() rearma al volver a la solapa
     if(!box.clientWidth){ renderGraphState('El grafo se arma al volver a la solapa.', null); return; }
-    box.textContent = '';
     try {
-      _cy = window.cytoscape({
-        container: box,
-        elements: graphElements(),
-        style: cyStyle(graphColors()),
-        layout: { name: 'preset' },
-        autoungrabify: true,   // zoom + pan sí; drag de nodos no
-        wheelSensitivity: 0.2,
-      });
-      layoutGraph(_cy, box.clientWidth, box.clientHeight);
-      wireGraphInteractions(_cy);
+      mountCy(false);
     } catch(e){
       console.error('schema graph error:', e.message);
       destroyGraph();
@@ -427,24 +477,95 @@
     }
   }
 
-  // hover resalta transitorio; tap fija/desfija; tap en el fondo limpia
+  // vecindario a nivel TABLA: la tabla del nodo + sus edges + las tablas del otro extremo
+  function neighborhoodOf(n){
+    const tname = n.data('tname');
+    const tbl = _cy.$id('tbl:' + tname);
+    const kids = tbl.descendants().union(tbl);
+    const edges = kids.connectedEdges('.rel');
+    const others = edges.connectedNodes().map(x => _cy.$id('tbl:' + x.data('tname'))).reduce((a, b) => a.union(b), _cy.collection());
+    return kids.union(edges).union(others).union(others.map(o => o.descendants()).reduce((a, b) => a.union(b), _cy.collection()));
+  }
+  function highlightNode(n){
+    _cy.elements().removeClass('hl dim');
+    const hood = neighborhoodOf(n);
+    _cy.elements().not(hood).addClass('dim');
+    hood.edges('.rel').addClass('hl');
+    _cy.$id('tbl:' + n.data('tname')).addClass('hl');
+  }
+  function clearHl(){ if(_cy) _cy.elements().removeClass('hl dim'); }
+
+  // tap en header/fila fija + abre panel; tap en stub expande; hover transitorio;
+  // tap en el fondo limpia y cierra el panel
   function wireGraphInteractions(cy){
-    const clear = () => cy.elements().removeClass('sch-hl sch-dim');
-    const highlight = (n) => {
-      clear();
-      const hood = n.closedNeighborhood();
-      cy.elements().not(hood).addClass('sch-dim');
-      hood.addClass('sch-hl');
-    };
-    _pinned = null;
-    cy.on('tap', 'node', (ev) => {
-      const id = ev.target.id();
-      if(_pinned === id){ _pinned = null; clear(); }
-      else { _pinned = id; highlight(ev.target); }
-    });
-    cy.on('tap', (ev) => { if(ev.target === cy){ _pinned = null; clear(); } });
-    cy.on('mouseover', 'node', (ev) => { if(!_pinned) highlight(ev.target); });
-    cy.on('mouseout', 'node', () => { if(!_pinned) clear(); });
+    cy.on('tap', 'node.hd, node.row', (ev) => { const t = ev.target.data('tname'); _gPinned = t; highlightNode(ev.target); openDetail(t); });
+    cy.on('tap', 'node.stub', (ev) => { _gOpen.add(ev.target.data('tname')); mountCy(true); });
+    cy.on('tap', (ev) => { if(ev.target === cy){ _gPinned = null; clearHl(); closeDetail(); } });
+    cy.on('mouseover', 'node.hd, node.row', (ev) => { if(!_gPinned) highlightNode(ev.target); });
+    cy.on('mouseout', 'node.hd, node.row', () => { if(!_gPinned) clearHl(); });
+  }
+
+  // ── panel de detalle (aside del canvas) ──
+  function openDetail(name){
+    const t = byName()[name]; if(!t) return;
+    const panel = $('sch-detail'); if(!panel) return;
+    const nameEl = $('sch-d-name'); if(nameEl) nameEl.textContent = t.name;
+    const linked = linkedSet();
+    const b = $('sch-d-badges');
+    if(b){
+      b.textContent = '';
+      const mk = (txt, cls) => b.appendChild(el('span', 'badge ' + cls, txt));
+      if(t.kind !== 'table') mk('vista','sch-b-kind'); else if(t.rls) mk('RLS','sch-b-rls'); else mk('SIN RLS','sch-b-norls');
+      if(t.kind === 'table' && !linked.has(t.name)) mk('ISLA — sin FK','sch-b-isla');
+      if(t.rows != null) mk('~' + t.rows + ' filas','sch-b-rows');
+    }
+    const tb = $('sch-d-cols');
+    if(tb){
+      tb.textContent = '';
+      for(const c of (t.columns || [])){
+        const tr = el('tr');
+        tr.appendChild(el('td','sch-d-cn', c.name));
+        tr.appendChild(el('td','sch-d-ct', shortType(c.type) + (c.nullable ? '' : ' · NOT NULL')));
+        const td3 = el('td');
+        if(c.isPk){ td3.appendChild(el('span','sch-pk-chip','PK')); td3.appendChild(document.createTextNode(' ')); }
+        if(c.fk && c.fk.table){
+          const chip = el('span','sch-fk-chip','→ ' + c.fk.table + '.' + c.fk.column);
+          chip.onclick = () => focusTable(c.fk.table);
+          td3.appendChild(chip);
+        }
+        tr.appendChild(td3); tb.appendChild(tr);
+      }
+    }
+    const rels = $('sch-d-rels');
+    if(rels){
+      rels.textContent = '';
+      const incoming = (_data.relations || []).filter(r => r.to.table === name);
+      if(incoming.length){
+        rels.appendChild(el('h3', null, 'Referenciada por'));
+        for(const r of incoming){
+          const d = el('div');
+          const s = el('span', null, r.from.table);
+          s.onclick = () => focusTable(r.from.table);
+          d.appendChild(s);
+          d.appendChild(document.createTextNode('.' + r.from.column + ' → ' + r.to.column));
+          rels.appendChild(d);
+        }
+      }
+    }
+    panel.hidden = false;
+  }
+  function closeDetail(){ const p = $('sch-detail'); if(p) p.hidden = true; }
+
+  function focusTable(name){
+    const t = byName()[name]; if(!t || !_cy) return;
+    if(t.kind !== 'table' && !_showViews){ _showViews = true; const cb = $('sch-g-vistas'); if(cb) cb.checked = true; }
+    _gOpen.add(name);
+    mountCy(true);
+    const hd = _cy.$id('hd:' + name);
+    if(hd.length){
+      _gPinned = name; highlightNode(hd); openDetail(name);
+      _cy.animate({ center:{ eles:_cy.$id('tbl:' + name) }, zoom:Math.max(_cy.zoom(), .8), duration:_REDUCED ? 0 : 280 });
+    }
   }
 
   function setView(view){
@@ -458,7 +579,7 @@
     if(graph) graph.hidden = view !== 'grafo';
     if(filter) filter.style.display = view === 'grafo' ? 'none' : '';
     if(view === 'grafo'){
-      if(_cy){ _cy.resize(); _cy.fit(undefined, 30); }
+      if(_cy){ _cy.resize(); _cy.fit(undefined, 40); }
       else if(_data){ renderGraph(); }
       else { renderGraphState('Cargando schema…', null); if(!_loading) refresh(false); }
     }
@@ -499,9 +620,14 @@
     $('sch-refresh')?.addEventListener('click', () => refresh(true));
     $('sch-view-lista')?.addEventListener('click', () => setView('lista'));
     $('sch-view-grafo')?.addEventListener('click', () => setView('grafo'));
-    // cambio de tema (body.light) → re-estilizar el grafo con los tokens nuevos
-    new MutationObserver(() => { if(_cy) _cy.style(cyStyle(graphColors())); })
-      .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    // (el observer de tema se fue con H.1: el canvas del grafo es constant-dark,
+    //  estilo GSTYLE constante — no hay nada que re-estilizar al flipar body.light)
+    // herramientas del grafo (viven dentro de #sch-graph → se ocultan con él)
+    $('sch-g-vistas')?.addEventListener('change', (e) => { _showViews = !!e.target.checked; if(_cy) mountCy(true); });
+    $('sch-g-expand')?.addEventListener('click', () => { if(!_data || !_cy) return; for(const t of (_data.tables || [])) _gOpen.add(t.name); mountCy(true); });
+    $('sch-g-collapse')?.addEventListener('click', () => { if(!_cy) return; _gOpen.clear(); mountCy(false); });
+    $('sch-g-fit')?.addEventListener('click', () => { if(_cy) _cy.fit(undefined, 40); });
+    $('sch-d-close')?.addEventListener('click', () => { _gPinned = null; clearHl(); closeDetail(); });
     const filterInput = $('sch-filter');
     if(filterInput){
       filterInput.addEventListener('input', debounce(() => {

@@ -16,7 +16,7 @@
 // (service_role JWT, nombre legacy) — ya existen para mailing/chat-workspace.
 
 // ── Queries fijas (validadas end-to-end contra la RPC el 2026-07-06) ──
-const Q_TABLES = `SELECT c.relname AS name, CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'matview' WHEN 'p' THEN 'table' END AS kind, c.relrowsecurity AS rls, obj_description(c.oid) AS comment FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r','v','m','p') ORDER BY 1`;
+const Q_TABLES = `SELECT c.relname AS name, CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'm' THEN 'matview' WHEN 'p' THEN 'table' END AS kind, c.relrowsecurity AS rls, obj_description(c.oid) AS comment, CASE WHEN c.relkind IN ('r','p') AND c.reltuples >= 0 THEN round(c.reltuples)::bigint END AS rows_est FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r','v','m','p') ORDER BY 1`;
 
 const Q_COLUMNS = `SELECT c.relname AS table_name, a.attname AS column_name, format_type(a.atttypid, a.atttypmod) AS data_type, NOT a.attnotnull AS is_nullable, a.atthasdef AS has_default, col_description(c.oid, a.attnum) AS comment, a.attnum AS position FROM pg_attribute a JOIN pg_class c ON c.oid = a.attrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r','v','m','p') AND a.attnum > 0 AND NOT a.attisdropped ORDER BY c.relname, a.attnum`;
 
@@ -117,6 +117,9 @@ export default async function handler(req, res) {
     kind: t.kind,
     rls: t.rls === true,
     comment: t.comment || null,
+    // estimador de pg_class.reltuples (redondeado; NULL si nunca se analizó) —
+    // el grafo lo muestra como "~N"; sigue siendo metadata, nunca datos
+    rows: t.rows_est == null ? null : Number(t.rows_est),
     columns: colsByTable.get(t.name) || [],
   }));
 
