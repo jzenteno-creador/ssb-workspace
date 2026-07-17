@@ -3015,6 +3015,13 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
 #panel-seguimiento .seg-mod-body{padding:18px 22px 22px}
 #panel-seguimiento .seg-field{margin-bottom:13px}
 #panel-seguimiento .seg-field label{display:block;font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft);margin-bottom:5px}
+/* B.1-fix: segmentado transporte del lote (namespace seg- propio — el .sch-seg
+   de Estructura DB está scoped a #panel-schema y no aplica acá) */
+#panel-seguimiento .seg-motseg{display:inline-flex;border:1px solid var(--seg-line-strong);border-radius:9px;overflow:hidden;background:var(--seg-surface)}
+#panel-seguimiento .seg-motseg button{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border:0;background:transparent;color:var(--seg-ink-soft);font-family:var(--font);font-size:var(--fs-sm);font-weight:600;cursor:pointer}
+#panel-seguimiento .seg-motseg button + button{border-left:1px solid var(--seg-line-strong)}
+#panel-seguimiento .seg-motseg button.is-on{background:var(--blue-lt);color:var(--blue)}
+#panel-seguimiento .seg-motseg button .ic{width:14px;height:14px}
 #panel-seguimiento .seg-field input,#panel-seguimiento .seg-field select,#panel-seguimiento .seg-field textarea{width:100%;font-family:var(--font);font-size:var(--fs-base);color:var(--seg-ink);background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);border-radius:9px;padding:9px 11px;outline:none}
 #panel-seguimiento .seg-field input:focus-visible,#panel-seguimiento .seg-field select:focus-visible,#panel-seguimiento .seg-field textarea:focus-visible{border-color:var(--blue)}
 #panel-seguimiento .seg-field .hint{font-size:var(--fs-2xs);color:var(--seg-ink-faint);margin-top:4px}
@@ -4665,8 +4672,18 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
         </div>
 
         <div class="seg-mod-body" id="seg-mod-body-batch" style="display:none">
+          <!-- B.1-fix (mockup aprobado 17-07): transporte del lote — antes todo lote
+               caía al default 'maritimo' de la tabla sin decisión del operador -->
           <div class="seg-field">
-            <label for="seg-gi-ta">Pegá filas: orden [TAB] fecha</label>
+            <label>Transporte del lote</label>
+            <div class="seg-motseg" id="seg-gi-batchmot" role="group" aria-label="Transporte del lote">
+              <button type="button" class="is-on" data-mot="maritimo"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ship"/></svg>Marítimo</button>
+              <button type="button" data-mot="terrestre"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-truck"/></svg>Terrestre</button>
+            </div>
+            <div class="hint">se aplica a todas las filas del pegado — una fila puede traer su propio <b>M</b>/<b>T</b> como 3ª columna (override)</div>
+          </div>
+          <div class="seg-field">
+            <label for="seg-gi-ta">Pegá filas: orden [TAB] fecha [TAB] transporte (opcional: M/T)</label>
             <textarea id="seg-gi-ta" rows="4" style="font-family:var(--mono);font-size:var(--fs-sm)" spellcheck="false"></textarea>
           </div>
           <div class="seg-applyrow">Aplicar <input type="date" id="seg-gi-applydate"> a todas las filas <b>sin fecha</b> <button type="button" id="seg-gi-applybtn">Aplicar</button></div>

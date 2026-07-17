@@ -703,12 +703,19 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   let _giActiveTab = 'single';
   let _giBusy = false;
   let _giBatchApplyDate = null;
+  let _giBatchMot = 'maritimo';   // B.1-fix: transporte default del lote (segmentado)
   let _giLastParse = null;
   let _giModalSnapshot = '';
 
   function _giModalSerialize(){
+    // _giBatchMot va en la serialización: el segmentado son <button> sin .value —
+    // sin esto el dirty-guard descartaría la selección Terrestre sin confirmar.
     return ['seg-gi-orden','seg-gi-fecha','seg-gi-mot','seg-gi-modo','seg-gi-notas','seg-gi-ta']
-      .map(id => { const e = $(id); return e ? e.value : ''; }).join('|');
+      .map(id => { const e = $(id); return e ? e.value : ''; }).join('|') + '|' + _giBatchMot;
+  }
+  function _giSyncBatchMotUI(){
+    const seg = $('seg-gi-batchmot'); if(!seg) return;
+    seg.querySelectorAll('button[data-mot]').forEach(b => b.classList.toggle('is-on', b.dataset.mot === _giBatchMot));
   }
   function _giIsDirty(){ return _giModalSerialize() !== _giModalSnapshot; }
 
@@ -751,6 +758,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const ad = $('seg-gi-applydate'); if(ad) ad.value = '';
     const errEl = $('seg-gi-orden-err'); if(errEl) errEl.hidden = true;
     _giBatchApplyDate = null;
+    _giBatchMot = 'maritimo';
+    _giSyncBatchMotUI();
     _giLastParse = null;
     renderGiPreview();
     segModSwitchTab('single');
@@ -775,11 +784,14 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       const parts = (toks.length ? toks : raw.trim().split(/\s+/)).map(normMiles);
       const ords = parts.filter(t => /^\d{7,12}$/.test(t));
       const fechas = parts.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t) || /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
+      // B.1-fix: 3ª columna opcional M/T = override de transporte por fila
+      const motToks = parts.filter(t => /^[MT]$/i.test(t));
       if(!ords.length){ errores.push({ linea:nl, orden:null, motivo:'sin número de orden (7-12 dígitos)' }); return; }
       if(ords.length > 1){ errores.push({ linea:nl, orden:ords[0], motivo:'más de un número tipo orden en la fila' }); return; }
       const ordenNorm = normalizeOrdenLocal(ords[0]);
       if(!ORDEN_RE.test(ordenNorm)){ errores.push({ linea:nl, orden:ords[0], motivo:'orden inválida (7-12 dígitos)' }); return; }
       if(fechas.length > 1){ errores.push({ linea:nl, orden:ordenNorm, motivo:'más de una fecha en la fila' }); return; }
+      if(motToks.length > 1){ errores.push({ linea:nl, orden:ordenNorm, motivo:'más de un M/T en la fila' }); return; }
       let iso = null, usedApply = false;
       if(fechas.length === 1){
         iso = /^\d{4}-\d{2}-\d{2}$/.test(fechas[0]) ? fechas[0] : parseFechaArLocal(fechas[0]);
@@ -791,10 +803,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       }
       if(iso > maxFecha){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha futura (> hoy+1) — ¿typo?' }); return; }
       if(iso < '2020-01-01'){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha fuera de rango' }); return; }
-      if(!porOrden.has(ordenNorm)) porOrden.set(ordenNorm, { fechas:new Set(), n:0, usedApply:false });
+      if(!porOrden.has(ordenNorm)) porOrden.set(ordenNorm, { fechas:new Set(), mots:new Set(), n:0, usedApply:false });
       const ent = porOrden.get(ordenNorm);
       ent.fechas.add(iso); ent.n++;
       if(usedApply) ent.usedApply = true;
+      // conflicto M vs T entre filas duplicadas = espejo del conflicto de fechas
+      if(motToks.length === 1) ent.mots.add(motToks[0].toUpperCase() === 'M' ? 'maritimo' : 'terrestre');
     });
     return { porOrden, errores };
   }
@@ -807,23 +821,44 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(!porOrden.size && !errores.length) return;
     const t = el('table');
     const thead = el('thead'); const trh = el('tr');
-    ['orden','fecha GI','estado del lote'].forEach(h => trh.appendChild(el('th', null, h)));
+    ['orden','fecha GI','transporte','estado del lote'].forEach(h => trh.appendChild(el('th', null, h)));
     thead.appendChild(trh); t.appendChild(thead);
+    // B.1-fix: celda transporte — ícono + texto + procedencia (lote vs override fila)
+    const motCell = (ent) => {
+      const td = el('td');
+      const motSet = ent.mots || new Set();
+      if(motSet.size > 1){ td.appendChild(document.createTextNode('M ≠ T')); return { td, conflict:true }; }
+      const isOverride = motSet.size === 1;
+      const mot = isOverride ? [...motSet][0] : _giBatchMot;
+      const ic = svgUse(mot === 'terrestre' ? '#i-truck' : '#i-ship', 'ic ic-sm');
+      ic.style.verticalAlign = 'middle'; ic.style.marginRight = '4px';
+      ic.style.color = mot === 'terrestre' ? 'var(--amber, #f5a623)' : 'var(--blue)';
+      td.appendChild(ic);
+      td.appendChild(document.createTextNode(mot));
+      const src = el('span', null, isOverride ? ' · override fila' : ' (lote)');
+      src.style.cssText = isOverride ? 'color:var(--blue);font-size:10px;font-weight:700' : 'color:var(--seg-ink-faint);font-size:10px';
+      td.appendChild(src);
+      return { td, conflict:false };
+    };
     const tbody = el('tbody');
     for(const [orden, ent] of porOrden){
       const tr = el('tr');
       tr.appendChild(el('td', null, orden));
-      if(ent.fechas.size === 1){
+      const mc = motCell(ent);
+      if(ent.fechas.size === 1 && !mc.conflict){
         const fecha = [...ent.fechas][0];
         tr.appendChild(el('td', null, fecha + (ent.usedApply ? ' (aplicada)' : '')));
+        tr.appendChild(mc.td);
         const st = el('td','st');
         st.appendChild(mkBadge('ok', ent.n > 1 ? ('lista · ×' + ent.n + ' filas (se toma una)') : 'lista'));
         tr.appendChild(st);
       } else {
         tr.appendChild(el('td', null, [...ent.fechas].join(' ≠ ')));
+        tr.appendChild(mc.td);
         const st = el('td','st');
-        const b = mkBadge('bad','conflicto: 2 fechas — no se escribe');
-        b.title = 'La misma orden vino con fechas distintas — no se escribe: corregí el pegado.';
+        const motivo = mc.conflict ? 'conflicto: M y T — no se escribe' : 'conflicto: 2 fechas — no se escribe';
+        const b = mkBadge('bad', motivo);
+        b.title = 'La misma orden vino con ' + (mc.conflict ? 'transportes distintos (M y T)' : 'fechas distintas') + ' — no se escribe: corregí el pegado.';
         st.appendChild(b);
         tr.appendChild(st);
       }
@@ -832,6 +867,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     for(const e of errores){
       const tr = el('tr');
       tr.appendChild(el('td', null, e.orden || '—'));
+      tr.appendChild(el('td', null, '—'));
       tr.appendChild(el('td', null, '—'));
       const st = el('td','st');
       st.appendChild(mkBadge('bad', 'inválida: línea ' + e.linea + ' — ' + e.motivo));
@@ -893,7 +929,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       if(!_giLastParse) reparseGiTextarea();
       if(!_giLastParse){ ssbToast('No hay filas para registrar — pegá el lote primero.', 'error'); return; }
       for(const [orden, ent] of _giLastParse.porOrden){
-        if(ent.fechas.size === 1) rows.push({ order_number: orden, despacho_at: [...ent.fechas][0] });
+        // B.1-fix: mot = override de fila (M/T) > segmentado del lote; conflicto
+        // M≠T no se escribe (espejo del conflicto de fechas)
+        const motSet = ent.mots || new Set();
+        if(ent.fechas.size === 1 && motSet.size <= 1){
+          rows.push({ order_number: orden, despacho_at: [...ent.fechas][0], mot: motSet.size === 1 ? [...motSet][0] : _giBatchMot });
+        }
       }
       if(!rows.length){ ssbToast('No hay filas listas para registrar en el lote.', 'error'); return; }
     }
@@ -1012,6 +1053,13 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     $('seg-gi-applybtn')?.addEventListener('click', () => {
       _giBatchApplyDate = $('seg-gi-applydate')?.value || null;
       reparseGiTextarea();
+    });
+    // B.1-fix: segmentado transporte del lote (delegado — 2 botones data-mot)
+    $('seg-gi-batchmot')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-mot]'); if(!btn) return;
+      _giBatchMot = btn.dataset.mot;
+      _giSyncBatchMotUI();
+      reparseGiTextarea();   // refresca la columna transporte del preview
     });
     $('seg-mod-submit')?.addEventListener('click', () => submitGi());
   })();
