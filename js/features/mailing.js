@@ -463,7 +463,9 @@
     // _SEG) — se muestran SOLO si vienen (deploy desfasado = sin línea, no rompe).
     if(_preview && (_preview.dias_libres != null || _preview.seg_alerta)){
       const extra = [];
-      if(_preview.dias_libres != null) extra.push('Días libres: ' + _preview.dias_libres);
+      // dias_libres es OBJETO desde plancompleto B ({dias,...}) — concatenarlo
+      // directo daba "[object Object]"; se muestra .dias con fallback escalar.
+      if(_preview.dias_libres != null){ const dl = _preview.dias_libres; extra.push('Días libres: ' + (dl && typeof dl === 'object' ? (dl.dias != null ? dl.dias + ' días' : '—') : dl)); }
       if(_preview.seg_alerta) extra.push(String(_preview.seg_alerta));
       c.appendChild(el('p','mail-note', extra.join(' · ')));
     }

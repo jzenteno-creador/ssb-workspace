@@ -33,6 +33,14 @@
  *      contacto de naviera en destino (mailing_naviera_destino), SEG obligatorio
  *      informativo para CIP/CIF (alerta, NO bloquea) y adjuntos extra manuales
  *      (passthrough al root para "Unir binarios" + lista del mail).
+ *   8. T6·2 (G.2, 2026-07-17): template "Slim & Structured" de la guía de John
+ *      (docs/context/SSB Shipping Docs Email (produccion).html) en INGLÉS,
+ *      email-safe estricto; KPI ETD+ATD+ETA+tránsito; Shipment/Incoterm/Freight
+ *      desde las columnas T6·1 de mailing_orders; banderas emoji vía embed
+ *      puertos→paises; FREE DAYS desde v_orden_freetime (regla hub P·5:
+ *      SIEMPRE la fila sin sufijo hub); SHIPPING LINE de la guía EXCLUIDO
+ *      (P·6 — datos de Naara pendientes). Saludo genérico + empresa en el
+ *      asunto; cero data-cfemail/scripts.
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -175,31 +183,42 @@ const sello_vigente = (bl && bl.bl_file_id)
 // (timestamps ISO del mismo formato → comparación lexicográfica, como etd/eta)
 const roleo_pendiente = !!(m.roleo_at && (!bl || String(bl.created_at) < String(m.roleo_at)));
 
-// Días libres en destino (detention_freetime) — mapeos VERIFICADOS EN VIVO
-// 2026-07-15 contra select distinct de supplier/country y puertos.pais; los
-// MISMOS mapas van inline en la URL del nodo "GET detention" (mantener espejados):
-//   carrier→supplier: MAERSK→MAERSK · SEALAND→MAERSK (marca del grupo Maersk) ·
-//   LOG-IN→LOG-IN LOGISTICA INTERMODAL S.A. · MERCOSUL→CMA CGM (grupo CMA CGM) ·
-//   HAPAG-LLOYD→HAPAG LLOYD (sin guión en la tabla).
-const DET_SUPPLIER = { 'MAERSK': 'MAERSK', 'SEALAND': 'MAERSK', 'LOG-IN': 'LOG-IN LOGISTICA INTERMODAL S.A.', 'MERCOSUL': 'CMA CGM', 'HAPAG-LLOYD': 'HAPAG LLOYD' };
-const DET_COUNTRY = { 'Brasil': 'BRAZIL', 'Chile': 'CHILE', 'Perú': 'PERU', 'Argentina': 'ARGENTINA', 'Colombia': 'COLOMBIA', 'México': 'MEXICO', 'Estados Unidos': 'UNITED STATES', 'España': 'SPAIN', 'India': 'INDIA', 'Vietnam': 'VIETNAM', 'China': 'CHINA (EAST/NORTH/SOUTH)' };
-const pais_destino = (row('GET puertos pais') || {}).pais || null;
-const det = row('GET detention');
-const det_dias = det
-  ? (det.combined_days != null ? Number(det.combined_days)
-    : ((det.demurrage_days != null || det.detention_days != null)
-      ? (Number(det.demurrage_days) || 0) + (Number(det.detention_days) || 0) : null))
+// Días libres en destino — T6·2 (G.2): fuente v_orden_freetime (resolutor T4
+// keyed por orden: mailing_orders.naviera_id + pod_puerto_id + pais_iso) —
+// reemplaza los mapas inline DET_SUPPLIER/DET_COUNTRY del v2 (ya no hay nada
+// que "mantener espejado" con la URL del GET). El GET puede traer 2 filas
+// (variantes hub: "U.A.E DPW Hub", "CHINA (SHANGHAI DIT HUB)", "SAUDI ARABIA
+// (JUBAIL ONLY)"): regla P·5 — SIEMPRE preferir la fila SIN sufijo hub.
+const ftRows = allRows('GET detention');
+const ftPlain = ftRows.filter((r) => !/\b(HUB|ONLY)\b/i.test(String(r.detention_label || '')));
+const ft = ftPlain[0] || ftRows[0] || null;
+const ppj = row('GET puertos pais') || {};
+const pais_destino = ppj.pais || null;
+const ft_dias = ft
+  ? (ft.combined_days != null ? Number(ft.combined_days)
+    : ((ft.demurrage_days != null || ft.detention_days != null)
+      ? (Number(ft.demurrage_days) || 0) + (Number(ft.detention_days) || 0) : null))
   : null;
 // Sin match (o fila sin días) → null y el bloque del mail se OMITE — jamás rompe.
-const dias_libres = (det && det_dias != null) ? {
-  dias: det_dias,
-  combined: det.combined_days != null,
-  per_diem_dry_usd: det.per_diem_dry_usd != null ? Number(det.per_diem_dry_usd) : null,
-  per_diem_reefer_usd: det.per_diem_reefer_usd != null ? Number(det.per_diem_reefer_usd) : null,
-  supplier: DET_SUPPLIER[String(pick(m.carrier) || '').toUpperCase().trim()] || null,
-  country: DET_COUNTRY[String(pais_destino || '').trim()] || null,
+const dias_libres = (ft && ft_dias != null) ? {
+  dias: ft_dias,
+  combined: ft.combined_days != null,
+  per_diem_dry_usd: ft.per_diem_dry_usd != null ? Number(ft.per_diem_dry_usd) : null,
+  per_diem_reefer_usd: ft.per_diem_reefer_usd != null ? Number(ft.per_diem_reefer_usd) : null,
+  supplier: ft.naviera || null,
+  country: ft.detention_label || null,
   pais_destino,
 } : null;
+
+// Ruta con banderas (T6·2): destino vía embed puertos→paises del GET (FK
+// pais_iso → paises.iso2); origen = INVARIANTE de dominio — SSB exporta SOLO
+// desde puertos argentinos (censo 2026-07-17: POL ∈ {BUENOS AIRES, BAHIA
+// BLANCA}); la propia guía hardcodea la bandera AR. Sin dato → la bandera se
+// omite y queda la ciudad, nunca rompe.
+const destPP = (ppj.paises && typeof ppj.paises === 'object') ? ppj.paises : {};
+const dest_country = destPP.nombre_en || pais_destino || null;
+const dest_flag = destPP.flag_emoji || null;
+const ORIGIN_COUNTRY = 'Argentina', ORIGIN_FLAG = '🇦🇷';
 
 // Bloque de contacto de la naviera en destino (mailing_naviera_destino — el
 // contenido lo cargan John/Naara: confiado, con sanitizado suave anti-<script>).
@@ -298,60 +317,92 @@ else if (req.request_test_mode) test_reasons.push('test_mode del request (llave 
 else if (!sendable_real) test_reasons.push('destinatarios no confirmados en mailing_contacts (tercera red)');
 else effective_test = false;
 
-// ---- subject + body (Batch B ATD-gate — template EXACTO aprobado en STOP 1;
-//      sin producto/cantidad; el SLA interno JAMÁS aparece en el mail) ----
+// ---- subject + body — T6·2 (G.2 2026-07-17): template "Slim & Structured" de
+//      la guía de John (docs/context/SSB Shipping Docs Email (produccion).html).
+//      Email-safe ESTRICTO: tablas anidadas + estilos inline, width fijo 600,
+//      Arial (Outlook ignora max-width y no banca flex/grid). En INGLÉS
+//      (destinatarios internacionales), saludo GENÉRICO ("Dear Customer") +
+//      empresa en el asunto. Data-driven punta a punta: todo segmento sin dato
+//      se OMITE o degrada a "—" — nunca rompe. SHIPPING LINE de la guía
+//      EXCLUIDO (P·6); lo cubre el bloque naviera-destino cuando haya filas.
+//      Sin producto/cantidad; el SLA interno JAMÁS aparece en el mail.
+//      testBanner y la degradación sin-ATD del v1/v2 quedan intactos.
 const buqueViaje = [vessel, voyage].filter(Boolean).join(' ');
-// tránsito estimado = ETA − ATD en días CORRIDOS (date-only, Date.UTC puro);
-// solo si hay ambas fechas y ATD ≤ ETA — si no, la tabla muestra "—", nunca rompe.
+// tránsito estimado = ETA efectiva − ATD en días CORRIDOS (date-only, Date.UTC).
+// ETA efectiva: schedule vivo (mejor dato) → booking (m.eta, columna T6·1).
+// Solo si hay ambas fechas y ATD ≤ ETA — si no, la celda muestra "—".
 const dUTC = (s) => { const p = String(s).split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); };
-const transit_days = (atd && schedule.eta && atd <= String(schedule.eta))
-  ? Math.round((dUTC(schedule.eta) - dUTC(atd)) / 86400000) : null;
-// Segmentos faltantes se OMITEN del subject (sin ATD → sin "Zarpe")
-const subject_real = ['Documentación de embarque · Orden ' + order_number,
-  buqueViaje || null, atd ? 'Zarpe ' + fmtD(atd) : null].filter(Boolean).join(' · ');
-const trow = (k, v) => `<tr><td style="padding:5px 12px 5px 0;color:#666;font-size:13px;white-space:nowrap;">${esc(k)}</td><td style="padding:5px 0;font-size:13px;"><b>${esc(v || '—')}</b></td></tr>`;
-// Labels humanos de la documentación adjunta; tipo desconocido → filename fallback
-const DOC_LBL = { bl_draft: 'Bill of Lading (BL)', factura: 'Factura Comercial (FC)', packing_list: 'Packing List (PL)', co_zip: 'Certificado de Origen — digital (ZIP)', co_pdf: 'Certificado de Origen (PDF)', pe: 'Permiso de Exportación (PE)', seg: 'Certificado de Seguro (SEG)', coo: 'Certificado de Origen (COO)', crt: 'CRT (Carta de Porte)' };
+const okD = (s) => (s && /^\d{4}-\d{2}-\d{2}/.test(String(s))) ? String(s).slice(0, 10) : null;
+const eta_eff = okD(schedule.eta) || okD(m.eta);
+const etd_plan = okD(m.etd);
+const transit_days = (atd && eta_eff && atd <= eta_eff)
+  ? Math.round((dUTC(eta_eff) - dUTC(atd)) / 86400000) : null;
+const incoterm_show = pick(m.incoterm, incoterm);
+const freight_show = m.freight_term
+  ? String(m.freight_term).charAt(0).toUpperCase() + String(m.freight_term).slice(1).toLowerCase() : null;
+const shipment_no = pick(m.shipment_no);
+// Segmentos faltantes se OMITEN del subject (sin ATD → sin "Sailed")
+const subject_real = ['Shipping Documents · Order ' + order_number, cliente || null,
+  buqueViaje || null, atd ? 'Sailed ' + fmtD(atd) : null].filter(Boolean).join(' · ');
+
+// Labels humanos EN de la documentación adjunta; tipo desconocido → filename
+const DOC_LBL = { bl_draft: 'Bill of Lading', factura: 'Commercial Invoice', packing_list: 'Packing List', co_zip: 'Certificate of Origin — digital (ZIP)', co_pdf: 'Certificate of Origin (PDF)', pe: 'Export Permit (PE)', seg: 'Insurance Certificate (SEG)', coo: 'Certificate of Origin (COO)', crt: 'CRT (Waybill)' };
 // Adjuntos extra manuales (§5.5): ya validados por "Validar request" (máx 3,
 // mime whitelist, ≤4MB). Passthrough al root (los adjunta "Unir binarios") y
-// a la lista del mail con sufijo "(adjunto manual)".
+// a la lista del mail con sufijo "(manual)".
 const extra_attachments = Array.isArray(req.extra_attachments) ? req.extra_attachments : [];
-const adjLi = attachments_found.map((f) => `<li style="font-size:13px;">${esc(DOC_LBL[f.tipo] || f.name || f.tipo)}</li>`).join('')
-  + extra_attachments.map((a) => `<li style="font-size:13px;">${esc(a.name)} (adjunto manual)</li>`).join('');
 const testBanner = effective_test
   ? `<p style="background:#fff3cd;border:1px solid #e0c860;padding:8px 12px;font-size:12px;color:#7a5d00;">[MODO TEST] Envío real iría a: ${esc(to.join(', ') || 'SIN DESTINATARIOS CONFIRMADOS')}${cc.length ? ' — CC: ' + esc(cc.join(', ')) : ''}</p>` : '';
-// Párrafo narrativo SOLO con zarpe confirmado + buque (tono de servicio, no bot)
-const parrafoZarpe = (atd && vessel)
-  ? `<p>El buque <b>${esc(buqueViaje)}</b> zarpó${pol ? ' de ' + esc(pol) : ''} el <b>${fmtD(atd)}</b>${pod ? ' con destino a ' + esc(pod) : ''}.${schedule.eta ? ` Arribo estimado: <b>${fmtD(schedule.eta)}</b>${transit_days != null ? ` (tránsito estimado ${transit_days} días)` : ''}.` : ''}</p>\n`
-  : '';
 
-// ---- bloques nuevos del template v2 (cada uno se OMITE entero si no aplica) ----
-const diasLibresHtml = dias_libres ? `<p style="margin:14px 0 4px;"><b>Días libres en destino</b></p>
-<table style="border-collapse:collapse;margin:6px 0 10px;">
-${trow('Días libres', dias_libres.dias + ' días' + (dias_libres.combined ? '' : ' (demurrage + detention)'))}${dias_libres.per_diem_dry_usd != null ? trow('Per diem dry', 'USD ' + dias_libres.per_diem_dry_usd + ' / día') : ''}${dias_libres.per_diem_reefer_usd != null ? trow('Per diem reefer', 'USD ' + dias_libres.per_diem_reefer_usd + ' / día') : ''}
-</table>` : '';
-const navieraHtml = naviera_html ? `<p style="margin:14px 0 4px;"><b>Contacto de la naviera en destino</b></p>
-<div style="font-size:13px;margin:4px 0 10px;">${naviera_html}</div>` : '';
-const segAvisoHtml = seg_alerta
-  ? `<p style="font-size:12px;color:#8a6d00;margin:10px 0 0;">El Certificado de Seguro (SEG) de esta operación se enviará por separado.</p>` : '';
+// -- piezas del card (paleta guía: navy #0C2340 · cyan #1C9BD9 · tint #EEF4FA) --
+const AR = 'font-family:Arial,Helvetica,sans-serif;';
+const SEP = '<span style="color:#1C9BD9;padding:0 8px;">&#183;</span>';
+const secHead = (t) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr><td width="3" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td style="padding-left:8px;${AR}font-size:11px;font-weight:bold;letter-spacing:1.3px;color:#0C2340;white-space:nowrap;">${t}</td></tr></table>`;
+const kpi = (k, v, first) => `<td width="25%" style="padding:11px 12px;${first ? '' : 'border-left:1px solid #E4EAF1;'}${AR}"><div style="font-size:9px;letter-spacing:1.2px;color:#8494A4;font-weight:bold;">${k}</div><div style="font-size:13.5px;color:#0C2340;font-weight:bold;margin-top:3px;">${esc(v || '—')}</div></td>`;
+const drow = (k, v, last) => `<tr><td align="left" style="${AR}font-size:11.5px;color:#7D8C9C;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(k)}</td><td align="right" style="${AR}font-size:12px;color:#0C2340;font-weight:bold;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(v || '—')}</td></tr>`;
+const endPt = (flag, city, country, right) => `<td valign="middle" align="${right ? 'right' : 'left'}" style="${AR}white-space:nowrap;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${(!right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-right:8px;">${flag}</td>` : ''}<td valign="middle"><div style="font-size:12.5px;font-weight:bold;color:#0C2340;">${esc(city || '—')}</div>${country ? `<div style="font-size:9px;letter-spacing:1px;color:#8494A4;font-weight:bold;margin-top:1px;">${esc(String(country).toUpperCase())}</div>` : ''}</td>${(right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-left:8px;">${flag}</td>` : ''}</tr></table></td>`;
 
-// Template v2 (item 35) — email-safe ESTRICTO: tablas anidadas + estilos inline,
-// width fijo 640 (Outlook ignora max-width y no banca flex/grid). testBanner y
-// la degradación sin-ATD del v1 quedan intactos.
-const body_html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;background:#f4f5f7;"><tr><td align="center" style="padding:18px 8px;">
-<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;background:#ffffff;border:1px solid #e2e6ea;">
-<tr><td style="background:#0f4c5c;padding:14px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;">SSB International — Documentación de exportación</td></tr>
-<tr><td style="padding:20px 24px;font-family:Arial,Helvetica,sans-serif;color:#222222;font-size:13px;line-height:1.55;">
-${testBanner}<p style="margin-top:0;">Estimados,</p>
-<p>Les enviamos la documentación de embarque correspondiente a la orden <b>${esc(order_number)}</b>${cliente ? ' (' + esc(cliente) + ')' : ''}.</p>
-${parrafoZarpe}<p style="margin-bottom:4px;">Detalle de la orden:</p>
-<table style="border-collapse:collapse;margin:6px 0 10px;">
-${trow('Orden', order_number)}${trow('Booking', booking_no)}${trow('BL', bl_number)}${trow('Buque / Viaje', buqueViaje)}${trow('Ruta', [pol, pod].filter(Boolean).join(' → '))}${trow('Zarpe (ATD)', atd ? fmtD(atd) : null)}${trow('Arribo est.', schedule.eta ? fmtD(schedule.eta) : null)}${trow('Tránsito est.', transit_days != null ? transit_days + ' días' : null)}
-</table>
-${adjLi ? `<p style="margin-bottom:4px;">Documentación adjunta:</p><ul style="margin-top:4px;padding-left:20px;">${adjLi}</ul>` : ''}${segAvisoHtml}${diasLibresHtml}${navieraHtml}<p>Quedamos a disposición ante cualquier consulta.</p>
-<p style="margin-bottom:0;">Saludos cordiales,<br><b>SSB International</b> — Equipo de Exportaciones</p>
-</td></tr>
-<tr><td style="background:#f4f5f7;border-top:1px solid #e2e6ea;padding:10px 24px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a919b;">SSB International · Equipo de Exportaciones · expoarpbb@ssbint.com</td></tr>
+// checklist de adjuntos en 2 columnas — lo REALMENTE adjuntado + extras manuales
+const docNames = attachments_found.map((f) => DOC_LBL[f.tipo] || f.name || f.tipo)
+  .concat(extra_attachments.map((a) => a.name + ' (manual)'));
+const docRow = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#33424F;">${esc(t)}</td></tr>`;
+const docMid = Math.ceil(docNames.length / 2);
+const docsCol = (arr) => `<td width="50%" valign="top"><table role="presentation" cellpadding="0" cellspacing="0" border="0">${arr.map(docRow).join('')}</table></td>`;
+const segNote = seg_alerta ? `<div style="${AR}font-size:10.5px;color:#8a6d00;margin-top:8px;">The Insurance Certificate (SEG) for this shipment will be sent separately.</div>` : '';
+const docsHtml = (docNames.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead('ATTACHED DOCUMENTS')}${docNames.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docNames.slice(0, docMid))}${docsCol(docNames.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">No documents attached yet.</div>`}${segNote}</td></tr>` : '';
+
+// FREE DAYS (v_orden_freetime) — se omite entero sin dato, jamás rompe
+const perDiem = [];
+if (dias_libres && dias_libres.per_diem_dry_usd != null) perDiem.push('DRY USD ' + dias_libres.per_diem_dry_usd + '/day');
+if (dias_libres && dias_libres.per_diem_reefer_usd != null) perDiem.push('REEFER USD ' + dias_libres.per_diem_reefer_usd + '/day');
+const freeDaysHtml = dias_libres ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;${AR}"><span style="font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">FREE DAYS AT DESTINATION</span><span style="font-size:12.5px;font-weight:bold;color:#0C2340;padding-left:12px;">${esc(dias_libres.dias + ' days')}</span>${perDiem.map((b) => `<span style="color:#C4D2E0;padding:0 8px;">&#183;</span><span style="font-size:11px;color:#5A6A7A;">${esc(b)}</span>`).join('')}</td></tr></table></td></tr>` : '';
+
+// Contacto de la naviera en destino (mailing_naviera_destino, la cargan
+// John/Naara) — P·6: se enciende solo cuando la tabla tenga filas.
+const navieraBox = naviera_html ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:11px 15px;"><div style="${AR}font-size:10px;font-weight:bold;letter-spacing:1px;color:#8494A4;">CARRIER CONTACT AT DESTINATION</div><div style="${AR}font-size:12px;color:#33424F;margin-top:4px;">${naviera_html}</div></td></tr></table></td></tr>` : '';
+
+const refBar = ['ORDER ' + esc(String(order_number)), buqueViaje ? esc(buqueViaje) : null,
+  (pol || pod) ? esc([pol, pod].filter(Boolean).join(' → ')) : null].filter(Boolean).join(SEP);
+
+const body_html = `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#E7ECF2;">Shipping documents for Order ${esc(String(order_number))}${buqueViaje ? ' — ' + esc(buqueViaje) : ''}${(pol && pod) ? ', ' + esc(pol + ' → ' + pod) : ''}.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;background-color:#E7ECF2;"><tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background-color:#ffffff;border:1px solid #DCE6F0;border-radius:14px;overflow:hidden;">
+<tr><td style="padding:20px 28px 15px;border-bottom:2px solid #0C2340;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td align="left" valign="middle" style="${AR}"><span style="font-size:24px;font-weight:bold;color:#0C2340;letter-spacing:-1px;">SSB</span><span style="font-size:9px;color:#F26A21;vertical-align:super;">&#9642;</span><div style="font-size:8px;letter-spacing:3px;color:#0C2340;font-weight:bold;margin-top:2px;">INTERNATIONAL</div></td>
+<td align="right" valign="middle" style="${AR}"><div style="font-size:14px;font-weight:bold;color:#0C2340;letter-spacing:0.4px;">SHIPPING DOCUMENTS</div><div style="font-size:9px;letter-spacing:2.5px;color:#93A3B4;font-weight:bold;margin-top:3px;">EXPORT DOCUMENTATION</div></td>
+</tr></table></td></tr>
+<tr><td style="background-color:#EEF4FA;padding:9px 28px;${AR}font-size:11.5px;color:#33475A;letter-spacing:0.3px;font-weight:bold;">${refBar}</td></tr>
+<tr><td style="padding:18px 28px 4px;${AR}font-size:13px;color:#3A4A5A;line-height:1.6;">${testBanner}Dear Customer,<br />Please find attached the documentation corresponding to the following shipment.</td></tr>
+<tr><td style="padding:14px 28px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${endPt(ORIGIN_FLAG, pol, ORIGIN_COUNTRY, false)}<td valign="middle" style="padding:0 12px;" width="100%"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="1" style="height:1px;font-size:0;line-height:0;border-top:1px dashed #C4D2E0;">&nbsp;</td></tr></table></td>${endPt(dest_flag, pod, dest_country, true)}</tr></table></td></tr>
+<tr><td style="padding:4px 28px 6px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4EAF1;border-radius:9px;"><tr>${kpi('ETD', etd_plan ? fmtD(etd_plan) : null, true)}${kpi('SAILED (ATD)', atd ? fmtD(atd) : null)}${kpi('ETA', eta_eff ? fmtD(eta_eff) : null)}${kpi('TRANSIT', transit_days != null ? transit_days + ' days' : null)}</tr></table></td></tr>
+<tr><td style="padding:14px 28px 2px;">${secHead('SHIPMENT DETAILS')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow('Order', order_number)}${drow('Shipment', shipment_no)}${drow('Booking', booking_no, true)}</table></td>
+<td width="4%" style="font-size:0;line-height:0;">&nbsp;</td>
+<td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow('Bill of Lading', bl_number)}${drow('Incoterm', incoterm_show)}${drow('Freight', freight_show, true)}</table></td>
+</tr></table></td></tr>
+${docsHtml}${freeDaysHtml}${navieraBox}
+<tr><td style="padding:16px 28px 4px;${AR}font-size:12.5px;color:#3A4A5A;line-height:1.6;">Should you have any questions, please do not hesitate to contact us.</td></tr>
+<tr><td style="padding:12px 28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4EAF1;"><tr><td style="padding-top:14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="3" valign="top" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td valign="top" style="padding-left:12px;${AR}"><div style="font-size:12px;font-weight:bold;color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div><div style="font-size:11.5px;color:#5A6A7A;margin-top:4px;"><a href="mailto:expoarpbb@ssbint.com" style="color:#1C9BD9;text-decoration:none;">expoarpbb@ssbint.com</a><span style="color:#C4D2E0;"> &#183; </span><a href="https://ssbint.com/es" style="color:#1C9BD9;text-decoration:none;">ssbint.com/es</a></div><div style="font-size:10px;color:#9BABBB;margin-top:8px;line-height:1.5;">This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.</div></td></tr></table></td></tr></table></td></tr>
 </table></td></tr></table>`;
 
 // Expo SIEMPRE en copia del envío real (item 28): cleanEmails filtra la casilla

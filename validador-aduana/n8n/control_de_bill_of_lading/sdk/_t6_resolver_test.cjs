@@ -1,0 +1,99 @@
+// Test offline T6·2 — corre el espejo code_mailing_resolver.js con stubs de los
+// 17 nodos upstream, datos REALES de 118833340 (mailing_orders + v_orden_freetime
+// + puertos embed). Asserts sobre subject/body/route/contratos. NO toca prod.
+const fs = require('fs');
+const path = require('path');
+const SDK = '/home/jzenteno/projects/ssb-workspace/validador-aduana/n8n/control_de_bill_of_lading/sdk/';
+const SCRATCH = '/tmp/claude-1000/-home-jzenteno-projects-ssb-workspace/6edff2e8-181d-4fd9-bea5-8559f07aec01/scratchpad/';
+
+const mo = JSON.parse(fs.readFileSync(SCRATCH + 'mo_row.json', 'utf8'));
+
+const NODES = {
+  'Validar request': [{ action: 'preview', order_number: '118833340', req_errors: [], overrides: {}, contacts: null, triggered_by: 't6-offline', lock_test_mode: true, request_test_mode: false, extra_attachments: [] }],
+  'GET mailing_orders': [mo],
+  'GET control BL (latest)': [{ order_number: '118833340', vessel: mo.vessel, voyage: mo.voyage, pol: mo.pol, pod: mo.pod, booking_no: mo.booking_no, bl_number: mo.bl_number, created_at: '2026-07-17T02:58:42Z', bl_file_id: 'FAKE_FILE_ID', factura_extract: { incoterm: 'CPT' } }],
+  'GET mailing_contacts': [],
+  'Agg schedules': [{ data: [] }],       // sin-match → send bloqueado, preview OK
+  'Buscar BL Draft': [{ id: 'drv-bl', name: '118833340_BL.pdf', mimeType: 'application/pdf' }],
+  'Buscar Factura': [{ id: 'drv-fc', name: '118833340_FC.pdf', mimeType: 'application/pdf' }],
+  'Buscar Packing List': [{}],
+  'GET certificados_origen': [{}],
+  'Buscar CO PDF': [{}],
+  'Buscar PE': [{}],
+  'GET sellos': [{ bl_file_id: 'FAKE_FILE_ID', sellado_by: 'john', sellado_at: '2026-07-17T03:00:00Z' }],
+  // 2 filas: variante hub PRIMERO a propósito — P·5 debe elegir la plana
+  'GET detention': [
+    { naviera: 'MAERSK', detention_label: 'BRAZIL (SANTOS DIT HUB)', combined_days: 14, demurrage_days: null, detention_days: null, per_diem_dry_usd: 50, per_diem_reefer_usd: 20 },
+    { naviera: 'MAERSK', detention_label: 'BRAZIL', combined_days: 21, demurrage_days: null, detention_days: null, per_diem_dry_usd: 35, per_diem_reefer_usd: 10 },
+  ],
+  'GET puertos pais': [{ pais: 'Brasil', pais_iso: 'BR', paises: { nombre_en: 'Brazil', flag_emoji: '🇧🇷' } }],
+  'GET naviera destino': [{}],
+  'Buscar SEG': [{}],
+  'Config (TEST_MODE)': [{ TEST_MODE: true }],
+};
+
+const $ = (name) => {
+  if (!(name in NODES)) throw new Error('nodo no stubeado: ' + name);
+  const items = NODES[name];
+  return {
+    item: { json: items[0] || {} },
+    first: () => ({ json: items[0] || {} }),
+    all: () => items.map((j) => ({ json: j })),
+  };
+};
+
+const code = fs.readFileSync(SDK + 'code_mailing_resolver.js', 'utf8');
+const out = new Function('$', 'console', code)($, console).json;
+const r = out.response, body = r.body_html, subj = r.gmail_preview.subject;
+
+let fails = [];
+const ok = (cond, label) => { console.log((cond ? '  ✓ ' : '  ✗ ') + label); if (!cond) fails.push(label); };
+
+console.log('SUBJECT:', subj);
+ok(subj.startsWith('[TEST → real:'), 'subject con prefijo TEST (lock ON)');
+ok(subj.includes('Shipping Documents · Order 118833340'), 'subject EN + orden');
+ok(subj.includes('ASIBRAS'), 'empresa en el asunto');
+ok(subj.includes('Sailed 14/07/2026'), 'Sailed con ATD');
+ok(out.route === 'respond' && r.send_blocked, 'preview → respond, send bloqueado (sin schedule)');
+ok(out.gmail.to === 'expoarpbb@ssbint.com', 'TEST: To = expoarpbb');
+
+ok(body.includes('SHIPPING DOCUMENTS') && body.includes('EXPORT DOCUMENTATION'), 'header guía');
+ok(body.includes('Dear Customer,'), 'saludo genérico');
+ok(body.includes('[MODO TEST]'), 'testBanner presente');
+ok(body.includes('🇦🇷') && body.includes('🇧🇷'), 'banderas AR + BR');
+ok(body.includes('BRAZIL') || body.includes('Brazil'), 'país destino');
+ok(body.includes('>ETD<') && body.includes('SAILED (ATD)') && body.includes('>ETA<') && body.includes('>TRANSIT<'), 'KPI ETD+ATD+ETA+TRANSIT');
+ok(body.includes('13/07/2026') && body.includes('14/07/2026') && body.includes('17/07/2026'), 'fechas ETD/ATD/ETA');
+ok(body.includes('3 days'), 'tránsito 3 días (14→17)');
+ok(body.includes('>Shipment<') && body.includes('48378497'), 'Shipment (T6·1)');
+ok(body.includes('>Incoterm<') && body.includes('>CPT<'), 'Incoterm');
+ok(body.includes('>Freight<') && body.includes('>Prepaid<'), 'Freight title-case');
+ok(body.includes('ATTACHED DOCUMENTS') && body.includes('Bill of Lading') && body.includes('Commercial Invoice'), 'checklist adjuntos EN');
+ok(body.includes('FREE DAYS AT DESTINATION') && body.includes('21 days'), 'FREE DAYS con fila PLANA (no hub) — P·5');
+ok(!body.includes('14 days') && !body.includes('USD 50'), 'variante hub descartada');
+ok(body.includes('DRY USD 35/day') && body.includes('REEFER USD 10/day'), 'per diem dry/reefer');
+ok(!body.includes('SHIPPING LINE'), 'SHIPPING LINE excluido (P·6)');
+ok(!body.includes('CARRIER CONTACT'), 'bloque naviera omitido (sin filas)');
+ok(!/cdn-cgi|data-cfemail|__cf_email__|<script/i.test(body), 'sin artefactos cf-email ni scripts');
+ok(body.includes('mailto:expoarpbb@ssbint.com') && body.includes('ssbint.com/es'), 'footer con mailto limpio');
+ok(!/SLA|sla_/i.test(body), 'SLA interno ausente');
+ok(r.dias_libres && r.dias_libres.dias === 21 && r.dias_libres.pais_destino === 'Brasil', 'response.dias_libres contrato');
+ok(r.control_revisado.vigente === true, 'sello vigente detectado');
+ok(Array.isArray(r.attachments.found) && r.attachments.found.length === 2, 'attachments.found = 2');
+
+// degradación: orden pelada sin nada
+NODES['GET mailing_orders'] = [{ order_number: '999999999', status: 'PENDIENTE', contacts_extracted: {} }];
+NODES['GET control BL (latest)'] = [];
+NODES['GET detention'] = [];
+NODES['GET puertos pais'] = [{}];
+NODES['Buscar BL Draft'] = [{}]; NODES['Buscar Factura'] = [{}];
+NODES['GET sellos'] = [];
+NODES['Validar request'][0].order_number = '999999999';
+const out2 = new Function('$', 'console', code)($, console).json;
+const b2 = out2.response.body_html;
+ok(b2.includes('—') && !b2.includes('FREE DAYS') && !b2.includes('🇧🇷'), 'degradación total: "—", sin FREE DAYS ni bandera destino');
+ok(out2.response.send_blocked, 'degradado: send bloqueado');
+
+fs.writeFileSync(SCRATCH + 'mail_t6_preview.html', body);
+console.log(fails.length ? '\nFAIL: ' + fails.length : '\nTODOS LOS ASSERTS PASS (' + (30 - fails.length) + ')');
+process.exit(fails.length ? 1 : 0);
