@@ -174,6 +174,34 @@
     return b;
   }
 
+  // R2 banderita: país destino como BANDERA flagcdn (mismo mecanismo que
+  // Detention/Schedule/Seguimiento) — mapa paises ES+EN → iso2, fetch único.
+  let _paisMapM = null;
+  async function ensurePaisMapM(){
+    if(_paisMapM) return;
+    const s2 = supa(); if(!s2) return;
+    try {
+      const { data, error } = await s2.from('paises').select('iso2, nombre_es, nombre_en');
+      if(error || !data) return;
+      _paisMapM = new Map();
+      for(const p of data){
+        if(p.nombre_es) _paisMapM.set(String(p.nombre_es).toUpperCase().trim(), p.iso2);
+        if(p.nombre_en) _paisMapM.set(String(p.nombre_en).toUpperCase().trim(), p.iso2);
+      }
+    } catch(_){ /* degrade: queda el texto */ }
+  }
+  function mailFlag(paisTxt){
+    if(!_paisMapM || !paisTxt) return null;
+    const iso = _paisMapM.get(String(paisTxt).toUpperCase().trim());
+    if(!iso) return null;
+    const img = document.createElement('img');
+    img.src = 'https://flagcdn.com/16x12/' + String(iso).toLowerCase() + '.png';
+    img.width = 16; img.height = 12; img.alt = paisTxt; img.title = paisTxt;
+    img.style.cssText = 'vertical-align:middle;margin-left:6px;border-radius:2px';
+    img.loading = 'lazy';
+    return img;
+  }
+
   async function apiMailing(body){
     const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
     if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
@@ -420,10 +448,20 @@
     item('Booking', _row.booking_no);
     item('BL', _row.bl_number);
     item('Buque / Viaje', [_row.vessel, _row.voyage].filter(Boolean).join(' '));
-    // R2-3b: país junto al puerto destino (confirmación visual — pais_destino
-    // del resolver, resuelto por la vertebral puerto→país)
-    item('POL → POD', [_row.pol, _row.pod].filter(Boolean).join(' → ')
-      + ((_preview && _preview.pais_destino) ? ' · ' + _preview.pais_destino : ''));
+    // R2-3b + banderita (John): país destino como BANDERA junto al puerto;
+    // sin match en paises → degrada al nombre en texto, jamás queda vacío.
+    {
+      const w = el('div'); w.appendChild(el('dt', null, 'POL → POD'));
+      const dd = el('dd', null, [_row.pol, _row.pod].filter(Boolean).join(' → ') || '—');
+      const paisTxt = _preview && _preview.pais_destino;
+      if(paisTxt){
+        const f = mailFlag(paisTxt);
+        if(f) dd.appendChild(f);
+        else dd.appendChild(document.createTextNode(' · ' + paisTxt));
+      }
+      w.appendChild(dd);
+      dl.appendChild(w);
+    }
     item('Factura', _row.invoice_no);
     item('Zarpe (ATD)', _row.atd ? fmtD(_row.atd) : '— sin confirmar');
     dl.style.marginTop = '12px';
@@ -1360,6 +1398,7 @@
     // quedaría pegado colándose en la próxima navegación a otro módulo.
     const _po = window.__segPendingOrder;
     window.__segPendingOrder = null;
+    ensurePaisMapM();   // R2 banderita: fire-and-forget — al llegar el preview ya hay mapa
     // G.1 pulido (T1·11): el filtro se aplica ANTES del fetch — al primer paint la
     // lista ya está acotada a la orden (sin el ~1s de espera); si había data en
     // caché se re-renderiza ya mismo y el fetch solo refresca

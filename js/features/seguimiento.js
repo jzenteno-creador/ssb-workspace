@@ -63,6 +63,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   let _openDetails = new Set();          // order_number con detalle abierto
   let _detailCache = new Map();          // order_number → { equip, docs, fetched }
   let _prodMap = new Map();              // order_number → [productos] (bulk en load)
+  let _crtSet = new Set();               // R2·J: órdenes con CRT capturado (bulk en load)
   // T3 (B.3): país → iso2 para banderas flagcdn (nombre_es de paises, T4.b);
   // null hasta el primer load — sin mapa no hay bandera, jamás rompe.
   let _paisMap = null;
@@ -251,6 +252,9 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
               _prodMap.get(p.order_number).push(p);
             }
           }, () => {}),
+        // R2·J: presencia de CRT por orden (39 filas) — para el badge n/m terrestre
+        s.from('documentos_orden').select('order_number').eq('tipo', 'crt')
+          .then(res => { if(!res.error && res.data) _crtSet = new Set(res.data.map(d => d.order_number)); }, () => {}),
       ]);
       if(error){
         console.error('seguimiento:load', error);
@@ -484,8 +488,14 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   // la sección DOCUMENTOS del desplegable (misma semántica que los chips viejos).
   function docsInventory(r){
     const items = [];
-    items.push({ tipo:null, label:'BL (Conocimiento de Embarque)', ok: !!r.doc_bl,
-      nota: r.doc_bl ? 'según último control' : '— sin control con BL asentado' });
+    if(r.mot === 'terrestre'){
+      // R2·J: el CRT reemplaza al BL (mockup aprobado) — presencia de documentos_orden
+      items.push({ tipo:'crt', label:'CRT (Carta de Porte) — reemplaza al BL', ok: _crtSet.has(r.order_number) || _crtSet.has(normalizeOrdenLocal(r.order_number)),
+        nota: '—' });
+    } else {
+      items.push({ tipo:null, label:'BL (Conocimiento de Embarque)', ok: !!r.doc_bl,
+        nota: r.doc_bl ? 'según último control' : '— sin control con BL asentado' });
+    }
     items.push({ tipo:'factura', label:'FC (Factura Comercial)', ok: !!r.doc_factura, nota: r.doc_factura ? null : '—' });
     items.push({ tipo:'packing', label:'PL (Packing List)', ok: !!r.doc_pl, nota: r.doc_pl ? null : '—' });
     if(r.co_requerimiento !== 'no_requerido'){
@@ -496,6 +506,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       items.push({ tipo:null, label:'CO (Cert. de Origen)', ok: null, nota: 'no requiere' });
     }
     if(r.order_kind === 'trade') items.push({ tipo:'permiso_exportacion', label:'PE (Permiso de Exportación)', ok: !!r.doc_pe, nota: r.doc_pe ? null : '—' });
+    else if(r.mot === 'terrestre') items.push({ tipo:null, label:'PE (Permiso de Exportación)', ok: null, nota: 'no aplica — orden STO (el PE es solo trade)' });
     return items;
   }
   function docsBadgeCell(r){
@@ -602,9 +613,49 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
     grid.appendChild(cardP);
 
-    // ── CONTENEDORES (último control) ──
-    const cardC = segdCard('▣ Contenedores — Control BL', 'último control');
-    if(!cache || !cache.fetched){
+    // ── CONTENEDORES (marítimo) / TRANSPORTE CRT-MIC (terrestre) ──
+    const esTerr = r.mot === 'terrestre';
+    const cardC = esTerr
+      ? segdCard('▣ Transporte — CRT / MIC', 'reemplaza a contenedores: sin BL ni control acá')
+      : segdCard('▣ Contenedores — Control BL', 'último control');
+    if(esTerr){
+      // R2·J: solo captura/presencia — el control sobre el CRT es fase futura
+      if(!cache || !cache.fetched){
+        cardC.appendChild(el('div', 'segd-empty', 'cargando…'));
+      } else {
+        const crts = cache.docs.filter(d => d.tipo === 'crt');
+        const { t, tb } = segdTable(['Documento', 'Nº / archivo', 'Estado']);
+        if(crts.length){
+          for(const d of crts){
+            const trc = el('tr');
+            trc.appendChild(el('td', null, 'CRT (Carta de Porte)'));
+            const tdA = el('td', 'segd-file');
+            tdA.appendChild(document.createTextNode((d.file_name || '—') + ' '));
+            if(d.drive_link){ const a = document.createElement('a'); a.href = d.drive_link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '⎘'; a.title = 'Abrir en Drive'; tdA.appendChild(a); }
+            trc.appendChild(tdA);
+            const tdE = el('td'); tdE.appendChild(mkBadge('ok', 'capturado en Drive')); trc.appendChild(tdE);
+            tb.appendChild(trc);
+          }
+        } else {
+          const trc = el('tr');
+          trc.appendChild(el('td', null, 'CRT (Carta de Porte)'));
+          trc.appendChild(el('td', 'seg-faint', '—'));
+          const tdE = el('td'); tdE.appendChild(mkBadge('bad', 'falta')); trc.appendChild(tdE);
+          tb.appendChild(trc);
+        }
+        const trm = el('tr');
+        trm.appendChild(el('td', null, 'MIC/DTA'));
+        const micDoc = cache.docs.find(d => /MIC/i.test(String(d.file_name || '')));
+        const tdM = el('td', 'segd-file');
+        if(micDoc){ tdM.appendChild(document.createTextNode(micDoc.file_name + ' ')); if(micDoc.drive_link){ const a = document.createElement('a'); a.href = micDoc.drive_link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '⎘'; tdM.appendChild(a); } }
+        else tdM.appendChild(el('span', 'seg-faint', '—'));
+        trm.appendChild(tdM);
+        const tdE2 = el('td'); tdE2.appendChild(micDoc ? mkBadge('ok', 'capturado') : mkBadge('mut', 'sin dato')); trm.appendChild(tdE2);
+        tb.appendChild(trm);
+        cardC.appendChild(t);
+        cardC.appendChild(el('div', 'segd-foot', 'nº y archivo del clasificador (el OCR ya los nombra) · el CONTROL sobre el CRT es fase futura'));
+      }
+    } else if(!cache || !cache.fetched){
       cardC.appendChild(el('div', 'segd-empty', 'cargando…'));
     } else if(cache.equip.length){
       const { t, tb } = segdTable(['Contenedor', 'Precinto', 'Neto', 'Bruto', 'Estado']);
@@ -629,7 +680,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     grid.appendChild(cardC);
 
     // ── DOCUMENTOS PARA EL ENVÍO ──
-    const cardD = segdCard('▤ Documentos para el envío', 'documentos_orden + certificados + control', controlEstadoBadge(r));
+    // R2·J: en terrestre NO hay estado de Control BL — el encabezado lo dice explícito
+    const cardD = segdCard('▤ Documentos para el envío',
+      esTerr ? 'documentos_orden' : 'documentos_orden + certificados + control',
+      esTerr ? mkBadge('mut', 'sin Control BL — no aplica en terrestre') : controlEstadoBadge(r));
     cardD.classList.add('segd-card--docs');
     const fileBy = {};
     if(cache && cache.fetched){
@@ -865,8 +919,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(c.archived) tr.className = 'seg-arch';
     const mar = _activeMode !== 'terrestre';
 
-    // R2·F: chevron del desplegable (solo marítimo)
-    if(mar){
+    // R2·F/R2·J: chevron del desplegable (ambos modos)
+    {
       const tdC = el('td');
       const abierto = _openDetails.has(r.order_number);
       const chev = el('button', 'segd-chev', abierto ? '▾' : '▸');
@@ -937,17 +991,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
     tr.appendChild(tdGi);
 
-    const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl);
-    // R2·F (mockup aprobado): en marítimo Cert.Origen y Progreso salen de la
-    // tabla (viven en el desplegable) y Docs pasa a badge n/m; terrestre
-    // conserva el layout previo hasta su fase 2.
-    if(mar){
-      tr.appendChild(docsBadgeCell(r));
-    } else {
-      const tdCo = el('td'); tdCo.appendChild(coBadgeCell(r)); tr.appendChild(tdCo);
-      const tdDocs = el('td'); tdDocs.appendChild(renderDocs(r)); tr.appendChild(tdDocs);
-      tr.appendChild(semaforoCell(r)); // item 47
-    }
+    // R2·J: la columna Control BL es SOLO marítima (en terrestre no aplica —
+    // mockup aprobado); Docs = badge n/m en ambos modos (inventario por modo).
+    if(mar){ const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl); }
+    tr.appendChild(docsBadgeCell(r));
 
     tr.appendChild(dlCell(r, c));
     tr.appendChild(envioCell(r));
@@ -957,20 +1004,18 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return tr;
   }
 
-  // R2·F (mockup aprobado): MARÍTIMO = chevron del desplegable + SIN columnas
-  // Cert. Origen / Progreso (default aprobado; el detalle vive en el desplegable)
-  // + 'Despacho planta'. TERRESTRE conserva el layout previo hasta su fase 2.
+  // R2·F/R2·J (mockups aprobados): AMBOS modos con chevron del desplegable y sin
+  // Cert.Origen/Progreso. Diferencias terrestres: SIN columna Control BL,
+  // 'Inicia tránsito → límite' en vez de Zarpe (+1 hábil, lógica T3).
   // SLA_DAYS sigue consumido PELADO (regla asimetría — jamás window.).
   const colsFor = (mode) => mode === 'terrestre' ? [
+    { label:'', sortKey:null },            // chevron del desplegable
     { label:'Orden', sortKey:'orden' },
     { label:'Ship-to', sortKey:'cliente' },
     { label:'Sold-to', sortKey:null },
     { label:'Destino', sortKey:null },
     { label:'Despacho planta', sortKey:'gi', title:'Despacho físico de planta (Good Issue)' },
-    { label:'Control BL', sortKey:null },
-    { label:'Cert. Origen', sortKey:null },
-    { label:'Docs', sortKey:null },
-    { label:'Progreso', sortKey:null, title:'GI → Control → CO → Zarpe → Envío — verde = cumplido, gris = pendiente (no es error)' },
+    { label:'Docs', sortKey:null, title:'Documentos disponibles / esperados (CRT+FC+PL+CO según regla) — detalle en el desplegable (▸)' },
     { label:'Inicia tránsito → límite', sortKey:'dl', title:'Inicio de tránsito real → límite de envío (+1 día hábil; vie→lun)' },
     { label:'Envío', sortKey:null },
     { label:'Alertas', sortKey:null },
@@ -999,7 +1044,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(title) title.textContent = _activeMode === 'terrestre' ? 'Seguimiento Terrestre' : 'Seguimiento Marítimo';
     const sub = document.querySelector('#panel-seguimiento .seg-sub');
     if(sub) sub.textContent = _activeMode === 'terrestre'
-      ? 'Torre de control de las órdenes terrestres — del despacho de planta al envío de la documentación. (Detalle por fila: fase 2.)'
+      ? 'Torre de control de las órdenes terrestres — abrí la flecha ▸ de cada orden para el detalle: producto, transporte (CRT/MIC) y documentos para el envío.'
       : 'Torre de control de las órdenes marítimas — abrí la flecha ▸ de cada orden para el detalle: producto, contenedores y documentos para el envío.';
     const bM = document.getElementById('tab-seguimiento');
     const bT = document.getElementById('tab-seguimiento-ter');
@@ -1097,11 +1142,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       tr.appendChild(td);
       tbody.appendChild(tr);
     } else {
-      const mar = _activeMode !== 'terrestre';
       for(const x of visible){
         tbody.appendChild(buildRow(x));
-        // R2·F: fila de detalle bajo cada orden abierta (solo marítimo)
-        if(mar && _openDetails.has(x.r.order_number)) tbody.appendChild(buildDetailRow(x.r, COLS.length));
+        // R2·F/R2·J: fila de detalle bajo cada orden abierta (ambos modos)
+        if(_openDetails.has(x.r.order_number)) tbody.appendChild(buildDetailRow(x.r, COLS.length));
       }
     }
     table.appendChild(tbody);
@@ -1395,16 +1439,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     legend.appendChild(el('b', null, 'Docs:'));
     // T3 (B.7): leyenda por sub-solapa — el set documental difiere por modo.
     legend.appendChild(document.createTextNode(_activeMode === 'terrestre'
-      ? ' FC Factura (satélites terrestres aún no integrados) · PL Packing List · CRT doc. de exportación terrestre (reemplaza al BL — el Control BL no aplica en este modo) — '
-      : ' BL Conocimiento de Embarque (según el último control) · FC Factura · PL Packing List · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · COA futuro (ppal. trade) — '));
-    const ital = el('span', null, 'punteado = aún sin dato en el sistema');
-    ital.style.fontStyle = 'italic';
-    legend.appendChild(ital);
-    legend.appendChild(document.createTextNode(' · rayado = falta · '));
+      ? ' el badge n/m cuenta CRT (reemplaza al BL — el Control BL no aplica en este modo) + FC + PL + CO según regla · PE solo trade — el detalle por documento está en el desplegable (▸) — '
+      : ' el badge n/m cuenta BL + FC + PL + CO (si la orden lo lleva) + PE (solo trade) — el detalle por documento, con archivo y link a Drive, está en el desplegable (▸) — '));
     const verde = el('b', null, 'verde');
     verde.style.color = 'var(--green)';
     legend.appendChild(verde);
-    legend.appendChild(document.createTextNode(' = presente'));
+    legend.appendChild(document.createTextNode(' = completo · ámbar = falta algo'));
   }
 
   // Filtro Sold-to (item 49, v3): #seg-filters es estático en index.html pero NO
