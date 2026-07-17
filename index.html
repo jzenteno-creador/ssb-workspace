@@ -2880,7 +2880,7 @@ body.light #panel-seguimiento{
   --seg-line:#E7E4DD; --seg-line-strong:#D9D5CC;
   --seg-accent:#1F5FAE; --seg-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
 }
-#panel-seguimiento .seg-root{max-width:1760px}
+#panel-seguimiento .seg-root{max-width:none} /* R2·F: full-width — ZARPE→LÍMITE siempre visible */
 #panel-seguimiento .seg-root *{box-sizing:border-box}
 
 #panel-seguimiento .seg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
@@ -3015,6 +3015,26 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
 #panel-seguimiento .seg-mod-body{padding:18px 22px 22px}
 #panel-seguimiento .seg-field{margin-bottom:13px}
 #panel-seguimiento .seg-field label{display:block;font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft);margin-bottom:5px}
+/* R2·F: desplegable por fila (chevron + detalle de 3 secciones — mockup aprobado) */
+#panel-seguimiento .segd-chev{width:26px;height:26px;border-radius:7px;border:1px solid var(--seg-line-strong);background:transparent;color:var(--seg-ink-soft);cursor:pointer;font-size:11px;line-height:1;padding:0}
+#panel-seguimiento tr.segd-open .segd-chev{background:var(--blue-lt);color:var(--blue);border-color:var(--blue)}
+#panel-seguimiento tr.segd-row>td{background:var(--seg-surface-2);padding:0 !important;border-bottom:1px solid var(--seg-line-strong)}
+#panel-seguimiento .segd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px 18px}
+#panel-seguimiento .segd-grid .segd-card--docs{grid-column:1 / -1}
+@media (min-width:1500px){ #panel-seguimiento .segd-grid{grid-template-columns:1.1fr 1fr 1fr} #panel-seguimiento .segd-grid .segd-card--docs{grid-column:auto} }
+@media (max-width:1100px){ #panel-seguimiento .segd-grid{grid-template-columns:1fr} #panel-seguimiento .segd-grid .segd-card--docs{grid-column:auto} }
+#panel-seguimiento .segd-card{background:var(--seg-surface);border:1px solid var(--seg-line);border-radius:11px;overflow:hidden}
+#panel-seguimiento .segd-card h5{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--seg-ink-soft);padding:10px 14px;border-bottom:1px solid var(--seg-line);margin:0;flex-wrap:wrap}
+#panel-seguimiento .segd-card h5 .src{margin-left:auto;font-size:9px;letter-spacing:.4px;color:var(--seg-ink-faint);text-transform:none;font-weight:400}
+#panel-seguimiento .segd-card table{border-collapse:collapse;width:100%;font-size:var(--fs-sm);min-width:0}
+#panel-seguimiento .segd-card th{text-align:left;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--seg-ink-soft);padding:7px 12px;border-bottom:1px solid var(--seg-line)}
+#panel-seguimiento .segd-card td{padding:7px 12px;border-bottom:1px solid var(--seg-line);vertical-align:top}
+#panel-seguimiento .segd-card tr:last-child td{border-bottom:0}
+#panel-seguimiento .segd-origen{color:var(--green);font-weight:700}
+#panel-seguimiento .segd-foot{padding:8px 14px;font-size:11px;color:var(--seg-ink-faint);border-top:1px solid var(--seg-line)}
+#panel-seguimiento .segd-empty{padding:14px;color:var(--seg-ink-faint);font-size:var(--fs-sm)}
+#panel-seguimiento .segd-file{font-family:var(--mono);font-size:11.5px;color:var(--seg-ink-faint)}
+#panel-seguimiento .segd-file a{color:var(--blue);text-decoration:none}
 /* T3 (B.7): sub-solapas Marítimo/Terrestre — split del seguimiento por mot */
 #panel-seguimiento .seg-subtabs{display:inline-flex;border:1px solid var(--seg-line-strong);border-radius:11px;overflow:hidden;background:var(--seg-surface);margin-bottom:14px;width:max-content}
 #panel-seguimiento .seg-subtab{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:0;background:transparent;color:var(--seg-ink-soft);font-family:var(--font);font-size:var(--fs-md);font-weight:600;cursor:pointer}
@@ -3025,10 +3045,11 @@ body.light #panel-seguimiento .seg-bdg--seal{background:#E6F6F3;color:#0F766E;bo
 #panel-seguimiento .seg-subtab.is-on .cnt{background:var(--blue-lt);color:var(--blue)}
 /* T3 (B.3/B.4/B.6): bandera flagcdn · triangulación · export */
 #panel-seguimiento .seg-flag{display:inline-block;vertical-align:middle;margin-right:5px;border-radius:2px}
-#panel-seguimiento tr.seg-triang-row td{background:linear-gradient(90deg, rgba(245,166,35,.09), transparent 60%)}
-#panel-seguimiento tr.seg-triang-row td:first-child{box-shadow:inset 3px 0 0 var(--amber)}
-#panel-seguimiento .triang-note{display:flex;align-items:center;gap:4px;font-size:var(--fs-2xs);color:var(--amber);font-weight:700;margin-top:2px}
-#panel-seguimiento .triang-note .ic{width:11px;height:11px}
+/* R2·F triangulación v2 (mockup aprobado): pill discreta con punto ámbar — sin degradé de fila */
+#panel-seguimiento .triang-note{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--seg-ink-soft);background:rgba(255,255,255,.05);border:1px solid var(--seg-line-strong);border-radius:999px;padding:1px 8px;margin-top:3px}
+body.light #panel-seguimiento .triang-note{background:rgba(0,0,0,.04)}
+#panel-seguimiento .triang-note::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber)}
+#panel-seguimiento .triang-note .ic{display:none}
 #panel-seguimiento .seg-btn--xls{border-color:var(--green-bd);color:var(--green)}
 #panel-seguimiento .seg-btn--xls:hover{background:var(--green-bg)}
 /* B.1-fix: segmentado transporte del lote (namespace seg- propio — el .sch-seg
@@ -3276,6 +3297,7 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
     <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   </defs>
 </svg>
@@ -3444,7 +3466,10 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="vac-tab-badge" id="seg-group-badge" style="display:none">0</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="rail-doc-sub" id="rail-doc-sub">
       <div class="rail-doc-hd" aria-hidden="true">Documentación</div>
-      <button class="tab-btn" id="tab-seguimiento" onclick="switchTab('seguimiento')" aria-label="Seguimiento"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento</span><span class="vac-tab-badge" id="seg-tab-badge" style="display:none">0</span></button>
+      <!-- R2·F: Seguimiento partido en DOS ítems del rail (mockup aprobado 17-07) —
+           segGo() fija el modo y corrige el par de estados activos -->
+      <button class="tab-btn" id="tab-seguimiento" onclick="segGo('maritimo')" aria-label="Seguimiento Marítimo"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento Marítimo</span><span class="vac-tab-badge" id="seg-tab-badge" style="display:none">0</span></button>
+      <button class="tab-btn" id="tab-seguimiento-ter" onclick="segGo('terrestre')" aria-label="Seguimiento Terrestre"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg><span class="tab-lbl">Seguimiento Terrestre</span><span class="vac-tab-badge" id="seg-ter-badge" style="display:none">0</span></button>
       <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
       <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
       <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
@@ -4662,7 +4687,7 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
       <div class="seg-actions">
         <label class="seg-toggle"><input type="checkbox" id="seg-arch-toggle"> ver archivadas</label>
         <button class="seg-btn" type="button" id="seg-refresh-btn"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg> Actualizar</button>
-        <button class="seg-btn seg-btn--primary" type="button" id="seg-gi-open-btn"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Good Issue</button>
+        <button class="seg-btn seg-btn--primary" type="button" id="seg-gi-open-btn"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg> Despacho de planta</button>
       </div>
     </header>
 
@@ -4709,7 +4734,7 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     <div class="seg-mod-backdrop" id="seg-modal">
       <div class="seg-mod" role="dialog" aria-modal="true" aria-labelledby="seg-mod-title-txt">
         <div class="seg-mod-head">
-          <div class="seg-mod-title"><span id="seg-mod-title-txt">Good Issue — despacho de planta</span><button type="button" id="seg-mod-close" aria-label="Cerrar">✕</button></div>
+          <div class="seg-mod-title"><span id="seg-mod-title-txt">Despacho de planta (Good Issue)</span><button type="button" id="seg-mod-close" aria-label="Cerrar">✕</button></div>
           <div class="seg-mod-warn">Fecha de <b>Good Issue</b> = salida física de planta — <u>no</u> es la fecha de zarpe. El zarpe (ATD) se confirma en Mailing → Confirmar zarpe.</div>
           <div class="seg-mod-tabs">
             <button type="button" class="seg-mod-tab active" id="seg-mod-tab-single" data-target="seg-mod-body-single">Individual</button>
@@ -4769,7 +4794,7 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
 
         <div class="seg-mod-foot">
           <button class="seg-btn" type="button" id="seg-mod-cancel">Cancelar</button>
-          <button class="seg-btn seg-btn--primary" type="button" id="seg-mod-submit">Registrar Good Issue</button>
+          <button class="seg-btn seg-btn--primary" type="button" id="seg-mod-submit">Registrar despacho</button>
         </div>
       </div>
     </div>

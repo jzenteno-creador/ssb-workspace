@@ -27,7 +27,9 @@ async function switchTab(name) {
     // typeof: si tt-dow.js todavía no cargó, no revienta la navegación.
     if(window.__ttDiscardAll) window.__ttDiscardAll();
   }
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','control-bl','mailing','cert-origen','schema','admin-co'].forEach(t => {
+  // 'seguimiento-ter' no tiene panel propio: está en la lista SOLO para que su
+  // botón del rail se desactive al navegar (R2·F: segGo() maneja el par activo).
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','seguimiento-ter','control-bl','mailing','cert-origen','schema','admin-co'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);

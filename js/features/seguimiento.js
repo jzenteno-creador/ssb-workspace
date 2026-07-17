@@ -58,7 +58,11 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   // T3 (B.7): el filtro mot MURIÓ — lo reemplazan las sub-solapas (_activeMode).
   let _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
   let _showArch = false;
-  let _activeMode = 'maritimo';   // T3 (B.7): sub-solapa activa — split de TODO el panel por mot
+  let _activeMode = 'maritimo';   // R2·F: modo del panel — lo fija segGo() desde los DOS ítems del rail
+  // R2·F: desplegable por fila (solo marítimo) — órdenes abiertas + caches
+  let _openDetails = new Set();          // order_number con detalle abierto
+  let _detailCache = new Map();          // order_number → { equip, docs, fetched }
+  let _prodMap = new Map();              // order_number → [productos] (bulk en load)
   // T3 (B.3): país → iso2 para banderas flagcdn (nombre_es de paises, T4.b);
   // null hasta el primer load — sin mapa no hay bandera, jamás rompe.
   let _paisMap = null;
@@ -232,9 +236,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       if(wrap && !_loaded) wrap.innerHTML = skelCardsHtml('Cargando seguimiento');
       // T3 (B.3): mapa país→iso2 para banderas — en paralelo con la vista;
       // si falla, degrade sin banderas (jamás bloquea la tabla).
+      // R2·F: + productos por orden (bulk, ~90 filas) para la sección PRODUCTO
+      // del desplegable — best-effort, sin productos el detalle degrada.
       const [{ data, error }] = await Promise.all([
         s.from('v_operacion_estado').select('*'),
         ensurePaisMap(),
+        s.from('orden_productos')
+          .select('order_number, product_key, description, grade, material_code, ncm_code, embalaje, net_kg, bags, pallets, line_count, origen, item_nos')
+          .then(res => {
+            if(res.error || !res.data) return;
+            _prodMap = new Map();
+            for(const p of res.data){
+              if(!_prodMap.has(p.order_number)) _prodMap.set(p.order_number, []);
+              _prodMap.get(p.order_number).push(p);
+            }
+          }, () => {}),
       ]);
       if(error){
         console.error('seguimiento:load', error);
@@ -463,6 +479,197 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return wrap;
   }
 
+  // ═══════ R2·F: desplegable por fila (marítimo) — mockup aprobado 17-07 ═══════
+  // Inventario documental marítimo: fuente ÚNICA del badge n/m de la tabla y de
+  // la sección DOCUMENTOS del desplegable (misma semántica que los chips viejos).
+  function docsInventory(r){
+    const items = [];
+    items.push({ tipo:null, label:'BL (Conocimiento de Embarque)', ok: !!r.doc_bl,
+      nota: r.doc_bl ? 'según último control' : '— sin control con BL asentado' });
+    items.push({ tipo:'factura', label:'FC (Factura Comercial)', ok: !!r.doc_factura, nota: r.doc_factura ? null : '—' });
+    items.push({ tipo:'packing', label:'PL (Packing List)', ok: !!r.doc_pl, nota: r.doc_pl ? null : '—' });
+    if(r.co_requerimiento !== 'no_requerido'){
+      const gen = r.co_estado === 'generado';
+      items.push({ tipo:null, label:'CO (Cert. de Origen ZIP + PDF)', ok: gen,
+        nota: gen ? 'generado ✓' : (r.co_requerimiento === 'sin_definir' ? '— según definición de CO' : '— aún no generado') });
+    } else {
+      items.push({ tipo:null, label:'CO (Cert. de Origen)', ok: null, nota: 'no requiere' });
+    }
+    if(r.order_kind === 'trade') items.push({ tipo:'permiso_exportacion', label:'PE (Permiso de Exportación)', ok: !!r.doc_pe, nota: r.doc_pe ? null : '—' });
+    return items;
+  }
+  function docsBadgeCell(r){
+    const td = el('td');
+    const inv = docsInventory(r).filter(i => i.ok !== null);   // "no requiere" no cuenta
+    const n = inv.filter(i => i.ok).length, m = inv.length;
+    const b = mkBadge(n === m ? 'ok' : 'warn', n + '/' + m);
+    const faltan = inv.filter(i => !i.ok).map(i => i.label);
+    b.title = faltan.length ? ('Faltan: ' + faltan.join(' · ') + ' — abrí el detalle (▸)') : 'Documentación completa ✓';
+    td.appendChild(b);
+    return td;
+  }
+  function controlEstadoBadge(r){
+    if(r.control_estado === 'SELLADO') return mkBadge('ok', (r.overall_result || 'OK') + ' · revisado');
+    if(r.overall_result === 'REVISAR') return mkBadge('warn', 'REVISAR' + (r.revisar_count != null ? ' · ' + r.revisar_count : '') + ' — sin revisar');
+    if(r.overall_result === 'OK') return mkBadge('info', 'OK — sin revisar');
+    return mkBadge('mut', 'sin control');
+  }
+
+  function toggleDetail(order){
+    if(_openDetails.has(order)) _openDetails.delete(order);
+    else { _openDetails.add(order); ensureDetailData(order); }
+    renderTable();
+  }
+  // contenedores (último control) + archivos (documentos_orden) — lazy + cache;
+  // best-effort: fallo de red = secciones vacías con aviso, jamás rompe la tabla.
+  async function ensureDetailData(order){
+    if(_detailCache.has(order)) return;
+    _detailCache.set(order, { fetched: false });
+    const s = supa(); if(!s){ _detailCache.set(order, { fetched: true, equip: [], docs: [] }); return; }
+    try {
+      const [eqRes, docRes] = await Promise.all([
+        s.from('bl_controls').select('equipment_comparison, created_at').eq('order_number', order).order('created_at', { ascending: false }).limit(1),
+        s.from('documentos_orden').select('tipo, file_name, drive_link').eq('order_number', order),
+      ]);
+      const eq = (!eqRes.error && eqRes.data && eqRes.data[0] && Array.isArray(eqRes.data[0].equipment_comparison))
+        ? eqRes.data[0].equipment_comparison : [];
+      _detailCache.set(order, { fetched: true, equip: eq, docs: (!docRes.error && docRes.data) ? docRes.data : [] });
+    } catch(_){ _detailCache.set(order, { fetched: true, equip: [], docs: [] }); }
+    if(_openDetails.has(order)) renderTable();
+  }
+
+  function segdCard(titulo, srcTxt, headBadge){
+    const card = el('div', 'segd-card');
+    const h = el('h5');
+    h.appendChild(document.createTextNode(titulo));
+    if(headBadge){ headBadge.style.marginLeft = '4px'; h.appendChild(headBadge); }
+    h.appendChild(el('span', 'src', srcTxt));
+    card.appendChild(h);
+    return card;
+  }
+  const segdTable = (headers) => {
+    const t = el('table'); const thead = el('thead'); const trh = el('tr');
+    headers.forEach(hh => trh.appendChild(el('th', null, hh)));
+    thead.appendChild(trh); t.appendChild(thead);
+    const tb = el('tbody'); t.appendChild(tb);
+    return { t, tb };
+  };
+  const numAR = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
+
+  function buildDetailRow(r, colSpan){
+    const tr = el('tr', 'segd-row');
+    const td = el('td'); td.colSpan = colSpan;
+    const grid = el('div', 'segd-grid');
+    const cache = _detailCache.get(r.order_number);
+
+    // ── PRODUCTO (orden_productos, bulk en load) ──
+    const cardP = segdCard('▦ Producto — factura', 'orden_productos (extracción de factura)');
+    const prods = _prodMap.get(r.order_number) || _prodMap.get(normalizeOrdenLocal(r.order_number)) || [];
+    if(prods.length){
+      const { t, tb } = segdTable(['Ítem', 'GMID', 'Producto', 'Cantidad', 'Origen']);
+      for(const p of prods){
+        const trp = el('tr');
+        const itemsTxt = Array.isArray(p.item_nos) && p.item_nos.length
+          ? (p.item_nos.length > 1 ? p.item_nos[0] + '–' + p.item_nos[p.item_nos.length - 1] : String(p.item_nos[0])) : '—';
+        trp.appendChild(el('td', 'seg-mono', itemsTxt));
+        trp.appendChild(el('td', 'seg-mono', p.material_code || '—'));
+        const tdP = el('td');
+        tdP.appendChild(document.createTextNode(p.description || p.grade || p.product_key || '—'));
+        const extra = [p.embalaje, p.ncm_code ? 'NCM ' + p.ncm_code : null].filter(Boolean).join(' · ');
+        if(extra){ const sub = el('div', 'seg-faint', extra); sub.style.fontSize = '11px'; tdP.appendChild(sub); }
+        trp.appendChild(tdP);
+        const cant = [p.net_kg != null ? numAR(p.net_kg) + ' kg' : null,
+          p.bags != null ? numAR(p.bags) + ' bolsas' : null,
+          p.pallets != null ? numAR(p.pallets) + ' pallets' : null].filter(Boolean).join(' · ');
+        trp.appendChild(el('td', null, cant || '—'));
+        const tdO = el('td');
+        if(p.origen){
+          const esAR = /^ARGENTIN/i.test(p.origen);
+          const sp = el('span', esAR ? 'segd-origen' : null, p.origen.toUpperCase());
+          const fl = segFlag(p.origen); if(fl) tdO.appendChild(fl);
+          tdO.appendChild(sp);
+          if(esAR && r.co_requerimiento === 'requerido'){
+            const sub = el('div', 'seg-faint', '→ dispara regla CO'); sub.style.fontSize = '10.5px'; tdO.appendChild(sub);
+          }
+        } else tdO.appendChild(el('span', 'seg-faint', '—'));
+        trp.appendChild(tdO);
+        tb.appendChild(trp);
+      }
+      cardP.appendChild(t);
+      cardP.appendChild(el('div', 'segd-foot', prods.reduce((s2, p) => s2 + (p.line_count || 1), 0) + ' línea(s) de factura agregadas por producto'));
+    } else {
+      cardP.appendChild(el('div', 'segd-empty', '⏳ esperando factura — el clasificador la extrae solo cuando llega el mail'));
+    }
+    grid.appendChild(cardP);
+
+    // ── CONTENEDORES (último control) ──
+    const cardC = segdCard('▣ Contenedores — Control BL', 'último control');
+    if(!cache || !cache.fetched){
+      cardC.appendChild(el('div', 'segd-empty', 'cargando…'));
+    } else if(cache.equip.length){
+      const { t, tb } = segdTable(['Contenedor', 'Precinto', 'Neto', 'Bruto', 'Estado']);
+      for(const eq of cache.equip){
+        const tre = el('tr');
+        tre.appendChild(el('td', 'seg-mono', eq.container || '—'));
+        const seal = (eq.seal && (eq.seal.BL || eq.seal.Aduana)) || '—';
+        tre.appendChild(el('td', 'seg-mono', String(seal)));
+        const net = eq.net && (eq.net.BL != null ? eq.net.BL : (eq.net.Aduana != null ? eq.net.Aduana : eq.net.Booking));
+        const gross = eq.gross && (eq.gross.BL != null ? eq.gross.BL : eq.gross.Aduana);
+        tre.appendChild(el('td', null, numAR(net)));
+        tre.appendChild(el('td', null, numAR(gross)));
+        const tdE = el('td');
+        tdE.appendChild(mkBadge(eq.estado === 'OK' ? 'ok' : 'warn', eq.estado || '—'));
+        tre.appendChild(tdE);
+        tb.appendChild(tre);
+      }
+      cardC.appendChild(t);
+    } else {
+      cardC.appendChild(el('div', 'segd-empty', 'sin control BL todavía para esta orden'));
+    }
+    grid.appendChild(cardC);
+
+    // ── DOCUMENTOS PARA EL ENVÍO ──
+    const cardD = segdCard('▤ Documentos para el envío', 'documentos_orden + certificados + control', controlEstadoBadge(r));
+    cardD.classList.add('segd-card--docs');
+    const fileBy = {};
+    if(cache && cache.fetched){
+      for(const d of cache.docs){
+        const k = (d.tipo === 'packing_maritimo' || d.tipo === 'packing_terrestre') ? 'packing' : d.tipo;
+        if(!fileBy[k]) fileBy[k] = d;
+      }
+    }
+    const { t: tD, tb: tbD } = segdTable(['Documento', 'Presencia', 'Archivo']);
+    for(const it of docsInventory(r)){
+      const trd = el('tr');
+      trd.appendChild(el('td', null, it.label));
+      const tdPre = el('td');
+      tdPre.appendChild(it.ok === null ? mkBadge('mut', 'no requiere') : mkBadge(it.ok ? 'ok' : 'bad', it.ok ? 'está' : 'falta'));
+      trd.appendChild(tdPre);
+      const tdF = el('td', 'segd-file');
+      const f = it.tipo ? fileBy[it.tipo] : null;
+      if(f && f.file_name){
+        tdF.appendChild(document.createTextNode(f.file_name + ' '));
+        if(f.drive_link){
+          const a = document.createElement('a');
+          a.href = f.drive_link; a.target = '_blank'; a.rel = 'noopener';
+          a.textContent = '⎘'; a.title = 'Abrir en Drive';
+          tdF.appendChild(a);
+        }
+      } else {
+        tdF.appendChild(el('span', 'seg-faint', (cache && !cache.fetched) ? 'cargando…' : (it.nota || '—')));
+      }
+      trd.appendChild(tdF);
+      tbD.appendChild(trd);
+    }
+    cardD.appendChild(tD);
+    cardD.appendChild(el('div', 'segd-foot', 'la vista de juntar los papeles para el correo — el "n/m" de la tabla, abierto · sin "aprobado" por documento (fase futura)'));
+    grid.appendChild(cardD);
+
+    td.appendChild(grid);
+    tr.appendChild(td);
+    return tr;
+  }
+
   function controlBadge(r){
     if(r.mot === 'terrestre'){
       const b = mkBadge('mut','no aplica');
@@ -523,7 +730,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   const ALERT_MAP = {
-    despacho_pendiente:  { cls:'act',  icon:'#i-pencil', txt:() => 'Registrar Good Issue',              action:(r) => openGiModal(r.order_number) },
+    despacho_pendiente:  { cls:'act',  icon:'#i-pencil', txt:() => 'Registrar despacho de planta',              action:(r) => openGiModal(r.order_number) },
     control_revisar:     { cls:'warn', icon:'#i-alert',  txt:() => 'Control: diferencias',               action:(r) => deepLink(r.order_number, 'control-bl') },
     sin_control:         { cls:'warn', icon:'#i-clock',  txt:(r) => 'GI hace ' + diasDesde(r.despacho_at) + ' días, sin control BL', action:(r) => deepLink(r.order_number, 'control-bl') },
     co_config_conflicto: { cls:'conf', icon:'#i-alert',  txt:() => 'Reglas de CO contradictorias',        action:null },
@@ -656,6 +863,20 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const r = x.r, c = x.c;
     const tr = el('tr');
     if(c.archived) tr.className = 'seg-arch';
+    const mar = _activeMode !== 'terrestre';
+
+    // R2·F: chevron del desplegable (solo marítimo)
+    if(mar){
+      const tdC = el('td');
+      const abierto = _openDetails.has(r.order_number);
+      const chev = el('button', 'segd-chev', abierto ? '▾' : '▸');
+      chev.type = 'button';
+      chev.title = 'Detalle: producto · contenedores · documentos para el envío';
+      chev.onclick = () => toggleDetail(r.order_number);
+      if(abierto) tr.classList.add('segd-open');
+      tdC.appendChild(chev);
+      tr.appendChild(tdC);
+    }
 
     const tdOrden = el('td');
     tdOrden.appendChild(el('div','seg-orden', r.order_number));
@@ -717,9 +938,16 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     tr.appendChild(tdGi);
 
     const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl);
-    const tdCo = el('td'); tdCo.appendChild(coBadgeCell(r)); tr.appendChild(tdCo);
-    const tdDocs = el('td'); tdDocs.appendChild(renderDocs(r)); tr.appendChild(tdDocs);
-    tr.appendChild(semaforoCell(r)); // item 47
+    // R2·F (mockup aprobado): en marítimo Cert.Origen y Progreso salen de la
+    // tabla (viven en el desplegable) y Docs pasa a badge n/m; terrestre
+    // conserva el layout previo hasta su fase 2.
+    if(mar){
+      tr.appendChild(docsBadgeCell(r));
+    } else {
+      const tdCo = el('td'); tdCo.appendChild(coBadgeCell(r)); tr.appendChild(tdCo);
+      const tdDocs = el('td'); tdDocs.appendChild(renderDocs(r)); tr.appendChild(tdDocs);
+      tr.appendChild(semaforoCell(r)); // item 47
+    }
 
     tr.appendChild(dlCell(r, c));
     tr.appendChild(envioCell(r));
@@ -729,53 +957,62 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return tr;
   }
 
-  // T3: COLS pasa a colsFor(mode) — split Ship-to/Sold-to (B.4) + label de plazo
-  // por modo (B.2). SLA_DAYS sigue consumido PELADO (regla asimetría — jamás window.).
-  const colsFor = (mode) => [
+  // R2·F (mockup aprobado): MARÍTIMO = chevron del desplegable + SIN columnas
+  // Cert. Origen / Progreso (default aprobado; el detalle vive en el desplegable)
+  // + 'Despacho planta'. TERRESTRE conserva el layout previo hasta su fase 2.
+  // SLA_DAYS sigue consumido PELADO (regla asimetría — jamás window.).
+  const colsFor = (mode) => mode === 'terrestre' ? [
     { label:'Orden', sortKey:'orden' },
     { label:'Ship-to', sortKey:'cliente' },
     { label:'Sold-to', sortKey:null },
     { label:'Destino', sortKey:null },
-    { label:'Good Issue', sortKey:'gi', title:'Good Issue = despacho físico de planta (GI)' },
+    { label:'Despacho planta', sortKey:'gi', title:'Despacho físico de planta (Good Issue)' },
     { label:'Control BL', sortKey:null },
     { label:'Cert. Origen', sortKey:null },
     { label:'Docs', sortKey:null },
     { label:'Progreso', sortKey:null, title:'GI → Control → CO → Zarpe → Envío — verde = cumplido, gris = pendiente (no es error)' },
-    mode === 'terrestre'
-      ? { label:'Inicia tránsito → límite', sortKey:'dl', title:'Inicio de tránsito real → límite de envío (+1 día hábil; vie→lun)' }
-      : { label:'Zarpe (ATD) → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
+    { label:'Inicia tránsito → límite', sortKey:'dl', title:'Inicio de tránsito real → límite de envío (+1 día hábil; vie→lun)' },
+    { label:'Envío', sortKey:null },
+    { label:'Alertas', sortKey:null },
+    { label:'Ir a', sortKey:null },
+  ] : [
+    { label:'', sortKey:null },            // chevron del desplegable
+    { label:'Orden', sortKey:'orden' },
+    { label:'Ship-to', sortKey:'cliente' },
+    { label:'Sold-to', sortKey:null },
+    { label:'Destino', sortKey:null },
+    { label:'Despacho planta', sortKey:'gi', title:'Despacho físico de planta (Good Issue)' },
+    { label:'Control BL', sortKey:null },
+    { label:'Docs', sortKey:null, title:'Documentos disponibles / esperados — el detalle está en el desplegable (▸)' },
+    { label:'Zarpe (ATD) → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
     { label:'Envío', sortKey:null },
     { label:'Alertas', sortKey:null },
     { label:'Ir a', sortKey:null },
   ];
 
-  // T3 (B.7): sub-solapas Marítimo/Terrestre — inyección runtime idempotente
-  // (molde ensureSoldToFilterUI), arriba del tablewrap. Cambiar de modo NO pisa
-  // el resto de los filtros (a diferencia del select viejo, que se reseteaba).
-  function ensureModeSubtabs(){
-    let cont = $('seg-subtabs');
-    if(!cont){
-      const wrap = $('seg-tablewrap'); if(!wrap || !wrap.parentNode) return;
-      cont = el('div','seg-subtabs'); cont.id = 'seg-subtabs';
-      cont.setAttribute('role','group'); cont.setAttribute('aria-label','Transporte');
-      for(const [mode, icon, lbl] of [['maritimo','#i-ship','Marítimo'], ['terrestre','#i-truck','Terrestre']]){
-        const b = el('button','seg-subtab');
-        b.type = 'button'; b.dataset.mode = mode;
-        b.appendChild(svgUse(icon, 'ic ic-sm'));
-        b.appendChild(el('span', null, lbl));
-        b.appendChild(el('span','cnt','0'));
-        b.onclick = () => { if(_activeMode === mode) return; _activeMode = mode; renderAll(); };
-        cont.appendChild(b);
-      }
-      wrap.parentNode.insertBefore(cont, wrap);
-    }
-    const act = computeAll().filter(x => !x.c.archived);
-    cont.querySelectorAll('.seg-subtab').forEach(b => {
-      b.classList.toggle('is-on', b.dataset.mode === _activeMode);
-      const n = act.filter(x => (x.r.mot || 'maritimo') === b.dataset.mode).length;
-      const cnt = b.querySelector('.cnt'); if(cnt) cnt.textContent = String(n);
-    });
+  // R2·F: las sub-solapas internas MURIERON — el modo lo fijan los DOS ítems del
+  // rail vía segGo() (mockup aprobado). Título y estado activo del par de
+  // botones se corrigen acá (switchTab solo conoce 'seguimiento').
+  function syncModeChrome(){
+    const stale = $('seg-subtabs'); if(stale) stale.remove();   // limpia el toggle viejo si quedó en DOM
+    const title = document.querySelector('#panel-seguimiento .seg-title');
+    if(title) title.textContent = _activeMode === 'terrestre' ? 'Seguimiento Terrestre' : 'Seguimiento Marítimo';
+    const sub = document.querySelector('#panel-seguimiento .seg-sub');
+    if(sub) sub.textContent = _activeMode === 'terrestre'
+      ? 'Torre de control de las órdenes terrestres — del despacho de planta al envío de la documentación. (Detalle por fila: fase 2.)'
+      : 'Torre de control de las órdenes marítimas — abrí la flecha ▸ de cada orden para el detalle: producto, contenedores y documentos para el envío.';
+    const bM = document.getElementById('tab-seguimiento');
+    const bT = document.getElementById('tab-seguimiento-ter');
+    const enSeg = document.getElementById('panel-seguimiento')?.classList.contains('active');
+    if(bM) bM.classList.toggle('active', !!enSeg && _activeMode === 'maritimo');
+    if(bT) bT.classList.toggle('active', !!enSeg && _activeMode === 'terrestre');
   }
+  window.segGo = function(mode){
+    _activeMode = mode === 'terrestre' ? 'terrestre' : 'maritimo';
+    switchTab('seguimiento');       // activa panel + loadSeguimiento (nav.js)
+    syncModeChrome();
+    if(_loaded) renderAll();        // ya había data: re-render inmediato en el modo
+  };
 
   // T3 (B.6): exporta la vista VISIBLE (filtros + sub-solapa activa) — 1 hoja,
   // 1:1 con las columnas de la tabla aplanadas a texto. XLSX es global CDN.
@@ -821,7 +1058,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   function renderTable(){
     const wrap = $('seg-tablewrap'); if(!wrap) return;
     syncFilterSelects();
-    ensureModeSubtabs();
+    syncModeChrome();
     const all = computeAll();
     const visible = sortRows(all.filter(passesFilters));
     updateCount(all.length, visible.length);
@@ -860,19 +1097,26 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       tr.appendChild(td);
       tbody.appendChild(tr);
     } else {
-      for(const x of visible) tbody.appendChild(buildRow(x));
+      const mar = _activeMode !== 'terrestre';
+      for(const x of visible){
+        tbody.appendChild(buildRow(x));
+        // R2·F: fila de detalle bajo cada orden abierta (solo marítimo)
+        if(mar && _openDetails.has(x.r.order_number)) tbody.appendChild(buildDetailRow(x.r, COLS.length));
+      }
     }
     table.appendChild(tbody);
     wrap.appendChild(table);
   }
 
   function updateBadge(){
-    const total = computeAll().filter(x => !x.c.archived).reduce((sum, x) => sum + x.c.alerts.length, 0);
-    for(const id of ['seg-tab-badge','seg-group-badge']){
-      const b = $(id); if(!b) continue;
-      b.textContent = String(total);
-      b.style.display = total > 0 ? '' : 'none';
-    }
+    // R2·F: badge POR SOLAPA (mar/terr) + total en el grupo Documentación
+    const act = computeAll().filter(x => !x.c.archived);
+    const nMar = act.filter(x => (x.r.mot || 'maritimo') === 'maritimo').reduce((s2, x) => s2 + x.c.alerts.length, 0);
+    const nTer = act.filter(x => x.r.mot === 'terrestre').reduce((s2, x) => s2 + x.c.alerts.length, 0);
+    const set = (id, n) => { const b = $(id); if(!b) return; b.textContent = String(n); b.style.display = n > 0 ? '' : 'none'; };
+    set('seg-tab-badge', nMar);
+    set('seg-ter-badge', nTer);
+    set('seg-group-badge', nMar + nTer);
   }
 
   // ═══════════ Modal Good Issue — dirty-guard nativo (no clon de .efa-mod-*) ═══════════
@@ -927,14 +1171,22 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const modal = $('seg-modal'); if(!modal) return;
     const oi = $('seg-gi-orden'); if(oi) oi.value = prefillOrder || '';
     const fi = $('seg-gi-fecha'); if(fi){ fi.value = hoyBA(); fi.max = isoPlus(hoyBA(), 1); }
-    const mi = $('seg-gi-mot'); if(mi) mi.value = 'maritimo';
+    // R2·F: el alta hereda el modo de la SOLAPA — selectores de transporte ocultos
+    // (el override M/T por fila del pegado SIGUE vivo para excepciones)
+    const mi = $('seg-gi-mot');
+    if(mi){
+      mi.value = _activeMode;
+      const f = mi.closest('.seg-field'); if(f) f.style.display = 'none';
+    }
+    const segBM = $('seg-gi-batchmot');
+    if(segBM){ const f = segBM.closest('.seg-field'); if(f) f.style.display = 'none'; }
     const moi = $('seg-gi-modo'); if(moi) moi.value = '';
     const ni = $('seg-gi-notas'); if(ni) ni.value = '';
     const ta = $('seg-gi-ta'); if(ta) ta.value = '';
     const ad = $('seg-gi-applydate'); if(ad) ad.value = '';
     const errEl = $('seg-gi-orden-err'); if(errEl) errEl.hidden = true;
     _giBatchApplyDate = null;
-    _giBatchMot = 'maritimo';
+    _giBatchMot = _activeMode;
     _giSyncBatchMotUI();
     _giLastParse = null;
     renderGiPreview();
@@ -1076,7 +1328,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   function renderGiFooterBusy(busy){
-    const btn = $('seg-mod-submit'); if(btn){ btn.disabled = busy; btn.textContent = busy ? 'Registrando…' : 'Registrar Good Issue'; }
+    const btn = $('seg-mod-submit'); if(btn){ btn.disabled = busy; btn.textContent = busy ? 'Registrando…' : 'Registrar despacho'; }
     const cancel = $('seg-mod-cancel'); if(cancel) cancel.disabled = busy;
   }
 
