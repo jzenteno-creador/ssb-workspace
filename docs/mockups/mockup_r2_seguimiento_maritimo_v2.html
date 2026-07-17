@@ -63,7 +63,9 @@
   tr.detail-row>td{background:var(--surface2);padding:0;border-bottom:1px solid var(--line-strong)}
   tr.detail-row.hide{display:none}
   .detail{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 18px 18px}
-  @media (max-width:1100px){ .detail{grid-template-columns:1fr} }
+  .detail .dcard--docs{grid-column:1 / -1}
+  @media (min-width:1500px){ .detail{grid-template-columns:1.1fr 1fr 1fr} .detail .dcard--docs{grid-column:auto} }
+  @media (max-width:1100px){ .detail{grid-template-columns:1fr} .detail .dcard--docs{grid-column:auto} }
   .dcard{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden}
   .dcard h5{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:1.4px;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line)}
   .dcard h5 .src{margin-left:auto;font-size:9px;letter-spacing:.4px;color:var(--ink-faint);text-transform:none;font-weight:400}
@@ -139,6 +141,17 @@
                 </tbody></table>
                 <div class="dfoot">el REVISAR del contenedor es el mismo del Control BL — click en ⎘ para el detalle completo</div>
               </div>
+              <div class="dcard dcard--docs"><h5>▤ DOCUMENTOS PARA EL ENVÍO<span style="margin-left:10px" class="bdg bdg--warn">Control BL: REVISAR · 2 — sin revisar</span><span class="src">documentos_orden + certificados + control</span></h5>
+                <table><thead><tr><th>Documento</th><th>Presencia</th><th>Archivo</th></tr></thead>
+                <tbody>
+                  <tr><td>BL (Conocimiento de Embarque)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">según último control</td></tr>
+                  <tr><td>FC (Factura Comercial)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">58790_118762005_FC.pdf ⎘</td></tr>
+                  <tr><td>PL (Packing List)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">48371002_118762005_PL.pdf ⎘</td></tr>
+                  <tr><td>CO (Cert. de Origen ZIP + PDF)</td><td><span class="bdg bdg--bad">falta</span></td><td class="faint">— aún no generado</td></tr>
+                  <tr><td>PE (Permiso de Exportación)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">26003EC01004409H_118762005_PE.pdf ⎘</td></tr>
+                </tbody></table>
+                <div class="dfoot">presencia = qué hay disponible para armar el correo (el "5/6" de la tabla, abierto) · SOLO presencia + estado del Control BL — el "aprobado" por documento queda para una fase futura (decisión John)</div>
+              </div>
             </div>
           </td></tr>
 
@@ -178,6 +191,17 @@
                   <tr><td class="mono">TCLU9932011</td><td class="mono">JK85975</td><td>27.000</td><td>27.540</td><td><span class="bdg bdg--ok">OK</span></td></tr>
                 </tbody></table>
               </div>
+              <div class="dcard dcard--docs"><h5>▤ DOCUMENTOS PARA EL ENVÍO<span style="margin-left:10px" class="bdg bdg--ok">Control BL: OK · revisado</span><span class="src">documentos_orden + certificados + control (real)</span></h5>
+                <table><thead><tr><th>Documento</th><th>Presencia</th><th>Archivo</th></tr></thead>
+                <tbody>
+                  <tr><td>BL (Conocimiento de Embarque)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">según último control</td></tr>
+                  <tr><td>FC (Factura Comercial)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">58823_118833340_FC.pdf ⎘</td></tr>
+                  <tr><td>PL (Packing List)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">48378632_118833340_PL.pdf ⎘</td></tr>
+                  <tr><td>CO (Cert. de Origen ZIP + PDF)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">generado ✓</td></tr>
+                  <tr><td>PE (Permiso de Exportación)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">26003EC03001622D_118833340_PE.pdf ⎘</td></tr>
+                </tbody></table>
+                <div class="dfoot">todo disponible → listo para armar el correo en Mailing · ⎘ abre el PDF en Drive</div>
+              </div>
             </div>
           </td></tr>
 
@@ -204,6 +228,17 @@
               <div class="dcard"><h5>▣ CONTENEDORES — CONTROL BL<span class="src">último control</span></h5>
                 <table><tbody><tr><td class="faint" style="padding:14px">sin control BL todavía para esta orden</td></tr></tbody></table>
               </div>
+              <div class="dcard dcard--docs"><h5>▤ DOCUMENTOS PARA EL ENVÍO<span style="margin-left:10px" class="bdg bdg--mut">Control BL: sin control</span><span class="src">documentos_orden + certificados + control</span></h5>
+                <table><thead><tr><th>Documento</th><th>Presencia</th><th>Archivo</th></tr></thead>
+                <tbody>
+                  <tr><td>BL (Conocimiento de Embarque)</td><td><span class="bdg bdg--bad">falta</span></td><td class="faint">— sin control con BL asentado</td></tr>
+                  <tr><td>FC (Factura Comercial)</td><td><span class="bdg bdg--ok">está</span></td><td class="mono faint">58911_118979709_FC.pdf ⎘</td></tr>
+                  <tr><td>PL (Packing List)</td><td><span class="bdg bdg--bad">falta</span></td><td class="faint">—</td></tr>
+                  <tr><td>CO (Cert. de Origen ZIP + PDF)</td><td><span class="bdg bdg--mut">no requiere</span></td><td class="faint">excepción Perú (sin beneficio)</td></tr>
+                  <tr><td>PE (Permiso de Exportación)</td><td><span class="bdg bdg--bad">falta</span></td><td class="faint">—</td></tr>
+                </tbody></table>
+                <div class="dfoot">la vista de "juntar los papeles": lo que ya llegó vs lo que falta para poder enviar</div>
+              </div>
             </div>
           </td></tr>
         </tbody>
@@ -216,6 +251,7 @@
       <li><b>2 · Ancho completo:</b> la tabla usa toda la pantalla; ZARPE (ATD) → LÍMITE siempre a la vista. Si la ventana es más chica que la tabla, scroll interno del panel (la página nunca se corta).</li>
       <li><b>3 · Triangulación v2:</b> pill discreta con punto ámbar bajo el Ship-to (fila 118833340) — murió el degradé de la fila. ¿Más visible, más sutil, u ok así?</li>
       <li><b>4 · Desplegable por fila (▸):</b> PRODUCTO de la factura (ítem, GMID, producto, cantidad, ORIGEN — ya vivo en la base) + CONTENEDORES del último Control BL (contenedor, precinto, neto/bruto, estado). Sin factura → "esperando factura"; sin control → aviso. Probá abrir/cerrar las 3 filas.</li>
+      <li><b>4b · DOCUMENTOS PARA EL ENVÍO (agregado que pediste):</b> tercera sección del desplegable — cada tipo (BL, FC, PL, CO, PE) con <b>está / falta</b> + nombre del archivo real (⎘ abre el PDF en Drive) + el <b>estado del Control BL</b> (OK / REVISAR / revisado) en el encabezado. Es el "5/6" de la tabla, abierto: la vista de juntar los papeles para el correo. <b>SIN "aprobado" por documento</b> — eso queda para una fase futura, como definiste. Fuentes: documentos_orden (archivo real), certificados_origen (CO) y el último control (BL + estado).</li>
       <li><b>5 · Columnas:</b> por defecto saqué <b>Cert. Origen</b> y <b>Progreso</b> para que respire. Activá el <b>control punteado azul de arriba</b> para verlas de vuelta y decidir: ¿se devuelven o quedan afuera?</li>
       <li><b>6 · Botón:</b> "Good Issue" → <b>"Despacho de planta"</b>. En esta solapa el alta es SIEMPRE marítima (el modal pierde el segmentado de transporte del lote; el override M/T por fila del pegado se conserva para excepciones).</li>
       <li><b>Iterá tranquilo:</b> pedime cambios sobre este mismo mockup — nada de esto toca prod hasta tu OK.</li>
