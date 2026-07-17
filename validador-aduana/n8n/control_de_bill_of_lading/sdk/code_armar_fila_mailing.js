@@ -94,6 +94,14 @@ const row = {
   ship_to_name: pick(consignee.name),
   sold_to_name: pick(sold.name),
   invoice_no: pick(fc.invoice_no),
+  // T6·1 (G.2, 2026-07-17): columnas del mail — mismas fuentes que el backfill
+  // (booking.dates YYYYMMDD → ISO date; incoterm booking→factura; freight kind
+  // del BL). shipment_no NO va acá: su fuente es documentos_orden (Gmail→Drive)
+  // y el backfill/es asunto de esa captura — no pisar con null.
+  etd: (() => { const v = ((ba.dates || {}).etd_pol || ''); return /^\d{8}$/.test(v) ? v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8) : null; })(),
+  eta: (() => { const v = ((ba.dates || {}).eta_destination || ''); return /^\d{8}$/.test(v) ? v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8) : null; })(),
+  incoterm: pick(ba.incoterm, fc.incoterm),
+  freight_term: pick((bl.freight || {}).ocean_freight_kind),
   contacts_extracted: {
     consignee: { name: pick(consignee.name), tax_id: pick(consignee.tax_id) },
     sold_to: { name: pick(sold.name) },
