@@ -41,6 +41,11 @@
  *      SIEMPRE la fila sin sufijo hub); SHIPPING LINE de la guía EXCLUIDO
  *      (P·6 — datos de Naara pendientes). Saludo genérico + empresa en el
  *      asunto; cero data-cfemail/scripts.
+ *   9. T6·3 (G.2): checklist ATTACHED DOCUMENTS con fuente de verdad en
+ *      documentos_orden (D.2/T5): lo adjuntado va con ✓; lo REGISTRADO para la
+ *      orden que no viaja en este mail va "(to follow)" — solo tipos
+ *      client-facing (factura/packing/PE/CRT; booking ZCB1 y "otros" jamás),
+ *      PE gateado por order_kind (una STO nunca lista PE).
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -362,14 +367,31 @@ const kpi = (k, v, first) => `<td width="25%" style="padding:11px 12px;${first ?
 const drow = (k, v, last) => `<tr><td align="left" style="${AR}font-size:11.5px;color:#7D8C9C;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(k)}</td><td align="right" style="${AR}font-size:12px;color:#0C2340;font-weight:bold;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(v || '—')}</td></tr>`;
 const endPt = (flag, city, country, right) => `<td valign="middle" align="${right ? 'right' : 'left'}" style="${AR}white-space:nowrap;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${(!right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-right:8px;">${flag}</td>` : ''}<td valign="middle"><div style="font-size:12.5px;font-weight:bold;color:#0C2340;">${esc(city || '—')}</div>${country ? `<div style="font-size:9px;letter-spacing:1px;color:#8494A4;font-weight:bold;margin-top:1px;">${esc(String(country).toUpperCase())}</div>` : ''}</td>${(right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-left:8px;">${flag}</td>` : ''}</tr></table></td>`;
 
-// checklist de adjuntos en 2 columnas — lo REALMENTE adjuntado + extras manuales
+// checklist de adjuntos en 2 columnas — lo REALMENTE adjuntado + extras manuales,
+// T6·3: + lo REGISTRADO en documentos_orden (D.2) que no viaja en este mail,
+// como "(to follow)". Solo tipos client-facing; PE gateado por order_kind.
+const regTipos = new Set(allRows('GET documentos_orden').map((r) => String(r.tipo || '')));
+const attTipos = new Set(attachments_found.map((f) => f.tipo));
+const REG_MAP = [
+  { reg: ['factura'], att: ['factura'], label: 'Commercial Invoice' },
+  { reg: ['packing_maritimo', 'packing_terrestre'], att: ['packing_list'], label: 'Packing List' },
+  { reg: ['permiso_exportacion'], att: ['pe'], label: 'Export Permit (PE)', onlyTrade: true },
+  { reg: ['crt'], att: ['crt'], label: 'CRT (Waybill)' },
+];
+const docs_to_follow = REG_MAP
+  .filter((mp) => !mp.onlyTrade || order_kind === 'trade')
+  .filter((mp) => mp.reg.some((t) => regTipos.has(t)) && !mp.att.some((t) => attTipos.has(t)))
+  .map((mp) => mp.label);
 const docNames = attachments_found.map((f) => DOC_LBL[f.tipo] || f.name || f.tipo)
   .concat(extra_attachments.map((a) => a.name + ' (manual)'));
 const docRow = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#1C9BD9;">&#10003;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#33424F;">${esc(t)}</td></tr>`;
-const docMid = Math.ceil(docNames.length / 2);
-const docsCol = (arr) => `<td width="50%" valign="top"><table role="presentation" cellpadding="0" cellspacing="0" border="0">${arr.map(docRow).join('')}</table></td>`;
+const docRowPend = (t) => `<tr><td valign="middle" style="padding:3px 0;font-size:13px;color:#B9C6D2;">&#9675;</td><td valign="middle" style="padding:3px 0 3px 8px;${AR}font-size:12px;color:#8494A4;">${esc(t)} <span style="font-size:10px;color:#9BABBB;">(to follow)</span></td></tr>`;
+// filas combinadas (✓ primero, luego pendientes) repartidas en 2 columnas
+const docRowsAll = docNames.map((t) => docRow(t)).concat(docs_to_follow.map((t) => docRowPend(t)));
+const docMid = Math.ceil(docRowsAll.length / 2);
+const docsCol = (arr) => `<td width="50%" valign="top"><table role="presentation" cellpadding="0" cellspacing="0" border="0">${arr.join('')}</table></td>`;
 const segNote = seg_alerta ? `<div style="${AR}font-size:10.5px;color:#8a6d00;margin-top:8px;">The Insurance Certificate (SEG) for this shipment will be sent separately.</div>` : '';
-const docsHtml = (docNames.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead('ATTACHED DOCUMENTS')}${docNames.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docNames.slice(0, docMid))}${docsCol(docNames.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">No documents attached yet.</div>`}${segNote}</td></tr>` : '';
+const docsHtml = (docRowsAll.length || segNote) ? `<tr><td style="padding:14px 28px 2px;">${secHead('ATTACHED DOCUMENTS')}${docRowsAll.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${docsCol(docRowsAll.slice(0, docMid))}${docsCol(docRowsAll.slice(docMid))}</tr></table>` : `<div style="${AR}font-size:12px;color:#9BABBB;">No documents attached yet.</div>`}${segNote}</td></tr>` : '';
 
 // FREE DAYS (v_orden_freetime) — se omite entero sin dato, jamás rompe
 const perDiem = [];
@@ -482,7 +504,7 @@ const response = {
   test_mode_efectivo: effective_test, test_reasons,
   send_blocked: block.length > 0, block_reasons: block,
   // file_id expuesto (Batch B): el chip-bar del front abre el PDF embebido de Drive
-  attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing },
+  attachments: { found: attachments_found.map(({ tipo, name, file_id }) => ({ tipo, name, file_id })), missing: attachments_missing, to_follow: docs_to_follow },
   // ---- PLANCOMPLETO B: señales nuevas para el front ----
   notify: { key: orderNotifyKey, name: m.notify_name || (ce.notify && ce.notify.name) || null },
   control_revisado: { vigente: !!sello_vigente, por: sello_vigente ? (sello_vigente.sellado_by || null) : null, at: sello_vigente ? (sello_vigente.sellado_at || null) : null },

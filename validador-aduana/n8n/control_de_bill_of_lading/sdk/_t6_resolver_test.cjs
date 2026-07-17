@@ -29,6 +29,14 @@ const NODES = {
   'GET puertos pais': [{ pais: 'Brasil', pais_iso: 'BR', paises: { nombre_en: 'Brazil', flag_emoji: '🇧🇷' } }],
   'GET naviera destino': [{}],
   'Buscar SEG': [{}],
+  // T6·3: registro D.2 real de 118833340 — booking ZCB1 se ignora (interno);
+  // factura YA adjunta (no repite); packing y PE registrados sin adjuntar → to follow
+  'GET documentos_orden': [
+    { tipo: 'booking_advice_zcb1', file_name: '48378632_118833340_ZCB1_BA.pdf' },
+    { tipo: 'factura', file_name: '58823_118833340_FC.pdf' },
+    { tipo: 'packing_maritimo', file_name: '48378632_118833340_PL.pdf' },
+    { tipo: 'permiso_exportacion', file_name: '26003EC03001622D_118833340_PE.pdf' },
+  ],
   'Config (TEST_MODE)': [{ TEST_MODE: true }],
 };
 
@@ -78,6 +86,12 @@ ok(!/cdn-cgi|data-cfemail|__cf_email__|<script/i.test(body), 'sin artefactos cf-
 ok(body.includes('mailto:expoarpbb@ssbint.com') && body.includes('ssbint.com/es'), 'footer con mailto limpio');
 ok(!/SLA|sla_/i.test(body), 'SLA interno ausente');
 ok(r.dias_libres && r.dias_libres.dias === 21 && r.dias_libres.pais_destino === 'Brasil', 'response.dias_libres contrato');
+// T6·3 — checklist con fuente documentos_orden
+ok(body.includes('(to follow)'), 'to-follow presente');
+ok(body.includes('Packing List') && body.includes('Export Permit (PE)'), 'packing + PE listados como to-follow');
+ok((body.match(/Commercial Invoice/g) || []).length === 1, 'factura adjunta NO duplicada como to-follow');
+ok(!body.includes('ZCB1') && !body.includes('booking_advice'), 'booking ZCB1 (interno) excluido');
+ok(JSON.stringify(r.attachments.to_follow) === JSON.stringify(['Packing List', 'Export Permit (PE)']), 'response.attachments.to_follow');
 ok(r.control_revisado.vigente === true, 'sello vigente detectado');
 ok(Array.isArray(r.attachments.found) && r.attachments.found.length === 2, 'attachments.found = 2');
 
@@ -87,6 +101,7 @@ NODES['GET control BL (latest)'] = [];
 NODES['GET detention'] = [];
 NODES['GET puertos pais'] = [{}];
 NODES['Buscar BL Draft'] = [{}]; NODES['Buscar Factura'] = [{}];
+NODES['GET documentos_orden'] = [];
 NODES['GET sellos'] = [];
 NODES['Validar request'][0].order_number = '999999999';
 const out2 = new Function('$', 'console', code)($, console).json;
