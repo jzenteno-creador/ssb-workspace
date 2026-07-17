@@ -1,0 +1,1564 @@
+{
+ "name": "Descarga de pdf, clasificacion y subida a drive",
+ "nodes": [
+  {
+   "parameters": {
+    "operation": "pdf",
+    "options": {
+     "keepSource": "both"
+    }
+   },
+   "type": "n8n-nodes-base.extractFromFile",
+   "typeVersion": 1,
+   "position": [
+    944,
+    720
+   ],
+   "id": "783b0d1d-60de-47d1-9297-122b6de30cd8",
+   "name": "Extract from File"
+  },
+  {
+   "parameters": {
+    "rules": {
+     "values": [
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "packing_maritimo_sin_consolidar",
+          "operator": {
+           "type": "string",
+           "operation": "equals"
+          },
+          "id": "2bf65373-f00a-4d7c-9fe2-8fa3df246431"
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "bfe89310-81fe-4f0e-9b75-60223f380a3d",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "booking_advice_zcb1",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "19020e16-0926-4fee-93a1-053bfd81f4f5",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "packing_maritimo",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "bf267a2f-721e-4ffd-8e84-fd878ef540f9",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "packing_terrestre",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "f9ac4aaa-d106-4f16-8661-1f016bba36d5",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "factura",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "696d8cc1-63b7-48c9-bcf3-2da8576c2882",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "otros",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "22fc936b-3780-41c9-8b22-91b46b28c666",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "crt",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "79fad9e7-03c0-47bc-9210-4e2ee7b1af7b",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "mic",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "e2e29329-1d99-4da7-86bf-4101b3e828d0",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "scan",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "eb990cf6-09f8-4f0f-87a5-d19c734bdfa6",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "booking_advice_zcb3",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "65695b91-b215-4a8d-b2a6-825f63b7ca4b",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "permiso_exportacion",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      },
+      {
+       "conditions": {
+        "options": {
+         "caseSensitive": true,
+         "leftValue": "",
+         "typeValidation": "strict",
+         "version": 2
+        },
+        "conditions": [
+         {
+          "id": "4a8f9863-125f-4e2d-a947-a37e6311bedb",
+          "leftValue": "={{$json.tipo}}",
+          "rightValue": "destinacion_ignorar",
+          "operator": {
+           "type": "string",
+           "operation": "equals",
+           "name": "filter.operator.equals"
+          }
+         }
+        ],
+        "combinator": "and"
+       }
+      }
+     ]
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.switch",
+   "typeVersion": 3.2,
+   "position": [
+    1440,
+    608
+   ],
+   "id": "4f946384-c533-4c49-be5d-b61921559428",
+   "name": "Switch por tipo de documento"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "// ===== PERMISO DE EXPORTACIÓN (Interlog / IFManager) — solo EXPORTACIÓN (E) =====\n{\n  const subjPE = String($json.emailSubject ?? $json.subject ?? '');\n  const isIFManagerDest = /Destinaci[oó]n\\s+SIM\\s*:/i.test(subjPE) && /Referencia\\s*:/i.test(subjPE);\n  if (isIFManagerDest) {\n    const mPermiso = subjPE.match(/Destinaci[oó]n\\s+SIM\\s*:\\s*([A-Za-z0-9]+)/i);\n    const permiso = mPermiso ? mPermiso[1].trim() : null;\n    const mTipo = permiso ? permiso.match(/([A-Za-z])C/i) : null;   // letra antes de la C: E=export, I=import\n    const tipoLetra = mTipo ? mTipo[1].toUpperCase() : '';\n\n    if (tipoLetra !== 'E') {\n      // Importación u otra destinación no-export → ignorar, no se guarda en ninguna carpeta\n      return { json: { tipo: 'destinacion_ignorar', permisoNumber: permiso, tipoLetra }, binary: $binary };\n    }\n\n    let ordenPE = null;\n    const mRef = subjPE.match(/Referencia\\s*:\\s*([0-9,\\s]+)/i);\n    if (mRef) {\n      const refs = mRef[1].split(',').map(s => s.trim()).filter(Boolean);\n      ordenPE = refs[1] || null;\n    }\n    const ordenSlot = ordenPE || 'orden';\n    return {\n      json: {\n        tipo: 'permiso_exportacion',\n        orderNumber: ordenPE,\n        newFileName: `${permiso}_${ordenSlot}_PE.pdf`,\n        incompleto: !ordenPE || !permiso,\n        permisoNumber: permiso,\n        tipoLetra,\n        shipmentNumber: null,\n        shippingPointNormalized: '',\n        hasExportPermit: false,\n        emailSubject: subjPE\n      },\n      binary: $binary\n    };\n  }\n}\n// ===== fin guard PE =====\n\n/**\n * Nodo: \"Clasificar Documento y renombrar pdf\"\n * Tarea...detectar Permiso de Exportación en FACTURAS y extraer Shipping\n */\n\nconst raw  = ($json.text || '');\nconst norm = raw.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n/* ======= Asunto del email (desde el item, no desde $items()) ======= */\nconst emailSubject = $json.emailSubject ?? $json.subject ?? $json.headers?.subject ?? null;\nlet subjectCode = $json.subjectCode ?? (emailSubject ? String(emailSubject).trim().slice(0, 4) : null);\nsubjectCode = subjectCode ? String(subjectCode).trim().slice(0, 4).toUpperCase() : null;\n\nconst stripZeros = (s) => {\n  const x = String(s || '').replace(/^0+/, '');\n  return x === '' ? '0' : x;\n};\nconst pick = (...vals) => vals.find(v => v != null && v !== '') ?? null;\n\nconst normalizeNamePart = (s) => String(s || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^\\w.\\-]+/g, '_')\n  .replace(/_{2,}/g, '_')\n  .replace(/^_+|_+$/g, '')\n  .toUpperCase();\n\nconst pickAllNumeric = (s, minLen = 6) => {\n  if (!s) return [];\n  return [...s.matchAll(new RegExp(String.raw`\\b0*([0-9]{${minLen},})\\b`, 'g'))]\n         .map(m => stripZeros(m[1]));\n};\n\nconst firstLineMatch = (re) => {\n  const m = raw.match(new RegExp(`^.*${re.source}.*$`, 'im'));\n  return m ? m[0] : null;\n};\n\nconst extractOrderFromInternalDoc = (text) => {\n  const lines = text.split(/\\r?\\n/);\n  const chosen = [];\n  const label = /(?:Internal\\s+Document\\s+Number|Internal\\s+Order\\s+Number|N[úu]mero\\s+de\\s+Orden\\s+Intern[ao])/i;\n  const firstLongNum = (s) => {\n    const arr = pickAllNumeric(s, 6);\n    return arr.length ? arr[0] : null;\n  };\n  for (let i = 0; i < lines.length; i++) {\n    const m1 = lines[i].match(new RegExp(label.source + String.raw`\\s*[:#-]?\\s*([^\\n]*)`, 'i'));\n    if (m1) {\n      let n1 = firstLongNum(m1[1]);\n      if (!n1 && lines[i + 1] && !new RegExp(label.source, 'i').test(lines[i + 1])) {\n        n1 = firstLongNum(lines[i + 1]);\n      }\n      const next = lines[i + 1];\n      const m2 = next ? next.match(new RegExp(label.source + String.raw`\\s*[:#-]?\\s*([^\\n]*)`, 'i')) : null;\n      if (m2) {\n        let n2 = firstLongNum(m2[1]);\n        if (!n2 && lines[i + 2] && !new RegExp(label.source, 'i').test(lines[i + 2])) {\n          n2 = firstLongNum(lines[i + 2]);\n        }\n        if (n2) chosen.push(n2);\n        else if (n1) chosen.push(n1);\n        i += 1;\n      } else {\n        if (n1) chosen.push(n1);\n      }\n    }\n  }\n  if (!chosen.length) return null;\n  return chosen[chosen.length - 1];\n};\n\nconst extractInvoiceNumber = () => {\n  const header =\n    firstLineMatch(/(?:ELECTRONIC\\s+INVOICE\\s+EXPORT|FACTURA\\s+DE\\s+EXPORTACI[OÓ]N|COMMERCIAL\\s+INVOICE|FACTURA\\s+COMERCIAL)/i);\n  if (header) {\n    const nums = pickAllNumeric(header, 3);\n    if (nums.length) return nums[nums.length - 1];\n  }\n  const label =\n    firstLineMatch(/(?:Invoice\\s*(?:Number|No\\.?)|Factura\\s*(?:N[o°º]\\.?|N[uú]mero)?)/i);\n  if (label) {\n    const n = pickAllNumeric(label, 3);\n    if (n.length) return n[n.length - 1];\n  }\n  const hm = raw.match(/(\\d{3,})\\s*[-–—]\\s*(\\d{3,})/);\n  if (hm) return stripZeros(hm[2]);\n  return null;\n};\n\nconst extractExportInvoiceStrict = () => {\n  const m = raw.match(/(?:FACTURA(?:\\s+DE\\s+EXPORTACI[oó]N)?|INVOICE)[^\\n]{0,30}?(\\d{4})\\s*[-–—]\\s*(\\d{8})/i);\n  return m ? `${m[1]}-${m[2]}` : null;\n};\n\n/* ===================== Helpers específicos MIC/CRT ===================== */\n\nconst coerceCrtForFilename = (s) => String(s || '').replace(/\\//g, '-').trim();\n\nconst findFieldValue = (fieldNo, valueRe, opts = {}) => {\n  const maxChars = opts.maxChars ?? 140;\n  const re = new RegExp(\n    String.raw`(?:^|\\n)\\s*(?:Campo\\s*)?${fieldNo}\\s*(?:[:\\-]?\\s*)?(?:[A-ZÁÉÍÓÚÑ/ ]{0,60}\\s*)?(${valueRe.source})`,\n    'i'\n  );\n  const m = raw.match(re);\n  if (m && m[1]) return m[1].trim();\n\n  const re2 = new RegExp(\n    String.raw`\\b(?:Campo\\s*)?${fieldNo}\\b[\\s:.\\-]{0,12}(.{0,${maxChars}})`,\n    'i'\n  );\n  const m2 = raw.match(re2);\n  if (m2 && m2[1]) {\n    const mm = m2[1].match(valueRe);\n    if (mm) return (mm[0] || '').trim();\n  }\n  return null;\n};\n\n// CRT campo 2 (mantener ceros a la izquierda): extrae el valor tal cual después de \"2 Numero\"\nconst extractCrtFromField2Numero = () => {\n  const isBad = (v) => !v || /^(NUMERO|NÚMERO|NUMBER)$/i.test(String(v).trim());\n  const hasDigit = (v) => /\\d/.test(String(v || ''));\n\n  // Caso típico multilinea: puede venir \"2\" + \"Numero\" + (repite \"Numero\") + valor\n  let m = raw.match(\n    /(?:^|\\n)\\s*2\\s*(?:\\r?\\n)+\\s*(?:Numero|N[uú]mero|Number)\\b[^\\n]*\\r?\\n\\s*([A-Z0-9][A-Z0-9.\\-\\/]{2,40})(?:\\r?\\n\\s*([A-Z0-9][A-Z0-9.\\-\\/]{4,40}))?/i\n  );\n\n  if (m && m[1]) {\n    const c1 = m[1].trim();\n    const c2 = (m[2] || '').trim();\n    if (!isBad(c1) && hasDigit(c1)) return c1;\n    if (c2 && !isBad(c2) && hasDigit(c2)) return c2;\n  }\n\n  // Inline: \"2 Numero: XXXXX\"\n  m = raw.match(\n    /(?:^|\\n)\\s*2\\s*(?:Numero|N[uú]mero|Number)\\b[^\\n]*[:\\-]?\\s*([A-Z0-9][A-Z0-9.\\-\\/]{4,40})/i\n  );\n  if (m && m[1] && !isBad(m[1]) && hasDigit(m[1])) return m[1].trim();\n\n  return null;\n};\n\n// Fallback CRT: por etiqueta \"N° carta de porte\"\nconst extractCrtFromCartaDePorte = () => {\n  const m = raw.match(/N[°º\\?]?\\s*carta\\s*de\\s*porte[^\\n]*\\r?\\n\\s*([A-Z0-9][A-Z0-9.\\-\\/]{6,40})/i);\n  return m ? m[1].trim() : null;\n};\n\n// MIC ID flexible desde el bloque del campo 4 (alfanumérico o numérico, sin formato fijo)\nconst extractMicIdFlexible = () => {\n  // 1) Intento vía findFieldValue (si el valor aparece inline cerca de \"4\")\n  // Acepta alfanumérico con . - /, mínimo 4 chars, debe contener al menos un dígito\n  const reVal = /[A-Z0-9][A-Z0-9.\\-\\/]{3,60}/i;\n  let v = findFieldValue(4, reVal);\n  if (v) {\n    v = String(v).trim();\n    if (/\\d/.test(v)) return v;\n  }\n\n  // 2) Layout típico del PDF: \"4\" en una línea, luego alguna etiqueta rara (ej \"N¿\"), y en la siguiente el valor\n  let m = raw.match(/(?:^|\\n)\\s*4\\s*(?:\\r?\\n)+[^\\n]*\\r?\\n\\s*([A-Z0-9][A-Z0-9.\\-\\/]{3,60})\\b/i);\n  if (m && m[1] && /\\d/.test(m[1])) return m[1].trim();\n\n  // 3) Otro layout: \"4\" y el valor en la línea siguiente directa\n  m = raw.match(/(?:^|\\n)\\s*4\\s*(?:\\r?\\n)+\\s*([A-Z0-9][A-Z0-9.\\-\\/]{3,60})\\b/i);\n  if (m && m[1] && /\\d/.test(m[1])) return m[1].trim();\n\n  return null;\n};\n\n/* ===================== Regex MIC / CRT ===================== */\n\n// MIC gate: el header debe tener MIC/DTA\nconst reMicHeaderStrict = /\\bMIC\\/DTA\\b/i;\n\n// MIC refuerzo: requerido\nconst reMicAduanaPartida = /(FIRMA\\s+Y\\s+SELLO\\s+DE\\s+ADUANA\\s+DE\\s+PARTIDA)/i;\n\n// CRT refuerzos requeridos\nconst reCrtMontoReembolso = /(MONTO\\s+DE\\s+REEMBOLSO\\s+CONTRA\\s+ENTREGA)/i;\nconst reCrtMontoFleteExt  = /(MONTO\\s+DEL\\s+FLETE\\s+EXTERNO)/i;\n\n// Evitar confundir CRT con MIC cortado (si es alfanumérico, solo aplica el patrón típico)\nconst reMicIdCut = /\\b\\dAR\\d{6}[A-Z]\\b/i;\n\n// ORDEN/ORDER\nconst reOrderGeneric = /\\b(?:ORDEN|ORDER)\\b[:\\s\\-\\u2013\\u2014]*([0-9]{6,12})/i;\n\n/* ======= Señales generales (para factura / etc.) ======= */\nconst isCertOrigen = /(CERTIFICADO\\s+DE\\s+ORIGEN(?:\\s+DIGITAL)?|CERTIFICATE\\s+OF\\s+ORIGIN)/i.test(norm);\n\nconst isBooking      = /(consolidated\\s+booking\\s+advice|booking\\s+advice|booking\\s+confirmation|booking\\s+notice)/i.test(norm);\nconst isPacking      = /packing\\s+list/i.test(norm);\nconst isConsolidated = /consolidated\\s+packing\\s+list/i.test(norm);\nconst isFactura      = !isCertOrigen && /(electronic\\s+invoice\\s+export|factura\\s+de\\s+exportaci[oó]n|commercial\\s+invoice|factura\\s+comercial)/i.test(norm);\n\n/* ===================== Detección de tipo ===================== */\n\nlet tipo = 'otros';\nlet descartar  = false;\nlet incompleto = false;\nlet newFileName = null;\n\nlet micId = null;\nlet crtId = null;\nlet bothHeaders = false;\nlet isScan = false;\n\nconst hasText = !!(raw && raw.trim().length);\n\n// ORDEN\nlet orderNumber = null;\n\n/* ======= MIC/CRT/SCAN ======= */\n\nif (!hasText) {\n  tipo = 'scan';\n  isScan = true;\n} else {\n  const isBookingText = isBooking;\n\n  // MIC gate: MIC/DTA + Firma y sello de Aduana de Partida\n  const micGate = reMicHeaderStrict.test(norm) && reMicAduanaPartida.test(norm);\n\n  // CRT gate: tus dos frases predeterminadas\n  const crtGate = !isBookingText && reCrtMontoReembolso.test(norm) && reCrtMontoFleteExt.test(norm);\n\n  // IDs\n  micId = micGate ? extractMicIdFlexible() : null;\n  crtId = crtGate ? (extractCrtFromField2Numero() || extractCrtFromCartaDePorte()) : null;\n\n  // Normalizaciones CRT\n  if (crtId) {\n    const c = crtId.replace(/\\s+/g, '');\n    if (reMicIdCut.test(c)) crtId = null;\n  }\n  if (crtId) crtId = coerceCrtForFilename(crtId);\n  const crtIdNorm = crtId ? normalizeNamePart(crtId) : null;\n\n  // ORDER genérico\n  const mo = norm.match(reOrderGeneric);\n  if (mo) orderNumber = stripZeros(mo[1]);\n\n  // ORDER por ubicaciones fijas si no apareció\n  // CRT: campo 11, MIC: campo 38\n  if (!orderNumber && (crtGate || micGate)) {\n    const f11 = findFieldValue(11, /\\b0*([0-9]{6,12})\\b/i);\n    if (f11) {\n      const m = f11.match(/\\b0*([0-9]{6,12})\\b/);\n      if (m) orderNumber = stripZeros(m[1]);\n    }\n  }\n  if (!orderNumber && (crtGate || micGate)) {\n    const f38 = findFieldValue(38, /\\b0*([0-9]{6,12})\\b/i);\n    if (f38) {\n      const m = f38.match(/\\b0*([0-9]{6,12})\\b/);\n      if (m) orderNumber = stripZeros(m[1]);\n    }\n  }\n\n  // Compatibilidad extra\n  if (!orderNumber) {\n    const mFO = norm.match(/(?:FACTURA|INVOICE)[^\\n]{0,60}?\\b(?:ORDEN|ORDER)\\b[^\\d]{0,10}([0-9]{6,12})/i);\n    if (mFO) orderNumber = stripZeros(mFO[1]);\n  }\n\n  // Headers finales\n  const micHeader = !!micId && micGate;\n  const crtHeader = !!crtIdNorm && crtGate;\n  bothHeaders = micHeader && crtHeader;\n\n  // Naming MIC/CRT (solo si hay IDs reales)\n  if (bothHeaders) {\n    tipo = 'crt';\n    newFileName = orderNumber\n      ? `${micId}_${orderNumber}_${crtIdNorm}_MIC_CT`\n      : `${micId}_${crtIdNorm}_MIC_CT`;\n    if (!orderNumber) incompleto = true;\n  } else if (micHeader) {\n    tipo = 'mic';\n    newFileName = orderNumber\n      ? `${micId}_${orderNumber}_MIC-DTA`\n      : `${micId}_MIC-DTA`;\n    if (!orderNumber) incompleto = true;\n  } else if (crtHeader) {\n    tipo = 'crt';\n    newFileName = orderNumber\n      ? `${orderNumber}_${crtIdNorm}_CT`\n      : `${crtIdNorm}_CT`;\n    if (!orderNumber) incompleto = true;\n  }\n}\n\n/* ======= Lógica si no hubo MIC/CRT/SCAN ======= */\n\nlet shipmentList = [...raw.matchAll(/(?:^|\\s)(?:Shipment\\s*(?:Number)?|N[uú]mero\\s+de\\s+Env[ií]o|Numero\\s+de\\s+Envio)\\s*[:#]?\\s*0*([0-9]{6,})/gim)]\n                   .map(m => stripZeros(m[1]));\nshipmentList = [...new Set(shipmentList)].sort((a, b) => Number(b) - Number(a));\nlet shipmentNumber = shipmentList[0] || null;\n\n/* ====== Detección de Permiso de Exportación (FIX: usar isFactura, no tipo) ====== */\nlet exportPermit = null;\nlet hasExportPermit = false;\n\nif (isFactura) {\n  const permitRegexes = [\n    /(Permiso\\s+de\\s+Exportaci[oó]n|Permiso\\s+de\\s+Embarque|Export\\s+Permit|Shipping\\s+Permit)\\s*[:#\\-]?\\s*([A-Z0-9.\\-\\/\\s]{6,30})/i,\n    /\\bP\\.?\\s*E\\.?\\s*[:#\\-]?\\s*([A-Z0-9.\\-\\/]{6,30})\\b/i\n  ];\n\n  for (const rx of permitRegexes) {\n    const m = raw.match(rx);\n    if (m && m[2]) {\n      exportPermit = m[2].trim().replace(/\\s+/g, ' ');\n      hasExportPermit = true;\n      break;\n    }\n    if (m && m[1] && !m[2]) {\n      exportPermit = m[1].trim().replace(/\\s+/g, ' ');\n      hasExportPermit = true;\n      break;\n    }\n  }\n}\n\nlet shippingPoint = null;\nlet shippingPointNormalized = null;\n\nlet mSP = raw.match(/(?:SHIPPING\\s+POINT|Punto\\s+de\\s+Embarque)\\s*[:#\\-]?\\s*([A-Za-z0-9 .\\-_/]{2,60})/i);\nif (mSP && mSP[1]) {\n  shippingPoint = mSP[1].trim();\n}\nif (!shippingPoint) {\n  const lines = raw.split(/\\r?\\n/);\n  for (let i = 0; i < lines.length; i++) {\n    if (/(?:SHIPPING\\s+POINT|Punto\\s+de\\s+Embarque)\\s*[:#!\\-]*\\s*$/i.test(lines[i])) {\n      const cand = (lines[i+1] || '').trim();\n      if (cand) {\n        shippingPoint = cand.replace(/^[\\s\\-:.#/]+|[\\s\\-:.#/]+$/g,'');\n        break;\n      }\n    }\n  }\n}\nif (shippingPoint) {\n  shippingPoint = shippingPoint.replace(/\\s{2,}/g,' ').replace(/[|]+/g,'').trim();\n  shippingPointNormalized = shippingPoint.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase();\n}\n\nif (!newFileName && !['mic','crt','scan'].includes(tipo)) {\n\n  // BOOKING ADVICE: SOLO ZCB1/ZCB3 (si no es ninguno -> otros)\n  if (isBooking) {\n    if (subjectCode === 'ZCB1') tipo = 'booking_advice_zcb1';\n    else if (subjectCode === 'ZCB3') tipo = 'booking_advice_zcb3';\n    else tipo = 'otros';\n  } else if (isPacking) {\n    let transportMode = (raw.match(/(?:Transport\\s*Mode|Modo\\s+de\\s+Transporte)\\s*[:\\s]*([A-Za-z]+)/i)?.[1] || '').toUpperCase();\n    if (isConsolidated) {\n      tipo = 'packing_maritimo';\n    } else if (transportMode === 'FCL' || transportMode === 'LCL') {\n      tipo = 'packing_maritimo_sin_consolidar';\n      descartar = true;\n    } else if (['TL', 'FTL', 'LTL', 'CAMION'].includes(transportMode)) {\n      tipo = 'packing_terrestre';\n    } else {\n      const maritimeHints = /(vessel|port\\s+of\\s+(loading|discharge)|container|fcl|lcl|bill\\s+of\\s+lading|\\bbl\\b)/i.test(norm);\n      tipo = maritimeHints ? 'packing_maritimo' : 'packing_terrestre';\n    }\n  } else if (isFactura) {\n    tipo = 'factura';\n  } else {\n    tipo = 'otros';\n  }\n\n  // FACTURA\n  let invoiceNumber = null;\n  if (tipo === 'factura') {\n    invoiceNumber = extractInvoiceNumber();\n    orderNumber = extractOrderFromInternalDoc(raw) || orderNumber;\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (invoiceNumber && orderNumber) {\n      newFileName = `${invoiceNumber}_${orderNumber}_FC`;\n    } else {\n      incompleto = true;\n    }\n  }\n\n  // BOOKING ADVICE (ZCB1/ZCB3)\n  if (\n    !newFileName &&\n    (tipo === 'booking_advice_zcb1' || tipo === 'booking_advice_zcb3')\n  ) {\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (shipmentNumber && orderNumber) {\n      newFileName = subjectCode\n        ? `${shipmentNumber}_${orderNumber}_${subjectCode}_BA`\n        : `${shipmentNumber}_${orderNumber}_BA`;\n    } else {\n      incompleto = true;\n    }\n  }\n\n  // PACKING LIST\n  if (!newFileName && (tipo === 'packing_maritimo' || tipo === 'packing_terrestre' || tipo === 'packing_maritimo_sin_consolidar')) {\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (shipmentNumber && orderNumber) {\n      newFileName = `${shipmentNumber}_${orderNumber}_PL`;\n    } else {\n      incompleto = true;\n    }\n  }\n}\n\n/* ===================== Fallbacks y normalización final ===================== */\n\nif (!orderNumber) {\n  const mo2 = raw.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n               .match(/\\b(?:ORDEN|ORDER)\\b[:\\s\\-\\u2013\\u2014]*([0-9]{6,12})/i);\n  if (mo2) orderNumber = stripZeros(mo2[1]);\n}\n\nconst originalName = pick($json.fileName, $binary?.data?.fileName, 'adjunto.pdf');\nconst ext = (originalName.match(/\\.[A-Za-z0-9]+$/)?.[0]) || '.pdf';\nconst baseOriginal = originalName.replace(/\\.[A-Za-z0-9]+$/, '');\n\nif (!newFileName) {\n  if (tipo === 'scan') {\n    newFileName = `${baseOriginal}_SCAN`;\n  } else {\n    newFileName = normalizeNamePart(baseOriginal);\n  }\n}\nnewFileName = normalizeNamePart(newFileName) + (newFileName.toLowerCase().endsWith(ext.toLowerCase()) ? '' : ext);\n\n// Fijación final de orderNumber desde el nombre\nif (!orderNumber && newFileName) {\n  const fname = String(newFileName);\n  let m = fname.match(/_([0-9]{6,12})_/);\n  if (m) {\n    orderNumber = stripZeros(m[1]);\n  } else {\n    const base = fname.replace(/\\.[A-Za-z0-9]+$/,'');\n    const parts = base.split('_');\n    const cand = parts.find(p => /^\\d{6,12}$/.test(p));\n    if (cand) orderNumber = stripZeros(cand);\n  }\n}\n\n/* ===================== Salida (mantener binary) ===================== */\nreturn {\n  json: {\n    tipo,\n    descartar,\n    incompleto,\n    shipmentNumber,\n    shipmentList,\n    orderNumber,\n    invoiceNumber: undefined,\n    micId,\n    crtId,\n    bothHeaders,\n    isScan,\n    newFileName,\n    originalName,\n\n    hasExportPermit,\n    exportPermit,\n    exportPermitNumber: exportPermit || null,\n    shippingPoint: shippingPoint || null,\n    shippingPointNormalized: shippingPointNormalized || null,\n\n    emailSubject: emailSubject || null,\n    subjectCode: subjectCode || null\n  },\n  binary: $binary\n};\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1200,
+    720
+   ],
+   "id": "3dbe0b9d-650f-4149-8b1e-5f95cca2b430",
+   "name": "Clasificar Documento y renombrar pdf"
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1_KiTUAkJdEHaFhIMUr3MBhIfSCUDw3-G",
+     "mode": "list",
+     "cachedResultName": "PACKING LIST MPC",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1_KiTUAkJdEHaFhIMUr3MBhIfSCUDw3-G"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    240
+   ],
+   "id": "44196b12-90e1-4a06-84cb-5484b88f8fe8",
+   "name": "Marítimo",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1eW5m63ej72Z9ZWw59yQw-d69TSsgYhfZ",
+     "mode": "list",
+     "cachedResultName": "PACKING LIST ROAD",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1eW5m63ej72Z9ZWw59yQw-d69TSsgYhfZ"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    400
+   ],
+   "id": "460697d3-333a-4ef8-a5b3-554eb90356ce",
+   "name": "Terrestre",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1NNXEAhC-Sc_vMrDqneG7ssAhCMzhMRDp",
+     "mode": "list",
+     "cachedResultName": "FACTURAS EXPORTACION",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1NNXEAhC-Sc_vMrDqneG7ssAhCMzhMRDp"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    544
+   ],
+   "id": "3cdcab0b-ea18-4db7-b540-fd4835539bba",
+   "name": "Facturas",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "format": "resolved",
+    "dataPropertyAttachmentsPrefixName": "",
+    "options": {
+     "customEmailConfig": "[\"UNSEEN\"] "
+    }
+   },
+   "type": "n8n-nodes-base.emailReadImap",
+   "typeVersion": 2.1,
+   "position": [
+    400,
+    720
+   ],
+   "id": "5e59b786-b443-4e9e-b1f8-ff1d69781829",
+   "name": "Email Trigger (ssbintn8n)",
+   "credentials": {
+    "imap": {
+     "id": "IAY5P5hHhqtkoNtg",
+     "name": "IMAP account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1OSoyfz2SsbxLDYSKb28TZIqSHAm-dG0c",
+     "mode": "list",
+     "cachedResultName": "OTROS DOCS",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1OSoyfz2SsbxLDYSKb28TZIqSHAm-dG0c"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    704
+   ],
+   "id": "a92f8dba-8753-4d1c-bc14-e2ca6c86eaf6",
+   "name": "OTROS",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const out = []\n\nconst removeDiacritics = (s) =>\n  String(s || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n\nconst normalizeSubject = (s) =>\n  removeDiacritics(s).replace(/\\s+/g, ' ').trim()\n\nconst stripReplyFwPrefixes = (s) => {\n  let x = String(s || '').trim()\n  while (/^(?:RE|RV|FW|FWD)\\s*:/i.test(x)) {\n    x = x.replace(/^(?:RE|RV|FW|FWD)\\s*:\\s*/i, '').trim()\n  }\n  return x\n}\n\nconst extractDate = (subjectClean) => {\n  const m = subjectClean.match(/\\b(\\d{2})[\\/\\-](\\d{2})[\\/\\-](\\d{4})\\b/)\n  return m ? `${m[1]}/${m[2]}/${m[3]}` : null\n}\n\n// ZCB1/ZCB3: \"Document 47682105\"\nconst extractShipmentFromZcb = (subjectClean) => {\n  const m = subjectClean.match(/\\bDOCUMENT\\b\\s*0*([0-9]{6,})\\b/i)\n  return m ? m[1] : null\n}\n\n// DOCUMENT: debe ser primera palabra\nconst isDocumentFirstWord = (subjectClean) => /^\\s*DOCUMENT\\b/i.test(subjectClean)\n\n// CERT ANALYSIS: \"Shp No -0047687667\"\nconst extractShipmentFromCertAnalysis = (subjectClean) => {\n  const m = subjectClean.match(/\\bSHP\\s*NO\\b\\s*[-: ]\\s*0*([0-9]{6,})\\b/i)\n  return m ? m[1] : null\n}\n\n// ISO -> \"YYYY-MM-DD HH:mm\" en Argentina\nconst formatLocalAr = (iso) => {\n  if (!iso) return null\n  const d = new Date(iso)\n  if (isNaN(d.getTime())) return null\n\n  const parts = new Intl.DateTimeFormat('sv-SE', {\n    timeZone: 'America/Argentina/Buenos_Aires',\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n    hour: '2-digit',\n    minute: '2-digit',\n    hour12: false,\n  })\n    .formatToParts(d)\n    .reduce((acc, p) => {\n      acc[p.type] = p.value\n      return acc\n    }, {})\n\n  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`\n}\n\nfor (const item of $input.all()) {\n  const emailSubjectRaw = item.json?.subject ?? item.json?.headers?.subject ?? ''\n  const emailSubjectNormalized = normalizeSubject(emailSubjectRaw)\n  const subjectClean = stripReplyFwPrefixes(emailSubjectNormalized)\n\n  const dateSent = extractDate(subjectClean)\n\n  let subjectCode = null\n  let sapDeliveryNumber = null\n  let shipmentNumberFromSubject = null\n\n  // SOLO estos códigos (sin fallback)\n  const mZcb = subjectClean.match(/\\b(ZCB1|ZCB3)\\b/i)\n  if (mZcb) {\n    subjectCode = mZcb[1].toUpperCase()\n    shipmentNumberFromSubject = extractShipmentFromZcb(subjectClean)\n  } else if (/\\bCERT\\s*ANALYSIS\\b/i.test(subjectClean)) {\n    subjectCode = 'CERT_ANALYSIS'\n    shipmentNumberFromSubject = extractShipmentFromCertAnalysis(subjectClean)\n  } else if (isDocumentFirstWord(subjectClean)) {\n    subjectCode = 'DOCUMENT'\n    const m = subjectClean.match(/^\\s*DOCUMENT\\b\\s*0*([0-9]{6,})\\b/i)\n    sapDeliveryNumber = m ? m[1] : null\n  }\n\n  const receivedAtLocalAr = formatLocalAr(item.json?.date)\n\n  for (const binary of Object.values(item.binary || {})) {\n    if (!binary) continue\n    const name = (binary.fileName || '').toLowerCase()\n    const mime = (binary.mimeType || '').toLowerCase()\n\n    if (mime === 'application/pdf' || name.endsWith('.pdf')) {\n      const json = {\n        fileName: binary.fileName || 'adjunto.pdf',\n        emailSubject: emailSubjectRaw,\n        emailSubjectNormalized,\n      }\n\n      if (receivedAtLocalAr) json.receivedAtLocalAr = receivedAtLocalAr\n\n      // agregar solo si existe\n      if (subjectCode) json.subjectCode = subjectCode\n      if (dateSent) json.dateSent = dateSent\n\n      // solo para DOCUMENT\n      if (subjectCode === 'DOCUMENT' && sapDeliveryNumber) {\n        json.sapDeliveryNumber = sapDeliveryNumber\n      }\n\n      // solo para ZCB1/ZCB3/CERT_ANALYSIS\n      if (\n        (subjectCode === 'ZCB1' || subjectCode === 'ZCB3' || subjectCode === 'CERT_ANALYSIS') &&\n        shipmentNumberFromSubject\n      ) {\n        json.shipmentNumberFromSubject = shipmentNumberFromSubject\n      }\n\n      out.push({\n        json,\n        binary: { data: binary }\n      })\n    }\n  }\n}\n\nreturn out.length ? out : []\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    672,
+    720
+   ],
+   "id": "0a58a61f-e1df-417d-846f-9b1934eec16e",
+   "name": "Seleccionar PDF"
+  },
+  {
+   "parameters": {
+    "numberInputs": 9
+   },
+   "type": "n8n-nodes-base.merge",
+   "typeVersion": 3.2,
+   "position": [
+    4992,
+    -464
+   ],
+   "id": "40b3f52f-a79a-42ec-b9c4-d017707b962c",
+   "name": "Merge1"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"{{$node['Switch por tipo de documento'].json.tipo}}\",\n  \"subjectCode\": \"{{$node['Switch por tipo de documento'].json.subjectCode}}\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    80
+   ],
+   "id": "17d21ee4-20b5-4537-b64b-c630a8f027e4",
+   "name": "set meta (booking advice)"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"packing_maritimo\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    240
+   ],
+   "id": "ece2ea57-e433-4c4d-be47-e330a3e54a94",
+   "name": "set meta (maritimo)"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"packing_terrestre\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    400
+   ],
+   "id": "69e3042f-4e4e-46bf-8324-9098b4e692c3",
+   "name": "set meta (terrestre)"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "=={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"factura\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\",\n  \"shippingPointNormalized\": \"{{$node['Switch por tipo de documento'].json.shippingPointNormalized || ''}}\",\n  \"hasExportPermit\": {{$node['Switch por tipo de documento'].json.hasExportPermit === true}}\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    544
+   ],
+   "id": "6ef7c781-6e95-4f5a-a7a7-b035b60af7de",
+   "name": "set meta (facturas)"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"otros\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    704
+   ],
+   "id": "4b75e687-aa95-4066-892f-7a189a57a9a3",
+   "name": "set meta (otros)"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * Nodo: \"Clasificar Documento y renombrar pdf\"\n * Tarea...detectar Permiso de Exportación en FACTURAS y extraer Shipping\n */\n\nconst raw  = ($json.text || '');\nconst norm = raw.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n/* ======= Asunto del email (viene de la rama \"Seleccionar PDF\") ======= */\nconst sel = $items('Seleccionar PDF')?.[$itemIndex]?.json || {};\nconst emailSubject = sel.emailSubject ?? sel.subject ?? sel.headers?.subject ?? null;\nlet subjectCode = sel.subjectCode ?? (emailSubject ? String(emailSubject).trim().slice(0, 4) : null);\nsubjectCode = subjectCode ? String(subjectCode).trim().slice(0, 4).toUpperCase() : null;\n\nconst stripZeros = (s) => {\n  const x = String(s || '').replace(/^0+/, '');\n  return x === '' ? '0' : x;\n};\nconst pick = (...vals) => vals.find(v => v != null && v !== '') ?? null;\n\nconst normalizeNamePart = (s) => String(s || '')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^\\w.\\-]+/g, '_')\n  .replace(/_{2,}/g, '_')\n  .replace(/^_+|_+$/g, '')\n  .toUpperCase();\n\nconst pickAllNumeric = (s, minLen = 6) => {\n  if (!s) return [];\n  return [...s.matchAll(new RegExp(String.raw`\\b0*([0-9]{${minLen},})\\b`, 'g'))]\n         .map(m => stripZeros(m[1]));\n};\n\nconst firstLineMatch = (re) => {\n  const m = raw.match(new RegExp(`^.*${re.source}.*$`, 'im'));\n  return m ? m[0] : null;\n};\n\nconst extractOrderFromInternalDoc = (text) => {\n  const lines = text.split(/\\r?\\n/);\n  const chosen = [];\n  const label = /(?:Internal\\s+Document\\s+Number|Internal\\s+Order\\s+Number|N[úu]mero\\s+de\\s+Orden\\s+Intern[ao])/i;\n  const firstLongNum = (s) => {\n    const arr = pickAllNumeric(s, 6);\n    return arr.length ? arr[0] : null;\n  };\n  for (let i = 0; i < lines.length; i++) {\n    const m1 = lines[i].match(new RegExp(label.source + String.raw`\\s*[:#-]?\\s*([^\\n]*)`, 'i'));\n    if (m1) {\n      let n1 = firstLongNum(m1[1]);\n      if (!n1 && lines[i + 1] && !new RegExp(label.source, 'i').test(lines[i + 1])) {\n        n1 = firstLongNum(lines[i + 1]);\n      }\n      const next = lines[i + 1];\n      const m2 = next ? next.match(new RegExp(label.source + String.raw`\\s*[:#-]?\\s*([^\\n]*)`, 'i')) : null;\n      if (m2) {\n        let n2 = firstLongNum(m2[1]);\n        if (!n2 && lines[i + 2] && !new RegExp(label.source, 'i').test(lines[i + 2])) {\n          n2 = firstLongNum(lines[i + 2]);\n        }\n        if (n2) chosen.push(n2);\n        else if (n1) chosen.push(n1);\n        i += 1;\n      } else {\n        if (n1) chosen.push(n1);\n      }\n    }\n  }\n  if (!chosen.length) return null;\n  return chosen[chosen.length - 1];\n};\n\nconst extractInvoiceNumber = () => {\n  const header =\n    firstLineMatch(/(?:ELECTRONIC\\s+INVOICE\\s+EXPORT|FACTURA\\s+DE\\s+EXPORTACI[OÓ]N|COMMERCIAL\\s+INVOICE|FACTURA\\s+COMERCIAL)/i);\n  if (header) {\n    const nums = pickAllNumeric(header, 3);\n    if (nums.length) return nums[nums.length - 1];\n  }\n  const label =\n    firstLineMatch(/(?:Invoice\\s*(?:Number|No\\.?)|Factura\\s*(?:N[o°º]\\.?|N[uú]mero)?)/i);\n  if (label) {\n    const n = pickAllNumeric(label, 3);\n    if (n.length) return n[n.length - 1];\n  }\n  const hm = raw.match(/(\\d{3,})\\s*[-–—]\\s*(\\d{3,})/);\n  if (hm) return stripZeros(hm[2]);\n  return null;\n};\n\nconst extractExportInvoiceStrict = () => {\n  const m = raw.match(/(?:FACTURA(?:\\s+DE\\s+EXPORTACI[oó]N)?|INVOICE)[^\\n]{0,30}?(\\d{4})\\s*[-–—]\\s*(\\d{8})/i);\n  return m ? `${m[1]}-${m[2]}` : null;\n};\n\n// Regex MIC / CRT\nconst reMicHeader = /(MANIFIESTO\\s+INTERNACIONAL\\s+DE\\s+CARGA|INTERNATIONAL\\s+CARGO\\s+MANIFEST|MIC\\/DTA|MIC\\s*DTA)/i;\nconst reCrtHeader = /(CONTRATO\\s+DE\\s+TRANSPORTE|CONSIGNMENT\\s+NOTE|CRT\\b)/i;\nconst reMicId     = /\\b\\d{2}\\s*ARG\\s*\\d{6,}\\b/i;\n\n// CRT ID: soportar variantes\nconst reCrtList = [\n  /\\b\\d{5,}[A-Z]{2}\\d{2}\\b/i,\n  /\\b\\d{3}AR(?:G)?[A-Z]*[.\\-]?\\d+\\/\\d{2,4}\\b/i,\n  /\\bAR\\d+\\/\\d{2,4}\\b/i,\n  /\\b\\d{3}AR(?:G)?[A-Z]*[.\\-]?\\d+\\-\\d{2,4}\\b/i,\n  /\\bAR\\d+\\-\\d{2,4}\\b/i\n];\n\n// Regex ORDEN/ORDER\nconst reOrderGeneric = /\\b(?:ORDEN|ORDER)\\b[:\\s\\-\\u2013\\u2014]*([0-9]{6,12})/i;\n\n/* ===================== Detección de tipo ===================== */\n\nlet tipo = 'otros';\nlet descartar  = false;\nlet incompleto = false;\nlet newFileName = null;\n\nlet micId = null;\nlet crtId = null;\nlet bothHeaders = false;\nlet isScan = false;\n\nconst hasText = !!(raw && raw.trim().length);\n\n// ORDEN accesible\nlet orderNumber = null;\n\n/* ======= MIC/CRT/SCAN ======= */\n\nif (!hasText) {\n  tipo = 'scan';\n  isScan = true;\n} else {\n  const micHeader = reMicHeader.test(norm);\n  const crtHeader = reCrtHeader.test(norm);\n  bothHeaders = micHeader && crtHeader;\n\n  micId = (norm.match(reMicId) || [])[0] || null;\n\n  for (const rx of reCrtList) {\n    const m = norm.match(rx);\n    if (m) { crtId = m[0]; break; }\n  }\n  if (!crtId) {\n    const fnameU = normalizeNamePart(pick($json.fileName, $binary?.data?.fileName, '') || '');\n    for (const rx of reCrtList) {\n      const m = fnameU.match(rx);\n      if (m) { crtId = m[0]; break; }\n    }\n  }\n  const crtIdNorm = crtId ? normalizeNamePart(crtId) : null;\n\n  let orderFromOrden = null;\n  const mo = norm.match(reOrderGeneric);\n  if (mo) {\n    orderFromOrden = stripZeros(mo[1]);\n    orderNumber = orderFromOrden;\n  }\n\n  if (!orderNumber) {\n    const mFO = norm.match(/(?:FACTURA|INVOICE)[^\\n]{0,60}?\\b(?:ORDEN|ORDER)\\b[^\\d]{0,10}([0-9]{6,12})/i);\n    if (mFO) orderNumber = stripZeros(mFO[1]);\n  }\n\n  const invoiceStrict = extractExportInvoiceStrict();\n\n  if (bothHeaders) {\n    tipo = 'crt';\n    if (micId && orderFromOrden) {\n      newFileName = crtIdNorm\n        ? `${micId}_${orderFromOrden}_${crtIdNorm}_MIC_CT`\n        : `${micId}_${orderFromOrden}_MIC_CT`;\n    } else if (micId && invoiceStrict) {\n      newFileName = crtIdNorm\n        ? `${micId}_${invoiceStrict}_${crtIdNorm}_MIC_CT`\n        : `${micId}_${invoiceStrict}_MIC_CT`;\n    } else if (micId && crtIdNorm) {\n      newFileName = `${micId}_${crtIdNorm}_MIC_CT`;\n    } else if (micId) {\n      newFileName = `${micId}_MIC_CT`;\n    } else if (crtIdNorm) {\n      newFileName = `${crtIdNorm}_MIC_CT`;\n    }\n  } else if (micHeader) {\n    tipo = 'mic';\n    if (micId && orderFromOrden) {\n      newFileName = `${micId}_${orderFromOrden}_MIC-DTA`;\n    } else if (micId) {\n      newFileName = `${micId}_MIC-DTA`;\n    }\n  } else if (crtHeader || crtId) {\n    tipo = 'crt';\n    if (crtIdNorm) {\n      newFileName = `${crtIdNorm}_CT`;\n    }\n  }\n}\n\n/* ======= Lógica si no hubo MIC/CRT/SCAN ======= */\n\nconst isCertOrigen = /(CERTIFICADO\\s+DE\\s+ORIGEN(?:\\s+DIGITAL)?|CERTIFICATE\\s+OF\\s+ORIGIN)/i.test(norm);\n\nconst isBooking      = /(consolidated\\s+booking\\s+advice|booking\\s+advice|booking\\s+confirmation|booking\\s+notice)/i.test(norm);\nconst isPacking      = /packing\\s+list/i.test(norm);\nconst isConsolidated = /consolidated\\s+packing\\s+list/i.test(norm);\nconst isFactura      = !isCertOrigen && /(electronic\\s+invoice\\s+export|factura\\s+de\\s+exportaci[oó]n|commercial\\s+invoice|factura\\s+comercial)/i.test(norm);\n\nlet shipmentList = [...raw.matchAll(/(?:^|\\s)(?:Shipment\\s*(?:Number)?|N[uú]mero\\s+de\\s+Env[ií]o|Numero\\s+de\\s+Envio)\\s*[:#]?\\s*0*([0-9]{6,})/gim)]\n                   .map(m => stripZeros(m[1]));\nshipmentList = [...new Set(shipmentList)].sort((a, b) => Number(b) - Number(a));\nlet shipmentNumber = shipmentList[0] || null;\n\n/* ====== Detección de Permiso de Exportación (para facturas) ====== */\nlet exportPermit = null;\nlet hasExportPermit = false;\n\nconst permitRegexes = [\n  /(Permiso\\s+de\\s+Exportaci[oó]n|Permiso\\s+de\\s+Embarque|Export\\s+Permit|Shipping\\s+Permit)\\s*[:#\\-]?\\s*([A-Z0-9.\\-\\/\\s]{6,30})/i,\n  /\\bP\\.?\\s*E\\.?\\s*[:#\\-]?\\s*([A-Z0-9.\\-\\/]{6,30})\\b/i\n];\n\nfor (const rx of permitRegexes) {\n  const m = raw.match(rx);\n  if (m && m[2]) {\n    exportPermit = m[2].trim().replace(/\\s+/g, ' ');\n    hasExportPermit = true;\n    break;\n  }\n  if (m && m[1] && !m[2]) {\n    exportPermit = m[1].trim().replace(/\\s+/g, ' ');\n    hasExportPermit = true;\n    break;\n  }\n}\n\nlet shippingPoint = null;\nlet shippingPointNormalized = null;\n\nlet mSP = raw.match(/(?:SHIPPING\\s+POINT|Punto\\s+de\\s+Embarque)\\s*[:#\\-]?\\s*([A-Za-z0-9 .\\-_/]{2,60})/i);\nif (mSP && mSP[1]) {\n  shippingPoint = mSP[1].trim();\n}\nif (!shippingPoint) {\n  const lines = raw.split(/\\r?\\n/);\n  for (let i = 0; i < lines.length; i++) {\n    if (/(?:SHIPPING\\s+POINT|Punto\\s+de\\s+Embarque)\\s*[:#!\\-]*\\s*$/i.test(lines[i])) {\n      const cand = (lines[i+1] || '').trim();\n      if (cand) {\n        shippingPoint = cand.replace(/^[\\s\\-:.#/]+|[\\s\\-:.#/]+$/g,'');\n        break;\n      }\n    }\n  }\n}\nif (shippingPoint) {\n  shippingPoint = shippingPoint.replace(/\\s{2,}/g,' ').replace(/[|]+/g,'').trim();\n  shippingPointNormalized = shippingPoint.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase();\n}\n\nif (!newFileName && !['mic','crt','scan'].includes(tipo)) {\n\n  if (isBooking) {\n    tipo = 'booking_advice';\n  } else if (isPacking) {\n    let transportMode = (raw.match(/(?:Transport\\s*Mode|Modo\\s+de\\s+Transporte)\\s*[:\\s]*([A-Za-z]+)/i)?.[1] || '').toUpperCase();\n    if (isConsolidated) {\n      tipo = 'packing_maritimo';\n    } else if (transportMode === 'FCL' || transportMode === 'LCL') {\n      tipo = 'packing_maritimo_sin_consolidar';\n      descartar = true;\n    } else if (['TL', 'FTL', 'LTL', 'CAMION'].includes(transportMode)) {\n      tipo = 'packing_terrestre';\n    } else {\n      const maritimeHints = /(vessel|port\\s+of\\s+(loading|discharge)|container|fcl|lcl|bill\\s+of\\s+lading|\\bbl\\b)/i.test(norm);\n      tipo = maritimeHints ? 'packing_maritimo' : 'packing_terrestre';\n    }\n  } else if (isFactura) {\n    tipo = 'factura';\n  } else {\n    tipo = 'otros';\n  }\n\n  // FACTURA\n  let invoiceNumber = null;\n  if (tipo === 'factura') {\n    invoiceNumber = extractInvoiceNumber();\n    orderNumber = extractOrderFromInternalDoc(raw) || orderNumber;\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (invoiceNumber && orderNumber) {\n      newFileName = `${invoiceNumber}_${orderNumber}_FC`;\n    } else {\n      incompleto = true;\n    }\n  }\n\n  // BOOKING ADVICE\n  if (!newFileName && tipo === 'booking_advice') {\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (shipmentNumber && orderNumber) {\n      newFileName = subjectCode ? `${shipmentNumber}_${orderNumber}_${subjectCode}_BA` : `${shipmentNumber}_${orderNumber}_BA`;\n    } else {\n      incompleto = true;\n    }\n  }\n\n  // PACKING LIST\n  if (!newFileName && (tipo === 'packing_maritimo' || tipo === 'packing_terrestre' || tipo === 'packing_maritimo_sin_consolidar')) {\n    if (!orderNumber) {\n      const lineON = raw.match(/^.*Order\\s*Number.*$/im);\n      if (lineON) {\n        const m = lineON[0].match(/\\b0*([0-9]{6,})\\b/);\n        if (m) orderNumber = stripZeros(m[1]);\n      }\n    }\n    if (shipmentNumber && orderNumber) {\n      newFileName = `${shipmentNumber}_${orderNumber}_PL`;\n    } else {\n      incompleto = true;\n    }\n  }\n}\n\n/* ===================== Fallbacks y normalización final ===================== */\n\nif (!orderNumber) {\n  const mo2 = raw.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n               .match(/\\b(?:ORDEN|ORDER)\\b[:\\s\\-\\u2013\\u2014]*([0-9]{6,12})/i);\n  if (mo2) orderNumber = stripZeros(mo2[1]);\n}\n\nconst originalName = pick($json.fileName, $binary?.data?.fileName, 'adjunto.pdf');\nconst ext = (originalName.match(/\\.[A-Za-z0-9]+$/)?.[0]) || '.pdf';\nconst baseOriginal = originalName.replace(/\\.[A-Za-z0-9]+$/, '');\n\nif (!newFileName) {\n  if (tipo === 'scan') {\n    newFileName = `${baseOriginal}_SCAN`;\n  } else {\n    newFileName = normalizeNamePart(baseOriginal);\n  }\n}\nnewFileName = normalizeNamePart(newFileName) + (newFileName.toLowerCase().endsWith(ext.toLowerCase()) ? '' : ext);\n\n// Fijación final de orderNumber desde el nombre\nif (!orderNumber && newFileName) {\n  const fname = String(newFileName);\n  let m = fname.match(/_([0-9]{6,12})_/);\n  if (m) {\n    orderNumber = stripZeros(m[1]);\n  } else {\n    const base = fname.replace(/\\.[A-Za-z0-9]+$/,'');\n    const parts = base.split('_');\n    const cand = parts.find(p => /^\\d{6,12}$/.test(p));\n    if (cand) orderNumber = stripZeros(cand);\n  }\n}\n\n/* ===================== Salida ===================== */\nreturn {\n  json: {\n    tipo,\n    descartar,\n    incompleto,\n    shipmentNumber,\n    shipmentList,\n    orderNumber,\n    invoiceNumber: undefined,   // compatibilidad histórica\n    micId,\n    crtId,\n    bothHeaders,\n    isScan,\n    newFileName,\n    originalName,\n\n    // NUEVO:\n    hasExportPermit,\n    exportPermit,\n    exportPermitNumber: exportPermit || null,\n    shippingPoint: shippingPoint || null,\n    shippingPointNormalized: shippingPointNormalized || null,\n\n    // Email\n    emailSubject: emailSubject || null,\n    subjectCode: subjectCode || null\n  }\n};\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1264,
+    224
+   ],
+   "id": "a19a934d-3281-4ffa-8eee-1faa1061d1fa",
+   "name": "Clasificar Documento y renombrar pdf1"
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1jVazv95XP0ajCQnuWg6xYgQB27cJJZ7Y",
+     "mode": "list",
+     "cachedResultName": "MIC-CRT",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1jVazv95XP0ajCQnuWg6xYgQB27cJJZ7Y"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    864
+   ],
+   "id": "f1186ec1-e5f1-4a6e-9914-d0b8a30e24c0",
+   "name": "MIC-CRT",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber || ''}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n \"tipo\": \"{{$node['Switch por tipo de documento'].json.tipo || 'mic_crt'}}\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2560,
+    864
+   ],
+   "id": "f3a8932f-3e31-498c-888e-3a9934524d20",
+   "name": "set meta (mic-crt)"
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.ocr.space/parse/image",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "apikey",
+       "value": "helloworld"
+      }
+     ]
+    },
+    "sendBody": true,
+    "contentType": "multipart-form-data",
+    "bodyParameters": {
+     "parameters": [
+      {
+       "parameterType": "formBinaryData",
+       "name": "file",
+       "inputDataFieldName": "data"
+      },
+      {
+       "name": "language",
+       "value": "spa"
+      },
+      {
+       "name": "OCREngine",
+       "value": "1"
+      },
+      {
+       "name": "filetype",
+       "value": "pdf"
+      },
+      {
+       "name": "isTable",
+       "value": "true"
+      },
+      {
+       "name": "scale",
+       "value": "true"
+      },
+      {
+       "name": "detectOrientation",
+       "value": "true"
+      },
+      {
+       "name": "isCreateSearchablePdf",
+       "value": "false"
+      }
+     ]
+    },
+    "options": {
+     "batching": {
+      "batch": {}
+     }
+    }
+   },
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1776,
+    1104
+   ],
+   "id": "8357fcb6-0324-426d-8abc-10dcfc9071a0",
+   "name": "HTTP Request"
+  },
+  {
+   "parameters": {
+    "text": "={{\n  (($json[\"ParsedResults\"] || [])\n    .map(p => p?.ParsedText || \"\")\n    .join(\"\\n\"))\n    .replace(/\\r/g, \"\\n\")\n    .replace(/[ \\t]+/g, \" \")\n}}\n",
+    "schemaType": "manual",
+    "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"doc_type\": { \"type\": \"string\", \"enum\": [\"CRT\"] },\n\n    \"crt_number\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"Número del CRT (Campo 2 del CRT). Respeta letras y guiones.\",\n      \"pattern\": \"^[A-Z0-9]{3,20}([\\\\-\\\\/][A-Z0-9]{1,20})?$\"\n    },\n\n    \"mic_dta_number\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"Número del MIC/DTA (ej: 25AR531149J).\",\n      \"pattern\": \"^\\\\d{2}[A-Z]{2}\\\\d{6}[A-Z]$\"\n    },\n\n    \"order_number\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"ORDEN del CRT (si existe). Solo dígitos.\",\n      \"pattern\": \"^\\\\d{8,12}$\"\n    },\n\n    \"shipment_number\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"SHIPMENT del CRT (si existe). Solo dígitos, sin ceros a la izquierda.\",\n      \"pattern\": \"^\\\\d{1,10}$\"\n    },\n\n    \"issue_date\": {\n      \"type\": [\"string\", \"null\"],\n      \"description\": \"Fecha en AAAA-MM-DD.\"\n    },\n\n    \"incomplete\": { \"type\": \"boolean\" },\n\n    \"missing_fields\": {\n      \"type\": \"array\",\n      \"items\": { \"type\": \"string\" }\n    }\n  },\n  \"required\": [\"doc_type\", \"crt_number\", \"mic_dta_number\", \"incomplete\", \"missing_fields\"],\n  \"additionalProperties\": false\n}\n",
+    "options": {
+     "systemPromptTemplate": "Vas a extraer datos desde el texto OCR (puede contener MIC/DTA y CRT).\n\nReglas IMPORTANTES:\n- doc_type SIEMPRE debe ser \"CRT\".\n- crt_number: extrae ÚNICAMENTE del CRT, Campo 2 (Número). Respeta letras y guiones (ej: 003GNOR25-177). No lo conviertas a solo dígitos.\n- mic_dta_number: extrae del documento MIC/DTA (normalmente en el encabezado). Formato típico: 2 dígitos + 2 letras + 6 dígitos + 1 letra (ej: 25AR531149J).\n- order_number: busca en CRT Campo 11 una línea tipo \"ORDEN\" o \"Order\". Devuelve SOLO dígitos (8 a 12). Si no aparece, null.\n- shipment_number: busca en CRT Campo 11 una línea tipo \"SHIPMENT\". Devuelve SOLO dígitos; si tiene ceros a la izquierda, elimínalos (ej: 0047308213 -> 47308213). Si queda vacío, null.\n- issue_date: devuelve fecha en formato AAAA-MM-DD. Si viene como DD/MM/AAAA o DD-MM-AAAA, conviértela.\n- Si un valor no es claro o hay conflicto, devuelve null.\n\nSalida:\n- incomplete = true si falta cualquiera de: crt_number, mic_dta_number, order_number, shipment_number, issue_date.\n- missing_fields debe listar los campos que quedaron null.\n"
+    }
+   },
+   "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+   "typeVersion": 1.2,
+   "position": [
+    1968,
+    1296
+   ],
+   "id": "80d33b77-79ca-4cc6-be0e-7271ba2ca3e1",
+   "name": "Information Extractor"
+  },
+  {
+   "parameters": {
+    "model": {
+     "__rl": true,
+     "value": "gpt-4.1-mini",
+     "mode": "list",
+     "cachedResultName": "gpt-4.1-mini"
+    },
+    "options": {
+     "maxTokens": 800,
+     "temperature": 0
+    }
+   },
+   "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+   "typeVersion": 1.2,
+   "position": [
+    1920,
+    1568
+   ],
+   "id": "c5e1eef9-c1cc-4603-914b-15dfac62268a",
+   "name": "OpenAI Chat Model",
+   "credentials": {
+    "openAiApi": {
+     "id": "WluUQYn6ZJbZ16OT",
+     "name": "n8n free OpenAI API credits"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForEachItem",
+    "jsCode": "/**\n * Nodo: \"CRT: armar nombre\"\n * Regla base: <shipment>_<order>_CRT\n * Fallbacks si faltan datos y bandera incompleto:true\n */\nconst rawAI = $json || {};\n\nconst stripZeros = (s) => {\n  const x = String(s || '').replace(/^0+/, '');\n  return x === '' ? '0' : x;\n};\nconst onlyDigits = (s) => (s ? String(s).replace(/\\D+/g, '') : null);\n\nlet orderNumber    = onlyDigits(rawAI.order_number);\nlet shipmentNumber = onlyDigits(rawAI.shipment_number);\nlet documentNumber = onlyDigits(rawAI.document_number);\nlet vehiclePlate   = (rawAI.vehicle_plate || '').toUpperCase().replace(/\\s+/g, '');\nlet issueDate      = rawAI.issue_date || null;\n\nif (orderNumber)    orderNumber    = stripZeros(orderNumber);\nif (shipmentNumber) shipmentNumber = stripZeros(shipmentNumber);\nif (documentNumber) documentNumber = stripZeros(documentNumber);\n\nlet newFileName = null;\nlet incompleto  = false;\n\nif (shipmentNumber && orderNumber) {\n  newFileName = `${shipmentNumber}_${orderNumber}_CRT`;\n} else {\n  incompleto = true;\n  if (shipmentNumber && documentNumber) {\n    newFileName = `${shipmentNumber}_${documentNumber}_CRT`;\n  } else if (orderNumber && documentNumber) {\n    newFileName = `${documentNumber}_${orderNumber}_CRT`;\n  } else if (shipmentNumber && vehiclePlate) {\n    newFileName = `${shipmentNumber}_${vehiclePlate}_CRT`;\n  } else if (documentNumber) {\n    newFileName = `${documentNumber}_CRT`;\n  } else {\n    const ts = new Date().toISOString().slice(0,10).replace(/-/g,'');\n    newFileName = `CRT_${ts}`;\n  }\n}\n\nreturn {\n  json: {\n    tipo: 'mic_crt',\n    incompleto,\n    shipmentNumber,\n    orderNumber,\n    documentNumber,\n    vehiclePlate,\n    issueDate,\n    newFileName\n  }\n};\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2336,
+    1296
+   ],
+   "id": "98758b3d-3f72-419f-aa9b-9bb4004ea8e1",
+   "name": "CRT: armar nombre"
+  },
+  {
+   "parameters": {
+    "mode": "combine",
+    "combineBy": "combineByPosition",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.merge",
+   "typeVersion": 3.2,
+   "position": [
+    2560,
+    1280
+   ],
+   "id": "e11458eb-8779-4d7c-aec3-29a5f5971f10",
+   "name": "Merge CRT"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['CRT: armar nombre'].json.order_number || $node['CRT: armar nombre'].json.orderNumber || ''}}\",\n  \"shipmentNumber\": \"{{$node['CRT: armar nombre'].json.shipment_number || $node['CRT: armar nombre'].json.shipmentNumber || ''}}\",\n  \"documentNumber\": \"{{$node['CRT: armar nombre'].json.document_number || $node['CRT: armar nombre'].json.documentNumber || ''}}\",\n  \"vehiclePlate\": \"{{$node['CRT: armar nombre'].json.vehicle_plate || $node['CRT: armar nombre'].json.vehiclePlate || ''}}\",\n  \"issueDate\": \"{{$node['CRT: armar nombre'].json.issue_date || $node['CRT: armar nombre'].json.issueDate || ''}}\",\n  \"tipo\": \"mic_crt\",\n  \"incompleto\": {{$node['CRT: armar nombre'].json.incompleto === true ? true : false}},\n  \"Link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + ($json.id || $json.fileId) + '/view')}}\",\n  \"name\": \"{{$json.name || $node['CRT: armar nombre'].json.newFileName}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2976,
+    1280
+   ],
+   "id": "31d4f642-9e9d-43a6-ad7c-d1027145ee8a",
+   "name": "set meta (mic-crt ORC)"
+  },
+  {
+   "parameters": {
+    "name": "={{\n  $json.newFileName\n    ? ($json.newFileName.endsWith('.pdf') ? $json.newFileName : $json.newFileName + '.pdf')\n    : ('CRT_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '.pdf')\n}}\n",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1jVazv95XP0ajCQnuWg6xYgQB27cJJZ7Y",
+     "mode": "list",
+     "cachedResultName": "MIC-CRT",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1jVazv95XP0ajCQnuWg6xYgQB27cJJZ7Y"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2752,
+    1280
+   ],
+   "id": "f577cb6b-c066-48b1-87c2-cf3c1d3d3c42",
+   "name": "MIC-CRT OCR",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "// Lee el PDF binario y construye un data URL válido para OCR.space\nconst BIN = 'data'; // ← cámbialo si tu binario se llama distinto (p.ej. 'attachment_0')\n\n// Lee el buffer real del PDF\nconst buf = await this.helpers.getBinaryDataBuffer(0, BIN);\nconst base64 = buf.toString('base64');\n\n// Devolvemos solo el JSON con el data URL; el binario sigue viajando por la otra rama al Merge\nreturn {\n  json: {\n    base64Image: 'data:application/pdf;base64,' + base64\n  }\n};\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1504,
+    1376
+   ],
+   "id": "9ca9c089-b22e-4506-8e7c-22028db7b834",
+   "name": "Build data URL (OCR)"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "strict",
+      "version": 2
+     },
+     "conditions": [
+      {
+       "id": "09d1ebb0-e901-491f-baf2-924caedab4b5",
+       "leftValue": "={{$json.tipo}}",
+       "rightValue": "factura",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      },
+      {
+       "id": "afc0ae0e-65fe-4bb9-b599-42114f64a7c4",
+       "leftValue": "={{$json.hasExportPermit}}",
+       "rightValue": "",
+       "operator": {
+        "type": "boolean",
+        "operation": "false",
+        "singleValue": true
+       }
+      },
+      {
+       "id": "b4408a3e-0f66-4944-a6c7-ab6c98a704b8",
+       "leftValue": "={{ $json.shippingPointNormalized }}",
+       "rightValue": "=GARIN",
+       "operator": {
+        "type": "string",
+        "operation": "notEquals"
+       }
+      },
+      {
+       "id": "2c1ce64b-4dde-4a46-b633-bacccff130c0",
+       "leftValue": "={{ $json.shippingPointNormalized }}",
+       "rightValue": "CAMPANA",
+       "operator": {
+        "type": "string",
+        "operation": "notEquals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    4800,
+    96
+   ],
+   "id": "4963435b-a9ad-45ed-b89a-d99218216d39",
+   "name": "Factura sin permiso"
+  },
+  {
+   "parameters": {
+    "sendTo": "expoarpbb@ssbint.com",
+    "subject": "=FALTA Permiso de Exportación – Orden {{$json.orderNumber || \"N/D\"}}\n",
+    "message": "=Hola equipo,<br><br>\nSe detectó una <b>FACTURA sin Permiso de Exportación</b>.<br><br>\n\n<b>Orden:</b> {{$json.orderNumber || \"N/D\"}}<br>\n<b>Shipping Point:</b> {{$json.shippingPoint || \"N/D\"}}<br>\n<b>Archivo:</b> {{$json.name || \"N/D\"}}<br>\n<b>Link Drive:</b> <a href=\"{{$json.link || \"#\"}}\">{{$json.link || \"N/D\"}}</a><br><br>\n\nPor favor, coordinar la corrección con el despachante.<br><br>\n— Arturito\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.gmail",
+   "typeVersion": 2.1,
+   "position": [
+    5056,
+    -32
+   ],
+   "id": "7d23d236-bd6f-4663-9067-c9e9221dcf4c",
+   "name": "Send a message",
+   "webhookId": "8478b152-b13f-4f30-85a0-f413c0cf05f6",
+   "credentials": {
+    "gmailOAuth2": {
+     "id": "wWZzmUj5MQLrECH0",
+     "name": "Gmail account 3"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const out = [];\n\nfor (const item of $input.all()) {\n  for (const [key, binary] of Object.entries(item.binary || {})) {\n    if (!binary) continue;\n    const name = (binary.fileName || '').toLowerCase();\n    const mime = (binary.mimeType || '').toLowerCase();\n    \n    if (mime === 'application/pdf' || name.endsWith('.pdf')) {\n      out.push({\n        json: { fileName: binary.fileName || 'adjunto.pdf' },\n        binary: { data: binary } // siempre \"data\"\n      });\n    }\n  }\n}\n\nreturn out.length ? out : [];\n"
+   },
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    656,
+    1136
+   ],
+   "id": "b803dce5-517b-4d86-b5a8-198b8b0f6f28",
+   "name": "Seleccionar PDF sin error"
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"booking_advice\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    1056
+   ],
+   "id": "08eee833-5655-43c6-bba1-011eeb39b554",
+   "name": "set meta (booking advice)1"
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1hwL6WLpFXwv5hdvMIaLf7qUwUWDcFqbk",
+     "mode": "list",
+     "cachedResultName": "BOOKING ADVICE",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1hwL6WLpFXwv5hdvMIaLf7qUwUWDcFqbk"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    80
+   ],
+   "id": "ba930645-5c2a-4147-8a64-df2778144ec3",
+   "name": "BOOKING ADVICE ZCB1",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1ALgZe9TS6u5lqWrhKraWxQ785G_tYI5V",
+     "mode": "list",
+     "cachedResultName": "BOOKING ADVICE - ZCB3",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/1ALgZe9TS6u5lqWrhKraWxQ785G_tYI5V"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    1056
+   ],
+   "id": "767fa2f7-60b2-499f-9b8f-2eeb6b602b0b",
+   "name": "BOOKING ADVICE ZCB3",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "name": "={{$json[\"newFileName\"]}}",
+    "driveId": {
+     "__rl": true,
+     "value": "0AKuox28BE9ytUk9PVA",
+     "mode": "list",
+     "cachedResultName": "TEAM EXPORTACION  ",
+     "cachedResultUrl": "https://drive.google.com/drive/folders/0AKuox28BE9ytUk9PVA"
+    },
+    "folderId": {
+     "__rl": true,
+     "value": "1DC2J-59vndNKNvBxw6EA5tZTGtVHzrwX",
+     "mode": "list",
+     "cachedResultName": "Permisos de Exportacion"
+    },
+    "options": {}
+   },
+   "type": "n8n-nodes-base.googleDrive",
+   "typeVersion": 3,
+   "position": [
+    2304,
+    1200
+   ],
+   "id": "e007a1eb-74a2-4c17-a283-1f258a746d1c",
+   "name": "Permisos de Exportación",
+   "credentials": {
+    "googleDriveOAuth2Api": {
+     "id": "Hdz3HCDRSA2GStDS",
+     "name": "Google Drive account 2"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "mode": "raw",
+    "jsonOutput": "={\n  \"orderNumber\": \"{{$node['Switch por tipo de documento'].json.orderNumber}}\",\n  \"shipmentNumber\": \"{{$node['Switch por tipo de documento'].json.shipmentNumber || ''}}\",\n  \"tipo\": \"permiso_exportacion\",\n  \"link\": \"{{$json.webViewLink || $json.webContentLink || ('https://drive.google.com/file/d/' + $json.id + '/view')}}\",\n  \"name\": \"{{$json.name}}\"\n}\n",
+    "options": {}
+   },
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    2544,
+    1200
+   ],
+   "id": "10456829-5b40-4980-b054-de00aca0a95b",
+   "name": "set meta (permiso)"
+  },
+  {
+   "parameters": {},
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    2304,
+    1400
+   ],
+   "id": "3beb952f-3c22-47b7-a991-bd9cf4498b7f",
+   "name": "Ignorar Destinación (no-export)"
+  },
+  {
+   "id": "t5-asentar-documento-0001",
+   "name": "Asentar documento (Supabase)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    5424,
+    -368
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/documentos_orden?on_conflict=order_number,tipo,file_name",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Prefer",
+       "value": "resolution=merge-duplicates,return=representation"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ order_number: (/^\\d{7,12}$/.test(String($json.orderNumber || '').trim()) ? String($json.orderNumber).trim() : null), tipo: $json.tipo || 'otros', file_name: $json.name || '(sin nombre)', drive_link: $json.link || null, shipment_number: $json.shipmentNumber || null, source: 'gmail-drive', updated_at: new Date().toISOString() }) }}",
+    "options": {}
+   },
+   "credentials": {
+    "supabaseApi": {
+     "id": "aQoShf0TVYyf2lrt",
+     "name": "Supabase account ssb workspace"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Extract from File": {
+   "main": [
+    [
+     {
+      "node": "Clasificar Documento y renombrar pdf",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Switch por tipo de documento": {
+   "main": [
+    [],
+    [
+     {
+      "node": "BOOKING ADVICE ZCB1",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Marítimo",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Terrestre",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Facturas",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "OTROS",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "MIC-CRT",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "MIC-CRT",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Merge CRT",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "HTTP Request",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "BOOKING ADVICE ZCB3",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Permisos de Exportación",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Ignorar Destinación (no-export)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Clasificar Documento y renombrar pdf": {
+   "main": [
+    [
+     {
+      "node": "Switch por tipo de documento",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Email Trigger (ssbintn8n)": {
+   "main": [
+    [
+     {
+      "node": "Seleccionar PDF",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Seleccionar PDF": {
+   "main": [
+    [
+     {
+      "node": "Extract from File",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Facturas": {
+   "main": [
+    [
+     {
+      "node": "set meta (facturas)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Terrestre": {
+   "main": [
+    [
+     {
+      "node": "set meta (terrestre)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Marítimo": {
+   "main": [
+    [
+     {
+      "node": "set meta (maritimo)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OTROS": {
+   "main": [
+    [
+     {
+      "node": "set meta (otros)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Merge1": {
+   "main": [
+    [
+     {
+      "node": "Asentar documento (Supabase)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (booking advice)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (maritimo)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 1
+     }
+    ]
+   ]
+  },
+  "set meta (terrestre)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 2
+     }
+    ]
+   ]
+  },
+  "set meta (facturas)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 3
+     },
+     {
+      "node": "Factura sin permiso",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (otros)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 4
+     }
+    ]
+   ]
+  },
+  "MIC-CRT": {
+   "main": [
+    [
+     {
+      "node": "set meta (mic-crt)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (mic-crt)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 5
+     }
+    ]
+   ]
+  },
+  "HTTP Request": {
+   "main": [
+    [
+     {
+      "node": "Information Extractor",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "OpenAI Chat Model": {
+   "ai_languageModel": [
+    [
+     {
+      "node": "Information Extractor",
+      "type": "ai_languageModel",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Information Extractor": {
+   "main": [
+    [
+     {
+      "node": "CRT: armar nombre",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "CRT: armar nombre": {
+   "main": [
+    [
+     {
+      "node": "Merge CRT",
+      "type": "main",
+      "index": 1
+     }
+    ]
+   ]
+  },
+  "Merge CRT": {
+   "main": [
+    [
+     {
+      "node": "MIC-CRT OCR",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (mic-crt ORC)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 6
+     }
+    ]
+   ]
+  },
+  "MIC-CRT OCR": {
+   "main": [
+    [
+     {
+      "node": "set meta (mic-crt ORC)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Build data URL (OCR)": {
+   "main": [
+    []
+   ]
+  },
+  "Clasificar Documento y renombrar pdf1": {
+   "main": [
+    []
+   ]
+  },
+  "Factura sin permiso": {
+   "main": [
+    [
+     {
+      "node": "Send a message",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  },
+  "Send a message": {
+   "main": [
+    []
+   ]
+  },
+  "BOOKING ADVICE ZCB1": {
+   "main": [
+    [
+     {
+      "node": "set meta (booking advice)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "BOOKING ADVICE ZCB3": {
+   "main": [
+    [
+     {
+      "node": "set meta (booking advice)1",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Permisos de Exportación": {
+   "main": [
+    [
+     {
+      "node": "set meta (permiso)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "set meta (permiso)": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 7
+     }
+    ]
+   ]
+  },
+  "set meta (booking advice)1": {
+   "main": [
+    [
+     {
+      "node": "Merge1",
+      "type": "main",
+      "index": 8
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "callerPolicy": "workflowsFromSameOwner",
+  "errorWorkflow": "pBN4Wd1lcTSHNkFg",
+  "availableInMCP": true
+ }
+}
