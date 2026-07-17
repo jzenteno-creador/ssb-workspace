@@ -373,20 +373,11 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   function renderDocs(r){
     const wrap = el('span','seg-docs');
     const add = (label, cls, title) => { const d = el('span','seg-doc ' + cls, label); d.title = title; wrap.appendChild(d); };
-    // PL (item 42, bonus EXPLORE): la view no trae señal de Packing List — se
-    // verifica recién al enviar (Mailing). Estilo NEUTRO propio (inline, no la
-    // clase 'off' de "falta") para no leerse como ámbar de falta: es "s/d todavía",
-    // no "debería estar y no está".
-    const addSoft = (label, title) => {
-      const d = el('span','seg-doc off', label);
-      d.title = title;
-      d.style.fontStyle = 'italic';
-      d.style.opacity = '.62';
-      wrap.appendChild(d);
-    };
+    // PL: r.doc_pl sale de v_operacion_estado vía documentos_orden (captura viva
+    // del workflow Gmail→Drive + backfill del LOG histórico) — señal de dato real.
     if(r.mot === 'terrestre'){
       add('FC','off','Factura — sin dato (satélites terrestres aún no integrados)');
-      addSoft('PL','Packing List — s/d (se verifica recién al enviar por Mailing)');
+      add('PL', r.doc_pl ? 'on' : 'off', 'Packing List' + (r.doc_pl ? ' ✓ disponible en Drive' : ' — no detectado en Drive'));
       add('CRT','fut','CRT — documento de exportación terrestre (reemplaza al BL). Fase futura: aún sin dato en el sistema');
       return wrap;
     }
@@ -395,7 +386,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     // (ya vivía en v2); si algún día faltara (undefined), !!undefined → 'off'.
     add('BL', r.doc_bl ? 'on' : 'off', 'Conocimiento de Embarque' + (r.doc_bl ? ' ✓ disponible (según el último control)' : ' — sin control con BL asentado para esta orden'));
     add('FC', r.doc_factura ? 'on' : 'off', 'Factura' + (r.doc_factura ? ' ✓' : ' — falta'));
-    addSoft('PL','Packing List — s/d (se verifica recién al enviar por Mailing)');
+    add('PL', r.doc_pl ? 'on' : 'off', 'Packing List' + (r.doc_pl ? ' ✓ disponible en Drive' : ' — no detectado en Drive'));
     if(r.co_requerimiento !== 'no_requerido'){
       const coCls = r.co_estado === 'generado' ? 'on' : (r.co_requerimiento === 'sin_definir' ? 'q' : 'off');
       const coTitle = r.co_estado === 'generado' ? ' ✓ generado' : (r.co_requerimiento === 'sin_definir' ? ' — según definición de CO' : ' — falta');
