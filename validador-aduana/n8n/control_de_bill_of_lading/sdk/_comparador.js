@@ -731,13 +731,41 @@ function buildComparison(doc) {
   campos.push(mkVacio('10', 'LOADING PIER / TERMINAL'));
 
   // (10A) ORIGINALS TO BE RELEASED AT ↔ release point del RAW del BA (Tanda C.1 — regex, SIN IA).
-  // BA declara → comparación (BL DESTINO/ORIGEN vs BA); difiere o contradicción → REVISAR;
-  // BA no lo indica → informativo (como hoy).
+  // A.3 (2026-07-17, regla de dominio John): si el inyector identificó el TIPO de documento
+  // (bl.bl_doc_type, hoy solo la rama Maersk lo emite), la semántica cambia:
+  //   · WAYBILL  → liberación electrónica: NO hay originales ni lugar — (10A) vacío es CORRECTO.
+  //   · ORIGINAL → hay emisión de original y el lugar lo dice el PROPIO BL ((10A) o Place of Issue).
+  //   · null     → lógica previa intacta (LOG-IN, extracts viejos): BA declara → comparación.
   const blOriginals = String(bl.originals_to_be_released_at || (bl.desc && bl.desc['DESC BL - ORIGINALS TO BE RELEASED AT']) || '').trim();
   const orl = (ba && ba.originals_release) || { value: '', conflict: false };
   const normRel = (s) => { const u = upper(s); return /DESTIN/.test(u) ? 'DESTINO' : (/ORIG/.test(u) ? 'ORIGEN' : u); };
+  const docType = upper(String(bl.bl_doc_type || '')).trim();
+  const placeIssue = String(bl.place_of_issue || '').trim();
   let c10a = null;
-  if (orl.conflict) {
+  let val10a = blOriginals;
+  if (docType === 'WAYBILL') {
+    val10a = 'WAYBILL — liberación electrónica';
+    c10a = comp('BL', 'Tipo de documento (BL)', 'NON-NEGOTIABLE WAYBILL', 'OK',
+      'Waybill: liberación electrónica — no hay originales ni lugar de liberación; (10A) vacío es correcto' +
+      (orl.value ? ` (el BA declara ${orl.value}: no aplica a un waybill)` : ''));
+  } else if (docType === 'ORIGINAL') {
+    if (blOriginals && orl.value && !orl.conflict) {
+      // el BL trae la cajita (10A) y el BA declara → comparación clásica
+      const okR = normRel(blOriginals) === orl.value;
+      c10a = comp('Booking', 'Booking (instrucciones)', orl.value, okR ? 'OK' : 'REVISAR',
+        okR ? '' : `Originales: BL ${normRel(blOriginals)} ≠ Booking ${orl.value} — verificar dónde se liberan los originales`);
+    } else if (placeIssue) {
+      val10a = placeIssue;
+      c10a = comp('BL', 'Place of Issue (BL)', placeIssue, 'OK',
+        `BL con emisión de original — originales emitidos en ${placeIssue} (lo dice el propio BL)`);
+    } else if (blOriginals) {
+      val10a = blOriginals;
+      c10a = comp('BL', 'BL (10A)', blOriginals, 'OK', '');
+    } else {
+      c10a = comp('BL', 'Tipo de documento (BL)', 'BILL OF LADING (original)', 'REVISAR',
+        'BL con emisión de original y sin lugar de liberación visible ((10A) ni Place of Issue) — verificar');
+    }
+  } else if (orl.conflict) {
     c10a = comp('Booking', 'Booking (instrucciones)', 'indicaciones contradictorias', 'REVISAR',
       'El BA trae indicaciones contradictorias de dónde se liberan los originales — revisar');
   } else if (orl.value) {
@@ -748,7 +776,7 @@ function buildComparison(doc) {
         ? `Originales: BL ${normRel(blOriginals)} ≠ Booking ${orl.value} — verificar dónde se liberan los originales`
         : `El BA indica ${orl.value} y el BL no trae el (10A) — verificar`) : '');
   }
-  campos.push(mkEntry('10A', 'ORIGINALS TO BE RELEASED AT', c10a ? 'comparacion' : 'informativo', blOriginals, [c10a]));
+  campos.push(mkEntry('10A', 'ORIGINALS TO BE RELEASED AT', c10a ? 'comparacion' : 'informativo', val10a, [c10a]));
 
   campos.push(mkEntry('11', 'TYPE OF MOVE', 'informativo', bl.type_of_move || (bl.desc && bl.desc['DESC BL - TYPE OF MOVE']) || '', []));
   campos.push(mkVacio('12', 'PLACE OF RECEIPT'));

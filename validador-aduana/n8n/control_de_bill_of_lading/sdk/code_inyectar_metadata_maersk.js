@@ -57,6 +57,27 @@ const d = x.description || {};
 const rawText = String(u.text || '');
 const flatText = flat(rawText);
 
+// ===== A.3 (2026-07-17) — tipo de documento del BL Maersk, por regex sobre el raw =====
+// Regla de dominio (John): "NON-NEGOTIABLE WAYBILL" = liberación electrónica → NO hay
+// originales ni lugar de liberación; (10A) vacío es CORRECTO. "BILL OF LADING FOR OCEAN
+// TRANSPORT OR MULTIMODAL TRANSPORT" = hay emisión de original y DÓNDE lo dice el propio
+// BL ("Place of Issue of B/L"). El comparador decide con estos 2 campos; si vienen null
+// (LOG-IN, extract viejo, título no reconocido) el comparador conserva la lógica actual.
+const blDocType = /NON[-\s]?NEGOTIABLE\s+WAYBILL/i.test(flatText) ? 'WAYBILL'
+  : (/BILL\s+OF\s+LADING\s+FOR\s+OCEAN\s+TRANSPORT/i.test(flatText) ? 'ORIGINAL' : null);
+let placeOfIssue = null;
+{
+  const m = /Place\s+of\s+Issue\s+of\s+B\/?L\.?:?\s+(.{2,60}?)(?=\s+(?:Number\s+of|Date\s+of|Shipped\s+on|Signed|Page\b|First\s+original|Freight|Payable|Carrier|\d{2}[-/]))/i.exec(flatText);
+  if (m) {
+    const cand = m[1].trim().replace(/[.,;:]+$/, '');
+    // sanity (validado contra los 35 fixtures reales): un lugar son ≤4 palabras y no
+    // contiene boilerplate — los textos mangled (mcp) capturan frases tipo "RECEIVED by the"
+    const looksPlace = cand && cand.split(/\s+/).length <= 4 &&
+      !/\b(?:by|the|of|and|received|containers?|packages?)\b/i.test(cand);
+    if (looksPlace) placeOfIssue = up(cand);
+  }
+}
+
 // ===== FREIGHT — reconciliación de balance (porta la lógica del inyector LOG-IN) =====
 const fl = x.freight_lines || {};
 const rawConcepts = Array.isArray(fl.concepts) ? fl.concepts : [];
@@ -343,7 +364,9 @@ const login_extract = {
   shipper: up(x.shipper || ''),
   consignee: up(x.consignee || ''),
   notify: up(notifyResolved || ''),
-  originals_to_be_released_at: null,          // Maersk no trae (10A) — el comparador lo saltea con null
+  originals_to_be_released_at: null,          // Maersk no trae la cajita (10A) — la semántica la dan los 2 campos A.3
+  bl_doc_type: blDocType,                     // A.3: 'WAYBILL' | 'ORIGINAL' | null (regex sobre el raw)
+  place_of_issue: placeOfIssue,               // A.3: "Place of Issue of B/L" del propio BL (o null)
   type_of_move: typeOfMove ? up(typeOfMove) : null,
   destino_pais: destinoPais,
   consignee_tax: consigneeTax,
