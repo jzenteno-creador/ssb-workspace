@@ -222,15 +222,20 @@ const dias_libres = (ft && ft_dias != null) ? {
   pais_destino,
 } : null;
 
-// Ruta con banderas (T6·2): destino vía embed puertos→paises del GET (FK
-// pais_iso → paises.iso2); origen = INVARIANTE de dominio — SSB exporta SOLO
-// desde puertos argentinos (censo 2026-07-17: POL ∈ {BUENOS AIRES, BAHIA
-// BLANCA}); la propia guía hardcodea la bandera AR. Sin dato → la bandera se
-// omite y queda la ciudad, nunca rompe.
+// Ruta con banderas (T6·2 · FIX 17-07 smoke John): IMÁGENES flagcdn keyed por
+// ISO2 (pais_iso del embed puertos→paises) — mismo mecanismo que Detention/
+// Schedule en la app. NUNCA emoji de bandera (Windows los degrada al código
+// crudo "BR"). Canal email: si el cliente bloquea imágenes, el alt = NOMBRE
+// del país (presentable); además el nombre ya viaja impreso bajo la ciudad.
+// Origen = INVARIANTE de dominio — SSB exporta SOLO desde puertos argentinos
+// (censo 2026-07-17: POL ∈ {BUENOS AIRES, BAHIA BLANCA}).
 const destPP = (ppj.paises && typeof ppj.paises === 'object') ? ppj.paises : {};
 const dest_country = destPP.nombre_en || pais_destino || null;
-const dest_flag = destPP.flag_emoji || null;
-const ORIGIN_COUNTRY = 'Argentina', ORIGIN_FLAG = '🇦🇷';
+const flagImg = (iso, name) => (iso && /^[A-Za-z]{2}$/.test(String(iso)))
+  ? `<img src="https://flagcdn.com/24x18/${String(iso).toLowerCase()}.png" width="24" height="18" alt="${String(name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}" style="display:inline;vertical-align:middle;border-radius:2px;border:1px solid #DCE6F0;">`
+  : '';
+const dest_flag = flagImg(ppj.pais_iso, dest_country);
+const ORIGIN_COUNTRY = 'Argentina', ORIGIN_FLAG = flagImg('ar', 'Argentina');
 
 // Bloque de contacto de la naviera en destino (mailing_naviera_destino — el
 // contenido lo cargan John/Naara: confiado, con sanitizado suave anti-<script>).
@@ -372,7 +377,7 @@ const SEP = '<span style="color:#1C9BD9;padding:0 8px;">&#183;</span>';
 const secHead = (t) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:10px;"><tr><td width="3" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td style="padding-left:8px;${AR}font-size:11px;font-weight:bold;letter-spacing:1.3px;color:#0C2340;white-space:nowrap;">${t}</td></tr></table>`;
 const kpi = (k, v, first) => `<td width="25%" style="padding:11px 12px;${first ? '' : 'border-left:1px solid #E4EAF1;'}${AR}"><div style="font-size:9px;letter-spacing:1.2px;color:#8494A4;font-weight:bold;">${k}</div><div style="font-size:13.5px;color:#0C2340;font-weight:bold;margin-top:3px;">${esc(v || '—')}</div></td>`;
 const drow = (k, v, last) => `<tr><td align="left" style="${AR}font-size:11.5px;color:#7D8C9C;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(k)}</td><td align="right" style="${AR}font-size:12px;color:#0C2340;font-weight:bold;padding:6px 0;${last ? '' : 'border-bottom:1px solid #EEF3F8;'}">${esc(v || '—')}</td></tr>`;
-const endPt = (flag, city, country, right) => `<td valign="middle" align="${right ? 'right' : 'left'}" style="${AR}white-space:nowrap;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${(!right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-right:8px;">${flag}</td>` : ''}<td valign="middle"><div style="font-size:12.5px;font-weight:bold;color:#0C2340;">${esc(city || '—')}</div>${country ? `<div style="font-size:9px;letter-spacing:1px;color:#8494A4;font-weight:bold;margin-top:1px;">${esc(String(country).toUpperCase())}</div>` : ''}</td>${(right && flag) ? `<td valign="middle" style="font-size:19px;line-height:1;padding-left:8px;">${flag}</td>` : ''}</tr></table></td>`;
+const endPt = (flag, city, country, right) => `<td valign="middle" align="${right ? 'right' : 'left'}" style="${AR}white-space:nowrap;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${(!right && flag) ? `<td valign="middle" style="line-height:1;padding-right:8px;">${flag}</td>` : ''}<td valign="middle"><div style="font-size:12.5px;font-weight:bold;color:#0C2340;">${esc(city || '—')}</div>${country ? `<div style="font-size:9px;letter-spacing:1px;color:#8494A4;font-weight:bold;margin-top:1px;">${esc(String(country).toUpperCase())}</div>` : ''}</td>${(right && flag) ? `<td valign="middle" style="line-height:1;padding-left:8px;">${flag}</td>` : ''}</tr></table></td>`;
 
 // checklist de adjuntos en 2 columnas — lo REALMENTE adjuntado + extras manuales,
 // T6·3: + lo REGISTRADO en documentos_orden (D.2) que no viaja en este mail,
