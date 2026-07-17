@@ -500,6 +500,7 @@
       ctrlBtn.appendChild(svgUse('#i-refresh'));
       ctrlBtn.appendChild(document.createTextNode('Controlar ahora'));
       ctrlBtn.onclick = () => cblReprocesar(row.order_number, ctrlBtn);
+      reprocDecorate(ctrlBtn, row.order_number); // A.2-front
       mini.appendChild(ctrlBtn);
       detail.appendChild(mini);
       return;
@@ -561,6 +562,7 @@
     reproc.appendChild(svgUse('#i-refresh'));
     reproc.appendChild(document.createTextNode('Reprocesar BL draft'));
     reproc.onclick = () => cblReprocesar(row.order_number, reproc);
+    reprocDecorate(reproc, row.order_number); // A.2-front: pendiente → deshabilitado "Reprocesando…"
     right.appendChild(reproc);
     if(sello && window.__ssbAuth && window.__ssbAuth.isAdmin){
       // Anular: SOLO admin (gate cosmético — el server re-valida con vac_employees.role).
@@ -603,6 +605,9 @@
     // choque con un BL nuevo llegado entre que se abrió el detalle y se apretó sellar.
     const cambioSlot = el('div'); cambioSlot.id = 'cbl-cambio-slot';
     detail.appendChild(cambioSlot);
+    // A.2-front: si esta orden tiene reproceso pendiente, el banner persiste al
+    // volver a abrirla (el estado vive en localStorage, no en el DOM)
+    if(reprocPending(row.order_number)) cblShowReprocBanner(row.order_number, cambioSlot);
 
     // Doc-tabs + visor (Análisis real; BL/Aduana/Booking/Factura/PE → visor Drive en commit 5)
     const dt = el('div', 'cbl-doctabs'); dt.id = 'cbl-doctabs';
@@ -637,13 +642,96 @@
   // El botón queda deshabilitado 15 s para no re-disparar por doble click (el
   // asiento es upsert y el mail tiene claim — un doble disparo ya no duplica,
   // pero cada corrida igual cuesta ~5 llamadas de IA).
+  // ── A.2-front (spec John 17-07): estado de reproceso PERSISTENTE POR ORDEN +
+  //    poll al fin REAL. El click confirma al instante, la orden queda marcada
+  //    "REPROCESANDO…" (sobrevive cambiar de orden/solapa/reload vía localStorage),
+  //    y un poll liviano (12s) mira bl_controlado_at: cuando el workflow termina
+  //    de verdad (A2-FIX: created_at fresco), avisa con toast y refresca la data.
+  //    Timeout 5 min → "sin confirmación", el botón se libera. ──
+  const REPROC_LS = 'cbl_reproc';                 // { [orden]: startedAtISO }
+  const REPROC_TIMEOUT_MS = 5 * 60 * 1000;
+  const REPROC_SKEW_MS = 60 * 1000;               // tolerancia reloj cliente vs servidor
+  let _reprocTimer = null;
+  function reprocAll(){ try { return JSON.parse(localStorage.getItem(REPROC_LS) || '{}'); } catch(_){ return {}; } }
+  function reprocSet(m){ try { localStorage.setItem(REPROC_LS, JSON.stringify(m)); } catch(_){} }
+  function reprocPending(order){ return reprocAll()[order] || null; }
+  function reprocMark(order){ const m = reprocAll(); m[order] = new Date().toISOString(); reprocSet(m); reprocEnsureTimer(); }
+  function reprocClear(order){ const m = reprocAll(); delete m[order]; reprocSet(m); }
+
+  // decora un botón de reprocesar si la orden está pendiente (render-time)
+  function reprocDecorate(btn, order){
+    if(!reprocPending(order)) return;
+    btn.disabled = true;
+    btn.textContent = '';
+    btn.appendChild(svgUse('#i-refresh'));
+    btn.appendChild(document.createTextNode('Reprocesando…'));
+  }
+
+  // banner persistente en el detalle (reusa el estilo .cbl-cambio existente)
+  function cblShowReprocBanner(orderNumber, slot){
+    if(_cblSel !== orderNumber) return;
+    slot = slot || $('cbl-cambio-slot');
+    if(!slot) return;
+    slot.textContent = '';
+    const banner = el('div', 'cbl-cambio');
+    banner.appendChild(svgUse('#i-refresh'));
+    const started = reprocPending(orderNumber);
+    const hhmm = started ? new Date(started).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '';
+    banner.appendChild(el('span', null, 'Reprocesando… solicitud enviada' + (hhmm ? ' ' + hhmm : '') +
+      ' — el control corre en n8n (~1-2 min). Podés seguir con otras órdenes: se actualiza solo y aviso al terminar.'));
+    slot.appendChild(banner);
+  }
+
+  async function reprocTick(){
+    const m = reprocAll();
+    const orders = Object.keys(m);
+    if(!orders.length){ if(_reprocTimer){ clearInterval(_reprocTimer); _reprocTimer = null; } return; }
+    const supa = window.__ssb && window.__ssb.supa;
+    if(!supa) return; // transitorio (boot) — reintenta en el próximo tick
+    let data = null;
+    try {
+      const res = await supa.from('v_bl_controls_latest').select('order_number, created_at').in('order_number', orders);
+      if(res.error) return; // error transitorio: no limpiar nada, reintentar
+      data = res.data || [];
+    } catch(_){ return; }
+    const now = Date.now();
+    for(const o of orders){
+      const started = Date.parse(m[o]);
+      const row = data.find(r => r.order_number === o);
+      if(row && Date.parse(row.created_at) > started - REPROC_SKEW_MS){
+        reprocClear(o);
+        ssbToast('Control de ' + o + ' actualizado ✓ — reproceso terminado (mail re-enviado).', 'success');
+        cblRefreshData(o); // re-render: botón libre, fecha fresca, detalle nuevo
+      } else if(now - started > REPROC_TIMEOUT_MS){
+        reprocClear(o);
+        ssbToast('Reproceso de ' + o + ': sin confirmación después de 5 min — reintentá o revisá n8n.', 'warning');
+        cblRefreshData(o);
+      }
+    }
+    if(!Object.keys(reprocAll()).length && _reprocTimer){ clearInterval(_reprocTimer); _reprocTimer = null; }
+  }
+  function reprocEnsureTimer(){
+    if(_reprocTimer) return;
+    _reprocTimer = setInterval(reprocTick, 12000);
+    reprocTick();
+  }
+  // reanudar el poll si quedaron pendientes de una sesión previa (reload/corte)
+  if(Object.keys(reprocAll()).length) reprocEnsureTimer();
+
   async function cblReprocesar(orderNumber, btn){
     if(btn) btn.disabled = true;
     try {
       const data = await cblApiSeguimiento({ action: 'reprocesar_bl', order_number: orderNumber });
       const r = data.result || {};
-      ssbToast(r.detail || 'Reproceso disparado.', r.status === 'disparado' ? 'success' : 'info');
-      if(btn) setTimeout(() => { btn.disabled = false; }, 15000);
+      if(r.status === 'disparado'){
+        reprocMark(orderNumber);
+        if(btn) reprocDecorate(btn, orderNumber);
+        cblShowReprocBanner(orderNumber);
+        ssbToast('Solicitud enviada ✓ — el control corre en n8n (~1-2 min); aviso acá al terminar.', 'success');
+      } else {
+        ssbToast(r.detail || 'Reproceso: respuesta inesperada del server (' + (r.status || '—') + ').', 'info');
+        if(btn) btn.disabled = false;
+      }
     } catch(e){
       ssbToast('No se pudo disparar el reproceso: ' + (e.message || 'error de red'), 'error');
       if(btn) btn.disabled = false;
