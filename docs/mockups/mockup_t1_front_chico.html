@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Tanda 1, front chico</title>
+<style>
+  :root{
+    --bg:#0f172a; --surface:#1e293b; --surface-2:#161e2b; --bd:rgba(255,255,255,.08); --bd-strong:rgba(255,255,255,.16);
+    --ink:#e2e8f0; --ink-soft:#94a3b8; --ink-faint:#64748b;
+    --teal:#2dd4bf; --teal-bg:rgba(45,212,191,.12); --teal-bd:rgba(45,212,191,.35);
+    --amber:#f59e0b; --amber-bg:rgba(245,158,11,.12); --amber-bd:rgba(245,158,11,.35);
+    --green:#4ade80; --green-bg:rgba(74,222,128,.12); --green-bd:rgba(74,222,128,.35);
+    --orange:#fb923c; --orange-bg:rgba(251,146,60,.12); --orange-bd:rgba(251,146,60,.35);
+    --purple:#a78bfa; --purple-bg:rgba(167,139,250,.12); --purple-bd:rgba(167,139,250,.35);
+    --blue:#60a5fa; --blue-bg:rgba(96,165,250,.12); --blue-bd:rgba(96,165,250,.35);
+    --red:#f87171; --red-bg:rgba(248,113,113,.12); --red-bd:rgba(248,113,113,.35);
+    --font:system-ui,Segoe UI,Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.2),0 8px 24px rgba(0,0,0,.28);
+  }
+  body.light{
+    --bg:#f1f5f9; --surface:#ffffff; --surface-2:#f8fafc; --bd:#e2e8f0; --bd-strong:#cbd5e1;
+    --ink:#0f172a; --ink-soft:#64748b; --ink-faint:#94a3b8;
+    --teal:#0f766e; --teal-bg:#e6f6f3; --teal-bd:#b7e4dc;
+    --amber:#b45309; --amber-bg:#fef3c7; --amber-bd:#fcd34d;
+    --green:#15803d; --green-bg:#eaf3de; --green-bd:#cfe3bd;
+    --orange:#c2410c; --orange-bg:#fbeedb; --orange-bd:#ecc79a;
+    --purple:#7c3aed; --purple-bg:#f1e9fe; --purple-bd:#ddc9fb;
+    --blue:#1f5fae; --blue-bg:#eaf0f8; --blue-bd:#c7d9ef;
+    --red:#c0392b; --red-bg:#fff0f0; --red-bd:#f5c0bb;
+    --shadow:0 1px 2px rgba(15,23,42,.05),0 8px 20px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:13px;line-height:1.5;padding:28px 28px 80px;transition:background .2s,color .2s}
+  .page{max-width:1180px;margin:0 auto}
+  h1{font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mock-tag{background:var(--amber);color:#1c1104;font-weight:800;font-size:10.5px;letter-spacing:.06em;padding:2px 9px;border-radius:999px}
+  h2{font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin:38px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-bd);font-size:11px;font-weight:800;flex-shrink:0}
+  h2 .num.info{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd)}
+  h3{font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--ink-soft);max-width:900px;line-height:1.6}
+  .note b{color:var(--ink)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:var(--ink-faint);max-width:900px;line-height:1.6;margin:2px 0 14px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--ink);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:50;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--bd)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-decoration:none;background:var(--surface);border:1px solid var(--bd);border-radius:999px;padding:6px 12px;white-space:nowrap}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal-bd)}
+  .subnav a.i{color:var(--blue)}
+
+  .card{background:var(--surface);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .muted{color:var(--ink-soft);font-size:12px}
+  .faint{color:var(--ink-faint);font-size:11.5px}
+  .row-compare{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .row-compare>.card{flex:1;min-width:340px}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .badge--amber{color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd)}
+  .badge--teal{color:var(--teal);background:var(--teal-bg);border:1px solid var(--teal-bd)}
+  .badge--green{color:var(--green);background:var(--green-bg);border:1px solid var(--green-bd)}
+  .badge--blue{color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-bd)}
+  .badge--neutral{color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--bd-strong)}
+
+  .codebox{background:var(--surface-2);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);overflow-x:auto;white-space:pre;margin:8px 0}
+  .codebox b{color:var(--red);font-weight:700}
+  .filepath{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)}
+
+  .ic{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;flex-shrink:0}
+
+  /* ═══════ recreación fiel: modal Good Issue (#seg-modal / seg-mod-* de seguimiento.js) ═══════ */
+  .seg-mod{background:var(--surface);border:1px solid var(--bd-strong);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:560px;overflow:hidden}
+  .seg-mod-head{padding:18px 22px 0}
+  .seg-mod-title{font-size:16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+  .seg-mod-title button{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px}
+  .seg-mod-warn{margin-top:10px;border:1px solid var(--amber-bd);background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:8px 11px;font-size:11.5px;font-weight:600}
+  .seg-mod-tabs{display:flex;gap:2px;margin-top:14px;border-bottom:1px solid var(--bd)}
+  .seg-mod-tab{font-family:var(--font);font-size:12.5px;font-weight:600;padding:8px 15px;background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-soft);cursor:pointer}
+  .seg-mod-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .seg-mod-body{padding:16px 22px 20px}
+  .seg-field{margin-bottom:12px}
+  .seg-field label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+  .seg-field input,.seg-field select,.seg-field textarea{width:100%;font-family:var(--font);font-size:13px;color:var(--ink);background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:9px;padding:8px 10px;outline:none}
+  .seg-field textarea{font-family:var(--mono);font-size:11.5px}
+  .seg-field .hint{font-size:10.5px;color:var(--ink-faint);margin-top:4px}
+  .seg-2col{display:flex;gap:12px}
+  .seg-2col>.seg-field{flex:1}
+  .seg-applyrow{display:flex;align-items:center;gap:8px;margin:8px 0 6px;font-size:11.5px;color:var(--ink-soft);flex-wrap:wrap}
+  .seg-applyrow input[type=date]{width:auto;font-size:11.5px;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:8px;padding:4px 7px;color:var(--ink)}
+  .seg-applyrow button{font-family:var(--font);font-size:11px;font-weight:600;border:1px solid var(--blue);color:var(--blue);background:var(--blue-bg);border-radius:7px;padding:4px 9px;cursor:pointer}
+  .seg-grid-prev{border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-top:4px}
+  .seg-grid-prev table{border-collapse:collapse;width:100%;font-size:11.5px}
+  .seg-grid-prev th{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);background:var(--surface-2);text-align:left;padding:6px 9px}
+  .seg-grid-prev td{padding:6px 9px;border-top:1px solid var(--bd);font-family:var(--mono);color:var(--ink)}
+  .seg-grid-prev td.st{font-family:var(--font)}
+  .seg-mod-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px 20px;border-top:1px solid var(--bd);margin-top:4px}
+  .seg-btn{font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:10px;padding:8px 15px;cursor:pointer;border:1px solid var(--bd-strong);background:var(--surface-2);color:var(--ink)}
+  .seg-btn--primary{background:var(--blue);border-color:var(--blue);color:#04203f}
+  body.light .seg-btn--primary{color:#fff}
+
+  /* transporte segmentado — patrón .sch-seg (Estructura DB) */
+  .sch-seg{display:inline-flex;border:1px solid var(--bd-strong);border-radius:9px;overflow:hidden}
+  .sch-seg-btn{font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:var(--surface-2);border:none;padding:8px 15px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .sch-seg-btn.is-on{color:var(--ink);background:var(--blue-bg);color:var(--blue)}
+  .sch-seg-btn+.sch-seg-btn{border-left:1px solid var(--bd-strong)}
+
+  .mk-badge-new{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+
+  /* ═══════ recreación fiel: chips de Docs (.seg-doc, seguimiento.js) ═══════ */
+  .seg-docs{display:inline-flex;gap:3px;flex-wrap:wrap;align-items:center}
+  .seg-doc{height:20px;min-width:24px;padding:0 5px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.03em;border:1px solid var(--bd);cursor:help}
+  .seg-doc.on{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+  .seg-doc.off{background:var(--surface-2);color:var(--ink-faint);border-style:dashed}
+  .seg-doc.soft-old{background:var(--surface-2);color:var(--ink-faint);border-style:dashed;opacity:.62;font-style:italic}
+  .seg-doc.fut{background:none;color:var(--ink-faint);border-style:dotted;opacity:.75;font-style:italic}
+  .seg-doc.sd{background:none;color:var(--blue);border-style:dotted;border-color:var(--blue-bd);opacity:.9;min-width:38px;font-style:normal}
+
+  /* ═══════ recreación fiel: Control BL (paper/dark cbl-*) ═══════ */
+  .cbl-demo{--cbl-ink:var(--ink);--cbl-ink-soft:var(--ink-soft);--cbl-line:var(--bd);--cbl-line-strong:var(--bd-strong);
+    --cbl-ok:var(--green);--cbl-ok-bg:var(--green-bg);--cbl-ok-bd:var(--green-bd);
+    --cbl-rev:var(--orange);--cbl-rev-bg:var(--orange-bg);--cbl-rev-bd:var(--orange-bd);
+    --cbl-seal:var(--teal);--cbl-seal-bg:var(--teal-bg);--cbl-seal-bd:var(--teal-bd);
+    --cbl-accent:var(--blue);
+    background:var(--surface);border:1px solid var(--bd);border-radius:14px;padding:16px 18px}
+  .cbl-exp-order{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--cbl-ink)}
+  .cbl-exp-line{font-size:12px;color:var(--cbl-ink-soft);margin-top:4px}
+  .cbl-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .cbl-badge .cbl-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .cbl-badge.rev{background:var(--cbl-rev-bg);color:var(--cbl-rev);border:1px solid var(--cbl-rev-bd)}
+  .cbl-reprocess{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--cbl-rev);background:var(--cbl-rev-bg);border:1px solid var(--cbl-rev-bd);border-radius:9px;padding:7px 13px;cursor:pointer;margin-top:10px}
+  .cbl-reprocess[disabled]{opacity:.6;cursor:progress}
+  .cbl-spinner-sm{width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:currentColor;border-radius:50%;animation:cbl-spin .7s linear infinite;flex-shrink:0}
+  @keyframes cbl-spin{to{transform:rotate(360deg)}}
+  .cbl-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;border-radius:7px;padding:4px 10px;margin-top:8px}
+  .cbl-chip.busy{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd)}
+  .cbl-chip.ok{background:var(--cbl-ok-bg);color:var(--cbl-ok);border:1px solid var(--cbl-ok-bd)}
+  .cbl-chip.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+  .cbl-listrow{display:flex;align-items:center;gap:10px;border:1px solid var(--bd);border-radius:10px;padding:9px 12px;background:var(--surface-2);margin-top:8px}
+  .cbl-listrow .ord{font-family:var(--mono);font-weight:700;color:var(--ink);min-width:96px}
+
+  /* ═══════ recreación fiel: lista Mailing (.mail-item) ═══════ */
+  .mail-demo-master{background:var(--surface);border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+  .mail-demo-item{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--bd);padding:10px 13px;font-family:var(--font)}
+  .mail-demo-item.sel{background:var(--blue-bg);box-shadow:inset 3px 0 0 var(--blue)}
+  .mail-demo-item.dim{opacity:.5}
+  .mail-item-order{font-weight:800;font-size:12.5px;color:var(--ink)}
+  .mail-item-cli{font-size:11px;color:var(--ink-soft);margin-top:1px}
+  .mail-demo-q{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--bd-strong);border-radius:9px;padding:8px 11px;margin-bottom:9px;font-size:12px;color:var(--ink)}
+  .mail-demo-q svg{color:var(--ink-faint)}
+
+  /* tabla wording C.1 */
+  table.wtbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  table.wtbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);padding:8px 10px;border-bottom:1px solid var(--bd-strong);background:var(--surface-2)}
+  table.wtbl td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:top;color:var(--ink)}
+  table.wtbl td.ph{font-family:var(--mono);color:var(--blue);background:var(--blue-bg);border-radius:6px;font-size:11.5px}
+  .wctx{font-size:10.5px;color:var(--ink-faint);display:block;margin-top:3px}
+  .wcls{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:5px}
+  .wcls.warn{background:var(--amber-bg);color:var(--amber)}
+  .wcls.err{background:var(--orange-bg);color:var(--orange)}
+
+  footer.closing{margin-top:48px;padding-top:16px;border-top:1px solid var(--bd);font-size:11.5px;color:var(--ink-faint)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<!-- sprite mínimo (subset embebido — Lucide, mismos íconos que index.html) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-ship" viewBox="0 0 24 24"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+</svg>
+
+<div class="page">
+  <h1>Tanda 1 — front chico <span class="mock-tag">MOCKUP</span></h1>
+  <p class="note">
+    Mockup estático, sin lógica — gate visual para que John apruebe antes de tocar
+    <code>js/features/seguimiento.js</code> / <code>js/features/control-bl.js</code>. Tokens y
+    formato calcados de <code>mockup_seguimiento_plancompleto.html</code> /
+    <code>mockup_controlbl_plancompleto.html</code> (dark slate + acento teal/azul, misma familia
+    visual del plan). Tres ítems de la fila <b>"1 · Front chico"</b> del plan
+    (<code>docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md</code>), cada uno con su código real
+    verificado en vivo hoy, más dos secciones informativas para que las valides en el mismo lugar.
+  </p>
+
+  <nav class="subnav">
+    <a href="#s1">1 · B.1-fix Transporte en lote</a>
+    <a href="#s2">2 · A.2-front Reprocesando…</a>
+    <a href="#s3">3 · B.8-interim PL s/d</a>
+    <a href="#s4" class="i">4 · G.1 (informativa)</a>
+    <a href="#s5" class="i">5 · C.1 (informativa)</a>
+    <a href="#notas">Notas para John</a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <h2 id="s1"><span class="num">1</span>B.1-fix — Selector de Transporte en el alta por lote</h2>
+  <p class="intent">Verificado en <code>js/features/seguimiento.js</code>: el modal Good Issue
+  (<code>#seg-modal</code>) tiene 2 pestañas, <b>Individual</b> y <b>Lote (pegar desde Excel)</b>.
+  El selector <b>Transporte</b> (<code>#seg-gi-mot</code>, Marítimo/Terrestre) existe HOY, pero
+  solo vive en el HTML de la pestaña Individual (<code>index.html</code>, dentro de
+  <code>#seg-mod-body-single</code>) — la pestaña Lote no tiene ningún control equivalente.
+  <code>submitGi()</code> lo confirma: la rama <code>single</code> arma
+  <code>{ order_number, despacho_at, mot: $('seg-gi-mot')?.value || 'maritimo' }</code>, pero la
+  rama <code>batch</code> arma <code>{ order_number, despacho_at }</code> — <b>sin campo
+  <code>mot</code></b>. Todo lo que entra por Lote nace <code>maritimo</code> por default del
+  server, sin que el operador lo haya elegido ni lo vea en ningún lado.</p>
+
+  <div class="card" style="max-width:640px;margin-bottom:14px">
+    <h3>Código real de hoy — <span class="filepath">js/features/seguimiento.js</span></h3>
+    <div class="codebox">// rama SINGLE (línea ~897) — SÍ lleva mot:
+const row = { order_number: norm, despacho_at: fecha, mot: $('seg-gi-mot')?.value || 'maritimo' };
+
+// rama BATCH (línea ~904-905) — NO lleva mot, nunca:
+for(const [orden, ent] of _giLastParse.porOrden){
+  if(ent.fechas.size === 1) rows.push({ order_number: orden, despacho_at: <b>[...ent.fechas][0]</b> });
+}</div>
+  </div>
+
+  <div class="row-compare">
+    <div class="card">
+      <h3>Antes</h3>
+      <p class="faint" style="margin-bottom:10px">Pestaña "Lote" — sin ningún control de
+      transporte. El operador no tiene forma de saber (ni de cambiar) que todo el lote nace
+      marítimo.</p>
+      <div class="seg-mod" style="max-width:100%">
+        <div class="seg-mod-head">
+          <div class="seg-mod-title"><span>Good Issue — despacho de planta</span><button>✕</button></div>
+          <div class="seg-mod-warn">Fecha de Good Issue = salida física de planta — no es la fecha de zarpe.</div>
+          <div class="seg-mod-tabs">
+            <button class="seg-mod-tab">Individual</button>
+            <button class="seg-mod-tab active">Lote (pegar desde Excel)</button>
+          </div>
+        </div>
+        <div class="seg-mod-body">
+          <div class="seg-field">
+            <label>Pegá filas: orden [TAB] fecha</label>
+            <textarea rows="3" readonly>118849241	16/07/2026
+118958515	16/07/2026</textarea>
+          </div>
+          <div class="seg-applyrow">Aplicar <input type="date" disabled> a todas las filas <b>sin fecha</b> <button disabled>Aplicar</button></div>
+          <div class="seg-grid-prev">
+            <table>
+              <thead><tr><th>orden</th><th>fecha GI</th><th>estado del lote</th></tr></thead>
+              <tbody>
+                <tr><td>118849241</td><td>2026-07-16</td><td class="st"><span class="badge badge--green">lista</span></td></tr>
+                <tr><td>118958515</td><td>2026-07-16</td><td class="st"><span class="badge badge--green">lista</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="seg-mod-foot">
+          <button class="seg-btn">Cancelar</button>
+          <button class="seg-btn seg-btn--primary">Registrar Good Issue</button>
+        </div>
+      </div>
+      <p class="faint" style="margin-top:10px">Las 2 órdenes se registran como <code>mot:'maritimo'</code>
+      sin que nadie lo haya decidido — si alguna es terrestre, queda mal clasificada en silencio
+      hasta que alguien lo note en Seguimiento.</p>
+    </div>
+
+    <div class="card">
+      <h3>Ahora (propuesta)</h3>
+      <p class="faint" style="margin-bottom:10px">Segmentado <b>Transporte del lote</b> (patrón
+      <code>.sch-seg</code> de Estructura DB) arriba del textarea — aplica a todas las filas del
+      pegado. Override por fila: 3ª columna opcional en el pegado
+      (<code>orden [TAB] fecha [TAB] M/T</code>), se ve como chip cuando difiere del default.</p>
+      <div class="seg-mod" style="max-width:100%">
+        <div class="seg-mod-head">
+          <div class="seg-mod-title"><span>Good Issue — despacho de planta</span><button>✕</button></div>
+          <div class="seg-mod-warn">Fecha de Good Issue = salida física de planta — no es la fecha de zarpe.</div>
+          <div class="seg-mod-tabs">
+            <button class="seg-mod-tab">Individual</button>
+            <button class="seg-mod-tab active">Lote (pegar desde Excel)</button>
+          </div>
+        </div>
+        <div class="seg-mod-body">
+          <div class="seg-field">
+            <label>Transporte del lote <span class="mk-badge-new">NUEVO</span></label>
+            <div class="sch-seg" role="group" aria-label="Transporte del lote">
+              <button type="button" class="sch-seg-btn is-on"><svg class="ic"><use href="#i-ship"/></svg>Marítimo</button>
+              <button type="button" class="sch-seg-btn"><svg class="ic"><use href="#i-truck"/></svg>Terrestre</button>
+            </div>
+            <div class="hint">se aplica a todas las filas del pegado, salvo que una fila traiga override (ver 3ª columna, abajo)</div>
+          </div>
+          <div class="seg-field">
+            <label>Pegá filas: orden [TAB] fecha [TAB] transporte (opcional: M/T)</label>
+            <textarea rows="3" readonly>118849241	16/07/2026
+118958515	16/07/2026	T</textarea>
+          </div>
+          <div class="seg-applyrow">Aplicar <input type="date" disabled> a todas las filas <b>sin fecha</b> <button disabled>Aplicar</button></div>
+          <div class="seg-grid-prev">
+            <table>
+              <thead><tr><th>orden</th><th>fecha GI</th><th>transporte</th><th>estado del lote</th></tr></thead>
+              <tbody>
+                <tr><td>118849241</td><td>2026-07-16</td><td><svg class="ic" style="color:var(--blue)"><use href="#i-ship"/></svg> marítimo <span class="faint">(lote)</span></td><td class="st"><span class="badge badge--green">lista</span></td></tr>
+                <tr><td>118958515</td><td>2026-07-16</td><td><svg class="ic" style="color:var(--orange)"><use href="#i-truck"/></svg> terrestre <span class="badge badge--blue" style="font-size:9px;padding:1px 6px">override fila</span></td><td class="st"><span class="badge badge--green">lista</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="seg-mod-foot">
+          <button class="seg-btn">Cancelar</button>
+          <button class="seg-btn seg-btn--primary">Registrar Good Issue</button>
+        </div>
+      </div>
+      <p class="faint" style="margin-top:10px">La pestaña <b>Individual</b> no cambia — ya tiene su
+      propio selector <code>#seg-gi-mot</code> funcionando bien; esta tanda toca solo la rama
+      <code>batch</code> de <code>submitGi()</code> para que cada fila lleve <code>mot</code>
+      (del segmentado o del override).</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s2"><span class="num">2</span>A.2-front — Estado "reprocesando…" persistente por orden</h2>
+  <p class="intent">Verificado en <code>js/features/control-bl.js</code>, función
+  <code>cblReprocesar(orderNumber, btn)</code> (línea ~640): hoy el único feedback es
+  <code>ssbToast(r.detail, ...)</code> (desaparece solo) + el botón <code>.disabled=true</code>
+  por 15&nbsp;s a ciegas (<code>setTimeout</code>) — no hay chip persistente, no hay señal en la
+  fila de la lista, y los 15&nbsp;s no tienen relación con cuándo termina realmente el workflow
+  n8n (que corre en background después del disparo). Si el usuario cambia de orden o recarga,
+  pierde todo rastro de que había un reproceso en curso.</p>
+
+  <div class="card" style="max-width:900px;margin-bottom:14px">
+    <h3>Código real de hoy — <span class="filepath">js/features/control-bl.js</span></h3>
+    <div class="codebox">async function cblReprocesar(orderNumber, btn){
+  if(btn) btn.disabled = true;
+  try {
+    const data = await cblApiSeguimiento({ action: 'reprocesar_bl', order_number: orderNumber });
+    const r = data.result || {};
+    ssbToast(r.detail || 'Reproceso disparado.', r.status === 'disparado' ? 'success' : 'info');
+    if(btn) setTimeout(() => { btn.disabled = false; }, 15000); <b>// 15s a ciegas, no el fin real</b>
+  } catch(e){
+    ssbToast('No se pudo disparar el reproceso: ' + (e.message || 'error de red'), 'error');
+    if(btn) btn.disabled = false;
+  }
+}</div>
+  </div>
+
+  <p class="faint" style="max-width:900px;margin-bottom:10px">Los 3 estados propuestos, en el
+  detalle de la orden (<code>cbl-exp-status</code>, donde vive el botón real) y como chip
+  persistente en la fila de la lista:</p>
+
+  <div class="row-compare">
+    <div class="card">
+      <h3>1. Reprocesando… (en curso)</h3>
+      <div class="cbl-demo">
+        <div class="cbl-exp-order">118000099</div>
+        <div class="cbl-exp-line">GRIMALDI · MV EXAMPLE · Santos</div>
+        <button class="cbl-reprocess" disabled>
+          <span class="cbl-spinner-sm"></span> Reprocesando…
+        </button>
+        <div class="cbl-chip busy"><svg class="ic"><use href="#i-refresh"/></svg> reprocesando… ~1 min</div>
+      </div>
+      <p class="faint" style="margin-top:8px">Botón deshabilitado con spinner (en vez del label
+      estático "Reprocesar BL draft") + chip persistente. El chip sobrevive a un cambio de
+      selección/orden — no depende de que el toast siga en pantalla.</p>
+    </div>
+    <div class="card">
+      <h3>2. Control actualizado (éxito)</h3>
+      <div class="cbl-demo">
+        <div class="cbl-exp-order">118000099</div>
+        <div class="cbl-exp-line">GRIMALDI · MV EXAMPLE · Santos</div>
+        <button class="cbl-reprocess"><svg class="ic"><use href="#i-refresh"/></svg> Reprocesar BL draft</button>
+        <div class="cbl-chip ok"><svg class="ic"><use href="#i-check"/></svg> control actualizado hace instantes</div>
+      </div>
+      <p class="faint" style="margin-top:8px">Botón vuelve a estado normal (ya no bloqueado a
+      ciegas) + chip verde. "hace instantes" en vez de una hora exacta — evita otro reloj más
+      para mantener sincronizado.</p>
+    </div>
+    <div class="card">
+      <h3>3. Error</h3>
+      <div class="cbl-demo">
+        <div class="cbl-exp-order">118000099</div>
+        <div class="cbl-exp-line">GRIMALDI · MV EXAMPLE · Santos</div>
+        <button class="cbl-reprocess"><svg class="ic"><use href="#i-refresh"/></svg> Reprocesar BL draft</button>
+        <div class="cbl-chip err"><svg class="ic"><use href="#i-alert"/></svg> no se pudo reprocesar — reintentar</div>
+      </div>
+      <p class="faint" style="margin-top:8px">Mismo botón reactivado — el chip rojo es lo que
+      distingue este estado del inicial (hoy ambos se ven idénticos apenas el toast desaparece).</p>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:900px;margin-top:14px">
+    <h3>En la lista (fila, no solo detalle)</h3>
+    <p class="faint" style="margin-bottom:2px">Mismo chip, versión compacta, junto al número de
+    orden — así se ve sin tener que abrir el detalle:</p>
+    <div class="cbl-listrow"><span class="ord">118000099</span><span class="cbl-badge rev"><span class="cbl-dot"></span>REVISAR</span><div class="cbl-chip busy" style="margin-top:0"><svg class="ic"><use href="#i-refresh"/></svg>reprocesando…</div></div>
+    <div class="cbl-listrow"><span class="ord">118958515</span><span class="cbl-badge rev" style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)"><span class="cbl-dot"></span>OK</span><div class="cbl-chip ok" style="margin-top:0"><svg class="ic"><use href="#i-check"/></svg>actualizado hace instantes</div></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s3"><span class="num">3</span>B.8-interim — Chip PL "s/d" distinto de "falta"</h2>
+  <p class="intent">Verificado en <code>js/features/seguimiento.js</code>, función
+  <code>renderDocs(r)</code>: la función <code>addSoft()</code> (usada solo para PL) crea
+  <code>el('span','seg-doc <b>off</b>', label)</code> — la <b>misma clase</b> <code>off</code>
+  que BL/FC usan cuando el documento genuinamente <b>falta</b> — y le agrega
+  <code>font-style:italic; opacity:.62</code> inline. Visualmente el chip PL queda idéntico al de
+  un documento faltante (gris, rayado). Coincide con lo hallado en
+  <code>docs/explore/EXPLORE_B8_G1_2026-07-16.md</code>.</p>
+
+  <div class="card" style="max-width:640px;margin-bottom:14px">
+    <h3>Código real de hoy — <span class="filepath">js/features/seguimiento.js</span></h3>
+    <div class="codebox">const addSoft = (label, title) => {
+  const d = el('span','seg-doc <b>off</b>', label);  // ← misma clase que "falta"
+  d.title = title;
+  d.style.fontStyle = 'italic';
+  d.style.opacity = '.62';
+  wrap.appendChild(d);
+};
+...
+addSoft('PL','Packing List — s/d (se verifica recién al enviar por Mailing)');</div>
+  </div>
+
+  <div class="row-compare">
+    <div class="card">
+      <h3>Antes</h3>
+      <p class="faint" style="margin-bottom:10px">PL se lee exactamente igual que FC cuando FC
+      realmente falta — misma clase <code>off</code> (gris + rayado), solo con opacidad/itálica
+      inline que a simple vista no se distingue.</p>
+      <p style="margin:0 0 6px"><span class="badge badge--neutral" style="font-size:10px">orden con FC real-falta</span></p>
+      <span class="seg-docs">
+        <span class="seg-doc on">BL</span>
+        <span class="seg-doc off" title="Factura — falta">FC</span>
+        <span class="seg-doc soft-old" title="Packing List — s/d (se verifica recién al enviar por Mailing)">PL</span>
+        <span class="seg-doc on">COz</span><span class="seg-doc on">COp</span>
+      </span>
+      <p class="faint" style="margin-top:10px">FC (falta de verdad) y PL (simplemente sin dato
+      todavía) son indistinguibles a simple vista — solo el <code>title</code> al pasar el mouse
+      explica la diferencia.</p>
+    </div>
+    <div class="card">
+      <h3>Ahora (propuesta) — 2 opciones</h3>
+      <p class="faint" style="margin-bottom:8px"><b>Opción A — gratis, cero CSS nuevo:</b>
+      reclasificar PL a <code>seg-doc <u>fut</u></code> (clase que YA EXISTE, hoy usada por
+      CRT/COA — punteado, sin fondo, itálica). Coincide además con lo que la leyenda de Docs
+      <i>ya promete</i> ("punteado = aún sin dato en el sistema") — hoy PL rompe esa promesa
+      porque usa <code>off</code> (rayado) en vez de <code>fut</code> (punteado). 1 línea de JS,
+      0 líneas de CSS nueva.</p>
+      <span class="seg-docs">
+        <span class="seg-doc on">BL</span>
+        <span class="seg-doc off" title="Factura — falta">FC</span>
+        <span class="seg-doc fut" title="Packing List — s/d (se verifica recién al enviar por Mailing)">PL</span>
+        <span class="seg-doc on">COz</span><span class="seg-doc on">COp</span>
+      </span>
+      <p class="faint" style="margin:14px 0 8px"><b>Opción B — más diferenciada:</b> clase nueva
+      dedicada (borde punteado + color propio + label <code>PL·s/d</code>), como pidió el
+      enunciado. 1 regla CSS nueva en <code>index.html</code>.</p>
+      <span class="seg-docs">
+        <span class="seg-doc on">BL</span>
+        <span class="seg-doc off" title="Factura — falta">FC</span>
+        <span class="seg-doc sd" title="Packing List — sin dato. Se verifica recién al enviar por Mailing.">PL·s/d</span>
+        <span class="seg-doc on">COz</span><span class="seg-doc on">COp</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s4"><span class="num info">i</span>G.1 (informativa) — Mailing llega filtrado desde una orden</h2>
+  <p class="intent"><span class="badge badge--teal">ya implementado en el código</span> — verificado
+  en vivo en <code>js/features/mailing.js</code>, <code>window.loadMailing</code>: al llegar desde
+  <code>deepLink(orden,'mailing')</code> (Seguimiento/Control BL), ahora se hace
+  <code>_q = _po</code> ANTES de <code>selectOrder()</code> — mismo patrón que
+  <code>control-bl.js</code> (<code>cblSearch()</code> tras consumir <code>__segPendingOrder</code>).
+  Se deja documentado acá (mismo doc que B.1/A.2/B.8) para que quede validado junto con el resto,
+  no porque falte construir algo.</p>
+
+  <div class="row-compare">
+    <div class="card">
+      <h3>Antes (comportamiento viejo, ya no vigente)</h3>
+      <p class="faint" style="margin-bottom:8px">Llegar desde una orden solo resaltaba la fila —
+      la lista de abajo seguía mostrando las ~40+ órdenes sin filtrar.</p>
+      <div class="mail-demo-q"><svg class="ic"><use href="#i-search"/></svg><span class="faint">Filtrar por orden, cliente, buque…</span></div>
+      <div class="mail-demo-master">
+        <div class="mail-demo-item"><div class="mail-item-order">118000045</div><div class="mail-item-cli">TEREOS · pendiente</div></div>
+        <div class="mail-demo-item sel"><div class="mail-item-order">118958515</div><div class="mail-item-cli">EMBALIXO MANAUS · pendiente</div></div>
+        <div class="mail-demo-item"><div class="mail-item-order">118000067</div><div class="mail-item-cli">LUPIN SA · en cola</div></div>
+        <div class="mail-demo-item dim"><div class="mail-item-order">118000012</div><div class="mail-item-cli">PBB POLISUR · enviada</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Ahora — filtrado real</h3>
+      <p class="faint" style="margin-bottom:8px">El buscador llega precargado con la orden y la
+      lista se re-renderiza acotada a ese match (limpiar el buscador restaura todo).</p>
+      <div class="mail-demo-q" style="color:var(--ink);border-color:var(--blue-bd)"><svg class="ic" style="color:var(--blue)"><use href="#i-search"/></svg>118958515</div>
+      <div class="mail-demo-master">
+        <div class="mail-demo-item sel"><div class="mail-item-order">118958515</div><div class="mail-item-cli">EMBALIXO MANAUS · pendiente</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s5"><span class="num info">i</span>C.1 (informativa) — Wording del validador de "Confirmar zarpe"</h2>
+  <p class="intent">Textos reales de <code>js/features/mailing.js</code> (lote de "Confirmar zarpe
+  (ATD)"). El problema (plan, sección C): dos mensajes describen comportamiento <b>correcto</b>
+  del sistema pero se leen como error — uno se pinta en ámbar, el otro en <b>naranja</b> con la
+  clase literal <code>err</code> (aunque el token real detrás sea naranja, no rojo). La columna
+  <b>Después</b> queda con placeholder — el wording final lo define quien implemente esta tanda,
+  <b>no se inventa acá</b>.</p>
+
+  <div class="card" style="max-width:1000px">
+    <table class="wtbl">
+      <thead><tr><th style="width:22%">Contexto</th><th style="width:39%">Antes (real, en <code>mailing.js</code> hoy)</th><th style="width:39%">Después</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="wcls warn">warn · ámbar</span>Pre-check local: la orden pegada no está
+          entre las cargadas en Mailing<span class="wctx">línea ~1189, antes de confirmar</span></td>
+          <td>"sin fila en Mailing — la orden no pasó por el Control BL (el server la va a omitir;
+          no es un error del pegado)"</td>
+          <td class="ph">sin fila en Mailing — la orden no pasó por el Control BL (el server la va a omitir; no es un error del pegado)</td>
+        </tr>
+        <tr>
+          <td><span class="wcls err">err · naranja</span>Reporte autoritativo del server tras
+          confirmar: la orden no tiene fila en <code>mailing_orders</code>
+          <span class="wctx">línea ~1147, status <code>no_encontrada</code></span></td>
+          <td>"sin fila en Mailing — la orden no pasó por el Control BL (reprocesar el BL la
+          asienta)"</td>
+          <td class="ph">sin fila en Mailing — la orden no pasó por el Control BL (reprocesar el BL la asienta)</td>
+        </tr>
+        <tr>
+          <td><span class="wcls err">err · naranja</span>Duplicado con fechas distintas en el
+          mismo pegado <span class="wctx">línea ~1195 — sin cambio, no es ambiguo</span></td>
+          <td>"CONFLICTO en el pegado — se excluye del lote"</td>
+          <td class="faint">sin cambio propuesto</td>
+        </tr>
+        <tr>
+          <td><span class="wcls err">err · naranja</span>Línea con error de formato (pasa el
+          motivo crudo del parser) <span class="wctx">línea ~1196 — sin cambio, no es ambiguo</span></td>
+          <td>"línea N: &lt;motivo del parser&gt;"</td>
+          <td class="faint">sin cambio propuesto</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="notas"><span class="num">✓</span>Notas para la aprobación de John</h2>
+  <p class="note">
+  · <b>B.1-fix — costo del override por fila:</b> el segmentado "Transporte del lote" es la parte
+  barata (1 control nuevo, aplica a todo el pegado). El override por fila (3ª columna
+  <code>M/T</code> opcional) es la parte que decide el alcance real: si preferís <b>sin override</b>
+  (todo el lote es 100% el segmentado, sin excepciones por fila), es más simple de implementar y
+  de explicar — avisá si querés recortarlo antes de que arranque la tanda.<br>
+  · <b>A.2-front — qué dispara cada transición:</b> este mock muestra los 3 estados visuales, pero
+  no resuelve el mecanismo de "fin real" (el plan lo menciona como "poll al fin real"). Mi lectura:
+  polling liviano (¿cada 5-10&nbsp;s, timeout ~90&nbsp;s?) contra <code>bl_controls</code> buscando
+  un <code>created_at</code> más nuevo que el momento del disparo — si nunca llega, un 4º estado
+  "no confirmado — probá de nuevo" en vez de quedar eternamente en "reprocesando…". Es una decisión
+  de implementación, no visual — dejo la pregunta abierta en vez de inventar el número.<br>
+  · <b>B.8-interim — Opción A vs B:</b> mi recomendación es <b>Opción A</b> (reclasificar a
+  <code>seg-doc fut</code>) por ser gratis y ya coherente con la leyenda existente — pero si
+  preferís que PL se destaque MÁS que CRT/COA (semánticamente son distintos: CRT/COA es "todavía
+  no existe en el sistema", PL es "existe pero se verifica en otro momento"), la Opción B es la
+  que pediste en el enunciado. Ambas conviven con <code>off=falta</code> intacto.<br>
+  · <b>G.1 y C.1 son informativas</b>, no piden aprobación de diseño nuevo — G.1 ya está en el
+  código (solo falta que lo veas funcionando); C.1 es una tabla de contexto para que el
+  implementador arranque con el texto real en la mano, no una propuesta de copy.<br>
+  · Este archivo es <b>visual únicamente</b> — no pasó por smoke headless (eso corre sobre
+  <code>index.html</code> real, con <code>python3 -m http.server 8899</code>, después de tu OK
+  sobre este mock).
+  </p>
+
+  <footer class="closing">docs/mockups/mockup_t1_front_chico.html · gate visual TANDA 1 (front chico) · sin lógica, sin datos reales de producción · generado 2026-07-17</footer>
+</div>
+</body>
+</html>

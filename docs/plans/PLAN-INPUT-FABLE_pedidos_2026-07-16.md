@@ -270,7 +270,7 @@ UI change gate obligatorio.
 ## PINS
 
 - Supabase: `xkppkzfxgtfsmfooozsm` · n8n: `jzenteno.app.n8n.cloud`
-- CBL `WVt6gvghL2nFVbt6` (versionId `69f11831`) · Mailing `kh6TORgRg9R1Shj1` (versionId `bce090d2`) · Gmail→Drive `pBN4Wd1lcTSHNkFg`
+- CBL `WVt6gvghL2nFVbt6` (versionId **`7cf87074`** — T2 aplicada 17-07; anterior `69f11831`) · Mailing `kh6TORgRg9R1Shj1` (versionId `bce090d2`) · Gmail→Drive `pBN4Wd1lcTSHNkFg`
 - Prod: `ssb-workspace.vercel.app` (Vercel auto-deploy en push a master). Netlify desactivado.
 - MD canónico del plan: **ESTE doc** (`PLAN-INPUT-FABLE_pedidos_2026-07-16.md`). La tabla GO-LIVE del
   plan ANTERIOR (ya en prod) vive en `docs/handoff/RESULTADO_PLANCOMPLETO_2026-07-14.md`.
@@ -312,6 +312,8 @@ UI change gate obligatorio.
 | 2026-07-16 noche | E.1 CERRADA: alcance = SOLO config de CO; `mot` override, contactos navieras y toggle TEST_MODE quedan como candidatos futuros | John prioriza estabilizar la vertebración de la base antes de sumar el resto de configs |
 | 2026-07-17 | **Tanda 0 APLICADA EN PROD y SMOKE-APROBADA**: B.1 (34 STO→terrestre, UPDATE 34) + C.2 (5 filas mailing_orders del booking LA0500989, ATD 2026-07-13 validada con refutación adversarial 3-lenses 0/3). Migración `migrations/2026-07-16-tanda0-backfill-c2-b1/` (commit `10f2f36`) | GO John 16-07 re-confirmado 17-07 tras verificación 3-puntos contra prod; smoke John: las 5 pendientes en Mailing con ATD 13-07 ✓ |
 | 2026-07-17 | **T4.a (vertebral) APLICADA EN PROD y SMOKE-APROBADA**: FKs validadas 4/4 + trigger ensure-parent + alta_source; 190/190 intacto. `migrations/2026-07-17-tanda-base-parte-a/` (commit `6fe368a`) | GO John; smoke John: grafo Estructura DB muestra las 4 aristas nuevas ✓ |
+| 2026-07-17 | **H.1 EN PROD** (grafo ER enriquecido, merge `49b1ab8` → deploy) · **T1 parcial**: G.1 filtro mailing + C.1 wording implementados (`fa58bb2`); B.1-fix/A.2-front/B.8-interim esperan aprobación de mockup (`docs/mockups/mockup_t1_front_chico.html`) | Modo autonomía total (John 17-07); smokes en paralelo |
+| 2026-07-17 | **T2 APLICADA AL CBL VIVO** (PUT Iron Law `put_t2_a3_a2resend.py`, 69→69 nodos, versionId `69f11831`→**`7cf87074`**): A.3 fix Maersk 10A (doc_type WAYBILL/ORIGINAL por regex, backward-compatible, tests 15/15 + golden 42/0) + A.2-resend (claim condicional por `isExecuted` del Form Trigger → reproceso re-envía el mail de control) | Root cause EXPLORE 16-07 + decisión John (re-envío SÍ) |
 | 2026-07-17 | **T4.b (referencia) APLICADA EN PROD y SMOKE-APROBADA**: paises(98)+alias(109), navieras 33 (+28) y 11 alias (LOG-IN→LOGIN cierra gap 75%), puertos 31/31, detention 1.441/1.441, mailing 84/84, `v_orden_freetime` 84/84 → días libres T6 destrabado. `migrations/2026-07-17-tanda-base-parte-b/` (commit `2f2373f`) | GO John; smokes John: Detention idéntica ✓ + paises/paises_alias en el grafo ✓ |
 | 2026-07-16 noche | QC del plan: PINS corregido (el MD canónico es ESTE doc, no RESULTADO_PLANCOMPLETO) · tags [DECISIÓN] residuales de B.2/D.2 limpiados · A.1 y D.1 marcados RESUELTOS en su sección | Control de calidad de John sobre el MD; GO a las 3 correcciones |
 | 2026-07-16 cierre | +SEGURIDAD: PAT de Supabase (`~/.supabase/access-token`) como 2º token a revocar — ambos siguen vivos hasta que John los baje | Pendiente real del handoff del go-live que no estaba en el MD (hallazgo del QC) |

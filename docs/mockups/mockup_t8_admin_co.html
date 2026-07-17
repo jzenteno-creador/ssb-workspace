@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOCKUP · Administración — Configuración de Cert. de Origen (Tanda 8 / E.1)</title>
+<!--
+  MOCKUP ESTÁTICO — no toca index.html, js/features/ ni la DB. Gate visual asincrónico
+  para que John apruebe ANTES de tocar código (mismo protocolo que los mockups PLANCOMPLETO
+  previos: mockup_seguimiento_plancompleto.html, grafo-enriquecido-mockup.html).
+
+  Alcance (PLAN-INPUT-FABLE_pedidos_2026-07-16.md, sección E, ítem E.1 — decisión CERRADA
+  16-07 noche): la solapa "Administración" nace con UN SOLO propósito — que un admin pueda
+  definir si una orden puntual lleva Certificado de Origen, cuando hoy el badge "CO ¿sin
+  definir?" de Seguimiento es un callejón sin salida (no hay UI para cambiarlo). Override de
+  `mot` por orden, carga de contactos de navieras destino y el toggle TEST_MODE del mailing
+  quedan fuera — se muestran acá como candidatos futuros, con candado, para que se entienda
+  el roadmap sin habilitarlos.
+
+  Fuente de verdad técnica verificada contra código real (no inventada):
+    - js/features/seguimiento.js → coBadgeCell() resuelve co_requerimiento en
+      {no_requerido, sin_definir, requerido} y pinta el badge "CO ¿sin definir?" (mkBadge
+      'mut') SIN ninguna acción asociada — es exactamente el vacío que esta tanda llena.
+    - api/seguimiento.js → handleSetRequiereCo() YA EXISTE en el backend (acción
+      "set_requiere_co", valores auto|requerido|no_requerido, motivo obligatorio si≠auto,
+      graba requiere_co_by/requiere_co_at) pero no tiene ninguna UI que lo llame todavía.
+      Este mockup es esa UI.
+    - api/seguimiento.js → ADMIN_ACTIONS hoy es {anular_alta, co_config_list, co_config_upsert,
+      co_config_toggle, anular_sello} — "set_requiere_co" NO está en ese set (ver nota en
+      la sección 8, es un hallazgo, no un supuesto).
+
+  Paleta y tipografía: tokens reales de index.html (--bg/--surface/--border/--text/--muted/
+  --teal/--fs-*, valores dark de la raíz) + namespace de isla propio --adm-* (mismo patrón
+  que --seg-*/--mail-*/--cbl-* ya usados en el código real, uno por tab). Iconos: subset del
+  sprite Lucide de index.html + un símbolo #i-lock nuevo (Lucide "lock" real, mismo stroke
+  que el resto — no existe hoy en el sprite de la app, candidato a sumarse si esto se aprueba).
+-->
+<style>
+:root{
+  --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
+  --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+  --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;
+  --blue-bg:#141f38;--blue-bd:#2a4478;
+  --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+  --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+  --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+  --purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+  --orange:#fb923c;--orange-bg:#2a1a0e;--orange-bd:#6b3e18;
+  --font:'Inter','system-ui',sans-serif;--mono:'JetBrains Mono','SFMono-Regular',monospace;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+  --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
+}
+body.light{
+  --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
+  --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
+  --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;
+  --blue-bg:#e8f0fe;--blue-bd:#c3d7f8;
+  --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
+  --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
+  --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
+  --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
+  --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+}
+/* isla propia de la solapa Administración — mismo patrón que --seg-*/--mail-*/--cbl-* reales */
+.adm-root{
+  --adm-surface:#1e293b;--adm-surface-2:#161e2b;--adm-line:rgba(255,255,255,.08);--adm-line-strong:rgba(255,255,255,.16);
+  --adm-ink-faint:#6b7488;
+}
+body.light .adm-root{
+  --adm-surface:#ffffff;--adm-surface-2:#fbfaf7;--adm-line:#e7e4dd;--adm-line-strong:#d9d5cc;--adm-ink-faint:#9c988f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-base);line-height:1.5;transition:background .2s,color .2s}
+
+header.bar{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#111c33,#0b0f17);flex-wrap:wrap}
+body.light header.bar{background:linear-gradient(180deg,#eef1f6,#f7f8fa)}
+.brand{font-weight:800;letter-spacing:-.01em;font-size:var(--fs-lg)}
+.brand small{color:var(--muted);font-weight:400;margin-left:8px;font-size:var(--fs-sm)}
+.mock-tag{background:var(--amber);color:#1c1104;font-weight:800;font-size:10.5px;padding:3px 9px;border-radius:999px;letter-spacing:.07em}
+.spacer{flex:1}
+.theme-btn{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:7px 13px;cursor:pointer;font-size:var(--fs-sm);font-weight:600}
+.theme-btn:hover{border-color:var(--teal)}
+
+.page{max-width:1280px;margin:0 auto;padding:24px 24px 90px}
+h1{font-size:20px;margin:0 0 6px}
+h2{font-size:var(--fs-md);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:38px 0 12px;display:flex;align-items:center;gap:9px}
+h2 .num{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);font-size:var(--fs-xs);font-weight:800}
+h3{font-size:var(--fs-sm);font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.note{font-size:var(--fs-sm);color:var(--muted);max-width:920px;line-height:1.65}
+.note b{color:var(--text)}
+.note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+.intent{font-size:var(--fs-xs);color:var(--adm-ink-faint,#6b7488);max-width:920px;line-height:1.65;margin:2px 0 14px;font-style:italic}
+
+.subnav{position:sticky;top:52px;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--border)}
+.subnav a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+.subnav a:hover{color:var(--teal);border-color:var(--teal)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.row-compare{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.faint{color:var(--adm-ink-faint,#6b7488);font-size:11.5px}
+
+/* ============ badges (reuso visual de .seg-bdg real, namespace propio) ============ */
+.adm-bdg,.seg-bdg{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border:1px solid transparent;border-radius:6px;padding:3px 9px;white-space:nowrap}
+.adm-bdg--ok,.seg-bdg--ok{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.adm-bdg--warn,.seg-bdg--warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+.adm-bdg--bad,.seg-bdg--bad{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.adm-bdg--mut,.seg-bdg--mut{background:var(--adm-surface-2,#161e2b);color:var(--muted);border-color:var(--adm-line-strong,#2a3346)}
+.adm-bdg--info,.seg-bdg--info{background:var(--blue-bg);color:var(--blue)}
+.adm-bdg--override{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+.adm-bdg[title],.seg-bdg[title]{cursor:help}
+
+/* ============ rail preview ============ */
+.rail-demo{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.rail-demo .rail-mini{width:64px;flex-shrink:0;background:#080b12;padding:12px 8px;display:flex;flex-direction:column;gap:6px;align-items:center;border-right:1px solid var(--border)}
+.rail-demo .rail-mini .rbtn{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.45)}
+.rail-demo .rail-mini .rbtn.active{background:#151b28;color:#5b9bf5;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.rail-demo .rail-mini .rbtn.new{color:var(--teal);position:relative}
+.rail-demo .rail-mini .rbtn.new::after{content:'';position:absolute;inset:-2px;border:1.5px dashed var(--teal);border-radius:11px;opacity:.6}
+.rail-demo .rail-mini .rbtn svg{width:18px;height:18px}
+.rail-demo .rail-body{flex:1;padding:14px 18px;min-width:0}
+.rail-demo .rail-body .lbl{font-size:var(--fs-xs);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.rail-demo .rail-body .val{font-size:var(--fs-sm);color:var(--text)}
+
+.rbac-toggle{display:inline-flex;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-bottom:14px}
+.rbac-toggle button{background:var(--surface);color:var(--muted);border:0;padding:8px 18px;font-size:var(--fs-sm);font-weight:700;cursor:pointer}
+.rbac-toggle button.is-on{background:var(--blue);color:#fff}
+
+.empty-no-admin{border:1.5px dashed var(--border);border-radius:12px;padding:26px 20px;text-align:center;color:var(--muted);font-size:var(--fs-sm);background:var(--surface-hv)}
+.empty-no-admin svg{width:30px;height:30px;color:var(--adm-ink-faint,#6b7488);margin-bottom:8px}
+
+/* ============ tabla de administración ============ */
+.adm-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--adm-line,var(--border));border-radius:14px;background:var(--adm-surface,var(--surface));padding:12px 14px;margin-bottom:12px}
+.adm-qbox{display:flex;align-items:center;gap:7px;min-width:280px;padding:0 12px;background:var(--adm-surface-2,var(--faint));border:1px solid var(--adm-line-strong,var(--border));border-radius:9px}
+.adm-qbox svg{width:15px;height:15px;color:var(--adm-ink-faint,#6b7488);flex-shrink:0}
+.adm-qbox input{border:none;background:none;outline:none;font-family:var(--font);font-size:var(--fs-md);color:var(--text);padding:9px 0;width:100%}
+.adm-qbox input::placeholder{color:var(--adm-ink-faint,#6b7488)}
+.adm-stats{margin-left:auto;font-size:var(--fs-sm);color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.adm-stats b{color:var(--text)}
+.adm-stats .dot{width:4px;height:4px;border-radius:50%;background:var(--adm-ink-faint,#6b7488)}
+
+.adm-tablewrap{overflow-x:auto;border:1px solid var(--adm-line,var(--border));border-radius:14px;background:var(--adm-surface,var(--surface));box-shadow:var(--shadow)}
+table.adm-table{border-collapse:collapse;width:100%;min-width:960px;font-size:var(--fs-md)}
+.adm-table th{font-size:var(--fs-2xs);letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);text-align:left;padding:10px 12px;border-bottom:1px solid var(--adm-line-strong,var(--border));background:var(--adm-surface-2,var(--faint));white-space:nowrap}
+.adm-table td{padding:11px 12px;border-bottom:1px solid var(--adm-line,var(--border));vertical-align:top}
+.adm-table tr:last-child>td{border-bottom:none}
+.adm-table tbody tr:hover>td{background:rgba(91,155,245,.04)}
+.adm-orden{font-family:var(--mono);font-weight:700}
+.adm-cliente .sub{display:block;font-size:10.5px;color:var(--adm-ink-faint,#6b7488);margin-top:1px}
+.adm-audit{font-size:11px;color:var(--adm-ink-faint,#6b7488);margin-top:4px;line-height:1.5;max-width:230px}
+.adm-audit b{color:var(--muted)}
+.adm-motivo-preview{font-style:italic}
+
+.adm-link{background:none;border:none;color:var(--blue);font-size:var(--fs-sm);font-weight:600;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px}
+.adm-link:hover{text-decoration:underline}
+.adm-link.danger{color:var(--red)}
+.adm-link svg{width:13px;height:13px;flex-shrink:0}
+.adm-btn{font-family:var(--font);font-size:var(--fs-sm);font-weight:700;border-radius:9px;padding:7px 14px;cursor:pointer;border:1px solid var(--adm-line-strong,var(--border));background:var(--adm-surface-2,var(--faint));color:var(--text);display:inline-flex;align-items:center;gap:6px}
+.adm-btn:hover{background:var(--surface-hv)}
+.adm-btn--primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.adm-btn--primary:hover{filter:brightness(1.08)}
+.adm-btn svg{width:14px;height:14px}
+
+tr.adm-editor-row td{background:var(--adm-surface-2,var(--faint));padding:0;border-bottom:1px solid var(--adm-line,var(--border))}
+tr.adm-editor-row.is-hidden{display:none}
+.adm-editor{padding:16px 20px;display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.adm-seg{display:inline-flex;border:1px solid var(--adm-line-strong,var(--border));border-radius:10px;overflow:hidden}
+.adm-seg button{background:var(--surface);color:var(--muted);border:0;border-right:1px solid var(--adm-line-strong,var(--border));padding:9px 16px;font-size:var(--fs-sm);font-weight:700;cursor:pointer}
+.adm-seg button:last-child{border-right:none}
+.adm-seg button.is-on[data-val="auto"]{background:var(--surface-hv);color:var(--text)}
+.adm-seg button.is-on[data-val="requerido"]{background:var(--green-bg);color:var(--green)}
+.adm-seg button.is-on[data-val="no_requerido"]{background:var(--red-bg);color:var(--red)}
+.adm-field{display:flex;flex-direction:column;gap:5px;min-width:260px;flex:1}
+.adm-field label{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488)}
+.adm-field textarea{font-family:var(--font);font-size:var(--fs-md);color:var(--text);background:var(--surface);border:1px solid var(--adm-line-strong,var(--border));border-radius:9px;padding:9px 11px;resize:vertical;min-height:44px;outline:none}
+.adm-field textarea:disabled{opacity:.45;cursor:not-allowed}
+.adm-field textarea:focus{border-color:var(--blue)}
+.adm-editor-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.adm-err{font-size:11.5px;color:var(--red);display:none;align-items:center;gap:5px}
+.adm-err.show{display:flex}
+.adm-ok-toast{font-size:11.5px;color:var(--green);display:none;align-items:center;gap:5px}
+.adm-ok-toast.show{display:flex}
+.adm-helper{font-size:11px;color:var(--adm-ink-faint,#6b7488);max-width:520px;line-height:1.5}
+
+/* ============ roadmap candidatos futuros ============ */
+.roadmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.roadmap-card{position:relative;border:1px solid var(--border);border-radius:14px;background:var(--surface);padding:16px 16px 14px;opacity:.62;cursor:not-allowed;overflow:hidden}
+.roadmap-card::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 10px,rgba(255,255,255,.02) 10px,rgba(255,255,255,.02) 20px)}
+.roadmap-card .lock-badge{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;background:var(--adm-surface-2,var(--faint));border:1px solid var(--adm-line-strong,var(--border));display:flex;align-items:center;justify-content:center;color:var(--adm-ink-faint,#6b7488)}
+.roadmap-card .lock-badge svg{width:13px;height:13px}
+.roadmap-card h4{font-size:var(--fs-md);font-weight:800;margin:0 0 6px;padding-right:30px;color:var(--text)}
+.roadmap-card p{font-size:var(--fs-xs);color:var(--muted);line-height:1.55;margin:0 0 8px}
+.roadmap-card .why{font-size:10.5px;color:var(--adm-ink-faint,#6b7488);font-style:italic;border-top:1px solid var(--adm-line,var(--border));padding-top:8px;margin-top:8px}
+
+footer.closing{margin-top:52px;padding-top:16px;border-top:1px solid var(--border);font-size:11.5px;color:var(--adm-ink-faint,#6b7488)}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <span class="brand">Administración <small>Configuración de Certificado de Origen · ssb-workspace</small></span>
+  <span class="mock-tag">MOCKUP</span>
+  <span class="spacer"></span>
+  <button class="theme-btn" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+</header>
+
+<div class="page adm-root">
+  <h1>Solapa "Administración" — Tanda 8 (E.1)</h1>
+  <p class="note">
+    Mockup estático, sin lógica real de escritura — gate visual para que John apruebe antes de
+    tocar <code>index.html</code> / <code>js/features/</code>. <b>Alcance CERRADO 16-07 noche:
+    SOLO configuración de Certificado de Origen por orden.</b> Hoy el badge
+    <code>"CO ¿sin definir?"</code> de Seguimiento (<code>coBadgeCell()</code> en
+    <code>js/features/seguimiento.js</code>) no tiene ninguna acción asociada — esta solapa le
+    da la única salida posible: decidir manualmente si esa orden lleva CO. El backend de esa
+    decisión (<code>set_requiere_co</code> en <code>api/seguimiento.js</code>) <b>ya existe y
+    ya persiste auditoría</b> (<code>requiere_co_by</code>/<code>requiere_co_at</code>) — no
+    tiene UI todavía. Override de <code>mot</code> por orden, contactos de navieras destino y
+    el toggle TEST_MODE del mailing se muestran como <b>candidatos futuros con candado</b>,
+    para que se entienda el roadmap sin habilitarlos.
+  </p>
+
+  <nav class="subnav">
+    <a href="#s1">1 · Antes → Ahora</a>
+    <a href="#s2">2 · Ubicación en el rail + RBAC</a>
+    <a href="#s3">3 · Buscador y tabla</a>
+    <a href="#s4">4 · Definir / editar override</a>
+    <a href="#s5">5 · Audit trail</a>
+    <a href="#s6">6 · Candidatos futuros (candado)</a>
+    <a href="#notas">Notas para John</a>
+  </nav>
+
+  <!-- ============================================================ -->
+  <h2 id="s1"><span class="num">1</span>Antes → Ahora: el candado del "CO ¿sin definir?"</h2>
+  <p class="intent">Verificado contra el código real de <code>coBadgeCell()</code>: cuando
+  <code>co_requerimiento === 'sin_definir'</code> el badge se pinta con <code>mkBadge('mut', …)</code>
+  y su <code>title</code> literalmente dice <i>"definir manualmente si esta orden lleva CO"</i> —
+  pero no hay dónde. Esta tanda cierra ese círculo.</p>
+
+  <div class="row-compare">
+    <div class="card" style="flex:1;min-width:300px">
+      <h3>Antes (hoy, en prod)</h3>
+      <p class="faint" style="margin-bottom:10px">Badge informativo puro. El tooltip invita a
+      "definir manualmente" pero no hay ningún control en toda la app que lo permita.</p>
+      <span class="seg-bdg seg-bdg--mut" title="Sin regla de configuración — definir manualmente si esta orden lleva Certificado de Origen.">CO ¿sin definir?</span>
+      <p class="faint" style="margin-top:12px">Único camino hoy: pedirle a Naara/Sole que agregue
+      una regla en <code>seguimiento_co_config</code> a mano (SQL), sin auditoría de "quién y
+      cuándo" a nivel de la orden puntual.</p>
+    </div>
+    <div class="card" style="flex:1;min-width:300px">
+      <h3>Ahora (v3 — esta tanda)</h3>
+      <p class="faint" style="margin-bottom:10px">Mismo badge (no se toca Seguimiento) + una
+      solapa nueva donde un admin resuelve el caso puntual en 2 clicks, con motivo y auditoría.</p>
+      <span class="adm-bdg adm-bdg--mut">CO ¿sin definir?</span>
+      <button class="adm-btn adm-btn--primary" style="margin-left:8px;vertical-align:middle" onclick="location.hash='s3'">
+        <svg aria-hidden="true"><use href="#i-pencil"/></svg>Definir en Administración
+      </button>
+      <p class="faint" style="margin-top:12px">El deep-link real iría con
+      <code>window.__segPendingOrder</code> (mismo puente ya usado por Control BL/Certificado/
+      Mailing) para precargar la orden en el buscador de la nueva solapa.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s2"><span class="num">2</span>Ubicación en el rail + RBAC (visible solo admin)</h2>
+  <p class="intent">"Administración" es un ítem <b>nuevo, independiente</b> del grupo
+  "Documentación" (que agrupa los 4 módulos operativos: Seguimiento/Control BL/Mailing/
+  Cert-Origen) — es config, no operatoria diaria. Gate por rol vía el patrón ya existente
+  <code>body.is-admin</code> / <code>.ssb-admin-only</code> (el mismo que ya oculta el botón de
+  subida de free time en Detention) — <b>cosmético, no seguridad</b>: la última línea de
+  defensa real tiene que vivir en el server (ver caveat en Notas para John, sección 8).</p>
+
+  <div class="rbac-toggle">
+    <button class="is-on" id="rbac-admin" onclick="setRbac('admin')">Simular sesión: Admin</button>
+    <button id="rbac-op" onclick="setRbac('op')">Simular sesión: Operador</button>
+  </div>
+
+  <div class="rail-demo">
+    <div class="rail-mini">
+      <span class="rbtn" title="Tarifas"><svg aria-hidden="true"><use href="#i-anchor"/></svg></span>
+      <span class="rbtn" title="Documentación"><svg aria-hidden="true"><use href="#i-folder"/></svg></span>
+      <span class="rbtn" title="Workspace IA"><svg aria-hidden="true"><use href="#i-bot"/></svg></span>
+      <span class="rbtn active new" id="rail-admin-item" title="Administración"><svg aria-hidden="true"><use href="#i-wrench"/></svg></span>
+    </div>
+    <div class="rail-body">
+      <div class="lbl" id="rbac-caption-lbl">Vista del rail — sesión ADMIN</div>
+      <div class="val" id="rbac-caption-val">El ítem <b>Administración</b> aparece (marcado con
+      borde punteado teal = nuevo). <code>class="tab-btn ssb-admin-only"</code> — visible porque
+      <code>body.is-admin</code> está seteado.</div>
+    </div>
+  </div>
+
+  <div id="rbac-panel-admin" style="margin-top:14px">
+    <p class="faint">Con sesión admin, el resto de esta página (secciones 3 a 6) es exactamente
+    lo que se ve dentro de <code>#panel-admin</code>.</p>
+  </div>
+  <div id="rbac-panel-op" style="margin-top:14px;display:none">
+    <div class="empty-no-admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><br>
+      Esta solapa no existe para tu rol.<br>
+      <span class="faint">El ítem del rail directamente no se renderiza (<code>display:none</code>
+      vía <code>body:not(.is-admin) .ssb-admin-only</code>) — no hay un candado visible ni un
+      "sin permiso": para un operador, Administración simplemente no está en el menú. Igual que
+      hoy pasa con el botón de subida de free time en Detention.</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s3"><span class="num">3</span>Buscador + tabla de órdenes</h2>
+  <p class="intent">Una fila = una orden con estado CO resuelto <b>hoy</b> (regla automática de
+  <code>seguimiento_co_config</code>, si matchea) + si tiene un <b>override manual</b> activo
+  (columna <code>seguimiento_ordenes.requiere_co</code> ≠ <code>'auto'</code>). El buscador
+  filtra por número de orden, cliente o sold-to — mismo patrón visual que el buscador de
+  Seguimiento (<code>.qbox</code> + ícono lupa).</p>
+
+  <div class="adm-toolbar">
+    <div class="adm-qbox">
+      <svg aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="adm-q" type="text" autocomplete="off" placeholder="Buscar por orden, cliente o sold-to…" oninput="filterAdmTable()">
+    </div>
+    <div class="adm-stats">
+      <span><b id="adm-count">6</b> órdenes en vista</span>
+      <span class="dot"></span>
+      <span><b style="color:var(--muted)">2</b> sin definir</span>
+      <span class="dot"></span>
+      <span><b style="color:var(--purple)">1</b> con override manual</span>
+      <span class="dot"></span>
+      <span><b style="color:var(--muted)">3</b> resueltas por regla</span>
+    </div>
+  </div>
+
+  <div class="adm-tablewrap">
+    <table class="adm-table" id="adm-table">
+      <thead><tr>
+        <th>Orden</th><th>Cliente</th><th>Destino</th><th>Estado CO actual</th><th style="min-width:210px">Definir / override</th>
+      </tr></thead>
+      <tbody>
+
+        <!-- Row A — sin definir, editor ABIERTO por defecto (demo) -->
+        <tr class="adm-row" data-q="118102233 clariant argentina">
+          <td class="adm-orden">118102233</td>
+          <td class="adm-cliente">CLARIANT ARGENTINA SA</td>
+          <td>Buenos Aires <span class="faint">· Argentina</span></td>
+          <td><span class="adm-bdg adm-bdg--mut">CO ¿sin definir?</span>
+            <div class="faint" style="margin-top:4px">ninguna regla de <code>seguimiento_co_config</code> matchea sus dimensiones</div>
+          </td>
+          <td><button class="adm-btn adm-btn--primary" onclick="toggleEditor('A')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Definir</button></td>
+        </tr>
+        <tr class="adm-editor-row" id="editor-A">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="A">
+                  <button data-val="auto" class="is-on" onclick="selectSeg('A','auto')">AUTO</button>
+                  <button data-val="requerido" onclick="selectSeg('A','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('A','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-A">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-A" disabled placeholder="Por qué te apartás de la regla automática…"></textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('A')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('A')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-A"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-A"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+              <div class="adm-helper">AUTO = vuelve a resolver por <code>seguimiento_co_config</code> (o
+              queda "sin definir" si ninguna regla matchea). El motivo viaja en la respuesta del endpoint
+              pero <b>no se persiste como columna propia</b> — el audit-trail genérico está diferido
+              (mismo criterio que el resto de Seguimiento); lo que sí queda siempre: quién y cuándo.</div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row B — sin definir, editor cerrado -->
+        <tr class="adm-row" data-q="118077410 quimica del norte">
+          <td class="adm-orden">118077410</td>
+          <td class="adm-cliente">QUÍMICA DEL NORTE SA</td>
+          <td>San Pablo <span class="faint">· Brasil</span></td>
+          <td><span class="adm-bdg adm-bdg--mut">CO ¿sin definir?</span></td>
+          <td><button class="adm-btn adm-btn--primary" onclick="toggleEditor('B')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Definir</button></td>
+        </tr>
+        <tr class="adm-editor-row is-hidden" id="editor-B">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="B">
+                  <button data-val="auto" class="is-on" onclick="selectSeg('B','auto')">AUTO</button>
+                  <button data-val="requerido" onclick="selectSeg('B','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('B','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-B">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-B" disabled placeholder="Por qué te apartás de la regla automática…"></textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('B')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('B')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-B"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-B"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row C — resuelta por regla (requerido), sin override -->
+        <tr class="adm-row" data-q="118849241 lupin sa">
+          <td class="adm-orden">118849241</td>
+          <td class="adm-cliente">LUPIN SA<div class="sub">sold-to: LUPIN SA — casa matriz</div></td>
+          <td>Santos <span class="faint">· Brasil</span></td>
+          <td><span class="adm-bdg adm-bdg--warn">CO pendiente</span>
+            <div class="faint" style="margin-top:4px">regla activa: ship_to=LUPIN → requerido (config)</div>
+          </td>
+          <td><button class="adm-link" onclick="toggleEditor('C')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Forzar override</button></td>
+        </tr>
+        <tr class="adm-editor-row is-hidden" id="editor-C">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="C">
+                  <button data-val="auto" class="is-on" onclick="selectSeg('C','auto')">AUTO</button>
+                  <button data-val="requerido" onclick="selectSeg('C','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('C','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-C">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-C" disabled placeholder="Por qué te apartás de la regla automática…"></textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('C')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('C')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-C"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-C"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row D — resuelta por regla (no_requerido), sin override -->
+        <tr class="adm-row" data-q="118958515 embalixo manaus">
+          <td class="adm-orden">118958515</td>
+          <td class="adm-cliente">EMBALIXO MANAUS</td>
+          <td>Manaus <span class="faint">· Brasil</span></td>
+          <td><span class="adm-bdg adm-bdg--info">CO no requerido · auto</span>
+            <div class="faint" style="margin-top:4px">regla activa: pais_destino=Brasil → no_requerido (config)</div>
+          </td>
+          <td><button class="adm-link" onclick="toggleEditor('D')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Forzar override</button></td>
+        </tr>
+        <tr class="adm-editor-row is-hidden" id="editor-D">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="D">
+                  <button data-val="auto" class="is-on" onclick="selectSeg('D','auto')">AUTO</button>
+                  <button data-val="requerido" onclick="selectSeg('D','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('D','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-D">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-D" disabled placeholder="Por qué te apartás de la regla automática…"></textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('D')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('D')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-D"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-D"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row E — override manual ACTIVO (requerido), con audit trail -->
+        <tr class="adm-row" data-q="118000099 gdm logistics">
+          <td class="adm-orden">118000099</td>
+          <td class="adm-cliente">GDM LOGISTICS<div class="sub">sold-to: GDM ARGENTINA SA</div></td>
+          <td>Paranaguá <span class="faint">· Brasil</span></td>
+          <td><span class="adm-bdg adm-bdg--ok">CO ✓ generado</span> <span class="adm-bdg adm-bdg--override">override manual</span>
+            <div class="adm-audit" id="audit-E"><b>jz@ssbint.com</b> · hace 2 h<br>
+            <span class="adm-motivo-preview">"Roleo a nuevo buque — cliente pidió mantener el CO pese a que la regla automática (país Brasil) dice no_requerido."</span></div>
+          </td>
+          <td><button class="adm-link" onclick="toggleEditor('E')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Editar override</button>
+            <br><button class="adm-link danger" style="margin-top:6px" onclick="removeOverride('E')"><svg aria-hidden="true"><use href="#i-rotate"/></svg>Quitar (volver a AUTO)</button>
+          </td>
+        </tr>
+        <tr class="adm-editor-row is-hidden" id="editor-E">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="E">
+                  <button data-val="auto" onclick="selectSeg('E','auto')">AUTO</button>
+                  <button data-val="requerido" class="is-on" onclick="selectSeg('E','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('E','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-E">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-E">Roleo a nuevo buque — cliente pidió mantener el CO pese a que la regla automática (país Brasil) dice no_requerido.</textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('E')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('E')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-E"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-E"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row F — resuelta por regla (no_requerido), sin override -->
+        <tr class="adm-row" data-q="118000123 pbb polisur">
+          <td class="adm-orden">118000123</td>
+          <td class="adm-cliente">PBB POLISUR</td>
+          <td>Buenos Aires <span class="faint">· Argentina</span></td>
+          <td><span class="adm-bdg adm-bdg--info">CO no requerido · auto</span></td>
+          <td><button class="adm-link" onclick="toggleEditor('F')"><svg aria-hidden="true"><use href="#i-pencil"/></svg>Forzar override</button></td>
+        </tr>
+        <tr class="adm-editor-row is-hidden" id="editor-F">
+          <td colspan="5">
+            <div class="adm-editor">
+              <div>
+                <label style="font-size:var(--fs-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--adm-ink-faint,#6b7488);display:block;margin-bottom:5px">¿Lleva Cert. de Origen?</label>
+                <div class="adm-seg" data-row="F">
+                  <button data-val="auto" class="is-on" onclick="selectSeg('F','auto')">AUTO</button>
+                  <button data-val="requerido" onclick="selectSeg('F','requerido')">SÍ</button>
+                  <button data-val="no_requerido" onclick="selectSeg('F','no_requerido')">NO</button>
+                </div>
+              </div>
+              <div class="adm-field">
+                <label for="motivo-F">Motivo (obligatorio si elegís SÍ/NO)</label>
+                <textarea id="motivo-F" disabled placeholder="Por qué te apartás de la regla automática…"></textarea>
+              </div>
+              <div class="adm-editor-actions">
+                <div style="display:flex;gap:8px">
+                  <button class="adm-btn adm-btn--primary" onclick="saveRow('F')"><svg aria-hidden="true"><use href="#i-check"/></svg>Guardar</button>
+                  <button class="adm-btn" onclick="toggleEditor('F')">Cancelar</button>
+                </div>
+                <span class="adm-err" id="err-F"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-alert"/></svg>Motivo obligatorio para cambiar de AUTO</span>
+                <span class="adm-ok-toast" id="ok-F"><svg aria-hidden="true" style="width:12px;height:12px"><use href="#i-check"/></svg>Guardado</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+  <p class="faint" style="margin-top:8px">Probá el flujo: abrí "Definir" en la fila
+  118102233 (CLARIANT), elegí SÍ o NO y clickeá Guardar sin escribir motivo — el error inline
+  espeja el mensaje real del backend (<code>"motivo obligatorio para el override…"</code>,
+  <code>api/seguimiento.js:313</code>).</p>
+
+  <!-- ============================================================ -->
+  <h2 id="s4"><span class="num">4</span>Definir / editar override — contrato con el backend</h2>
+  <p class="intent">El editor de cada fila no inventa un flujo nuevo: es la UI directa de la
+  acción <code>set_requiere_co</code> que ya vive en <code>api/seguimiento.js</code>. Tabla de
+  mapeo control → payload, tal cual el contrato real:</p>
+
+  <div class="card">
+    <table class="adm-table" style="min-width:0">
+      <thead><tr><th>Control (UI)</th><th>Campo del payload</th><th>Validación</th></tr></thead>
+      <tbody>
+        <tr><td>Segmentado AUTO/SÍ/NO</td><td><code>valor</code>: <code>auto</code> | <code>requerido</code> | <code>no_requerido</code></td><td>uno de los 3, siempre</td></tr>
+        <tr><td>Textarea Motivo</td><td><code>motivo</code></td><td><b>obligatorio</b> si <code>valor≠auto</code> (espejo del CHECK <code>seguimiento_override_con_motivo</code>); se limpia a <code>null</code> si volvés a AUTO</td></tr>
+        <tr><td>(implícito — sesión)</td><td><code>order_number</code></td><td>normalizado igual que el resto de Seguimiento (strip de un 0 inicial)</td></tr>
+        <tr><td>(nunca del body)</td><td><code>requiere_co_by</code> / <code>requiere_co_at</code></td><td>los pone el server del JWT validado — el front <b>no los manda</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s5"><span class="num">5</span>Audit trail mínimo — quién y cuándo</h2>
+  <p class="intent">No hay un log genérico de cambios (diferido en todo Seguimiento) — lo que sí
+  se muestra siempre, tomado de columnas que YA existen en <code>seguimiento_ordenes</code>:
+  quién hizo el último override y cuándo. Mismo lenguaje visual que el sello "Revisado" de
+  Control BL (<code>controlBadge()</code>: <code>[who, when].filter(Boolean).join(' · ')</code>).</p>
+
+  <div class="card" style="max-width:420px">
+    <div class="adm-audit" style="font-size:12.5px">
+      <b>jz@ssbint.com</b> · hace 2 h<br>
+      <span class="adm-motivo-preview">"Roleo a nuevo buque — cliente pidió mantener el CO pese a que la regla automática (país Brasil) dice no_requerido."</span>
+    </div>
+    <p class="faint" style="margin-top:10px">Formato: <code>requiere_co_by</code> (usuario del JWT,
+    nunca del body) + <code>requiere_co_at</code> relativo, mismo helper <code>diasDesde()</code>/
+    variante en horas que ya usa la columna de alertas. Sin override activo, esta línea
+    directamente no se renderiza (fila C/D/F arriba).</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="s6"><span class="num">6</span>Candidatos futuros — fuera de alcance, con candado</h2>
+  <p class="intent">Estas tres configuraciones se pidieron para la misma solapa, pero John las
+  sacó del alcance de esta tanda (16-07 noche): <i>"prioridad es estabilizar la vertebración de
+  la base primero y sumar el resto de configs sobre esa base ya estable."</i> Se muestran acá
+  <b>deshabilitadas y con candado</b> — visibles para que el roadmap se entienda, sin habilitar
+  nada todavía.</p>
+
+  <div class="roadmap-grid">
+    <div class="roadmap-card" title="Candidato futuro — no se habilita en esta tanda">
+      <span class="lock-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-lock"/></svg></span>
+      <h4>Override de <code>mot</code> por orden</h4>
+      <p>Forzar marítimo/terrestre puntual cuando la orden no matchea el criterio automático de
+      Seguimiento.</p>
+      <div class="why">Por qué está bloqueado: decisión CERRADA 16-07 — candidato post-base estable.</div>
+    </div>
+    <div class="roadmap-card" title="Candidato futuro — dato bloqueado además de fuera de alcance">
+      <span class="lock-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-lock"/></svg></span>
+      <h4>Contactos de navieras destino</h4>
+      <p>Carga de <code>mailing_naviera_destino</code> — hoy vacía, bloquea el bloque "SHIPPING
+      LINE" del mail de shipping docs (G.2).</p>
+      <div class="why">Por qué está bloqueado: fuera de alcance E.1 + dato de Naara pendiente (arrastre).</div>
+    </div>
+    <div class="roadmap-card" title="Candidato futuro — no se habilita en esta tanda">
+      <span class="lock-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#i-lock"/></svg></span>
+      <h4>Toggle TEST_MODE (Mailing)</h4>
+      <p>Pasar el envío real de shipping docs de TEST_MODE a producción — hoy es un flag de
+      workflow n8n, no de UI.</p>
+      <div class="why">Por qué está bloqueado: tiene su propio gate de 3 pasos (arrastre), independiente de esta tanda.</div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="notas"><span class="num">✓</span>Notas para la aprobación de John</h2>
+  <p class="note">
+  · <b>El backend de esta feature ya existe.</b> <code>handleSetRequiereCo()</code> en
+  <code>api/seguimiento.js</code> (línea ~304) implementa exactamente el contrato de la sección
+  4 — auditoría incluida. Esta tanda es <b>90% front</b>: una tabla nueva + un editor que llama
+  una acción que ya está en prod y sin usar.<br>
+  · <b>Hallazgo de seguridad, no supuesto (verificado en código):</b> <code>ADMIN_ACTIONS</code>
+  en <code>api/seguimiento.js</code> hoy es <code>{anular_alta, co_config_list, co_config_upsert,
+  co_config_toggle, anular_sello}</code> — <code>set_requiere_co</code> <b>NO está en ese set</b>,
+  es una acción EMPLOYEE hoy. Si esta solapa se gatea <code>body.is-admin</code> en el front (como
+  pide el alcance), el gate es <b>cosmético</b>: cualquier empleado autenticado que llame al
+  endpoint directo con <code>action:'set_requiere_co'</code> puede seguir editándolo, tab o no
+  tab. Dos caminos, a decidir con John antes de implementar: (a) aceptar que es cosmético (mismo
+  criterio ya documentado para el resto de RBAC UI de la casa), o (b) sumar
+  <code>set_requiere_co</code> a <code>ADMIN_ACTIONS</code> server-side para que el candado sea
+  real. No es bloqueante para aprobar el visual, pero sí para el gate de implementación.<br>
+  · <b>La tabla no pagina en este mock</b> — 6 filas de ejemplo sobre "124 órdenes" reales del
+  censo. La versión real necesita paginación o, al menos, que el filtro "sin definir" sea el
+  default (son las únicas que realmente requieren acción del admin; el resto es solo consulta).<br>
+  · <b>Datos de ejemplo:</b> LUPIN SA / EMBALIXO MANAUS / GDM LOGISTICS / PBB POLISUR y sus
+  números de orden se reusan tal cual de <code>mockup_seguimiento_plancompleto.html</code>
+  (aprobado) para que la familia de mockups de PLAN COMPLETO se lea consistente. CLARIANT
+  ARGENTINA SA y QUÍMICA DEL NORTE SA son ilustrativos (casos "sin definir" nuevos para esta
+  tanda).<br>
+  · <b>Ícono <code>#i-lock</code> es nuevo</b> — no existe hoy en el sprite Lucide de
+  <code>index.html</code>. Si se aprueba el candado visual de la sección 6, es 1 símbolo SVG
+  más para sumar al sprite (mismo stroke que el resto, path real de Lucide "lock").<br>
+  · Este archivo es <b>visual únicamente</b> — el "Guardar" de los editores es un mock local
+  (valida motivo obligatorio y muestra un toast, no llama a ningún endpoint). No pasó por smoke
+  headless (ese corre sobre <code>index.html</code> real, después del gate de John sobre este mock).
+  </p>
+
+  <footer class="closing">docs/mockups/mockup_t8_admin_co.html · gate visual TANDA 8 / E.1 (Administración — Configuración de CO) · sin lógica real de escritura, datos de ejemplo · generado 2026-07-17</footer>
+</div>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-anchor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M12 8v14"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <!-- Lucide "lock" real — NUEVO, no existe hoy en el sprite de index.html (ver Notas §8) -->
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+</svg>
+
+<script>
+  // ---- RBAC demo (solo visual — no hay auth real en este mockup) ----
+  function setRbac(who){
+    var isAdmin = who === 'admin';
+    document.getElementById('rbac-admin').classList.toggle('is-on', isAdmin);
+    document.getElementById('rbac-op').classList.toggle('is-on', !isAdmin);
+    document.getElementById('rail-admin-item').style.visibility = isAdmin ? 'visible' : 'hidden';
+    document.getElementById('rbac-panel-admin').style.display = isAdmin ? '' : 'none';
+    document.getElementById('rbac-panel-op').style.display = isAdmin ? 'none' : '';
+    document.getElementById('rbac-caption-lbl').textContent = 'Vista del rail — sesión ' + (isAdmin ? 'ADMIN' : 'OPERADOR');
+    document.getElementById('rbac-caption-val').innerHTML = isAdmin
+      ? 'El ítem <b>Administración</b> aparece (borde punteado teal = nuevo). <code>class="tab-btn ssb-admin-only"</code> — visible porque <code>body.is-admin</code> está seteado.'
+      : 'El ítem <b>Administración</b> no se renderiza — <code>body:not(.is-admin) .ssb-admin-only{display:none!important}</code>. No hay candado visible: para un operador, el ítem directamente no existe.';
+  }
+
+  // ---- editor inline: abrir/cerrar ----
+  function toggleEditor(id){
+    var row = document.getElementById('editor-' + id);
+    row.classList.toggle('is-hidden');
+  }
+
+  // ---- segmentado AUTO/SÍ/NO ----
+  function selectSeg(id, val){
+    var group = document.querySelector('.adm-seg[data-row="' + id + '"]');
+    group.querySelectorAll('button').forEach(function(b){ b.classList.toggle('is-on', b.dataset.val === val); });
+    var textarea = document.getElementById('motivo-' + id);
+    textarea.disabled = (val === 'auto');
+    if (val === 'auto') textarea.value = '';
+    document.getElementById('err-' + id).classList.remove('show');
+  }
+
+  // ---- guardar (mock — valida motivo obligatorio, sin llamada real) ----
+  function saveRow(id){
+    var group = document.querySelector('.adm-seg[data-row="' + id + '"]');
+    var active = group.querySelector('button.is-on');
+    var val = active ? active.dataset.val : 'auto';
+    var motivo = document.getElementById('motivo-' + id).value.trim();
+    var err = document.getElementById('err-' + id);
+    var ok = document.getElementById('ok-' + id);
+    if (val !== 'auto' && !motivo){
+      err.classList.add('show');
+      ok.classList.remove('show');
+      return;
+    }
+    err.classList.remove('show');
+    ok.classList.add('show');
+    setTimeout(function(){
+      ok.classList.remove('show');
+      toggleEditor(id);
+    }, 1100);
+  }
+
+  function removeOverride(id){
+    selectSeg(id, 'auto');
+    document.getElementById('editor-' + id).classList.remove('is-hidden');
+  }
+
+  // ---- filtro simple del buscador ----
+  function filterAdmTable(){
+    var q = document.getElementById('adm-q').value.trim().toLowerCase();
+    var rows = document.querySelectorAll('#adm-table tbody tr.adm-row');
+    var visible = 0;
+    rows.forEach(function(r){
+      var match = !q || (r.dataset.q || '').indexOf(q) !== -1;
+      r.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('adm-count').textContent = visible;
+  }
+</script>
+</body>
+</html>
