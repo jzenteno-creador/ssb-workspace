@@ -74,8 +74,116 @@ function coSubline(r){
     return div;
   }
   if(r.co_requerimiento && r.co_requerimiento !== 'sin_definir')
-    return el('div', 'adm-audit', 'resuelto por configuración');
-  return null;
+    return el('div', 'adm-audit', 'resuelto por regla (excepción o origen de factura)');
+  // R2·G: sin_definir ahora significa casi siempre "esperando factura" (el
+  // origen llega solo cuando el clasificador/control procesa la factura)
+  return el('div', 'adm-audit', 'esperando factura (el origen define solo)');
+}
+
+// ═══════════ R2·G: EXCEPCIONES POR DIMENSIÓN — la regla del CO ═══════════
+// Base: origen argentino en la factura ⇒ requiere CO. Acá se administran las
+// EXCEPCIONES (país: Perú · cliente: TdF · material) vía co_config_* (admin).
+let _rules = [];
+
+// normKey espejo del contrato del directorio (mailing/CBL) — para la dimensión cliente
+const normKey = (s) => String(s || '').toUpperCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+async function loadRules(){
+  try {
+    const resp = await apiSeg({ action:'co_config_list' });
+    _rules = resp.rules || [];
+  } catch(e){ _rules = []; console.error('co_config_list:', e.message); }
+}
+
+function renderRules(){
+  const box = $('adm-rules'); if(!box) return;
+  box.textContent = '';
+  const t = el('table', 'adm-table');
+  const thead = el('thead'); const trh = el('tr');
+  ['Dimensión', 'Valor', 'CO', 'Motivo', 'Alta', ''].forEach(h => trh.appendChild(el('th', null, h)));
+  thead.appendChild(trh); t.appendChild(thead);
+  const tbody = el('tbody');
+  const activas = _rules.filter(r => r.documento === 'CO');
+  if(!activas.length){
+    const tr = el('tr'); const td = el('td', 'adm-sub', 'Sin reglas cargadas.'); td.colSpan = 6;
+    tr.appendChild(td); tbody.appendChild(tr);
+  }
+  for(const r of activas){
+    const tr = el('tr');
+    if(!r.activo) tr.style.opacity = '.45';
+    const dims = [];
+    if(r.ship_to_key) dims.push(['cliente', r.ship_to_key]);
+    if(r.pais_destino) dims.push(['país destino', r.pais_destino]);
+    if(r.material) dims.push(['material/GMID', r.material]);
+    tr.appendChild(el('td', null, dims.map(d => d[0]).join(' + ') || '—'));
+    const tdV = el('td', 'adm-mono'); tdV.textContent = dims.map(d => d[1]).join(' · ') || '—';
+    tr.appendChild(tdV);
+    const tdR = el('td');
+    tdR.appendChild(el('span', 'badge ' + (r.requiere_co ? 'badge--warning' : 'badge--neutral'),
+      r.requiere_co ? 'SÍ requiere' : 'NO requiere'));
+    tr.appendChild(tdR);
+    const tdM = el('td'); tdM.appendChild(el('div', 'adm-audit', r.motivo || '—')); tr.appendChild(tdM);
+    tr.appendChild(el('td', 'adm-audit', [r.created_by, r.created_at ? String(r.created_at).slice(0, 10) : null].filter(Boolean).join(' · ')));
+    const tdA = el('td', 'adm-actions');
+    const tglBtn = el('button', 'adm-btn', r.activo ? 'Desactivar' : 'Reactivar');
+    tglBtn.type = 'button';
+    tglBtn.onclick = async () => {
+      if(r.activo && !(await ssbConfirm({ title:'Desactivar regla', body:'La regla deja de aplicar (borrado lógico — se puede reactivar).', confirmText:'Desactivar', danger:true }))) return;
+      try {
+        await apiSeg({ action:'co_config_toggle', id: r.id, activo: !r.activo });
+        ssbToast('Regla ' + (r.activo ? 'desactivada' : 'reactivada') + ' ✓', 'success');
+        await loadRules(); renderRules(); await loadData(); render();
+      } catch(e){ ssbToast('No se pudo: ' + e.message, 'error'); }
+    };
+    tdA.appendChild(tglBtn);
+    tr.appendChild(tdA);
+    tbody.appendChild(tr);
+  }
+  t.appendChild(tbody);
+  const wrap = el('div', 'adm-tablewrap'); wrap.appendChild(t);
+  box.appendChild(wrap);
+}
+
+function buildRulesSection(root){
+  const h2 = el('h2', 'adm-rules-h', 'Excepciones por dimensión — la regla del CO');
+  root.appendChild(h2);
+  root.appendChild(el('p', 'adm-sub', 'Regla base: factura con ORIGEN ARGENTINO ⇒ la orden requiere CO. Acá viven las excepciones (por país como Perú, por cliente como los de Tierra del Fuego, por material). La definición orden-por-orden de abajo queda como válvula manual.'));
+  const rules = el('div'); rules.id = 'adm-rules';
+  root.appendChild(rules);
+
+  // alta de excepción
+  const form = el('div', 'adm-rule-form');
+  const mk = (ph, id, w) => { const i = document.createElement('input'); i.placeholder = ph; i.id = id; i.autocomplete = 'off'; i.style.width = w; return i; };
+  const iCli = mk('cliente (razón social — se normaliza sola)', 'adm-r-cli', '250px');
+  const iPais = mk('país destino (ej: Perú)', 'adm-r-pais', '150px');
+  const iMot = mk('motivo (obligatorio)', 'adm-r-motivo', '280px');
+  let reqVal = false;
+  const seg = el('div', 'adm-seg');
+  for(const [v, lbl] of [[false, 'NO requiere'], [true, 'SÍ requiere']]){
+    const b = el('button', 'adm-seg-btn' + (v === reqVal ? ' is-on' : ''), lbl);
+    b.type = 'button'; b.dataset.val = String(v);
+    b.onclick = () => { reqVal = v; seg.querySelectorAll('.adm-seg-btn').forEach(x => x.classList.toggle('is-on', x.dataset.val === String(v))); };
+    seg.appendChild(b);
+  }
+  const save = el('button', 'adm-btn adm-btn--primary', 'Agregar excepción'); save.type = 'button';
+  save.onclick = async () => {
+    const cli = iCli.value.trim(), pais = iPais.value.trim(), motivo = iMot.value.trim();
+    if(!cli && !pais){ ssbToast('Cargá al menos cliente o país.', 'error'); return; }
+    if(!motivo){ ssbToast('El motivo es obligatorio.', 'error'); return; }
+    const body = { action:'co_config_upsert', requiere_co: reqVal, motivo };
+    if(cli) body.ship_to_key = normKey(cli);
+    if(pais) body.pais_destino = pais;
+    try {
+      const resp = await apiSeg(body);
+      ssbToast('Excepción ' + ((resp.result && resp.result.status) || 'guardada') + ' ✓', 'success');
+      iCli.value = ''; iPais.value = ''; iMot.value = '';
+      await loadRules(); renderRules(); await loadData(); render();
+    } catch(e){ ssbToast('No se pudo guardar: ' + e.message, 'error'); }
+  };
+  [iCli, iPais, seg, iMot, save].forEach(x => form.appendChild(x));
+  root.appendChild(form);
+  root.appendChild(el('div', 'adm-rules-sep'));
 }
 
 // ---- editor inline (segmentado AUTO/SÍ/NO + motivo) ----
@@ -246,8 +354,14 @@ function ensureSkeleton(){
   const head = el('div', 'adm-head');
   const h1 = el('h1', null, 'Administración');
   head.appendChild(h1);
-  head.appendChild(el('p', 'adm-sub', 'Configuración del sistema — por ahora, SOLO la definición de Certificado de Origen por orden. El resto de configs llega sobre esta base.'));
+  head.appendChild(el('p', 'adm-sub', 'Certificado de Origen — la FACTURA decide (origen argentino ⇒ requiere CO); acá se administran las EXCEPCIONES y queda la válvula manual por orden. El resto de configs llega sobre esta base.'));
   root.appendChild(head);
+
+  // R2·G: sección de excepciones dimensionales ANTES de la tabla de órdenes
+  buildRulesSection(root);
+
+  const subh = el('h2', 'adm-rules-h', 'Órdenes — estado y válvula manual');
+  root.appendChild(subh);
 
   const toolbar = el('div', 'adm-toolbar');
   const qbox = el('div', 'adm-qbox');
@@ -328,8 +442,9 @@ async function loadAdminCo(){
     const cb = $('adm-solo-sindef'); if(cb) cb.checked = false;
   }
   try {
-    await loadData();
+    await Promise.all([loadData(), loadRules()]);
     render();
+    renderRules();
   } catch(e){
     const box = $('adm-tbl');
     if(box){ box.textContent = ''; box.appendChild(el('p', 'adm-sub', 'No se pudo cargar: ' + e.message)); }
