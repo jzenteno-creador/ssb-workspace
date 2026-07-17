@@ -256,7 +256,8 @@ UI change gate obligatorio.
 - **Seguimiento Terrestre completo (Belén / PLAN 2)** — módulo entero, conecta con B.1–B.7.
 - **Vacaciones lado empleado** — smoke pendiente (falta sesión no-admin).
 - **Datos que bloquean features:** email de Mariano (consultor), contactos navieras destino (tabla `mailing_naviera_destino` vacía), decisión planilla BRASIL `118979709`.
-- **TEST_MODE→real del mailing** — gate propio de 3 pasos, cuando quieras.
+- **TEST_MODE del mailing: sigue ON** — NO es un pendiente del plan: el flip a real es acción operativa
+  EXCLUSIVA de John, cuando decida que el producto está terminado. Los PUTs siguen asserteándolo `true`.
 
 ---
 
@@ -315,9 +316,17 @@ UI change gate obligatorio.
 | R2·E | Contactos LOG-IN al pie (texto TEXTUAL de John), SOLO carrier LOG-IN — **reemplaza el concepto P·6** | ✅ LIVE en 118975420; MAERSK sin bloque; `mailing_naviera_destino` fuera del template; Maersk/Hapag cuando John pase casillas (diferido) |
 | R2·F | Implementar Seguimiento MARÍTIMO (post-GO del mockup v2); terrestre = fase posterior con el mismo patrón | ⏸ bloqueado por GO del mockup v2 (**actualizado 17-07:** +sección DOCUMENTOS PARA EL ENVÍO en el desplegable — presencia está/falta por tipo con archivo real + estado del Control BL; SIN "aprobado" por documento, decisión John = futuro) |
 | **R2·I** | Mailing: (a) DIRECCIÓN del destinatario desde el BA — **hallazgo: la extracción YA EXISTÍA** (address_str del parser Booking), era plomería: espejo Armar fila Mailing la copia (CBL pin `9f69b166`) + backfill 84/84 + `party_dirs` en el resolver (pin `943bbc15`) + front con domicilio bajo Ship-to/Sold-to/Notify; (b) país junto al puerto ("POL → POD · País") | ✅ EN PROD (deploy `830b515`), verificado live |
-| **R2·J** | Mockup Seguimiento TERRESTRE (fase 2 — diferencias del modo: **inicia tránsito** en vez de zarpe, **CRT en vez de BL**, **sin Control BL**, sección TRANSPORTE CRT/MIC, PE no-aplica para STO) | ✅ EN PROD (GO de John 17-07 + cambio banderita): columna "Inicia tránsito → límite" (+1 hábil), desplegable con card TRANSPORTE — CRT/MIC (archivos del clasificador, MIC detectado por nombre, control del CRT = fase futura), DOCUMENTOS con CRT en lugar de BL + badge "sin Control BL — no aplica en terrestre" + PE "no aplica — orden STO"; smoke headless 20/20 |
+| **R2·J** | Mockup Seguimiento TERRESTRE (fase 2 — diferencias del modo: **inicia tránsito** en vez de zarpe, **CRT en vez de BL**, **sin Control BL**, sección TRANSPORTE CRT/MIC, PE no-aplica para STO) | ✅ EN PROD (GO de John 17-07 + cambio banderita): columna "Inicia tránsito → límite" (+1 hábil), desplegable con card TRANSPORTE — CRT/MIC (archivos del clasificador, MIC detectado por nombre, control del CRT = fase futura), DOCUMENTOS con CRT en lugar de BL + badge "sin Control BL — no aplica en terrestre" + PE "no aplica — orden STO"; smoke headless 20/20 · **VERIFICADO POR JOHN 17-07** |
 | **R2·H** | **[FUTURO — NO ejecutar ahora] Control Certificado de Origen vs Factura**: al extraer el PDF del CO, comparar sus valores contra la factura — **FOB o valor total según destino, con criterio DISTINTO para CHILE vs región MERCOSUR**. Mismo patrón que el control Factura↔Permiso (D.3) aplicado al CO. Arrastra extracción de un documento nuevo (el CO hoy es ZIP/PDF — confirmar si se extrae texto). También conecta con el "aprobado por documento" del desplegable (futuro) | 📌 REGISTRADO como ítem futuro (definición de John 17-07) — ni diseñado ni ejecutado; se agenda cuando John lo priorice |
 | R2·G | Rediseño CO implementado con las definiciones de John | ✅ EN PROD: seed 2 excepciones TdF por cliente · vista con derivación nueva (byte-verificada; hardcode Perú eliminado) · Admin re-orientada (sección Excepciones primero + válvula manual) · verificado en vivo: origen AR→requerido · Perú→no_requerido vía config · sin factura→"esperando factura" |
+
+## PRÓXIMA SESIÓN (registrado 2026-07-17 cierre — NO ejecutar ahora)
+
+| Código | Ítem | Notas |
+|---|---|---|
+| **PS·1** | **Nombre del cliente en el CUERPO del mail al cliente**: mostrar a quién se VENDE (Sold-to), a quién se ENVÍA (Ship-to) y el Notify. Hoy el nombre va en el ASUNTO pero no en el cuerpo | Primer ítem de la próxima sesión. Toca el template del resolver (PUT Iron Law al mailing `kh6TORgRg9R1Shj1`) — los 3 partes ya viajan en la fila (`ship_to_name`/`sold_to_name`/`notify_name` + `party_dirs` de R2·I) |
+
+---
 
 ## CONTROL DE CAMBIOS DEL PLAN
 
@@ -326,6 +335,7 @@ UI change gate obligatorio.
 
 | Fecha | Cambio | Motivo |
 |---|---|---|
+| 2026-07-17 (cierre FINAL) | **SMOKES DE JOHN APROBADOS — CERO CÓDIGO PENDIENTE DE LAS TANDAS**: banderita país destino VERIFICADA (mail real CON banderas + web) · Seguimiento Terrestre R2·J ✓ · B.1 alta por lote (T1·2) ✓ · G.1 filtro Mailing (T1·4) ✓ · Admin CO guardado (T8·3) ✓. **TEST_MODE deja de trackearse como pendiente del plan**: sigue ON, el flip a real es acción operativa EXCLUSIVA de John cuando dé por terminado el producto (nota en ARRASTRES reescrita). **+PS·1 registrado para la PRÓXIMA sesión** (no ejecutar): nombre del cliente en el CUERPO del mail — Sold-to (a quién se vende), Ship-to (a quién se envía) y Notify; hoy solo va en el asunto | Smokes finales de John 17-07 + directiva de cierre |
 | 2026-07-17 (R2-5ª · cierre) | **GO al mockup terrestre → R2·J EN PROD**: Seguimiento Terrestre sobre el patrón marítimo — "Inicia tránsito → límite" (+1 hábil), desplegable con TRANSPORTE CRT/MIC (archivos reales del clasificador) y DOCUMENTOS con CRT en lugar de BL, badge "sin Control BL", PE no-aplica STO (headless 20/20) · **Banderita (pedido nuevo)**: país destino como BANDERA flagcdn en Mailing junto a POL→POD (alt=nombre, degrade a texto) — reemplaza el "· País" textual de R2-3b · harness T5 Gmail→Drive versionado (estaba suelto) · **PINS de este doc corregidos** (estaban desactualizados: CBL decía `7cf87074`, vivo es `9f69b166`; mailing decía `bce090d2`, vivo es `943bbc15`) · Cierre de sesión: listado de pendientes clasificado entregado en el handoff | GO de John al terrestre + pedido banderita + cierre de corrida |
 | 2026-07-16 | Doc inicial: 13 pedidos (A–E) + decisiones pendientes + arrastres | Relevamiento de John (Claude web) |
 | 2026-07-16 tarde | Addendum: +A.3, B.8, C.2, G.1 → 17 ítems | John probando en prod |
