@@ -19,7 +19,7 @@ vive en `js/`.
 
 ## Stack
 
-- HTML/CSS/JS vanilla — `index.html` (~5.060 líneas: markup + CSS `<style>` + anti-FOUC + tags `<script>`/`<script type="module">`) es el cascarón. La LÓGICA vive en `js/shared/` (8 archivos: `helpers.js`/`supabase-client.js`/`auth.js` CLÁSICOS vía `<script src>` + `toast.js`/`autocomplete.js`/`nav.js`/`app-shell.js`/`mm-writes.js` ES Modules) y `js/features/` (14 módulos ES, uno por tab — ver mapa de módulos abajo), con `js/main.js` como entry point. Sin bundler — ES Modules nativos del browser
+- HTML/CSS/JS vanilla — `index.html` (~5.060 líneas: markup + CSS `<style>` + anti-FOUC + tags `<script>`/`<script type="module">`) es el cascarón. La LÓGICA vive en `js/shared/` (8 archivos: `helpers.js`/`supabase-client.js`/`auth.js` CLÁSICOS vía `<script src>` + `toast.js`/`autocomplete.js`/`nav.js`/`app-shell.js`/`mm-writes.js` ES Modules) y `js/features/` (15 módulos ES, uno por tab — ver mapa de módulos abajo), con `js/main.js` como entry point. Sin bundler — ES Modules nativos del browser
 - Persistencia: Supabase (proyecto `xkppkzfxgtfsmfooozsm`). Datos de tarifas marítimas/EFA históricamente desde Google Sheets/Excel
 - Deploy: Vercel — auto-deploy en `git push origin master` (rama es `master`, no `main`). `vercel.json` setea headers de seguridad, no hay build step. URL: `https://ssb-workspace.vercel.app`
 - Sin frameworks, sin bundlers. CDN-only (Supabase JS, fuentes). `npm` existe SOLO en `scripts/` y en los serverless de `api/` (utilidades/agentes), nunca en la app del front
@@ -50,11 +50,11 @@ No hay suite de tests. Verificación = smoke test visual en navegador (ver "Veri
 
 Censo/queries read-only a Supabase desde local: `.env` (`SUPABASE_DB_PASSWORD` = service_role JWT, nombre legacy) + `curl POST $SUPABASE_URL/rest/v1/rpc/execute_readonly_query` — UN statement, empieza con SELECT (sin WITH/CTE), sin `;`, keywords de escritura bloqueadas hasta en aliases.
 
-## Mapa de la app — 14 módulos (rail lateral)
+## Mapa de la app — 15 módulos (rail lateral)
 
 La nav es un **rail lateral fijo** estilo Flight Deck (2026-07-04): `<nav class="tab-bar">` fixed left 64px icon-only + tooltip, expandible a 228px vía botón pin (persistido en `localStorage['ssb-rail-pinned']`, solo ≥1101px), y drawer off-canvas ≤700px con hamburguesa en topbar. La clase `.tab-bar` se conserva a propósito: la referencia el anti-bypass de auth. Constant-dark en ambos temas (vars `--rail-*` + hex fijos — nunca vars que flipen en `body.light`).
 
-Desde F0 (2026-07-11) los 4 módulos de documentación (**Seguimiento, Control BL, Mailing, Cert-Origen**) viven **agrupados bajo un ítem "Documentación"** del rail (ícono `i-folder`, badge que cuenta solo alertas de órdenes activas): flyout en colapsado / árbol en pinned / drawer ≤700px.
+Desde F0 (2026-07-11) los módulos de documentación (**Seguimiento, Control BL, Mailing, Cert-Origen**) viven **agrupados bajo un ítem "Documentación"** del rail (ícono `i-folder`, badge que cuenta solo alertas de órdenes activas): flyout en colapsado / árbol en pinned / drawer ≤700px. Desde R2 (2026-07-17) **Seguimiento son DOS ítems del rail** sobre el mismo panel/módulo: `tab-seguimiento` (Marítimo, `#i-package`) y `tab-seguimiento-ter` (Terrestre, `#i-route`), conmutados por `segGo(mode)` — `'seguimiento-ter'` está en el array de `switchTab` SOLO para desactivar su botón, no tiene panel propio.
 
 `switchTab` **hardcodea el array de tab-ids** → al agregar un módulo nuevo hay que sumar el id ahí y el botón al rail (con `aria-label` e ícono único del sprite) o el panel nunca se activa.
 
@@ -71,11 +71,12 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | `docs/modules/vacaciones.md` + `docs/modules/auth-global.md` |
 | `agente` | SSB Copilot — text-to-SQL contra MySQL (orders/shipments) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
 | `workspace-ia` | Workspace IA — text-to-SQL contra Supabase (todas las tablas) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
-| `seguimiento` | Seguimiento — torre de control por orden (Supabase vista `v_operacion_estado`; write-actions vía `/api/seguimiento`, auth Bearer JWT + gate `vac_employees`). Agrupada bajo **Documentación**. | `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md` |
+| `seguimiento` | Seguimiento — torre de control por orden (Supabase vista `v_operacion_estado`; write-actions vía `/api/seguimiento`, auth Bearer JWT + gate `vac_employees`). Agrupada bajo **Documentación**; DOS ítems del rail (Marítimo/Terrestre) vía `segGo(mode)` — terrestre: CRT/MIC en vez de BL, sin Control BL, límite +1 hábil. Anon NO lee la vista (smokes headless = fixtures PostgREST). | `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md` + R2 en `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` |
 | `control-bl` | Control BL read-only (Supabase `bl_controls`) + **sello humano "Revisado"** (tabla `control_bl_sellos`, actions `sellar_control`/`anular_sello`; regla X keyea por `bl_file_id`) | `docs/modules/control-bl.md` · sello: `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` |
 | `mailing` | Mailing — envío de documentación (Supabase `mailing_*` + `/api/mailing` → webhook n8n) | header de `api/mailing.js` |
 | `cert-origen` | Certificado de Origen — ZIP COD en Drive → PDF pdf-lib + registro (Supabase `certificados_origen`) | `docs/modules/certificado-origen.md` · el ZIP jamás se modifica |
 | `schema` | Estructura DB — browser read-only del schema public (`/api/schema` → RPC F0, queries fijas sin input) | `docs/modules/schema-viewer.md` · el endpoint jamás acepta parámetros |
+| `admin-co` | Administración (solo admins, `.ssb-admin-only` + guard isAdmin) — config de CO: excepciones por dimensión (`seguimiento_co_config`) + override por orden como válvula; actions `set_requiere_co`/`co_config_*` en `/api/seguimiento` | módulo `js/features/admin-co.js` (R2·G/T8, 2026-07-17) · regla CO viva: origen AR ⇒ requerido, excepciones por PAÍS y CLIENTE |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
 
@@ -97,7 +98,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **los agentes text-to-SQL** (chat IA) → `docs/modules/agentes-text-to-sql.md` (guardrail de seguridad: `api/CLAUDE.md`, se auto-carga bajo `api/**`)
 - tocás **el workflow Schedule Excel→Supabase** → `docs/integrations/n8n-schedule-excel.md`
 - tocás **`scripts/claude-processor/`** → `scripts/claude-processor/README.md`
-- tocás **el plan de pedidos / tandas 0–8 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4, NO aplicado)
+- tocás **el plan de pedidos / tandas 0–8 / R2 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio — **plan CERRADO 17-07**: T0–T8+R2 en prod y verificadas; próximo = PS·1) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4 **APLICADO en prod 17-07**, partes a+b)
 - **antes de commitear cambios de UI** → `docs/dev/smoke-headless.md`
 
 ## Reglas — NO HACER
