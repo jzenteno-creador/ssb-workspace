@@ -221,12 +221,19 @@ function buildCompareEquipos(bl, ba, adu, palletsBLTotal) {
     const grossDiff = presentGr.length >= 2 && new Set(presentGr).size > 1;
     const refGr = (grBL != null) ? grBL : grAD;
 
-    // Measurement BL (europeo m³) → CD3 (×1000); vs Volume BA (CD3). Tolerancia = redondeo a entero.
+    // C2 (PUT-C3 · R8, 2026-07-18): volume_cd3 del BA llega YA EN M³ (SPEC firmada John
+    // 2026-07-17, verificado EXPLORE) — pese al nombre del campo ("_cd3"), NO es dm³/litros
+    // y NO se convierte contra el measurement del BL (también m³, ver parseNumberEU arriba).
+    // El código viejo trataba volume_cd3 como si estuviera en cd3 (Math.round(volRaw) sin
+    // conversión) y measM3 escalado ×1000 a cd3 → comparaba escalas distintas → flag falso
+    // de volumen SIEMPRE (ej. measBL_cd3≈46100 vs volBA_cd3≈45, nunca coincidían).
+    // Comparación directa en m³ + tolerancia por DIFERENCIA ABSOLUTA, NO por redondeo de
+    // cada lado (45.9 vs 46.1 redondeados a enteros dan 46/46 — esconde exactamente el caso
+    // que motiva la tolerancia; la resta abs() no tiene ese punto ciego). |Δm³| < 1.0 → OK
+    // (sub-unidad se ignora, decisión John); |Δm³| >= 1.0 → DIFF, igual criterio que antes.
     const measM3 = eBL ? parseNumberEU(eBL.measurement) : null;
-    const measBL_cd3 = (measM3 != null) ? Math.round(measM3 * 1000) : null;
-    const volRaw = eBA ? toNum(eBA.volume_cd3) : null;
-    const volBA_cd3 = (volRaw != null) ? Math.round(volRaw) : null;
-    const measDiff = (measBL_cd3 != null && volBA_cd3 != null) ? (measBL_cd3 !== volBA_cd3) : false;
+    const volM3 = eBA ? toNum(eBA.volume_cd3) : null;
+    const measDiff = (measM3 != null && volM3 != null) ? (Math.abs(measM3 - volM3) >= 1.0) : false;
 
     // Wooden BL (validación BL-only; NO se compara contra BA).
     const wm = eBL ? upper(eBL.wooden_material) : '';
@@ -267,10 +274,10 @@ function buildCompareEquipos(bl, ba, adu, palletsBLTotal) {
              stBL: cellSt(netBL, refNet, netDiff), stAD: cellSt(netAD, refNet, netDiff), stBA: cellSt(netBA, refNet, netDiff) },
       gross: { BL: grBL, Aduana: grAD, Booking: grBA,
                stBL: cellSt(grBL, refGr, grossDiff), stAD: cellSt(grAD, refGr, grossDiff), stBA: cellSt(grBA, refGr, grossDiff) },
-      // FIX1: presentación en m³ (BL ya viene en m³; BA = volume_cd3/1000). La comparación interna sigue en CD3 (measDiff).
-      meas: { BL_m3: measM3, BA_m3: (volRaw != null ? volRaw / 1000 : null),
-              stBL: measBL_cd3 == null ? 'NODATA' : (measDiff ? 'DIFF' : 'OK'),
-              stBA: volBA_cd3 == null ? 'NODATA' : (measDiff ? 'DIFF' : 'OK') },
+      // C2: BA ya es m³ directo (volM3), sin conversión — ver comentario en buildCompareEquipos.
+      meas: { BL_m3: measM3, BA_m3: volM3,
+              stBL: measM3 == null ? 'NODATA' : (measDiff ? 'DIFF' : 'OK'),
+              stBA: volM3 == null ? 'NODATA' : (measDiff ? 'DIFF' : 'OK') },
       wooden: { BL: woodenBL, st: eBL ? (woodenValid ? 'OK' : 'DIFF') : 'NODATA' },
       estado,
       notas: notas.join('; '),
