@@ -52,11 +52,10 @@ Pin pre `943bbc15` · nodo `Resolver Mailing` `194f0f56` · espejo `code_mailing
 - EXPLORE completo 18-07 (sub-agente + cross-check grep): **sin drift espejo↔vivo** (diff byte a byte exit 0), pin vivo confirmado `943bbc15-cc67-49d4-9740-175cd78bb52b` (36 nodos, 24 creds), TEST_MODE true en las 3 capas. `LOGIN_HEAD` = string plano `code_mailing_resolver.js:471`, ÚNICO consumo en `:486` (dentro del bloque `isLogin`); el subject no lo toca. Bug de origen: nació ES en el mismo commit (`9f11ab8`) donde LOGIN_LINES nació PT — omisión, no regresión.
 - PLAN: (1) editar espejo `:471` → copy PT; (2) actualizar **`_t6_resolver_test.cjs:117`** (assert textual ES hardcodeado — FLAG del EXPLORE, mismo commit); (3) derivar `put_a1_login_head.py` del esqueleto `put_r2_3ab_resolver.py` (`EXPECT_VER_PRE="943bbc15-cc67-49d4-9740-175cd78bb52b"`, target único Resolver Mailing, drift-check nodo-por-nodo, rollback, deactivate→activate); (4) correr `--dry-run` SIEMPRE primero — **sin flag ya escribe** (no existe `--apply` en esta familia); (5) PUT real; (6) smoke send test → bloque 100% PT. Snapshots JSON históricos con el ES quedan como están (no gatean nada).
 
-### A2 (alias PUT-M2 · R1) — bloque Partes en el cuerpo — Estado: `en cola`
-- Sold-to/Ship-to/Notify + party_dirs, labels PACKS en/es/pt, cadena notify con marca.
-- Fuente notify: `bl_extract.notify` (112/112 poblado, multilinea, línea 1 = nombre) → `notify_name` → `contacts_extracted.notify` → si nada, marca "⚠ SIN NOTIFY". Subject intacto.
-- Control discrepancia notify (118762005 RFORNE on-behalf) NO se toca — fix operativo, no de código.
-- Smoke: 4010746690 + una orden sin notify_name.
+### A2 (alias PUT-M2 · R1) — bloque Partes en el cuerpo — Estado: `✅ IMPLEMENTADO EN VIVO 18-07 — pin 990a5fc4 → 6164fe00 (commit 43cfee1) — smoke datos reales corriendo`
+- Bloque PARTES antes de PRODUCT (caja 3 columnas estilo KPI row): Sold-to/Ship-to (nombre + dirección de la misma fuente que `party_dirs`) + Notify por cadena `bl_extract.notify` línea 1 → `notify_name` → `contacts_extracted.notify.name` → marca visible. Data path verificado: `bl_extract` YA llega vía "GET control BL (latest)" sin select= — cero GETs nuevos. Subject intacto; `response.notify` (clave del directorio) intacta; RFORNE sin tocar. Test t6: 64/64 (14 asserts nuevos).
+- **⚠ DECISIÓN DE COPY ELEVADA A JOHN (aplicada con default, reversible en 1 PUT):** la marca se LOCALIZÓ por idioma — ES "⚠ SIN NOTIFY" · PT "⚠ SEM NOTIFY" · EN "⚠ NOTIFY NOT ON FILE" — en vez del string ES literal en los 3 idiomas (razón: template 100% localizado R2·D, precedente noDocs). John citó el string en ES; si prefiere el literal único, es un cambio de 2 strings.
+- Iron Law PASS completo + verificado en vivo (Partes + A1 + 3 marcas presentes, orden de bloques OK, active=true).
 
 ## B · CBL extracción
 
