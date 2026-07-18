@@ -71,9 +71,11 @@ Pin encadenado desde `9f69b166` · Iron Law (PUT solo por harness) · reproceso 
 - Smoke: reproceso 118762005 → seguro 129.17 (agrupado con C1/C2). **ELEVAR a John en el reporte del Workstream B:** ¿re-corremos las otras 7 CIP para corregir el backfill? (7 mails internos extra; también les daría el shape nuevo de items para D1).
 - Autocrítica del prep: los 8 PDFs son del mismo despachante/aduana (BB-PBB/Dow) — layout de otra aduana no visto; parser sigue siendo LLM, no determinístico (riesgo residual declarado: bloque fragmentado entre páginas o 3+ refs -PES-VP).
 
-### B2 (alias PUT-C4 · R3b) — parser Factura, `material` — Estado: `en cola`
-- Regla 11 `material` (layout `0099237508` de 729002); fallback regex determinístico SOLO si el prompt no alcanza.
-- Smoke: reproceso 4010729002; regresión 4010726911.
+### B2 (alias PUT-C4 · R3b) — parser Factura, `material` — Estado: `✅ DONE 18-07 — pin CBL c1c78576 → 7f8b0a69 (commit 7c5a86b) + SMOKE REPROCESO REAL PASS`
+- **Causa raíz (prep con PDFs reales):** el layout DFDA duplica la cantidad "1080,000 BAG" ANTES del par material+descripción — 7 órdenes rotas, TODAS "DFDA 7537 NT" (bug por template, recurrente). Aclaración: `0099237508` es el CÓDIGO DE MATERIAL, no el invoice (invoice real `0110-00058853`). El prompt alcanzó — fallback regex NO necesario.
+- Fix: bullet material con ancla posicional (último número largo pegado a la descripción) + EJEMPLO 3 del layout real, anclado a la cola del prompt con aborts defensivos. Espejo `factura_prompt.txt` regenerado del vivo (mismo commit).
+- **SMOKE real (reprocesos vía Form Trigger, 18-07):** 4010729002 → material `99237508` en 4/4 ítems (antes null) + ganó shape nuevo item/origen (D1-ready). Regresión 4010726911 → material `99208759` intacto 4/4, seguro null intacto (regresión B1 no-CIP ✓), overall OK. Ejecuciones reales end-to-end = re-registro del trigger post-PUT confirmado.
+- **HALLAZGO ELEVADO A JOHN (fuera del plan, sin tocar):** el mismo layout DFDA rompe el regex determinístico de `amount` en `code_inyectar_factura_v2.js` (7/7 con amount null, misma causa raíz). Fix de 1 línea descrito: `(?:[\d.,]+\s*BAG\s+)?` opcional en el ancla. Decide John si entra en la tanda.
 
 ## C · CBL comparador
 
