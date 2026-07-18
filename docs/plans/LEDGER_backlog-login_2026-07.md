@@ -7,7 +7,8 @@
 ## Estado global
 
 - **✅ FASE 1 (DISEÑO) COMPLETA 18-07 — los 6 visuales LOCKEADOS con mockup de referencia:** U1 (pill límite, opción 1) · U2 (rail sin badges, variante B) · D4 (timeline salidas, v2.1) · D3 (columna ETD + a-rolear) · D1 (desplegable por ítem) · D5 (visor lado a lado). Mockups en `docs/mockups/MOCKUP_*_2026-07-18.html`.
-- **FASE 2 (IMPLEMENTACIÓN): NO habilitada** — John la define por separado. HOLD total: sin PUTs, sin tocar la app, sin push. A1 con PLAN listo esperando. Cero código de la tanda implementado.
+- **🚀 FASE 2 (IMPLEMENTACIÓN) HABILITADA por John 18-07:** ejecución AUTÓNOMA de la secuencia completa A→B→C→U→D, sin pedir permiso por ítem. Gates vigentes: Iron Law en cada PUT (drift-check + connections byte-idénticas + activate + ejecución real post-PUT) · **STOP antes de CADA push** (commits locales acumulados) · TEST_MODE ON · rollback de la migración D3+D4 escrito ANTES de aplicar · intocables respetados · autocrítica en ítems think-hard · si algo falla 2 veces o pide decisión de negocio → PARAR y elevar a John. Reporte por workstream; mockups lockeados = referencia, sin re-abrir diseño.
+- EN CURSO: **A1 en IMPL** (agente: espejo + test t6 + `put_a1_login_head.py`; el PUT lo ejecuta el orquestador tras revisión) · **B1 en prep** (agente: PDF del PE 118762005 + prompt actual + regresiones CIP). Rama de trabajo: `feat/plan1-bl-nunca-silencioso` (master mergeado 18-07 pre-FASE 2 — decisión de orquestación: una sola línea de historia en vez de rama nueva; app+docs juntos, push gateado igual).
 - **TEST_MODE ON toda la tanda.** STOP antes de cualquier push.
 - Pins vivos (verificados 17-07 contra dump): CBL `WVt6gvghL2nFVbt6` = **`9f69b166`** (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = **`943bbc15`** (36, TEST_MODE 3 capas) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = **`b8d997d6`** (43).
 
