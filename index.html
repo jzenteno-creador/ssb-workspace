@@ -2625,6 +2625,42 @@ body.light #panel-control-bl{
 @keyframes cbl-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#panel-control-bl .cbl-spinner{animation:none}}
 </style>
+<style id="cbl-split-styles">
+/* ═══ Control BL — visor de DOS documentos lado a lado (D5, 2026-07-18) ═══
+   Mockup lockeado: docs/mockups/MOCKUP_D5_visor-split_2026-07-18.html — mismo
+   par de decisiones ahí congeladas. SOLO clases nuevas namespaced cbl-split-* —
+   pegado DESPUÉS de la isla #cbl-styles (arriba) para ganar por orden de cascada
+   sin specificity-hacks. La isla #cbl-styles y el bloque responsive Fase B
+   (@media max-width:900/700 sobre cbl-layout/cbl-master/cbl-search, más arriba
+   en este mismo <style> grande) son NO-TOUCH ABSOLUTO — ni una línea tocada acá.
+   Split HORIZONTAL únicamente: .cbl-frame sigue con sus alturas fijas (72vh doc
+   / 78vh iframe Análisis) SIN override — funcionan igual a mitad de ancho
+   (decisión explícita: no agregar variante vertical apilada, duplicaría alturas). */
+#panel-control-bl .cbl-split-toggle{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--cbl-ink);background:var(--cbl-surface);border:1px solid var(--cbl-line-strong);border-radius:9px;padding:7px 13px;cursor:pointer;margin-top:9px;margin-left:8px;transition:background .12s,border-color .12s,color .12s}
+#panel-control-bl .cbl-split-toggle:hover:not([disabled]){background:var(--cbl-surface-2)}
+#panel-control-bl .cbl-split-toggle .ic{width:14px;height:14px}
+#panel-control-bl .cbl-split-toggle.is-on{border-color:var(--cbl-accent);color:var(--cbl-accent);background:var(--cbl-accent-soft)}
+#panel-control-bl .cbl-split-toggle[disabled]{opacity:.45;cursor:not-allowed}
+
+/* Wrap: 1 col (default, sin tocar el layout de siempre) → 2 col cuando .is-split.
+   gap+padding horizontal 1:1 con el mockup lockeado — el padding propio de
+   .cbl-doctabs/.cbl-viewer (isla NO-TOUCH) sigue intacto adentro de cada pane. */
+#panel-control-bl .cbl-split-wrap{display:grid;grid-template-columns:1fr}
+#panel-control-bl .cbl-split-wrap.is-split{grid-template-columns:1fr 1fr;gap:12px;padding:0 12px}
+#panel-control-bl .cbl-split-wrap.is-split .cbl-split-pane{min-width:0}
+
+/* Doc-tabs más compactas dentro de un pane a mitad de ancho (mismo criterio del
+   mockup): las 6 tabs no rompen a scroll feo con la mitad del ancho disponible. */
+#panel-control-bl .cbl-split-wrap.is-split .cbl-doctab{font-size:11.5px;padding:6px 10px;gap:5px}
+#panel-control-bl .cbl-split-wrap.is-split .cbl-doctab .ic{width:12px;height:12px}
+
+/* ≤900px: colapsa a un solo documento (decisión D5) — el botón ya queda disabled
+   vía JS (cblSplitAllowed(), title explicativo); esta regla es la red de seguridad
+   puramente visual si is-split quedara en el DOM por cualquier motivo transitorio. */
+@media (max-width:900px){
+  #panel-control-bl .cbl-split-wrap.is-split{grid-template-columns:1fr}
+}
+</style>
 <style id="mailing-styles">
 /* ═══════════ Mailing — estilos scoped (T3, patrón isla #cbl-styles) ═══════════ */
 /* Todo bajo #panel-mailing, clases mail-*. DARK-AWARE (T3.1, a diferencia del CBL

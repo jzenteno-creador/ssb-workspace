@@ -40,7 +40,24 @@
 /* Reusa window.__ssb.supa (NO crea cliente). Render XSS-safe: createElement + textContent. */
   let _cblData = [];
   let _cblSel = null; // order_number seleccionado
-  let _cblActiveDoc = 'analisis'; // doc-tab activo; se resetea a 'analisis' SOLO al cambiar de control
+  // D5 (2026-07-18, mockup lockeado docs/mockups/MOCKUP_D5_visor-split_2026-07-18.html):
+  // visor de DOS documentos lado a lado, MISMA orden, split HORIZONTAL. El singleton
+  // _cblActiveDoc pasa a estado POR PANE — _cblDoc.a es el pane izquierdo (el "activo"
+  // de siempre en modo simple, sin split); _cblDoc.b es el pane derecho, solo visible
+  // con _cblSplit=true. Reglas lockeadas:
+  //  - _cblDoc.a se resetea a 'analisis' SOLO al cambiar de control (igual que antes).
+  //  - _cblDoc.b se resetea AL MISMO TIEMPO al default relativo a _cblDoc.a (BL si el
+  //    izquierdo quedó en Análisis, si no Análisis) — cblResetPaneDocs()/cblDefaultDocB().
+  //  - _cblSplit (el propio toggle) NO se resetea al cambiar de orden/control — se
+  //    mantiene mientras dure la sesión (variable de módulo, se pierde solo con reload).
+  let _cblDoc = { a: 'analisis', b: 'bl' };
+  let _cblSplit = false; // toggle "Lado a lado" (cabecera, junto a "Reprocesar BL draft")
+  function cblDefaultDocB(docA){ return docA === 'analisis' ? 'bl' : 'analisis'; }
+  function cblResetPaneDocs(){ _cblDoc = { a: 'analisis', b: cblDefaultDocB('analisis') }; }
+  // ≤900px colapsa a un solo documento (decisión D5) — mismo breakpoint que el bloque
+  // responsive Fase B de cbl-layout (index.html, NO-TOUCH), evaluado en JS porque acá
+  // decide un booleano de comportamiento (deshabilita el botón), no solo CSS.
+  function cblSplitAllowed(){ return window.innerWidth > 900; }
   const _cblBodyCache = {}; // body_html cacheado por order_number (sin re-fetch al volver al tab)
   const DOC_TABS = [
     { key:'analisis', label:'Análisis', icon:'#i-clipboard' },
@@ -190,6 +207,22 @@
     const u = document.createElementNS(NS, 'use');
     u.setAttribute('href', href);
     s.appendChild(u);
+    return s;
+  }
+  // Ícono inline de "dos paneles" para el toggle de split (D5) — SVG literal (1:1 con
+  // el mockup lockeado), no sprite: no hay símbolo #i-* equivalente en index.html.
+  // class="ic" para que el tamaño lo controle CSS (mismo patrón que svgUse arriba).
+  function svgSplitIcon(){
+    const NS = 'http://www.w3.org/2000/svg';
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('class', 'ic'); s.setAttribute('aria-hidden', 'true');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '2.4');
+    [[3, 4, 7.5, 16], [13.5, 4, 7.5, 16]].forEach(([x, y, w, h]) => {
+      const r = document.createElementNS(NS, 'rect');
+      r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', w); r.setAttribute('height', h); r.setAttribute('rx', '1.5');
+      s.appendChild(r);
+    });
     return s;
   }
 
@@ -456,10 +489,18 @@
 
   function cblSelect(orderNumber){
     _cblSel = orderNumber;
-    _cblActiveDoc = 'analisis'; // cambiar de control vuelve a Análisis (NUNCA dentro de render)
+    cblResetPaneDocs(); // cambiar de control vuelve ambos panes al default (NUNCA dentro de render)
     const row = cblUniverse().find(r => r.order_number === orderNumber);
     cblRenderList();
     if(row) cblRenderDetail(row);
+  }
+
+  // Row actualmente mostrada en el detalle, sea modo master/búsqueda (por
+  // order_number) o histórico (por id de corrida) — DRY entre el click-delegation
+  // de doc-tabs y el resize listener del split (D5).
+  function cblCurrentRow(){
+    if(_cblMode === 'historico') return _cblHistData.find(r => r.id === _cblHistSel) || null;
+    return cblUniverse().find(r => r.order_number === _cblSel) || null;
   }
 
   // Línea 1 del expediente: carrier · buque · viaje(mono) · POD · corrida — con pips
@@ -510,6 +551,10 @@
     const sello = cblSelloDe(row);
     const head = el('div', ('cbl-exp-head ' + (sello ? 'is-seal' : STATUS_CLASS[st])).trim());
     const topRow = el('div', 'cbl-exp-top');
+    // D5: visor split — efectivo solo si el toggle está prendido Y el viewport alcanza
+    // (≤900px colapsa a un solo documento, decisión lockeada). Se recalcula en CADA
+    // render del detalle (incluye el resize listener de más abajo).
+    const effectiveSplit = _cblSplit && cblSplitAllowed();
 
     const left = el('div');
     left.appendChild(el('div', 'cbl-exp-order', row.order_number || '—'));
@@ -564,6 +609,21 @@
     reproc.onclick = () => cblReprocesar(row.order_number, reproc);
     reprocDecorate(reproc, row.order_number); // A.2-front: pendiente → deshabilitado "Reprocesando…"
     right.appendChild(reproc);
+    // D5 (2026-07-18) — toggle "Lado a lado": mismo estilo/posición que sus vecinos
+    // (cabecera, junto a Reprocesar). Deshabilitado ≤900px con title explicativo —
+    // no se oculta (visibilidad constante del control, solo se apaga la acción).
+    const splitBtn = el('button', 'cbl-split-toggle' + (effectiveSplit ? ' is-on' : ''));
+    splitBtn.type = 'button';
+    splitBtn.id = 'cbl-split-toggle';
+    splitBtn.appendChild(svgSplitIcon());
+    splitBtn.appendChild(document.createTextNode('Lado a lado'));
+    const splitAllowedNow = cblSplitAllowed();
+    splitBtn.disabled = !splitAllowedNow;
+    splitBtn.title = splitAllowedNow
+      ? 'Ver dos documentos de esta orden lado a lado (p.ej. Análisis vs BL)'
+      : 'Necesitás una pantalla más ancha (más de 900px) para el visor lado a lado';
+    splitBtn.onclick = () => cblToggleSplit(row);
+    right.appendChild(splitBtn);
     if(sello && window.__ssbAuth && window.__ssbAuth.isAdmin){
       // Anular: SOLO admin (gate cosmético — el server re-valida con vac_employees.role).
       const anular = el('button', 'cbl-anular');
@@ -609,14 +669,64 @@
     // volver a abrirla (el estado vive en localStorage, no en el DOM)
     if(reprocPending(row.order_number)) cblShowReprocBanner(row.order_number, cambioSlot);
 
-    // Doc-tabs + visor (Análisis real; BL/Aduana/Booking/Factura/PE → visor Drive en commit 5)
-    const dt = el('div', 'cbl-doctabs'); dt.id = 'cbl-doctabs';
-    detail.appendChild(dt);
-    const viewer = el('div', 'cbl-viewer'); viewer.id = 'cbl-viewer';
-    detail.appendChild(viewer);
-    cblRenderDocTabs(row);
-    cblRenderViewer(row);
+    // Doc-tabs + visor (Análisis real; BL/Aduana/Booking/Factura/PE — habilitados desde
+    // el fix 2026-07-15, fc_link/pe_link). D5: wrap con 1 o 2 panes; cada pane tiene su
+    // propia doctabs+viewer con ids sufijados por pane (dejan de ser singleton).
+    const wrap = el('div', 'cbl-split-wrap' + (effectiveSplit ? ' is-split' : ''));
+    wrap.id = 'cbl-split-wrap';
+    wrap.appendChild(cblPaneSkeleton('a'));
+    if(effectiveSplit) wrap.appendChild(cblPaneSkeleton('b'));
+    detail.appendChild(wrap);
+    cblRenderDocTabs(row, 'a');
+    cblRenderViewer(row, 'a');
+    if(effectiveSplit){
+      cblRenderDocTabs(row, 'b');
+      cblRenderViewer(row, 'b');
+    }
   }
+
+  // Esqueleto DOM de un pane (doctabs + viewer, ids sufijados). D5.
+  function cblPaneSkeleton(pane){
+    const paneEl = el('div', 'cbl-split-pane');
+    paneEl.setAttribute('data-cbl-pane-root', pane);
+    const dt = el('div', 'cbl-doctabs'); dt.id = 'cbl-doctabs-' + pane;
+    paneEl.appendChild(dt);
+    const viewer = el('div', 'cbl-viewer'); viewer.id = 'cbl-viewer-' + pane;
+    paneEl.appendChild(viewer);
+    return paneEl;
+  }
+
+  // Click "Lado a lado": toggle + re-render completo del detalle (mismo camino que
+  // cualquier otro refresh — cblSelect ya renderiza así). Si el toggle se prende y el
+  // pane B coincidía con el A (evita 2 panes idénticos), aplica el default relativo
+  // (decisión D5: BL si el izquierdo está en Análisis, si no Análisis).
+  function cblToggleSplit(row){
+    if(!cblSplitAllowed()) return; // guard extra — el botón ya está disabled
+    _cblSplit = !_cblSplit;
+    if(_cblSplit && _cblDoc.b === _cblDoc.a) _cblDoc.b = cblDefaultDocB(_cblDoc.a);
+    cblRenderDetail(row);
+  }
+
+  // D5 — colapso responsive del split (≤900px). Debounced; solo actúa si el tab
+  // control-bl está activo (evita reload de iframes en tabs inactivos), si hay una
+  // orden mostrada, y si el breakpoint de 900px REALMENTE se cruzó (_cblSplitAllowedCache)
+  // — sin este último guard, CUALQUIER resize (incluidos los que no cruzan el
+  // breakpoint — barra de direcciones del navegador mobile, un screenshot fullPage
+  // de herramientas de test que redimensiona el viewport un instante, etc.) dispara
+  // un re-render completo que recarga AMBOS iframes sin necesidad (detectado en el
+  // smoke headless de este mismo commit). Reusa cblRenderDetail — recalcula 1 o 2
+  // panes en el siguiente render (no manipula el DOM del split a mano).
+  let _cblSplitAllowedCache = cblSplitAllowed();
+  window.addEventListener('resize', debounce(() => {
+    const nowAllowed = cblSplitAllowed();
+    if(nowAllowed === _cblSplitAllowedCache) return; // no cruzó el breakpoint — nada que recalcular
+    _cblSplitAllowedCache = nowAllowed;
+    if(!_cblSplit) return; // split apagado — no hay 1↔2 panes que decidir
+    const panel = document.getElementById('panel-control-bl');
+    if(!panel || !panel.classList.contains('active')) return;
+    const row = cblCurrentRow();
+    if(row) cblRenderDetail(row);
+  }, 250));
 
   // ════════════ Sello humano "control revisado" — POST + flujo (tanda 1.5.c) ════════════
   // Molde 1:1 de apiMailing/apiSeguimiento (T3/Seguimiento): Bearer JWT de sesión,
@@ -905,19 +1015,21 @@
   }
 
   // ── Doc-tabs (6) — disabled si no hay contenido ──
-  function cblRenderDocTabs(row){
-    const bar = $('cbl-doctabs');
+  function cblRenderDocTabs(row, pane){
+    const bar = $('cbl-doctabs-' + pane);
     if(!bar) return;
     const docs = cblDocsFor(row);
+    const activeDoc = _cblDoc[pane];
     bar.className = 'cbl-doctabs';
     bar.innerHTML = '';
     DOC_TABS.forEach(t => {
       let cls = 'cbl-doctab';
       if(t.key === 'analisis') cls += ' analisis';
-      if(t.key === _cblActiveDoc) cls += ' cbl-doctab--active';
+      if(t.key === activeDoc) cls += ' cbl-doctab--active';
       const btn = el('button', cls);
       btn.type = 'button';
       btn.setAttribute('data-cbl-doc', t.key);
+      btn.setAttribute('data-cbl-pane', pane);
       const hasContent = t.key === 'analisis' ? true : !!docs[t.key];
       if(!hasContent){
         btn.disabled = true;
@@ -929,17 +1041,22 @@
     });
   }
 
-  // ── Visor: Análisis (body_html on-demand) · resto → placeholder (commit 5) ──
-  async function cblRenderViewer(row){
-    const v = $('cbl-viewer');
+  // ── Visor: Análisis (body_html on-demand) · resto → visor Drive. D5: recibe el
+  // pane ('a'/'b') — el guard de carrera del fetch de Análisis (dos fetches pueden
+  // estar en vuelo a la vez, uno por pane) queda pane-aware. ──
+  async function cblRenderViewer(row, pane){
+    const v = $('cbl-viewer-' + pane);
     if(!v) return;
     v.className = 'cbl-viewer';
+    const activeDoc = _cblDoc[pane];
 
-    if(_cblActiveDoc !== 'analisis'){
-      // Documento de Drive (BL / Planilla Aduana / Booking). Factura/PE no llegan acá (tab disabled).
+    if(activeDoc !== 'analisis'){
+      // Documento de Drive (BL / Planilla Aduana / Booking / Factura / Permiso PE —
+      // habilitados desde el fix 2026-07-15 vía fc_link/pe_link, proyección PostgREST
+      // del JSONB de factura_extract/pe_extract; tab disabled si no hay link).
       const docs = cblDocsFor(row);
-      const id = docs[_cblActiveDoc];
-      const label = (DOC_TABS.find(t => t.key === _cblActiveDoc) || {}).label || 'Documento';
+      const id = docs[activeDoc];
+      const label = (DOC_TABS.find(t => t.key === activeDoc) || {}).label || 'Documento';
       v.innerHTML = '';
       if(!id){
         v.appendChild(stateMsg('#i-file-text', 'Sin documento', 'No hay un archivo de Drive guardado para este documento.'));
@@ -962,7 +1079,9 @@
     // fila con body_html YA TRAÍDO en el select de bl_controls crudo — nunca re-fetch a
     // v_bl_controls_latest, que siempre da la versión MÁS NUEVA y pisaría el análisis
     // de la corrida vieja que se está mirando. Cache por row.id en histórico, por
-    // order_number en master/búsqueda (ahí solo hay 1 versión visible por orden).
+    // order_number en master/búsqueda (ahí solo hay 1 versión visible por orden) — el
+    // cache NO se sufija por pane: si ambos panes muestran Análisis del MISMO row, es
+    // el mismo body_html, no hace falta duplicar el fetch.
     const orderNumber = row.order_number;
     const isHist = !!row._histRow;
     const cacheKey = isHist ? ('hist:' + row.id) : orderNumber;
@@ -987,15 +1106,21 @@
           .maybeSingle();
         if(error){
           console.error('control-bl:body_html', error);
-          if(_cblActiveDoc === 'analisis' && stillSelected()){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
+          if(_cblDoc[pane] === 'analisis' && stillSelected()){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
           return;
         }
         html = (data && data.body_html) || '';
         _cblBodyCache[cacheKey] = html;
       }
     }
-    // El usuario pudo cambiar de tab/control mientras resolvía el fetch
-    if(_cblActiveDoc !== 'analisis' || !stillSelected()) return;
+    // El usuario pudo cambiar de tab/control/pane (o apagar el split) mientras resolvía
+    // el fetch — el guard de carrera es POR PANE: cada uno solo pinta si SU pane sigue
+    // en 'analisis' y la orden/corrida sigue siendo la misma.
+    if(_cblDoc[pane] !== 'analisis' || !stillSelected()) return;
+    // Si el pane fue desmontado (toggle off / colapso ≤900px) mientras el fetch estaba
+    // en vuelo, el nodo capturado en `v` ya no es el que vive en el DOM — no pintar
+    // sobre un elemento huérfano.
+    if($('cbl-viewer-' + pane) !== v) return;
 
     v.innerHTML = '';
     if(!html){ v.appendChild(stateMsg('#i-file-text', 'Sin análisis', 'Este control no tiene el cuerpo del análisis guardado.')); return; }
@@ -1012,22 +1137,23 @@
     frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (html es un documento completo — no se escapa)
   }
 
-  // Cambio de doc-tab por event delegation: UN listener sobre #cbl-detail (no uno por tab)
+  // Cambio de doc-tab por event delegation: UN listener sobre #cbl-detail (no uno por
+  // tab, no uno por pane). D5: el pane se lee de data-cbl-pane (default 'a' — cubre el
+  // modo simple, donde el atributo igual se setea explícito desde cblRenderDocTabs).
+  // Re-renderiza SOLO el pane que cambió — el otro pane queda intacto (sin cross-render).
   (function(){
     const detailEl = $('cbl-detail');
     if(!detailEl) return;
     detailEl.addEventListener('click', e => {
       const tab = e.target.closest('[data-cbl-doc]');
       if(!tab || !detailEl.contains(tab) || tab.hasAttribute('disabled')) return;
+      const pane = tab.getAttribute('data-cbl-pane') || 'a';
       const doc = tab.getAttribute('data-cbl-doc');
-      if(doc === _cblActiveDoc) return;
-      _cblActiveDoc = doc;
-      // TANDA D: en histórico el eje es la CORRIDA (_cblHistSel por id), no la orden.
-      const row = _cblMode === 'historico'
-        ? _cblHistData.find(r => r.id === _cblHistSel)
-        : cblUniverse().find(r => r.order_number === _cblSel);
-      cblRenderDocTabs(row);
-      if(row) cblRenderViewer(row);
+      if(doc === _cblDoc[pane]) return;
+      _cblDoc[pane] = doc;
+      const row = cblCurrentRow();
+      cblRenderDocTabs(row, pane);
+      if(row) cblRenderViewer(row, pane);
     });
   })();
 
@@ -1180,7 +1306,7 @@
     if(!rows.length){ _cblSel = null; }
     else if(!_cblSel || !rows.some(r => r.order_number === _cblSel)){
       _cblSel = rows[0].order_number;
-      _cblActiveDoc = 'analisis';
+      cblResetPaneDocs();
     }
     cblRenderLote();
     cblRenderSummary();
@@ -1254,7 +1380,7 @@
     if(_cblMode === 'historico'){
       if(btn) btn.textContent = '◀ Volver';
       if(q){ q.placeholder = 'Orden exacta (o varias) — histórico completo, sin ventana de fecha…'; q.value = ''; }
-      _cblHistData = []; _cblHistSel = null; _cblActiveDoc = 'analisis';
+      _cblHistData = []; _cblHistSel = null; cblResetPaneDocs();
       const lb = $('cbl-lotebar'); if(lb){ lb.style.display = 'none'; lb.innerHTML = ''; }
       cblRenderHistList();
       setDetail(stateMsg('#i-search', 'Modo histórico', 'Buscá una orden (o varias) para ver TODAS sus corridas — sin límite de fecha. Los links a Drive de documentos de más de ~1 mes pueden estar caducados; el análisis se conserva igual.'));
@@ -1282,7 +1408,7 @@
     _cblHistData = (data || []).map(r => Object.assign({}, r, { _histRow: true }));
     await cblFetchSellos(); // sellos frescos — cualquier corrida vieja puede tener sello activo
     _cblHistSel = _cblHistData.length ? _cblHistData[0].id : null;
-    _cblActiveDoc = 'analisis';
+    cblResetPaneDocs();
     cblRenderHistList();
     cblRenderHistDetail();
   }
@@ -1302,7 +1428,7 @@
     card.appendChild(vline);
     const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
     card.appendChild(el('div', 'cbl-ctrl-route', route));
-    card.onclick = () => { _cblHistSel = row.id; _cblActiveDoc = 'analisis'; cblRenderHistList(); cblRenderHistDetail(); };
+    card.onclick = () => { _cblHistSel = row.id; cblResetPaneDocs(); cblRenderHistList(); cblRenderHistDetail(); };
     return card;
   }
 
@@ -1327,15 +1453,17 @@
     const row = _cblHistData.find(r => r.id === _cblHistSel);
     if(!row){ setDetail(stateMsg('#i-search', 'Nada para mostrar', 'Elegí una corrida de la lista.')); return; }
     cblRenderDetail(row);
-    // Aviso de histórico (item 7 + O1): reusa .cbl-issue-row, cero CSS nuevo.
+    // Aviso de histórico (item 7 + O1): reusa .cbl-issue-row, cero CSS nuevo. D5: el
+    // ancla ya no es #cbl-doctabs (singleton, no existe más) sino el wrap del split
+    // (#cbl-split-wrap) — así el banner queda arriba de TODO el visor, tenga 1 o 2 panes.
     const detail = $('cbl-detail');
-    const dt = $('cbl-doctabs');
-    if(detail && dt && dt.parentNode){
+    const wrap = $('cbl-split-wrap');
+    if(detail && wrap && wrap.parentNode){
       const warn = el('div', 'cbl-issue-row');
       warn.style.margin = '0 18px 12px';
       warn.appendChild(svgUse('#i-alert'));
       warn.appendChild(el('span', null, 'Corrida histórica: los documentos de Drive de más de ~1 mes pueden tener el link caducado — el análisis igual se conserva. Los doc-tabs intentan abrir el link de todas formas.'));
-      dt.parentNode.insertBefore(warn, dt);
+      wrap.parentNode.insertBefore(warn, wrap);
     }
   }
 
