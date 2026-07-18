@@ -808,7 +808,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       }
     }
     const { t: tD, tb: tbD } = segdTable(['Documento', 'Presencia', 'Archivo']);
-    for(const it of docsInventory(r)){
+    const docsInv = docsInventory(r);
+    for(const it of docsInv){
       const trd = el('tr');
       trd.appendChild(el('td', null, it.label));
       const tdPre = el('td');
@@ -832,6 +833,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
     cardD.appendChild(tD);
     cardD.appendChild(el('div', 'segd-foot', 'la vista de juntar los papeles para el correo — el "n/m" de la tabla, abierto · sin "aprobado" por documento (fase futura)'));
+    // D2(b) (18-07): hint de reproceso — SOLO cuando falta al menos un documento
+    // esperado (it.ok===false; excluye null = "no requiere"/"no aplica", que no
+    // cuenta como falta — mismo criterio que docsBadgeCell). Informativo, no
+    // warning (sin ámbar, mismo tono faint que el segd-foot de arriba) — reusa
+    // segReprocesarBl ya cableado por D1 (fallback Producto), cero lógica duplicada.
+    if(docsInv.some(x => x.ok === false)){
+      const hint = el('div', 'segd-foot');
+      hint.appendChild(document.createTextNode('Reprocesar BL re-busca los documentos en Drive. '));
+      const btnH = el('button', 'seg-btn', 'Reprocesar');
+      btnH.type = 'button';
+      btnH.style.cssText = 'font-size:10px;padding:2px 8px;color:var(--seg-ink-soft);background:none';
+      btnH.onclick = () => segReprocesarBl(r.order_number, btnH);
+      hint.appendChild(btnH);
+      cardD.appendChild(hint);
+    }
     grid.appendChild(cardD);
 
     td.appendChild(grid);
