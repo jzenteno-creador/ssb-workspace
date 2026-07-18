@@ -41,12 +41,13 @@
   .vday.we .vday-lbl{color:var(--seg-ink-soft)}
   .vday.fer .vday-lbl{color:var(--amber)}
   .vfer-name{font-size:9.5px;color:var(--amber);opacity:.85}
-  /* gap comprimido: un puntito por día, findes tintados */
-  .vgap{flex-shrink:0;border-top:2px dotted var(--seg-line);padding-top:9px;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:34px}
-  .vgap-dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:52px}
-  .vgap-dots i{width:4px;height:4px;border-radius:50%;background:var(--seg-line-strong)}
-  .vgap-dots i.we{background:rgba(91,155,245,.45)}
-  .vgap-lbl{font-size:8.5px;color:var(--seg-ink-faint);letter-spacing:.04em}
+  /* día vacío = columna ANGOSTA con fecha visible (ajuste John 18-07) */
+  .vday--slim{min-width:44px;max-width:48px;padding-top:7px;gap:1px;align-items:center}
+  .vday--slim .sdw{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-faint)}
+  .vday--slim .sdm{font-size:8.5px;color:var(--seg-ink-faint);opacity:.85}
+  .vday--slim.we .sdw,.vday--slim.we .sdm{color:rgba(91,155,245,.75)}
+  .vday--slim.fer .sdw,.vday--slim.fer .sdm{color:var(--amber)}
+  .vday--slim .sfer{font-size:7px;font-weight:800;letter-spacing:.06em;color:var(--amber);margin-top:2px}
 
   /* ── cards ── */
   .vcard{border:1px solid var(--seg-line);background:var(--seg-surface);border-radius:10px;padding:9px 11px;cursor:pointer;text-align:left;font-family:var(--font);transition:transform .1s,border-color .1s,opacity .15s;display:flex;flex-direction:column;gap:3px;width:100%}
@@ -116,13 +117,13 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
 </svg>
 
-<div class="mockband">Mockup estático v2 · nada implementado · para GO de John</div>
+<div class="mockband">Mockup estático v2.1 · nada implementado · para GO de John</div>
 <h1>D4 v2 — Timeline de salidas (riel comprimido)</h1>
 <p class="sub">Variante B + tus 6 cambios. <b>REAL de la DB hoy:</b> JATOBA 21/07 con sus cut-offs verdaderos (Doc 16/07 · Físico 18/07), las <b>5 candidatas a roleo reales</b> (ETD 13 y 14/07 sin ATD) y el feriado 17/08 (San Martín, de la tabla de vacaciones). <b>Ilustrativo:</b> las 4 salidas "programado (schedule)" usan buques reales del schedule con fechas aproximadas; las órdenes de la tabla de abajo son de muestra. Días de semana calculados por código (fix de la errata v1). <b>Probá:</b> click en buque · click en un destino del card · click en una candidata roja.</p>
 
 <section>
   <h2>El riel — lun 13/07 → mar 18/08 en un solo scroll</h2>
-  <p class="secsub">Días con evento = columna completa. Días vacíos = comprimidos a puntitos (uno por día; los azulados son finde). Feriados = columna ámbar aunque no haya salida. El eje arranca 5 días antes de HOY para que las candidatas a roleo queden a la vista.</p>
+  <p class="secsub">Días con evento = columna completa. Días vacíos = columna ANGOSTA con su fecha visible (ajuste 18-07); findes con fecha azulada y tinte, feriados con fecha ámbar. El eje arranca 5 días antes de HOY para que las candidatas a roleo queden a la vista.</p>
   <div class="vtl">
     <div class="vtl-head"><span class="vtl-title">Salidas</span><span class="vtl-range" id="rangeLbl"></span></div>
     <div class="vrail" id="rail"></div>
@@ -130,8 +131,8 @@
       <span><i class="lg" style="background:var(--seg-surface);border:1px solid var(--seg-line-strong)"></i>salida con órdenes</span>
       <span><i class="lg" style="background:var(--seg-surface-2);border:1px dashed var(--seg-line-strong)"></i>programado (schedule) — sin órdenes en circuito</span>
       <span><i class="lg" style="background:var(--red-bg);border:1px solid var(--red-bd)"></i>⟳ candidata a roleo (ETD vencido sin ATD)</span>
-      <span><i class="lg" style="background:rgba(245,166,35,.25);border:1px solid var(--amber-bd)"></i>feriado</span>
-      <span><i class="lg" style="background:rgba(91,155,245,.35)"></i>finde (puntito azulado)</span>
+      <span><i class="lg" style="background:rgba(245,166,35,.25);border:1px solid var(--amber-bd)"></i>feriado (fecha ámbar)</span>
+      <span><i class="lg" style="background:rgba(91,155,245,.35)"></i>finde (fecha azulada + tinte)</span>
     </div>
   </div>
 </section>
@@ -252,29 +253,24 @@ function mkCard(c){
   return el;
 }
 
-/* eje: expandido = con evento, HOY o feriado; corridas vacías → gap comprimido */
+/* eje: TODOS los días tienen columna con fecha; sin evento = columna angosta (ajuste John 18-07) */
 function buildRail(){
   const rail = document.getElementById('rail');
-  let gap = [];
-  const flushGap = () => {
-    if(!gap.length) return;
-    const g = document.createElement('div'); g.className = 'vgap';
-    g.title = gap.length + ' días sin salidas (' + DM(gap[0]) + ' → ' + DM(gap[gap.length-1]) + ')';
-    g.innerHTML = '<span class="vgap-dots">' + gap.map(d => '<i class="' + (isWE(d) ? 'we' : '') + '"></i>').join('') + '</span><span class="vgap-lbl">' + gap.length + 'd</span>';
-    rail.appendChild(g); gap = [];
-  };
   for(let d = D(START); d <= D(END); d.setDate(d.getDate() + 1)){
     const iso = d.toISOString().slice(0,10);
     const fer = FERIADOS[iso], cards = CARDS[iso], today = iso === TODAY;
-    if(!cards && !fer && !today){ gap.push(new Date(d)); continue; }
-    flushGap();
     const col = document.createElement('div');
-    col.className = 'vday' + (today ? ' today' : '') + (isWE(d) ? ' we' : '') + (fer ? ' fer' : '');
-    col.innerHTML = '<span class="vday-lbl">' + DW(d) + ' ' + DM(d) + (today ? ' · HOY' : '') + (fer ? ' · FERIADO' : '') + '</span>' + (fer ? '<span class="vfer-name">' + fer + '</span>' : '');
-    (cards || []).forEach(c => col.appendChild(mkCard(c)));
+    if(cards || today){
+      col.className = 'vday' + (today ? ' today' : '') + (isWE(d) ? ' we' : '') + (fer ? ' fer' : '');
+      col.innerHTML = '<span class="vday-lbl">' + DW(d) + ' ' + DM(d) + (today ? ' · HOY' : '') + (fer ? ' · FERIADO' : '') + '</span>' + (fer ? '<span class="vfer-name">' + fer + '</span>' : '');
+      (cards || []).forEach(c => col.appendChild(mkCard(c)));
+    } else {
+      col.className = 'vday vday--slim' + (isWE(d) ? ' we' : '') + (fer ? ' fer' : '');
+      if(fer) col.title = 'Feriado: ' + fer;
+      col.innerHTML = '<span class="sdw">' + DW(d) + '</span><span class="sdm">' + DM(d) + '</span>' + (fer ? '<span class="sfer">FERIADO</span>' : '');
+    }
     rail.appendChild(col);
   }
-  flushGap();
   document.getElementById('rangeLbl').textContent = DW(D(START)).toLowerCase() + ' ' + DM(D(START)) + ' → ' + DW(D(END)).toLowerCase() + ' ' + DM(D(END)) + ' · hoy es ' + DW(D(TODAY)).toLowerCase() + ' ' + DM(D(TODAY));
 }
 
