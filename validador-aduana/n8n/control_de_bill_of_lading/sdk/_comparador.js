@@ -133,9 +133,51 @@ const expectedIncotermBucketByFreight = (kind) => {
 function buildCompareEquipos(bl, ba, adu, palletsBLTotal) {
   // Mapas por fuente (clave = container en mayúsculas)
   const blMap = {}, adMap = {}, baMap = {};
+  // C1 (PUT-C2 · R7, 2026-07-18): adGroups agrupa TODAS las filas de Aduana por contenedor.
+  // La planilla puede traer el MISMO contenedor en varios renglones (multi-producto: un
+  // renglón por producto dentro del contenedor) — antes adMap[container]=e pisaba en cada
+  // vuelta del forEach (LAST-WINS) y se perdían neto/bruto de los renglones previos, así que
+  // el comparador terminaba comparando el BL/Booking (que sí totalizan el contenedor) contra
+  // UN SOLO renglón de Aduana → falso REVISAR (caso real: orden 118762005, MSBU8784391).
+  // adMap[container] sigue siendo un único renglón representativo (PRIMERO, no último — el
+  // orden entre renglones del mismo contenedor no tiene señal de cuál es "más correcto") para
+  // los campos que son propiedad física del contenedor (seal/precinto, container) y no varían
+  // entre renglones; adGroups es la fuente para sumar neto/bruto y listar contenido por
+  // renglón (ver sumField/bultosForRow y su uso más abajo).
+  const adGroups = {};
   (Array.isArray(bl?.equipos) ? bl.equipos : []).forEach(e => { if (e && e.container) blMap[upper(e.container)] = e; });
-  (Array.isArray(adu?.contenedores) ? adu.contenedores : []).forEach(e => { if (e && e.container) adMap[upper(e.container)] = e; });
+  (Array.isArray(adu?.contenedores) ? adu.contenedores : []).forEach(e => {
+    if (!e || !e.container) return;
+    const k = upper(e.container);
+    (adGroups[k] || (adGroups[k] = [])).push(e);
+    if (!adMap[k]) adMap[k] = e;   // representativo = PRIMER renglón
+  });
   (Array.isArray(ba?.equipos) ? ba.equipos : []).forEach(e => { if (e && e.container) baMap[upper(e.container)] = e; });
+
+  // C1: suma segura de neto/bruto entre renglones repetidos del mismo contenedor — trata null
+  // como ausente (no como 0); si NINGÚN renglón del grupo declara el campo, NODATA (null), igual
+  // que el comportamiento single-renglón previo (toNum(eAD.campo) con eAD ausente).
+  const sumField = (rows, field) => {
+    const vals = (rows || []).map(r => toNum(r && r[field])).filter(v => v != null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) : null;
+  };
+  // C1: BULTOS es ambiguo en multi-renglón. parseBultosAduana (nodo "Inyectar pe + source_link",
+  // code_inyectar_pe_source_link.js) ubica cada contenedor con String.indexOf(code) SIN avanzar
+  // el cursor entre renglones repetidos del MISMO contenedor — dos renglones del mismo contenedor
+  // pueden terminar apuntando al mismo segmento de texto y, si el matching neto/bruto no alcanza
+  // a discriminar o cae al fallback posicional (ints[0]), producir el MISMO bultos en ambas filas
+  // (dato duplicado, no dos lecturas independientes). Regla conservadora (sin acceso al raw desde
+  // acá): en grupos multi-renglón, un bultos que se REPITE entre 2+ filas del mismo contenedor se
+  // trata como no confiable → NODATA (null) para esas filas puntuales; un bultos que aparece UNA
+  // sola vez en el grupo se mantiene tal cual. Nunca se suma (bultos es un dato POR PRODUCTO en
+  // "contenido", no un total del contenedor) — "no flag falso, no suma ciega".
+  const bultosForRow = (row, rows) => {
+    const b = toNum(row && row.bultos);
+    if (b == null) return null;
+    if (!rows || rows.length <= 1) return b;   // single-renglón: comportamiento intacto
+    const dup = rows.some(r => r !== row && toNum(r && r.bultos) === b);
+    return dup ? null : b;
+  };
 
   // Base de filas = contenedores en BL y/o Aduana (excluir los SOLO-BA → fila fantasma).
   const keys = [...new Set([...Object.keys(blMap), ...Object.keys(adMap)])].sort();
@@ -154,20 +196,26 @@ function buildCompareEquipos(bl, ba, adu, palletsBLTotal) {
   const out = [];
   for (const k of keys) {
     const eBL = blMap[k], eAD = adMap[k], eBA = baMap[k];
+    // C1: TODOS los renglones de Aduana para este contenedor (1 en el caso común; 2+ en
+    // multi-producto). eAD sigue siendo el primero de este mismo array (adRows[0]).
+    const adRows = adGroups[k] || (eAD ? [eAD] : []);
 
     const sealBL = eBL ? (eBL.seal || eBL.seal_or_precinto || '') : '';
     const sealAD = eAD ? (eAD.precinto || eAD.seal || '') : '';
     const sealDiff = (sealBL && sealAD) ? (upper(sealBL) !== upper(sealAD)) : false;
 
     const netBL = eBL ? toNum(eBL.nw ?? eBL.net_kg ?? eBL.nw_kg) : null;
-    const netAD = eAD ? toNum(eAD.neto) : null;
+    // C1: suma de neto entre renglones repetidos del mismo contenedor (antes: solo el renglón
+    // representativo → perdía los demás productos del contenedor, ver adGroups arriba).
+    const netAD = adRows.length ? sumField(adRows, 'neto') : null;
     const netBA = eBA ? toNum(eBA.net_kg ?? eBA.nw) : null;
     const presentNet = [netBL, netAD, netBA].filter(v => v != null);
     const netDiff = presentNet.length >= 2 && new Set(presentNet).size > 1;
     const refNet = (netBL != null) ? netBL : netAD;
 
     const grBL = eBL ? toNum(eBL.gw ?? eBL.gross_kg ?? eBL.gw_kg) : null;
-    const grAD = eAD ? toNum(eAD.bruto) : null;
+    // C1: ídem netAD, para bruto.
+    const grAD = adRows.length ? sumField(adRows, 'bruto') : null;
     const grBA = eBA ? toNum(eBA.gross_kg ?? eBA.gw) : null;
     const presentGr = [grBL, grAD, grBA].filter(v => v != null);
     const grossDiff = presentGr.length >= 2 && new Set(presentGr).size > 1;
@@ -205,9 +253,13 @@ function buildCompareEquipos(bl, ba, adu, palletsBLTotal) {
       // Tanda C.1 — CONTENIDO por contenedor para el mail v10 (producto · bolsas · pallets).
       // Fuente primaria: extracción del raw del BA (Inyectar Booking); fallback: Aduana
       // (producto + bultos como pallets). Multi-producto → 2+ entradas (la plantilla apila).
+      // C1: el fallback de Aduana ahora recorre TODOS los renglones del contenedor (adRows) en
+      // vez de solo el representativo (eAD) — antes un contenedor con 2 productos en la
+      // planilla de Aduana mostraba una sola entrada (la del renglón que sobrevivía al pisado);
+      // ahora sale una entrada por renglón, con bultos NODATA si es ambiguo (bultosForRow).
       contenido: (eBA && Array.isArray(eBA.contenido) && eBA.contenido.length)
         ? eBA.contenido
-        : (eAD && eAD.producto ? [{ producto: eAD.producto, bolsas: null, pallets: toNum(eAD.bultos) }] : []),
+        : adRows.filter(r => r && r.producto).map(r => ({ producto: r.producto, bolsas: null, pallets: bultosForRow(r, adRows) })),
       seal: { BL: sealBL, Aduana: sealAD,
               stBL: sealBL ? (sealDiff ? 'DIFF' : 'OK') : 'NODATA',
               stAD: sealAD ? (sealDiff ? 'DIFF' : 'OK') : 'NODATA' },
