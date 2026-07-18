@@ -301,6 +301,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
   html.rail-pinned .rail-group.open .rail-doc-sub{display:flex;flex-direction:column;gap:3px;position:relative;padding:2px 0 0}
   html.rail-pinned .rail-group.open .rail-doc-sub::before{content:'';position:absolute;left:19px;top:2px;bottom:6px;width:1px;background:rgba(255,255,255,.10)}
   html.rail-pinned .rail-doc-sub .tab-btn{margin-left:22px;width:calc(100% - 22px);height:36px;font-size:12.5px}
+  /* U2 (18-07): #seg-group-badge ya no existe en el DOM (span sacado del rail) —
+     regla huérfana inofensiva, se deja tal cual (tocar CSS acá es riesgo sin beneficio) */
   html.rail-pinned .rail-group.open #seg-group-badge{display:none !important}
 }
 @media (max-width:700px){
@@ -309,6 +311,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
   .rail-group.open .rail-doc-sub{display:flex;flex-direction:column;gap:3px;position:relative;padding:2px 0 0}
   .rail-group.open .rail-doc-sub::before{content:'';position:absolute;left:19px;top:2px;bottom:6px;width:1px;background:rgba(255,255,255,.10)}
   .rail-doc-sub .tab-btn{margin-left:22px;width:calc(100% - 22px);height:36px;font-size:12.5px}
+  /* U2 (18-07): ídem arriba — #seg-group-badge huérfano, se deja */
   .rail-group.open #seg-group-badge{display:none !important}
 }
 
@@ -3463,13 +3466,19 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
   <button class="tab-btn" id="tab-agente" onclick="switchTab('agente')" aria-label="SSB Copilot"><svg class="ic" aria-hidden="true"><use href="#i-bot"/></svg><span class="tab-lbl">SSB Copilot</span></button>
   <button class="tab-btn" id="tab-workspace-ia" onclick="switchTab('workspace-ia')" aria-label="Workspace IA"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg><span class="tab-lbl">Workspace IA</span></button>
   <div class="rail-group" id="rail-doc">
-    <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><span class="vac-tab-badge" id="seg-group-badge" style="display:none">0</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <!-- U2 (18-07, Variante B lockeada): se sacaron los 3 badges numéricos de
+         alertas del rail (seg-group-badge acá + seg-tab-badge/seg-ter-badge
+         abajo) — el conteo vive SOLO en el card Resumen dentro de la solapa.
+         Las reglas CSS #seg-group-badge de las líneas ~304/312 quedan
+         huérfanas a propósito (display:none sobre un id que ya no existe:
+         inofensivo, tocar el CSS es riesgo sin beneficio). -->
+    <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
     <div class="rail-doc-sub" id="rail-doc-sub">
       <div class="rail-doc-hd" aria-hidden="true">Documentación</div>
       <!-- R2·F: Seguimiento partido en DOS ítems del rail (mockup aprobado 17-07) —
            segGo() fija el modo y corrige el par de estados activos -->
-      <button class="tab-btn" id="tab-seguimiento" onclick="segGo('maritimo')" aria-label="Seguimiento Marítimo"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento Marítimo</span><span class="vac-tab-badge" id="seg-tab-badge" style="display:none">0</span></button>
-      <button class="tab-btn" id="tab-seguimiento-ter" onclick="segGo('terrestre')" aria-label="Seguimiento Terrestre"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg><span class="tab-lbl">Seguimiento Terrestre</span><span class="vac-tab-badge" id="seg-ter-badge" style="display:none">0</span></button>
+      <button class="tab-btn" id="tab-seguimiento" onclick="segGo('maritimo')" aria-label="Seguimiento Marítimo"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span class="tab-lbl">Seguimiento Marítimo</span></button>
+      <button class="tab-btn" id="tab-seguimiento-ter" onclick="segGo('terrestre')" aria-label="Seguimiento Terrestre"><svg class="ic" aria-hidden="true"><use href="#i-route"/></svg><span class="tab-lbl">Seguimiento Terrestre</span></button>
       <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
       <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
       <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>

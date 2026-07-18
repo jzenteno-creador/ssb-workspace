@@ -14,9 +14,11 @@
    helpers.js sigue siendo clásico durante la transición, viven en el
    scope léxico global), debounce (×2, dentro de wire()), hoyBA,
    diasDesde, ssbSlaBucket, ssbToast, ssbConfirm, ssbAlert, switchTab
-   (deepLink resuelve vía window ✓). Actualiza los badges del rail
-   (`seg-tab-badge`/`seg-group-badge`, DOM fuera de #panel-seguimiento)
-   en cada renderAll(). Acciones (alta_despacho) vía /api/seguimiento
+   (deepLink resuelve vía window ✓). U2 (18-07, Variante B lockeada):
+   updateBadge() es NO-OP — se sacaron los 3 badges numéricos del rail
+   (`seg-tab-badge`/`seg-ter-badge`/`seg-group-badge`); el conteo de
+   alertas sigue vivo SOLO en el card Resumen dentro de la solapa
+   (mkChip('alertas', ...) en renderTriage, sin tocar). Acciones (alta_despacho) vía /api/seguimiento
    con Bearer JWT + gate vac_employees server-side: NO existen en local
    (501) — smoke de esa acción SOLO en prod; loadSeguimiento lee
    Supabase directo y SÍ es verificable en local. Modal Good Issue con
@@ -1172,14 +1174,12 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   function updateBadge(){
-    // R2·F: badge POR SOLAPA (mar/terr) + total en el grupo Documentación
-    const act = computeAll().filter(x => !x.c.archived);
-    const nMar = act.filter(x => (x.r.mot || 'maritimo') === 'maritimo').reduce((s2, x) => s2 + x.c.alerts.length, 0);
-    const nTer = act.filter(x => x.r.mot === 'terrestre').reduce((s2, x) => s2 + x.c.alerts.length, 0);
-    const set = (id, n) => { const b = $(id); if(!b) return; b.textContent = String(n); b.style.display = n > 0 ? '' : 'none'; };
-    set('seg-tab-badge', nMar);
-    set('seg-ter-badge', nTer);
-    set('seg-group-badge', nMar + nTer);
+    // U2 (18-07, Variante B lockeada): NO-OP a propósito. Los 3 spans que
+    // esto pintaba (seg-tab-badge/seg-ter-badge/seg-group-badge) se sacaron
+    // del rail en index.html — el conteo de alertas sigue vivo SOLO en el
+    // card Resumen de la solapa (renderTriage, sin tocar). Se deja la
+    // función + su llamada en renderAll() (no-op explícito documentado,
+    // en vez de código muerto activo recalculando computeAll() para nada).
   }
 
   // ═══════════ Modal Good Issue — dirty-guard nativo (no clon de .efa-mod-*) ═══════════
