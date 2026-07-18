@@ -89,10 +89,13 @@ Nodo COMPARADOR `76143b4d` + T7 `t7-armar-fcpe-01` · espejos `_comparador.js` /
 - Bug real: escalas distintas (BL ×1000 a cd3 vs BA as-is → flag falso SIEMPRE). Fix: comparación directa en m³, flag solo `abs(Δ) >= 1.0` (por diferencia — nunca redondeo por lado). NODATA intacto; verificación in-memory 8 casos (45.1848 vs 46.10 → OK).
 - **HALLAZGO ELEVADO A JOHN (preexistente, ahora consecuente, sin tocar):** `toNum()` misparsea números con exactamente 3 decimales como miles europeos (`45.999` → 45999) — un volumen BA así se leería inflado ×1000 → falso DIFF. Tocar `toNum` afecta ~15 sitios (no quirúrgico) — decide John si se ataca y cuándo. Sin fixture local que reproduzca la escala real: la verificación empírica es el reproceso 118762005.
 
-### C3 (alias PUT-C5 · R9) — FOB bulk-aware — Estado: `en cola`
-- En COMPARADOR + T7 `k_fob`. Detección = `isBulk` EXISTENTE (RE_BULK `/\b(BULK|BLK)\b/i` sobre `bl.goods_block_raw` — ya matchea 708683 "5 BULK OF 40 HC"); espejar isBulk en T7 vía `goods_block_raw`.
-- Regla John: unitario FOB/kg idéntico PE↔FC (abs(Δu) ≤ 0.005 USD/kg) + REVISAR solo si `kg_fc > kg_pe × 1.04` (exceso; under-shipment OK). No-bulk exacto. BL↔FC sin cambio.
-- Smoke: reproceso 708683 → sin flag; regresión 708684/735878/735880/735883/735888 + una no-bulk.
+### C3 (alias PUT-C5 · R9) — FOB bulk-aware — Estado: `✅ DONE 18-07 — pin CBL e70794b2 → c14bec3a (commit a03ee80) + SMOKE REPROCESO REAL PASS — WORKSTREAM C CERRADO`
+- Implementado en COMPARADOR (isBulk existente reusado) + T7 `k_fob` (detección re-derivada, patrón del nodo; data path `goods_block_raw` verificado en el spread del COMPARADOR — sin blocker). Fila nueva independiente "Peso bulk (KG, Factura↔PE)" solo exceso >4%. kg = BRUTO ambos lados (único par comparable; golden real coincide). 29/29 asserts + regresiones repo.
+- **SMOKE AGRUPADO C (reprocesos reales 18-07) — TODO PASS:**
+  - **118762005** → B1 `seguro_total=129.17` ✓ · C1 MSBU8784391 Aduana=27000 stAD=OK ✓ · C2 meas 45.522 vs 45.1848 → OK (Δ=0.34) ✓. Overall REVISAR con 3 motivos AJENOS a los fixes (identificado: buque de planilla aduana "LOG IN RESILIENTE" ≠ BL "MERCOSUL SUAPE" — dato real, + discrepancia notify RFORNE conocida).
+  - **4010708683** (bulk, número completo — el alias corto 708683 no existe en bl_controls) → overall **OK**, sin flag FOB, fila Peso bulk renderizada sin flaggear ✓.
+  - **Regresiones 6/6 PASS**: 4010708684 REVISAR→**OK** y 4010735880 REVISAR→**OK** (el falso flag de FOB bulk era la causa — C3 lo eliminó); 4010735878 OK→OK; 4010735883/888 REVISAR→REVISAR (flags legítimos restantes, sin empeorar); no-bulk 4010726911 OK→OK (exacto intacto).
+  - Bonus backfill: las órdenes reprocesadas hoy ganaron el shape nuevo de items (D1-ready).
 
 ## U · UI-chico (app — independiente de n8n, puede adelantarse)
 
