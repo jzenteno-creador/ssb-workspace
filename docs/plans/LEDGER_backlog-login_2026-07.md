@@ -85,10 +85,9 @@ Nodo COMPARADOR `76143b4d` + T7 `t7-armar-fcpe-01` · espejos `_comparador.js` /
 - `adGroups` suma neto/bruto de renglones repetidos por contenedor (antes LAST-WINS); bultos duplicado entre renglones = no confiable → NODATA puntual (nunca suma — dato por producto). Intocables verificados fuera del diff (gates bulk B/C/D, prefix4, decisión #1). Verificación in-memory 6 escenarios: single-row byte-idéntico al pre-fix. Causa raíz upstream documentada sin tocar: `parseBultosAduana` (nodo Inyectar pe + source_link) no avanza el cursor entre renglones repetidos — fix real futuro ahí.
 - Smoke: reproceso 118762005 → MSBU8784391 OK 27000/27540 (agrupado al cierre de C, junto con B1 y C2).
 
-### C2 (alias PUT-C3 · R8) — volumen, unidades + tolerancia — Estado: `en cola`
-- Fix de unidades: BA `volume_cd3` llega en m³, el comparador dividía ÷1000.
-- Tolerancia fija abs(ΔM3) < 1.0 — NO redondeo por lado (artefacto 45.9/46.1), sin banda %. Cubre LOG-IN y MAERSK por vivir en el comparador.
-- Smoke: mismo reproceso 118762005 → sin flag Vol (verifica C1+C2 juntos; cierra también el smoke de B1).
+### C2 (alias PUT-C3 · R8) — volumen, unidades + tolerancia — Estado: `✅ IMPLEMENTADO EN VIVO 18-07 — pin CBL 72e2f07f → e70794b2 (commit 6b84892) — verificación real en smoke agrupado C`
+- Bug real: escalas distintas (BL ×1000 a cd3 vs BA as-is → flag falso SIEMPRE). Fix: comparación directa en m³, flag solo `abs(Δ) >= 1.0` (por diferencia — nunca redondeo por lado). NODATA intacto; verificación in-memory 8 casos (45.1848 vs 46.10 → OK).
+- **HALLAZGO ELEVADO A JOHN (preexistente, ahora consecuente, sin tocar):** `toNum()` misparsea números con exactamente 3 decimales como miles europeos (`45.999` → 45999) — un volumen BA así se leería inflado ×1000 → falso DIFF. Tocar `toNum` afecta ~15 sitios (no quirúrgico) — decide John si se ataca y cuándo. Sin fixture local que reproduzca la escala real: la verificación empírica es el reproceso 118762005.
 
 ### C3 (alias PUT-C5 · R9) — FOB bulk-aware — Estado: `en cola`
 - En COMPARADOR + T7 `k_fob`. Detección = `isBulk` EXISTENTE (RE_BULK `/\b(BULK|BLK)\b/i` sobre `bl.goods_block_raw` — ya matchea 708683 "5 BULK OF 40 HC"); espejar isBulk en T7 vía `goods_block_raw`.
@@ -99,7 +98,8 @@ Nodo COMPARADOR `76143b4d` + T7 `t7-armar-fcpe-01` · espejos `_comparador.js` /
 
 Tier: Sonnet implementa, Fable revisa. Smoke headless pre-commit (`docs/dev/smoke-headless.md`).
 
-### U1 — pill "venció" → "límite" — Estado: `DISEÑO APROBADO 18-07 (LOCK: Opción 1 — ícono #i-alert + tooltip) — HOLD hasta fase de implementación`
+### U1 — pill "venció" → "límite" — Estado: `✅ DONE 18-07 (commit fe5a974) — smoke headless PASS + verificación visual vs mockup`
+- Implementado según Opción 1 lockeada: pill vencida con ícono `#i-alert` dentro (12px inline — isla CSS intocada), tooltip "Plazo de envío vencido el [fecha]", aria-label. Mismo code path marítimo/terrestre. Smoke con la receta de fixtures PostgREST NUEVA (gotcha documentado: en `page.route` gana la ruta registrada ÚLTIMO → catch-all primero, específicas después — reusar en D). Canario GoTrue=2 ✓. Nota menor de autocrítica: el tooltip de vencida reemplaza al genérico del header (pérdida del matiz "+1 día hábil" terrestre) — ajuste de 1 línea si a John le importa.
 - DECIDIDO por John 18-07: GO al cambio de texto "venció [fecha]" → "límite [fecha]" manteniendo el rojo. Confirmó la colisión de labels (en-fecha YA dice "límite" en `seguimiento.js:861`, azul) → el refuerzo no-cromático se decide sobre el mockup. NO implementar hasta ese OK.
 - Mockup: `docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html` — Opción 1 (RECOMENDADA: ícono `#i-alert` del sprite + tooltip) · Opción 2 (solo texto + tooltip) · Opción 3 (relleno sólido rojo + tooltip).
 - Anclas verificadas 18-07: texto en `js/features/seguimiento.js:858` (`dlCell`, bucket `vencida`, variant `bad` → `.seg-bdg--bad`). En implementación sumar texto accesible para lectores de pantalla.
