@@ -114,7 +114,7 @@ ok(!body.includes('loginlogistica'), 'carrier MAERSK → SIN bloque Log-In');
   NODES['GET mailing_orders'] = [moLI];
   const outLI = new Function('$', 'console', code)($, console).json;
   const bLI = outLI.response.body_html;
-  ok(bLI.includes('Favor de entrar en contacto con Login para retirar el BL original.'), 'Log-In: encabezado TEXTUAL');
+  ok(bLI.includes('Favor entrar em contato com a Login para retirar o BL original.'), 'Log-In: encabezado TEXTUAL');
   ok(bLI.includes('atendimento.longocurso@loginlogistica.com.br') && bLI.includes('92 8511-5816 – Joiciane Rocha'), 'Log-In: contactos verbatim (primero y último)');
   ok((bLI.match(/mailto:[\w.]+@loginlogistica/g) || []).length >= 10, 'Log-In: emails clickeables');
   NODES['GET mailing_orders'] = [mo];

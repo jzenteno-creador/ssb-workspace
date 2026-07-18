@@ -468,7 +468,7 @@ const control_fcpe = fcpeRow ? {
 // NO traducir aunque el mail vaya en otro idioma). Emails clickeables sin
 // alterar el texto. Maersk/Hapag: se suman cuando John tenga las casillas.
 const isLogin = /^LOG\s*-?\s*IN/i.test(String(pick(m.carrier) || '').trim());
-const LOGIN_HEAD = 'Favor de entrar en contacto con Login para retirar el BL original.';
+const LOGIN_HEAD = 'Favor entrar em contato com a Login para retirar o BL original.';
 const LOGIN_LINES = [
   'Atendimento Booking, alterações, Tracking e informações: atendimento.longocurso@loginlogistica.com.br',
   'Documentação (importação e exportação Brasil):  doc.longocurso@loginlogistica.com.br',
