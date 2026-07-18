@@ -58,7 +58,11 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   // soldto (item 49): filtro nuevo por sold_to_name (v3) — undefined/vacío en TODAS
   // las filas si la vista todavía es v2 → el select queda con solo "todos" (degrade).
   // T3 (B.7): el filtro mot MURIÓ — lo reemplazan las sub-solapas (_activeMode).
-  let _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
+  // D4 (18-07): _filters.vessel/pod nuevos — match EXACTO (molde cliente/soldto);
+  // vesselCand/vesselRoleada distinguen el ORIGEN del click de buque (candidata vs
+  // roleada vs card normal) cuando el mismo nombre de buque sirve voyages distintos
+  // en fechas distintas (p.ej. "LOG-IN JATOBA" candidata 14/07 vs main 21/07).
+  let _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'', vessel:'', pod:'', vesselCand:false, vesselRoleada:false };
   let _showArch = false;
   let _activeMode = 'maritimo';   // R2·F: modo del panel — lo fija segGo() desde los DOS ítems del rail
   // R2·F: desplegable por fila (solo marítimo) — órdenes abiertas + caches
@@ -69,6 +73,16 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   // T3 (B.3): país → iso2 para banderas flagcdn (nombre_es de paises, T4.b);
   // null hasta el primer load — sin mapa no hay bandera, jamás rompe.
   let _paisMap = null;
+  // D4 (18-07, timeline de salidas — mockup MOCKUP_D4v2_timeline-salidas_2026-07-18.html):
+  // _scheduleRows = schedules_master en ventana [hoy, hoy+21] disponible=true (bulk,
+  // best-effort — sin esto degrada a "sin cut-off en schedule" en todas las cards).
+  // _holidayMap = vac_holidays iso→nombre en la ventana máxima posible del riel; null
+  // hasta el primer load (degrade sin feriados, nunca rompe). _carrierMap = order_number
+  // → carrier (v_bl_controls_latest, mismo "último control" que ya usa la vista) — solo
+  // para desambiguar codeshare cuando el schedule lista 2 navieras el mismo día/buque.
+  let _scheduleRows = [];
+  let _holidayMap = null;
+  let _carrierMap = new Map();
 
   // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
@@ -238,6 +252,416 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return String(r.etd).slice(0, 10) < hoyBA() && !r.atd && !r.roleo_at && !r.archivada_at;
   }
 
+  // ═══════════ D4 (18-07): Timeline de salidas — riel comprimido ═══════════
+  // Mockup de referencia (ALGORITMO, portado — no reinventado):
+  // docs/mockups/MOCKUP_D4v2_timeline-salidas_2026-07-18.html (buildRail, columnas
+  // angostas por día vacío, cards, filtros combinados). Decisiones LOCKEADAS 18-07
+  // (ledger D4): cards "programado (schedule)" ENTRAN difuminadas/sin destinos ·
+  // ventana atrás DINÁMICA hasta la candidata más vieja, tope 14 días · ventana
+  // adelante hoy+21 · codeshare schedule-only bajo la naviera dueña del servicio ·
+  // candidatas a roleo (segARolear, D3) como cards rojas · roleadas registradas
+  // (roleo_at) = card de estado propio si alguna vez existe · oculto en terrestre ·
+  // vacío = línea sutil. DOM 100% createElement/textContent (regla del archivo) —
+  // el mockup usa innerHTML porque es una demo estática sin este requisito.
+
+  // ── día de semana + dd/mm por código (mismo patrón que fmtDMdow, sin TZ shift) ──
+  function segVtlDayParts(iso){
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return { dow:'', dm:'' };
+    const dow = DOW_AB[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()];
+    return { dow, dm: fmtDM(iso) };
+  }
+  function isoIsWeekend(iso){
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m) return false;
+    const dow = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+    return dow === 0 || dow === 6;
+  }
+  function isoDaysDiff(aIso, bIso){
+    const ma = String(aIso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const mb = String(bIso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!ma || !mb) return Infinity;
+    const da = Date.UTC(+ma[1], +ma[2] - 1, +ma[3]);
+    const db = Date.UTC(+mb[1], +mb[2] - 1, +mb[3]);
+    return Math.round((da - db) / 86400000);
+  }
+
+  // ── vessel "root" de schedules_master.buque: quita "(CMA)"/"(LOGIN)" y el código
+  // de voyage final (contiene dígitos) para poder emparejar el codeshare de la MISMA
+  // salida física bajo 2 navieras — verificado contra datos reales 18-07 ("LOG-IN
+  // JATOBA 285" / "LOG-IN JATOBA 1PC1HN1RCN  (CMA)" → mismo root "LOG-IN JATOBA";
+  // "JAZAN 2624N" bajo HAPAG y MSC → mismo root "JAZAN"). Idempotente sobre
+  // r.vessel (que ya llega "limpio", sin código) — mismo root en ambos lados.
+  function scheduleVesselRoot(buque){
+    let s = String(buque || '').trim();
+    if(!s) return '';
+    s = s.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    const toks = s.split(/\s+/).filter(Boolean);
+    if(toks.length > 1 && /\d/.test(toks[toks.length - 1])) toks.pop();
+    return toks.join(' ').toUpperCase();
+  }
+  // normaliza para comparar naviera (schedules_master) contra carrier (bl_controls) —
+  // vocabulario real hoy: "LOG-IN"/"LOG IN" deben matchear pese al guion/espacio.
+  function segNorm(s){ return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  function segNavieraMatchesCarrier(navieraUpper, carrierRaw){
+    const a = segNorm(navieraUpper), b = segNorm(carrierRaw);
+    if(!a || !b) return false;
+    return a.includes(b) || b.includes(a);
+  }
+  // carrier "moda" entre las órdenes de un grupo (bulk _carrierMap, best-effort) —
+  // null si ninguna orden del grupo tiene carrier conocido (degrade sin romper).
+  function segD4ModeCarrier(orderNumbers){
+    const counts = new Map();
+    for(const on of orderNumbers){
+      const c = _carrierMap.get(on) || _carrierMap.get(normalizeOrdenLocal(on));
+      if(!c) continue;
+      counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    let best = null, bestN = 0;
+    for(const [c, n] of counts){ if(n > bestN){ bestN = n; best = c; } }
+    return best;
+  }
+  // Cut Off Doc/Físico para una card CON órdenes: schedules_master.buque empieza
+  // con el vessel (case-insensitive) + ETD más cercano DENTRO del subset (regla
+  // firmada EXPLORE 2c — NUNCA fallback global). Codeshare (>1 naviera empatada en
+  // el ETD más cercano): 1º desambigua por el carrier REAL de la orden (_carrierMap,
+  // "uso el cut-off de la naviera de TU orden"); 2º si no hay carrier conocido, la
+  // naviera con más filas en el subset (fan-out de destinos = proxy de "dueña del
+  // servicio", mismo criterio que el dedup de schedule-only); 3º cut-off más
+  // temprano (determinístico, conservador). Sin match → null ("sin cut-off en schedule").
+  function segD4Cutoffs(vesselName, etdIso, orderNumbers){
+    const vUp = String(vesselName || '').trim().toUpperCase();
+    if(!vUp || !_scheduleRows.length) return null;
+    const candidates = _scheduleRows.filter(s => String(s.buque || '').toUpperCase().startsWith(vUp));
+    if(!candidates.length) return null;
+    let minDiff = Infinity;
+    for(const c of candidates){ const d = Math.abs(isoDaysDiff(c.etd, etdIso)); if(d < minDiff) minDiff = d; }
+    const closest = candidates.filter(c => Math.abs(isoDaysDiff(c.etd, etdIso)) === minDiff);
+    const byNav = new Map();
+    for(const c of closest){ const k = String(c.naviera || '').trim().toUpperCase(); if(!byNav.has(k)) byNav.set(k, c); }
+    if(byNav.size === 1) return [...byNav.values()][0];
+    const carrier = segD4ModeCarrier(orderNumbers);
+    if(carrier){
+      for(const [navKey, row] of byNav){ if(segNavieraMatchesCarrier(navKey, carrier)) return row; }
+    }
+    const counts = new Map();
+    for(const c of candidates){ const k = String(c.naviera || '').trim().toUpperCase(); counts.set(k, (counts.get(k) || 0) + 1); }
+    let bestKey = null, bestN = -1;
+    for(const [k, n] of counts){ if(n > bestN){ bestN = n; bestKey = k; } }
+    if(byNav.has(bestKey)) return byNav.get(bestKey);
+    return [...byNav.values()].sort((a, b) => (a.cut_off_doc || '9999-99-99') < (b.cut_off_doc || '9999-99-99') ? -1 : 1)[0];
+  }
+
+  // ── Ventana + grupos por día (candidatas / normal / roleada / schedule-only) ──
+  function segD4WindowAndGroups(){
+    const hoy = hoyBA();
+    const fwdEnd = isoPlus(hoy, 21);
+    const rowsMar = _rows.filter(r => r.mot !== 'terrestre' && !r.archivada_at);
+
+    const candidateRows = rowsMar.filter(r => segARolear(r));
+    // ventana atrás DINÁMICA hasta la candidata más vieja, tope 14 días (LOCK John 18-07)
+    let backStart = hoy;
+    if(candidateRows.length){
+      let minEtd = hoy;
+      for(const r of candidateRows){ const iso = String(r.etd).slice(0, 10); if(iso < minEtd) minEtd = iso; }
+      const capped = isoPlus(hoy, -14);
+      backStart = minEtd < capped ? capped : minEtd;
+    }
+
+    const roleadaRows = rowsMar.filter(r => !segARolear(r) && r.roleo_at && r.roleo_to_vessel && r.roleo_to_etd
+      && String(r.roleo_to_etd).slice(0, 10) >= backStart && String(r.roleo_to_etd).slice(0, 10) <= fwdEnd);
+    const normalRows = rowsMar.filter(r => !segARolear(r) && !r.roleo_at && r.etd
+      && String(r.etd).slice(0, 10) >= hoy && String(r.etd).slice(0, 10) <= fwdEnd);
+
+    const groupsByDate = new Map();
+    const pushGroup = (iso, group) => {
+      if(!iso) return;
+      if(!groupsByDate.has(iso)) groupsByDate.set(iso, []);
+      groupsByDate.get(iso).push(group);
+    };
+    const groupRows = (rows, vesselKey, etdKey) => {
+      const map = new Map();
+      for(const r of rows){
+        const v = r[vesselKey], e = r[etdKey];
+        if(!v || !e) continue;
+        const iso = String(e).slice(0, 10);
+        const key = v + '|' + iso;
+        if(!map.has(key)) map.set(key, { vessel: v, etd: iso, rows: [] });
+        map.get(key).rows.push(r);
+      }
+      return [...map.values()];
+    };
+
+    const candGroups = groupRows(candidateRows, 'vessel', 'etd');
+    const normalGroups = groupRows(normalRows, 'vessel', 'etd');
+    const roleadaGroups = groupRows(roleadaRows, 'roleo_to_vessel', 'roleo_to_etd');
+
+    // claimed: (vessel-root|etd) ya cubierto por una card con órdenes reales — el
+    // schedule-only NO debe duplicar esa misma salida (LOCK: entran, pero solo
+    // "sin órdenes en circuito").
+    const claimed = new Set();
+    for(const g of normalGroups) claimed.add(scheduleVesselRoot(g.vessel) + '|' + g.etd);
+    for(const g of roleadaGroups) claimed.add(scheduleVesselRoot(g.vessel) + '|' + g.etd);
+
+    for(const g of candGroups) pushGroup(g.etd, { kind:'candidata', vessel:g.vessel, etd:g.etd, rows:g.rows });
+    for(const g of normalGroups) pushGroup(g.etd, { kind:'normal', vessel:g.vessel, etd:g.etd, rows:g.rows });
+    for(const g of roleadaGroups) pushGroup(g.etd, { kind:'roleada', vessel:g.vessel, etd:g.etd, rows:g.rows });
+
+    // schedule-only: dedup por (root|etd) sobre TODO schedules_master en la
+    // ventana [hoy, fwdEnd] — el fan-out por puerto_destino colapsa solo (mismas
+    // filas repetidas por destino); el codeshare (2 navieras) se resuelve eligiendo
+    // la naviera con más filas (fan-out = proxy de "dueña del servicio", LOCK John
+    // 18-07), empate → cut_off_doc más temprano (determinístico).
+    if(_scheduleRows && _scheduleRows.length){
+      const schedGroupMap = new Map();
+      for(const s of _scheduleRows){
+        if(!s.etd) continue;
+        const iso = String(s.etd).slice(0, 10);
+        if(iso < hoy || iso > fwdEnd) continue;
+        const root = scheduleVesselRoot(s.buque);
+        if(!root) continue;
+        const key = root + '|' + iso;
+        if(!schedGroupMap.has(key)) schedGroupMap.set(key, []);
+        schedGroupMap.get(key).push(s);
+      }
+      for(const [key, rowsForKey] of schedGroupMap){
+        if(claimed.has(key)) continue;
+        const iso = key.slice(key.lastIndexOf('|') + 1);
+        const root = key.slice(0, key.lastIndexOf('|'));
+        const byNav = new Map();
+        for(const s of rowsForKey){
+          const k = String(s.naviera || '').trim().toUpperCase();
+          if(!byNav.has(k)) byNav.set(k, []);
+          byNav.get(k).push(s);
+        }
+        let bestKey = null, bestArr = null;
+        for(const [k, arr] of byNav){
+          if(bestArr === null){ bestKey = k; bestArr = arr; continue; }
+          if(arr.length > bestArr.length){ bestKey = k; bestArr = arr; continue; }
+          if(arr.length === bestArr.length){
+            const a = arr[0].cut_off_doc || '9999-99-99', b = bestArr[0].cut_off_doc || '9999-99-99';
+            if(a < b){ bestKey = k; bestArr = arr; }
+          }
+        }
+        const pick = bestArr[0];
+        pushGroup(iso, { kind:'sched', vessel:root, etd:iso, naviera:pick.naviera, cutDoc:pick.cut_off_doc, cutCargo:pick.cut_off_cargo });
+      }
+    }
+
+    return { hoy, backStart, fwdEnd, groupsByDate };
+  }
+
+  // ── selección de buque (click card) — combinación vessel+kind, molde mockup sel.vessel/sel.cand ──
+  function segVtlSelectionMatches(vesselName, kind){
+    if(_filters.vessel !== vesselName) return false;
+    if(kind === 'candidata') return _filters.vesselCand === true;
+    if(kind === 'roleada') return _filters.vesselRoleada === true;
+    return !_filters.vesselCand && !_filters.vesselRoleada;
+  }
+  function segVtlSelectVessel(vesselName, kind){
+    if(segVtlSelectionMatches(vesselName, kind)){
+      _filters.vessel = ''; _filters.vesselCand = false; _filters.vesselRoleada = false;
+    } else {
+      _filters.vessel = vesselName; _filters.vesselCand = kind === 'candidata'; _filters.vesselRoleada = kind === 'roleada';
+    }
+    renderAll();
+  }
+  // click POD: aditivo al filtro de buque (suma destino) — re-click mismo pod+buque = limpia solo el pod.
+  function segVtlSelectPod(vesselName, kind, pod){
+    if(_filters.pod === pod && _filters.vessel === vesselName){
+      _filters.pod = '';
+    } else {
+      _filters.vessel = vesselName; _filters.vesselCand = kind === 'candidata'; _filters.vesselRoleada = kind === 'roleada';
+      _filters.pod = pod;
+    }
+    renderAll();
+  }
+
+  function segVtlCutLine(label, iso){
+    const span = el('span', 'seg-vtl-cut');
+    span.appendChild(el('span', 'lbl', label));
+    if(!iso){ span.appendChild(el('b', null, '—')); return span; }
+    const hoy = hoyBA();
+    if(iso < hoy) span.classList.add('past');
+    else if(iso === hoy) span.classList.add('warn');
+    const dp = segVtlDayParts(iso);
+    span.appendChild(el('b', null, dp.dow + ' ' + dp.dm));
+    return span;
+  }
+  function segVtlPodChips(g){
+    const podCounts = new Map();
+    for(const r of g.rows){ if(!r.pod) continue; podCounts.set(r.pod, (podCounts.get(r.pod) || 0) + 1); }
+    if(!podCounts.size) return null;
+    const pods = el('span', 'seg-vtl-pods');
+    for(const [pod, n] of podCounts){
+      const b = el('button', 'seg-vtl-pod', pod + ' (' + n + ')');
+      b.type = 'button';
+      b.classList.toggle('on', _filters.vessel === g.vessel && _filters.pod === pod);
+      b.onclick = (ev) => { ev.stopPropagation(); segVtlSelectPod(g.vessel, g.kind, pod); };
+      pods.appendChild(b);
+    }
+    return pods;
+  }
+  function segVtlSchedCard(g){
+    const card = el('div', 'seg-vtl-card seg-vtl-card--sched');
+    card.appendChild(el('span', 'seg-vtl-name', g.vessel));
+    if(g.naviera) card.appendChild(el('span', 'seg-vtl-carrier', g.naviera));
+    const cuts = el('span', 'seg-vtl-cuts');
+    cuts.appendChild(segVtlCutLine('C.Off Doc', g.cutDoc));
+    cuts.appendChild(segVtlCutLine('C.Off Fís', g.cutCargo));
+    card.appendChild(cuts);
+    card.appendChild(el('span', 'seg-vtl-sched-tag', 'programado (schedule) · sin órdenes en circuito'));
+    return card;
+  }
+  function segVtlOrderCard(g){
+    const orderNumbers = g.rows.map(r => r.order_number);
+    const nOrders = g.rows.length;
+    const isCand = g.kind === 'candidata', isRoleada = g.kind === 'roleada';
+    const card = el('button', 'seg-vtl-card' + (isCand ? ' seg-vtl-card--cand' : '') + (isRoleada ? ' seg-vtl-card--roleada' : ''));
+    card.type = 'button';
+    const isOn = segVtlSelectionMatches(g.vessel, g.kind);
+    card.classList.toggle('on', isOn);
+    card.classList.toggle('dim', !!_filters.vessel && !isOn);
+    card.onclick = (ev) => { if(ev.target.closest('.seg-vtl-pod')) return; segVtlSelectVessel(g.vessel, g.kind); };
+    if(isCand){
+      const tag = el('span', 'seg-vtl-cand-tag');
+      tag.appendChild(svgUse('#i-alert', 'ic ic-sm'));
+      tag.appendChild(document.createTextNode(' SIN ROLEAR'));
+      card.appendChild(tag);
+    } else if(isRoleada){
+      const tag = el('span', 'seg-vtl-roleada-tag');
+      tag.appendChild(svgUse('#i-rotate', 'ic ic-sm'));
+      tag.appendChild(document.createTextNode(' ROLEADA — pend. BL nuevo'));
+      card.appendChild(tag);
+    }
+    card.appendChild(el('span', 'seg-vtl-name', g.vessel));
+    if(!isCand){
+      const co = segD4Cutoffs(g.vessel, g.etd, orderNumbers);
+      const carrierFallback = segD4ModeCarrier(orderNumbers);
+      if(co && co.naviera) card.appendChild(el('span', 'seg-vtl-carrier', co.naviera));
+      else if(carrierFallback) card.appendChild(el('span', 'seg-vtl-carrier', carrierFallback));
+      if(co){
+        const cuts = el('span', 'seg-vtl-cuts');
+        cuts.appendChild(segVtlCutLine('C.Off Doc', co.cut_off_doc));
+        cuts.appendChild(segVtlCutLine('C.Off Fís', co.cut_off_cargo));
+        card.appendChild(cuts);
+      } else {
+        card.appendChild(el('span', 'seg-vtl-nocut', 'sin cut-off en schedule'));
+      }
+    }
+    const numsWrap = el('span', 'seg-vtl-nums');
+    if(isCand){
+      numsWrap.appendChild(el('b', null, String(nOrders)));
+      numsWrap.appendChild(document.createTextNode(' ' + (nOrders === 1 ? 'orden' : 'órdenes') + ' · ETD vencido sin ATD'));
+    } else {
+      const nCont = g.rows.reduce((acc, r) => acc + (Number(r.contenedores) || 0), 0);
+      numsWrap.appendChild(el('b', null, String(nOrders)));
+      numsWrap.appendChild(document.createTextNode(' ' + (nOrders === 1 ? 'orden' : 'órdenes') + ' · '));
+      numsWrap.appendChild(el('b', null, String(nCont)));
+      numsWrap.appendChild(document.createTextNode(' cont.'));
+    }
+    card.appendChild(numsWrap);
+    const pods = segVtlPodChips(g);
+    if(pods) card.appendChild(pods);
+    if(!isCand){
+      const nRev = g.rows.filter(r => r.overall_result === 'REVISAR' && r.control_estado !== 'SELLADO').length;
+      if(nRev){
+        const al = el('span', 'seg-vtl-alert');
+        al.appendChild(svgUse('#i-alert', 'ic ic-sm'));
+        al.appendChild(document.createTextNode(' ' + nRev + ' REVISAR'));
+        card.appendChild(al);
+      }
+    }
+    return card;
+  }
+
+  // ── chips removibles en la barra de filtros existente (seg-fstate) ──
+  function ensureVtlChipsUI(){
+    let box = $('seg-vtl-chips');
+    if(box) return box;
+    const state = document.querySelector('#panel-seguimiento .seg-fstate');
+    if(!state) return null;
+    box = el('span', 'seg-vtl-chips');
+    box.id = 'seg-vtl-chips';
+    state.insertBefore(box, state.firstChild);
+    return box;
+  }
+  function renderVtlChips(){
+    const box = ensureVtlChipsUI(); if(!box) return;
+    while(box.firstChild) box.removeChild(box.firstChild);
+    if(_filters.vessel){
+      const chip = el('button', 'seg-vtl-chip' + (_filters.vesselCand ? ' seg-vtl-chip--cand' : ''));
+      chip.type = 'button';
+      const lead = _filters.vesselCand ? '⟳ sin rolear · ' : (_filters.vesselRoleada ? '⟳ roleada · ' : 'buque: ');
+      chip.textContent = lead + _filters.vessel + ' ✕';
+      chip.onclick = () => { _filters.vessel = ''; _filters.vesselCand = false; _filters.vesselRoleada = false; renderAll(); };
+      box.appendChild(chip);
+    }
+    if(_filters.pod){
+      const chip = el('button', 'seg-vtl-chip');
+      chip.type = 'button';
+      chip.textContent = 'destino: ' + _filters.pod + ' ✕';
+      chip.onclick = () => { _filters.pod = ''; renderAll(); };
+      box.appendChild(chip);
+    }
+  }
+
+  function segVtlRangeLabel(backStart, fwdEnd, hoy){
+    const a = segVtlDayParts(backStart), b = segVtlDayParts(fwdEnd), h = segVtlDayParts(hoy);
+    return a.dow + ' ' + a.dm + ' → ' + b.dow + ' ' + b.dm + ' · hoy es ' + h.dow + ' ' + h.dm;
+  }
+
+  // ═══ Render del timeline — vacía y repuebla su div (patrón de la casa) ═══
+  function renderVesselTimeline(){
+    const box = $('seg-vessels-timeline'); if(!box) return;
+    if(_activeMode === 'terrestre'){ box.style.display = 'none'; while(box.firstChild) box.removeChild(box.firstChild); return; }
+    box.style.display = '';
+    while(box.firstChild) box.removeChild(box.firstChild);
+
+    const { hoy, backStart, fwdEnd, groupsByDate } = segD4WindowAndGroups();
+    let totalCards = 0;
+    for(const arr of groupsByDate.values()) totalCards += arr.length;
+    if(!totalCards){
+      box.appendChild(el('div', 'seg-vtl-empty', 'Sin salidas próximas ni candidatas a roleo en esta ventana.'));
+      renderVtlChips();
+      return;
+    }
+
+    const wrap = el('div', 'seg-vtl');
+    const head = el('div', 'seg-vtl-head');
+    head.appendChild(el('span', 'seg-vtl-title', 'Salidas'));
+    head.appendChild(el('span', 'seg-vtl-range', segVtlRangeLabel(backStart, fwdEnd, hoy)));
+    wrap.appendChild(head);
+
+    const rail = el('div', 'seg-vtl-rail');
+    for(let iso = backStart; iso <= fwdEnd; iso = isoPlus(iso, 1)){
+      const groups = groupsByDate.get(iso) || [];
+      const isToday = iso === hoy;
+      const holidayName = _holidayMap ? _holidayMap.get(iso) : null;
+      const isWe = isoIsWeekend(iso);
+      const hasContent = groups.length > 0 || isToday;
+      const col = el('div', 'seg-vtl-day'
+        + (isToday ? ' seg-vtl-day--today' : '')
+        + (isWe ? ' seg-vtl-day--we' : '')
+        + (holidayName ? ' seg-vtl-day--fer' : '')
+        + (!hasContent ? ' seg-vtl-day--slim' : ''));
+      const dp = segVtlDayParts(iso);
+      if(hasContent){
+        col.appendChild(el('span', 'seg-vtl-day-lbl', dp.dow + ' ' + dp.dm + (isToday ? ' · HOY' : '') + (holidayName ? ' · FERIADO' : '')));
+        if(holidayName) col.appendChild(el('span', 'seg-vtl-fer-name', holidayName));
+        for(const g of groups) col.appendChild(g.kind === 'sched' ? segVtlSchedCard(g) : segVtlOrderCard(g));
+      } else {
+        col.appendChild(el('span', 'seg-vtl-sdw', dp.dow));
+        col.appendChild(el('span', 'seg-vtl-sdm', dp.dm));
+        if(holidayName){ col.appendChild(el('span', 'seg-vtl-sfer', 'FERIADO')); col.title = 'Feriado: ' + holidayName; }
+      }
+      rail.appendChild(col);
+    }
+    wrap.appendChild(rail);
+    box.appendChild(wrap);
+    renderVtlChips();
+  }
+
   // ═══ Carga ═══
   window.loadSeguimiento = async function(){
     if(_loading) return;
@@ -270,6 +694,32 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
         // R2·J: presencia de CRT por orden (39 filas) — para el badge n/m terrestre
         s.from('documentos_orden').select('order_number').eq('tipo', 'crt')
           .then(res => { if(!res.error && res.data) _crtSet = new Set(res.data.map(d => d.order_number)); }, () => {}),
+        // D4: schedules_master en ventana [hoy, hoy+21] — best-effort, sin esto
+        // toda card degrada a "sin cut-off en schedule" (nunca bloquea la tabla).
+        // activo=true NO garantiza ETD vigente (FLAG EXPLORE 2c) → filtro por
+        // fecha explícito, nunca por `activo`.
+        s.from('schedules_master')
+          .select('buque, naviera, etd, cut_off_doc, cut_off_cargo, puerto_origen, activo, disponible')
+          .gte('etd', hoyBA())
+          .lte('etd', isoPlus(hoyBA(), 21))
+          .eq('disponible', true)
+          .then(res => { _scheduleRows = (!res.error && res.data) ? res.data : []; }, () => { _scheduleRows = []; }),
+        // D4: feriados (vac_holidays, RLS authenticated) en la ventana máxima
+        // posible del riel — tope 14 días atrás, 21 adelante.
+        s.from('vac_holidays').select('date, name')
+          .gte('date', isoPlus(hoyBA(), -14))
+          .lte('date', isoPlus(hoyBA(), 21))
+          .then(res => {
+            _holidayMap = new Map();
+            if(!res.error && res.data) for(const h of res.data) _holidayMap.set(String(h.date).slice(0, 10), h.name);
+          }, () => { _holidayMap = new Map(); }),
+        // D4: carrier real por orden (mismo "último control" que ya usa la vista,
+        // v_bl_controls_latest) — solo para desambiguar codeshare del schedule.
+        s.from('v_bl_controls_latest').select('order_number, carrier')
+          .then(res => {
+            _carrierMap = new Map();
+            if(!res.error && res.data) for(const c of res.data) if(c.carrier) _carrierMap.set(c.order_number, c.carrier);
+          }, () => { _carrierMap = new Map(); }),
       ]);
       if(error){
         console.error('seguimiento:load', error);
@@ -315,6 +765,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
 
   // ═══ Render ═══
   function renderAll(){
+    renderVesselTimeline();  // D4: antes del triage — vacía y repuebla su propio div
     renderTriage();
     renderClean();
     renderTable();
@@ -437,6 +888,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(_filters.co && x.r.co_requerimiento !== _filters.co) return false;
     if(_filters.cliente && x.r.ship_to_name !== _filters.cliente) return false;
     if(_filters.soldto && x.r.sold_to_name !== _filters.soldto) return false; // v3 (undefined en v2 → nunca matchea, degrade OK)
+    // D4: filtro por buque (click card del timeline) — match EXACTO (molde
+    // cliente/soldto). vesselRoleada compara contra roleo_to_vessel (la card
+    // "roleada" vive en el buque NUEVO, no en x.r.vessel); vesselCand exige
+    // además que la fila sea candidata (mismo cálculo que el chip/celda D3) —
+    // sin esto, un buque reusado en otro voyage futuro (mismo nombre, otra
+    // fecha) se colaría al clickear la card roja.
+    if(_filters.vessel){
+      if(_filters.vesselRoleada){
+        if((x.r.roleo_to_vessel || '') !== _filters.vessel) return false;
+      } else {
+        if((x.r.vessel || '') !== _filters.vessel) return false;
+        if(_filters.vesselCand && !segARolear(x.r)) return false;
+      }
+    }
+    if(_filters.pod && (x.r.pod || '') !== _filters.pod) return false; // D4: click POD del card, aditivo
     return true;
   }
 
@@ -459,7 +925,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   function updateCount(tot, vis){
     const cEl = $('seg-count'); if(!cEl) return;
     while(cEl.firstChild) cEl.removeChild(cEl.firstChild);
-    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente || _filters.soldto || _filters.q) : true;
+    const filtersActive = _showArch ? !!(_filters.urgencia || _filters.mot || _filters.kind || _filters.co || _filters.cliente || _filters.soldto || _filters.q || _filters.vessel || _filters.pod) : true;
     if(filtersActive){
       cEl.appendChild(el('b', null, String(vis)));
       cEl.appendChild(document.createTextNode(' de ' + tot + ' órdenes'));
@@ -1747,7 +2213,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     // de que el debounce corra (lección "no tocar inputs con focus en re-renders").
     $('seg-f-q')?.addEventListener('input', debounce((e) => { _filters.q = e.target.value; renderAll(); }, 250));
     $('seg-clear')?.addEventListener('click', () => {
-      _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'' };
+      _filters = { urgencia:'', kind:'', co:'', cliente:'', soldto:'', q:'', vessel:'', pod:'', vesselCand:false, vesselRoleada:false };
       const qEl = $('seg-f-q'); if(qEl) qEl.value = '';
       renderAll();   // la sub-solapa activa NO se resetea — es navegación, no filtro
     });
