@@ -61,10 +61,12 @@ Pin pre `943bbc15` · nodo `Resolver Mailing` `194f0f56` · espejo `code_mailing
 
 Pin encadenado desde `9f69b166` · Iron Law (PUT solo por harness) · reproceso = smoke de trigger. Tier: sub-agente Opus + revisión Fable.
 
-### B1 (alias PUT-C1 · R6) — parser PE, seguro — Estado: `en cola`
-- Regla 9 + Ejemplo 2 del prompt PE (bloque "Divisa GARANTIAS/Pagos"; hoy toma 2880.04 en vez de 129.17).
-- ANTES de escribir: leer PDF PE 118762005 (dónde vive 129.17 vs 2880.04) + validar contra 2-3 PEs CIP OK del backfill T7.
-- Smoke: reproceso 118762005 → seguro 129.17 (agrupado con C1/C2).
+### B1 (alias PUT-C1 · R6) — parser PE, seguro — Estado: `PREP COMPLETA 18-07 — propuesta lista, IMPL tras Workstream A`
+- **HALLAZGO SISTÉMICO (18-07, 8 PDFs reales leídos vía Drive + cross-check):** 0/8 órdenes CIP tienen `seguro_total` correcto — 118762005=2880.04 (suma de DERECHOS EXPORTACION 22,87+2.857,17 ✓ aritmética), 118762010=2793.59 (ídem), 118762029=1971.83 (Insumos Import.), y 5 en null (miss). Ground truth real: 129,17 / 129,11×7. **NO existen PEs CIP "OK" para regresión** (premisa del plan corregida) — regresión = 2 null-correctos verificados (118833340 CPT · 4010736311 CFR, bloque GARANTIAS con asteriscos) + re-corrida post-fix contra ground truth.
+- **Causa raíz:** regla 9 (`put_pe_ingesta_bl.py:90`) describe el lugar pero sin ancla estructural cerrada ni contraste con los 2 bloques confusores ("GARANTIZADO" del bloque `( 020 ) DERECHOS EXPORTACION` por ítem — raíz léxica compartida con "GARANTIAS" — e "Insumos Import."). El Ejemplo 2 (117214236, no re-auditable) nunca muestra el bloque a ignorar.
+- **Propuesta banqueada:** regla 9 nueva (ancla: bloque de CABECERA único post-fila FOB/Flete y ANTES del primer "Nº Item"; último monto entre la última ref `-PES-VP` y la divisa; asteriscos→null; exclusión explícita de los bloques (a) DERECHOS EXPORTACION y (b) Insumos, siempre DESPUÉS cerca de "OFICIALIZADO") + Ejemplo 2 reemplazado por la orden real 118762005 verificada contra PDF (campos ya-OK preservados byte a byte).
+- Smoke: reproceso 118762005 → seguro 129.17 (agrupado con C1/C2). **ELEVAR a John en el reporte del Workstream B:** ¿re-corremos las otras 7 CIP para corregir el backfill? (7 mails internos extra; también les daría el shape nuevo de items para D1).
+- Autocrítica del prep: los 8 PDFs son del mismo despachante/aduana (BB-PBB/Dow) — layout de otra aduana no visto; parser sigue siendo LLM, no determinístico (riesgo residual declarado: bloque fragmentado entre páginas o 3+ refs -PES-VP).
 
 ### B2 (alias PUT-C4 · R3b) — parser Factura, `material` — Estado: `en cola`
 - Regla 11 `material` (layout `0099237508` de 729002); fallback regex determinístico SOLO si el prompt no alcanza.
