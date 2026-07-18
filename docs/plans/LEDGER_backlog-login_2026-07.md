@@ -81,10 +81,9 @@ Pin encadenado desde `9f69b166` · Iron Law (PUT solo por harness) · reproceso 
 
 Nodo COMPARADOR `76143b4d` + T7 `t7-armar-fcpe-01` · espejos `_comparador.js` / `iny_aduana.js` / `code_armar_productos_fcpe.js` · gates bulk B/C/D + prefix4 + decisión #1 INTACTOS. Tier: sub-agente Opus + revisión Fable.
 
-### C1 (alias PUT-C2 · R7) — equipos multi-renglón — Estado: `en cola`
-- `buildCompareEquipos`: agregar (sumar neto/bruto) filas aduana repetidas por container — hoy `adMap[container]` hace last-wins.
-- Bultos ambiguo en multi-renglón → NODATA (parse cruzado 18/204 en `parseBultosAduana`/iny_aduana).
-- Smoke: reproceso 118762005 → MSBU8784391 OK 27000/27540 + regresión single-product.
+### C1 (alias PUT-C2 · R7) — equipos multi-renglón — Estado: `✅ IMPLEMENTADO EN VIVO 18-07 — pin CBL 7f8b0a69 → 72e2f07f (commit 3d6c822) — verificación real en smoke agrupado C`
+- `adGroups` suma neto/bruto de renglones repetidos por contenedor (antes LAST-WINS); bultos duplicado entre renglones = no confiable → NODATA puntual (nunca suma — dato por producto). Intocables verificados fuera del diff (gates bulk B/C/D, prefix4, decisión #1). Verificación in-memory 6 escenarios: single-row byte-idéntico al pre-fix. Causa raíz upstream documentada sin tocar: `parseBultosAduana` (nodo Inyectar pe + source_link) no avanza el cursor entre renglones repetidos — fix real futuro ahí.
+- Smoke: reproceso 118762005 → MSBU8784391 OK 27000/27540 (agrupado al cierre de C, junto con B1 y C2).
 
 ### C2 (alias PUT-C3 · R8) — volumen, unidades + tolerancia — Estado: `en cola`
 - Fix de unidades: BA `volume_cd3` llega en m³, el comparador dividía ÷1000.
