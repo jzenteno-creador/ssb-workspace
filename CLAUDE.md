@@ -98,7 +98,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **los agentes text-to-SQL** (chat IA) → `docs/modules/agentes-text-to-sql.md` (guardrail de seguridad: `api/CLAUDE.md`, se auto-carga bajo `api/**`)
 - tocás **el workflow Schedule Excel→Supabase** → `docs/integrations/n8n-schedule-excel.md`
 - tocás **`scripts/claude-processor/`** → `scripts/claude-processor/README.md`
-- tocás **el plan de pedidos / tandas 0–8 / R2 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio — **plan CERRADO 17-07**: T0–T8+R2 en prod y verificadas) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4 **APLICADO en prod 17-07**, partes a+b). **Próximo = backlog Log-In R1–R12** (PS·1 absorbido como R1): plan cerrado SIN implementar en `SESSION_HANDOFF.md` 17-07 2ª sesión + memoria `backlog-login-2026-07-17` — entrar por Workstream A (PUT-M1 · R2)
+- tocás **el plan de pedidos / tandas 0–8 / R2 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio — **plan CERRADO 17-07**: T0–T8+R2 en prod y verificadas) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4 **APLICADO en prod 17-07**, partes a+b). **Próximo = backlog Log-In R1–R12 + D4/U1/U2**: ledger VIVO en `docs/plans/LEDGER_backlog-login_2026-07.md` (IDs A/B/C/D/U, estado por ítem, forma de trabajo 18-07 — actualizar tras CADA paso; fuente: `SESSION_HANDOFF.md` 17-07 + memoria `backlog-login-2026-07-17`) — entrar por A1, GO de John por ítem
 - **antes de commitear cambios de UI** → `docs/dev/smoke-headless.md`
 
 ## Reglas — NO HACER
