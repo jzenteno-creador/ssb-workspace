@@ -107,7 +107,8 @@ Tier: Sonnet implementa, Fable revisa. Smoke headless pre-commit (`docs/dev/smok
 
 Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de código · smokes headless con fixtures PostgREST (anon NO lee `v_operacion_estado`). Tier: Fable mockup/review, Sonnet scaffolding.
 
-### D1 (alias R3) — panel Seguimiento por ítem — Estado: `PLAN/MOCKUP presentado 18-07 — espera GO (totales · hint reproceso · formato cantidad)`
+### D1 (alias R3) — panel Seguimiento por ítem — Estado: `DISEÑO LOCKEADO ✅ 18-07 (mockup = referencia) — HOLD hasta fase de implementación`
+- **LOCK John 18-07:** los 3 defaults confirmados: (1) fila de totales al pie ENTRA; (2) hint + botón "Reprocesar BL para desglosar" queda en órdenes viejas; (3) Cantidad en formato compacto de una línea. Fuente = `factura_extract->'items'` sumada al fetch lazy existente (cero queries extra); `orden_productos` + writers + bloque PRODUCT del mail INTOCABLES en esta tanda; el botón "Reprocesar" es visual — su acción real se define con D2/R10.
 - **EXPLORE (18-07, agente + DB en vivo):** la card "▦ Producto — factura" del desplegable YA tiene las 5 columnas (Ítem/GMID/Producto/Cantidad/Origen, `buildDetailRow` :576-614) — el cambio es LA FUENTE: hoy lee `orden_productos` vía `_prodMap` bulk (:245-254), que agrega por producto (pierde desglose por línea; `origen`/`item_nos` null en las viejas). Keys reales de `items[]` verificadas en prod: `item`/`material`/`description`+`grade`/`net_kg`+`bags`+`pallets`/`origen` — las 5 existen, sin flag de shape. Cobertura: 19/112 controles con shape nuevo (todo lo post-17-07); lote JATOBA 21/07 = 18/24 nuevo, 2 viejo, 4 sin factura. **Fixture real:** `4010755500` (4 ítems completos). Writers intocables confirmados: `put_t7_d3_rama_fcpe` / `put_r2c_extract_gd` / `put_t7_mail_product` + espejos.
 - **PLAN/MOCKUP:** `docs/mockups/MOCKUP_D1_panel-items_2026-07-18.html` — 3 estados demo (desglose nuevo por ítem con fila de TOTALES · fallback agregado de orden vieja + hint "Reprocesar BL para desglosar" que liga con D2/R10 · sin factura = estado vacío actual). Cards Contenedores y Documentos SIN CAMBIOS. Fuente: `factura_extract->'items'` se suma al MISMO select de `ensureDetailData()` (cero round-trips extra); `orden_productos` queda solo como fallback. Verificado headless: 3 toggles, 4 filas de ítems, total 108.000 kg, nota fallback y estado vacío.
 - `buildDetailRow` (`seguimiento.js:576-614`) lee `bl_controls.factura_extract->'items'` — fila por ítem: Ítem (R3c: SÍ mostrar nº) / GMID / Producto / Cantidad / Origen. Fallback a `orden_productos` si items viejos.
@@ -155,7 +156,7 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
   - Propósito: guía para el documental — ver las salidas que vienen y cruzar/cargar la info en el schedule antes de los cortes.
 - Comparte la dependencia ETD con D3 (por eso va pegado a D3 en la secuencia). El PLAN debe incluir sugerencias de mejora de Fable si las hay.
 
-### D5 (alias R11) — visor lado a lado Control BL — Estado: `en cola`
+### D5 (alias R11) — visor lado a lado Control BL — Estado: `EXPLORE (18-07, agente: visor actual + singleton + isla CSS + stale :939)`
 - Mockup PRIMERO → split `#cbl-viewer`, refactor singleton `_cblActiveDoc` → estado por pane, CSS namespaced `cbl-split-*`.
 - Isla CSS existente y overrides por orden: NO-TOUCH.
 - De paso: corregir stale `control-bl.js:939` + `control-bl.md`.
