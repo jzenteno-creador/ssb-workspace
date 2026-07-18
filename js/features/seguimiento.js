@@ -538,16 +538,24 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   async function ensureDetailData(order){
     if(_detailCache.has(order)) return;
     _detailCache.set(order, { fetched: false });
-    const s = supa(); if(!s){ _detailCache.set(order, { fetched: true, equip: [], docs: [] }); return; }
+    const s = supa(); if(!s){ _detailCache.set(order, { fetched: true, equip: [], items: null, docs: [] }); return; }
     try {
       const [eqRes, docRes] = await Promise.all([
-        s.from('bl_controls').select('equipment_comparison, created_at').eq('order_number', order).order('created_at', { ascending: false }).limit(1),
+        // D1 (18-07, diseño lockeado): + factura_extract en el MISMO select que ya
+        // trae equipment_comparison — el desglose por línea de la card Producto sale
+        // de acá, CERO round-trips extra (mismo bl_controls, mismo último control).
+        s.from('bl_controls').select('equipment_comparison, factura_extract, created_at').eq('order_number', order).order('created_at', { ascending: false }).limit(1),
         s.from('documentos_orden').select('tipo, file_name, drive_link').eq('order_number', order),
       ]);
-      const eq = (!eqRes.error && eqRes.data && eqRes.data[0] && Array.isArray(eqRes.data[0].equipment_comparison))
-        ? eqRes.data[0].equipment_comparison : [];
-      _detailCache.set(order, { fetched: true, equip: eq, docs: (!docRes.error && docRes.data) ? docRes.data : [] });
-    } catch(_){ _detailCache.set(order, { fetched: true, equip: [], docs: [] }); }
+      const row0 = (!eqRes.error && eqRes.data && eqRes.data[0]) ? eqRes.data[0] : null;
+      const eq = (row0 && Array.isArray(row0.equipment_comparison)) ? row0.equipment_comparison : [];
+      // items=null cuando no hay factura_extract.items todavía (control sin factura
+      // procesada, o error) — distinto de [] (factura procesada con 0 líneas, no
+      // debería pasar pero no rompe): buildDetailRow decide shape con Array.isArray.
+      const fx = row0 ? row0.factura_extract : null;
+      const items = (fx && Array.isArray(fx.items)) ? fx.items : null;
+      _detailCache.set(order, { fetched: true, equip: eq, items, docs: (!docRes.error && docRes.data) ? docRes.data : [] });
+    } catch(_){ _detailCache.set(order, { fetched: true, equip: [], items: null, docs: [] }); }
     if(_openDetails.has(order)) renderTable();
   }
 
@@ -569,15 +577,31 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   };
   const numAR = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
 
-  function buildDetailRow(r, colSpan){
-    const tr = el('tr', 'segd-row');
-    const td = el('td'); td.colSpan = colSpan;
-    const grid = el('div', 'segd-grid');
-    const cache = _detailCache.get(r.order_number);
-
-    // ── PRODUCTO (orden_productos, bulk en load) ──
-    const cardP = segdCard('▦ Producto — factura', 'orden_productos (extracción de factura)');
-    const prods = _prodMap.get(r.order_number) || _prodMap.get(normalizeOrdenLocal(r.order_number)) || [];
+  // ═══ D1 (18-07, diseño lockeado): desglose por línea de factura_extract ═══
+  // suma un campo entre items — null si NINGÚN ítem lo trae (evita "0 kg" cuando
+  // en realidad no hay dato, distinto de una suma real que da cero).
+  function sumOrNull(items, key){
+    let any = false, s = 0;
+    for(const it of items){ if(it && it[key] != null){ any = true; s += Number(it[key]) || 0; } }
+    return any ? s : null;
+  }
+  // Cantidad compacta en una línea (decisión lockeada: "27.000 kg · 1.080 bags ·
+  // 18 plt") — kg en negrita (mirror de la card), resto plano; pallets puede venir
+  // null (ver mockup) → se omite ese segmento sin romper el resto de la celda.
+  function qtyCompactTd(netKg, bags, pallets){
+    const td = el('td', 'seg-qty');
+    const kgTxt = netKg != null ? numAR(netKg) + ' kg' : null;
+    const rest = [bags != null ? numAR(bags) + ' bags' : null, pallets != null ? numAR(pallets) + ' plt' : null].filter(Boolean);
+    if(!kgTxt && !rest.length){ td.appendChild(el('span', 'seg-faint', '—')); return td; }
+    if(kgTxt) td.appendChild(el('b', null, kgTxt));
+    if(rest.length) td.appendChild(document.createTextNode((kgTxt ? ' · ' : '') + rest.join(' · ')));
+    return td;
+  }
+  // Fallback INTOCABLE (D1): agregado por producto desde orden_productos/_prodMap
+  // — código PREVIO a D1 sin cambios funcionales, solo extraído a función para
+  // reusarlo tanto mientras el fetch lazy de factura_extract está en vuelo como
+  // cuando el control confirma shape viejo (sin key `item` en los items).
+  function renderProdFallback(cardP, prods, r){
     if(prods.length){
       const { t, tb } = segdTable(['Ítem', 'GMID', 'Producto', 'Cantidad', 'Origen']);
       for(const p of prods){
@@ -612,6 +636,95 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       cardP.appendChild(el('div', 'segd-foot', prods.reduce((s2, p) => s2 + (p.line_count || 1), 0) + ' línea(s) de factura agregadas por producto'));
     } else {
       cardP.appendChild(el('div', 'segd-empty', '⏳ esperando factura — el clasificador la extrae solo cuando llega el mail'));
+    }
+  }
+
+  function buildDetailRow(r, colSpan){
+    const tr = el('tr', 'segd-row');
+    const td = el('td'); td.colSpan = colSpan;
+    const grid = el('div', 'segd-grid');
+    const cache = _detailCache.get(r.order_number);
+
+    // ── PRODUCTO (factura) — D1 (18-07, diseño lockeado, mockup
+    // docs/mockups/MOCKUP_D1_panel-items_2026-07-18.html): desglose por LÍNEA de
+    // bl_controls.factura_extract->'items' cuando el control tiene shape nuevo
+    // (elementos con key `item`, todo lo procesado desde el 17-07). FALLBACK al
+    // agregado de orden_productos (_prodMap, INTOCABLE — renderProdFallback) si el
+    // shape es viejo (items sin `item`) o no hay items todavía. "esperando
+    // factura" (prods vacío) queda IGUAL — estado actual, sin cambios.
+    const prods = _prodMap.get(r.order_number) || _prodMap.get(normalizeOrdenLocal(r.order_number)) || [];
+    const fxItems = (cache && cache.fetched && Array.isArray(cache.items)) ? cache.items : null;
+    const shapeNew = !!(fxItems && fxItems.length && fxItems[0] && Object.prototype.hasOwnProperty.call(fxItems[0], 'item'));
+    // Badge de header: SOLO cuando ya sabemos el shape con certeza (cache resuelto)
+    // — mientras el fetch lazy está en vuelo no se afirma nada, para no mostrar
+    // "orden vieja" en un parpadeo antes de que llegue la respuesta real.
+    let headBadge = null;
+    if(shapeNew) headBadge = mkBadge('seal', 'por ítem');
+    else if(cache && cache.fetched && prods.length) headBadge = mkBadge('warn', 'agregado (orden vieja)');
+    const cardP = segdCard('▦ Producto — factura',
+      shapeNew ? 'bl_controls.factura_extract (por línea)' : 'orden_productos (extracción de factura)',
+      headBadge);
+
+    if(shapeNew){
+      const { t, tb } = segdTable(['Ítem', 'GMID', 'Producto', 'Cantidad', 'Origen']);
+      for(const it of fxItems){
+        const trp = el('tr');
+        trp.appendChild(el('td', 'seg-mono', it.item != null ? String(it.item) : '—'));
+        trp.appendChild(el('td', 'seg-mono', it.material || '—'));
+        const tdP = el('td');
+        tdP.appendChild(document.createTextNode(it.description || it.grade || '—'));
+        // NCM: los 8 primeros dígitos de product_code (verificado en prod contra
+        // 4010755500 — "39011030000X" → "39011030", igual al mockup). embalaje
+        // viene directo del ítem (puede venir '' en shape viejo, pero acá NUNCA
+        // llegamos con shape viejo — esta rama es solo shapeNew===true).
+        const ncmM = /^(\d{8})/.exec(String(it.product_code || ''));
+        const extra = [it.embalaje || null, ncmM ? 'NCM ' + ncmM[1] : null].filter(Boolean).join(' · ');
+        if(extra){ const sub = el('div', 'seg-faint', extra); sub.style.fontSize = '11px'; tdP.appendChild(sub); }
+        trp.appendChild(tdP);
+        trp.appendChild(qtyCompactTd(it.net_kg, it.bags, it.pallets));
+        const tdO = el('td');
+        if(it.origen){
+          const esAR = /^ARGENTIN/i.test(it.origen);
+          const sp = el('span', esAR ? 'segd-origen' : null, it.origen.toUpperCase());
+          const fl = segFlag(it.origen); if(fl) tdO.appendChild(fl);
+          tdO.appendChild(sp);
+          if(esAR && r.co_requerimiento === 'requerido'){
+            const sub = el('div', 'seg-faint', '→ dispara regla CO'); sub.style.fontSize = '10.5px'; tdO.appendChild(sub);
+          }
+        } else tdO.appendChild(el('span', 'seg-faint', '—'));
+        trp.appendChild(tdO);
+        tb.appendChild(trp);
+      }
+      // Fila de totales al pie — decisión lockeada 18-07 (chequeo visual rápido
+      // contra el total de factura). Sin <tfoot> propio (isla CSS #panel-seguimiento
+      // .segd-card no define uno) — fila extra en el mismo tbody con estilo inline,
+      // molde de las demás celdas de esta función que ya usan inline style puntual.
+      const trTot = el('tr');
+      trTot.style.fontWeight = '700';
+      trTot.style.borderTop = '1px solid var(--seg-line-strong)';
+      const tdTotLbl = el('td', null, 'Total factura'); tdTotLbl.colSpan = 3;
+      trTot.appendChild(tdTotLbl);
+      trTot.appendChild(qtyCompactTd(sumOrNull(fxItems, 'net_kg'), sumOrNull(fxItems, 'bags'), sumOrNull(fxItems, 'pallets')));
+      trTot.appendChild(el('td'));
+      tb.appendChild(trTot);
+      cardP.appendChild(t);
+      cardP.appendChild(el('div', 'segd-foot', fxItems.length + ' línea(s) de factura, una por ítem'));
+    } else {
+      renderProdFallback(cardP, prods, r);
+      // Hint + botón de reproceso (decisión lockeada 18-07): SOLO cuando el cache
+      // ya confirmó que no hay shape nuevo Y hay algo agregado para mostrar (si
+      // prods está vacío es "esperando factura" — otro estado, sin nota/botón).
+      if(cache && cache.fetched && prods.length){
+        const note = el('div');
+        note.style.cssText = 'margin-top:8px;font-size:11px;color:var(--amber, #f5a623);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap';
+        note.appendChild(document.createTextNode('⚠ Factura procesada antes del 17-07 — sin desglose por ítem ni origen.'));
+        const btnR = el('button', 'seg-btn', 'Reprocesar BL para desglosar');
+        btnR.type = 'button';
+        btnR.style.cssText = 'font-size:10px;padding:2px 8px;border-color:var(--amber-bd, #6b4a12);color:var(--amber, #f5a623);background:none';
+        btnR.onclick = () => segReprocesarBl(r.order_number, btnR);
+        note.appendChild(btnR);
+        cardP.appendChild(note);
+      }
     }
     grid.appendChild(cardP);
 
@@ -1388,6 +1501,35 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const data = await res.json().catch(() => ({}));
     if(!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
     return data;
+  }
+
+  // D1 (18-07): botón "Reprocesar BL para desglosar" del fallback de la card
+  // Producto — la action YA EXISTE server-side (api/seguimiento.js:reprocesar_bl,
+  // PLAN1 FIX 3, EMPLOYEE — no admin) y control-bl.js ya la dispara igual desde su
+  // propio botón (cblReprocesar), SIN ssbConfirm previo (no destructivo: reprocesa
+  // el mismo BL draft ya subido). Acá se reusa apiSeguimiento() de este mismo
+  // módulo — mismo molde 1:1, sin duplicar la lógica de polling/localStorage de
+  // control-bl (fuera de alcance de D1; el usuario puede seguir el resultado real
+  // abriendo Control BL, que sí tiene ese seguimiento persistente).
+  async function segReprocesarBl(order, btn){
+    if(btn.disabled) return;
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+    try {
+      const data = await apiSeguimiento({ action: 'reprocesar_bl', order_number: order });
+      const result = data.result || {};
+      if(result.status === 'disparado' || result.status === 'disparado_sin_confirmar'){
+        ssbToast('Solicitud enviada ✓ — el control corre en n8n (~1-2 min). Volvé a abrir el detalle para ver el desglose nuevo.', 'success');
+        btn.textContent = 'Solicitado ✓';
+      } else {
+        ssbToast(result.detail || 'Reproceso: respuesta inesperada del server.', 'info');
+        btn.disabled = false; btn.textContent = orig;
+      }
+    } catch(e){
+      ssbToast('No se pudo disparar el reproceso: ' + (e.message || 'error de red'), 'error');
+      btn.disabled = false; btn.textContent = orig;
+    }
   }
 
   function renderGiFooterBusy(busy){
