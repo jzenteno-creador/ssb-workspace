@@ -63,7 +63,8 @@ const out = new Function('$', 'console', code)($, console).json;
 const r = out.response, body = r.body_html, subj = r.gmail_preview.subject;
 
 let fails = [];
-const ok = (cond, label) => { console.log((cond ? '  ✓ ' : '  ✗ ') + label); if (!cond) fails.push(label); };
+let total = 0;
+const ok = (cond, label) => { total++; console.log((cond ? '  ✓ ' : '  ✗ ') + label); if (!cond) fails.push(label); };
 
 console.log('SUBJECT:', subj);
 ok(subj.startsWith('[TEST → real:'), 'subject con prefijo TEST (lock ON)');
@@ -137,6 +138,66 @@ ok(!(r.block_reasons || []).some((b) => /factura|permiso|fc-pe|fcpe/i.test(b)), 
 ok(r.control_revisado.vigente === true, 'sello vigente detectado');
 ok(Array.isArray(r.attachments.found) && r.attachments.found.length === 2, 'attachments.found = 2');
 
+// ---- A2 (PUT-M2): bloque "Partes" (Sold-to/Ship-to/Notify) ----
+// 118833340 real: mo_row.json trae ship_to_name/sold_to_name pero
+// notify_key/notify_name=null y contacts_extracted={} — o sea, esta MISMA
+// fixture ya prueba "nada en ningún nivel de la cadena" sin tocar nada.
+ok(body.includes('PARTES') && body.includes('Sold-to') && body.includes('Ship-to') && body.includes('Notify'), 'bloque Partes: header + labels PT (Sold-to/Ship-to/Notify literales en los 3 idiomas)');
+ok(body.includes('ASIBRAS COMERCIO EXTERIOR LTDA'), 'Sold-to: nombre desde mailing_orders.sold_to_name');
+ok(body.includes('ASIBRAS EMBALAGENS LTDA'), 'Ship-to: nombre desde mailing_orders.ship_to_name');
+ok(body.includes('⚠ SEM NOTIFY'), 'Notify sin dato en NINGÚN nivel (118833340 real) → marca visible PT, nunca "—" mudo');
+
+// tier 1: bl_extract.notify (multilínea, LÍNEA 1 = nombre) gana sobre notify_name Y contacts_extracted
+{
+  const blBase = NODES['GET control BL (latest)'][0];
+  const moBase = NODES['GET mailing_orders'][0];
+  NODES['GET control BL (latest)'] = [{ ...blBase, bl_extract: { notify: 'TRANSPORTES DEL SUR SA\nAV. SIEMPREVIVA 742\nSANTOS - BRASIL\nCNPJ: 11.222.333/0001-44' } }];
+  NODES['GET mailing_orders'] = [{ ...moBase, notify_name: 'OTRO NOMBRE (NO DEBE GANAR)', contacts_extracted: { notify: { name: 'TAMPOCO ESTE (ce)' } } }];
+  const outN1 = new Function('$', 'console', code)($, console).json;
+  const bN1 = outN1.response.body_html;
+  ok(bN1.includes('TRANSPORTES DEL SUR SA') && !bN1.includes('AV. SIEMPREVIVA'), 'tier 1: bl_extract.notify — SOLO línea 1 (nombre); dirección/CNPJ de la línea 2+ NO se pegan');
+  ok(!bN1.includes('OTRO NOMBRE') && !bN1.includes('TAMPOCO ESTE'), 'tier 1 gana sobre notify_name Y contacts_extracted aunque ambos estén poblados');
+  NODES['GET control BL (latest)'] = [blBase];
+  NODES['GET mailing_orders'] = [moBase];
+}
+// tier 2: sin bl_extract.notify (bl real sin ese dato) → notify_name gana sobre contacts_extracted
+{
+  const moBase = NODES['GET mailing_orders'][0];
+  NODES['GET mailing_orders'] = [{ ...moBase, notify_name: 'LOGISTICA NOTIFY LTDA', contacts_extracted: { notify: { name: 'NO DEBE GANAR (ce)' } } }];
+  const outN2 = new Function('$', 'console', code)($, console).json;
+  const bN2 = outN2.response.body_html;
+  ok(bN2.includes('LOGISTICA NOTIFY LTDA') && !bN2.includes('NO DEBE GANAR'), 'tier 2: notify_name gana sobre contacts_extracted.notify cuando falta bl_extract.notify');
+  NODES['GET mailing_orders'] = [moBase];
+}
+// tier 3: sin bl_extract.notify, sin notify_name → contacts_extracted.notify.name como último fallback antes de la marca
+{
+  const moBase = NODES['GET mailing_orders'][0];
+  NODES['GET mailing_orders'] = [{ ...moBase, notify_name: null, contacts_extracted: { notify: { name: 'CONTACTO EXTRAIDO BA' } } }];
+  const outN3 = new Function('$', 'console', code)($, console).json;
+  const bN3 = outN3.response.body_html;
+  ok(bN3.includes('CONTACTO EXTRAIDO BA'), 'tier 3: contacts_extracted.notify.name como último fallback (cubre filas viejas sin notify_name)');
+  NODES['GET mailing_orders'] = [moBase];
+}
+// tier 4: nada en ningún nivel + idioma ES → marca EXACTA firmada por John
+{
+  NODES['GET puertos pais'] = [{ pais: 'Perú', pais_iso: 'PE', paises: { nombre_en: 'Peru', flag_emoji: '' } }];
+  const outN4 = new Function('$', 'console', code)($, console).json;
+  const bN4 = outN4.response.body_html;
+  ok(bN4.includes('⚠ SIN NOTIFY'), 'tier 4 (ES): marca EXACTA "⚠ SIN NOTIFY" (texto firmado por John, SPEC 17-07)');
+  const outNEN = (() => { NODES['GET puertos pais'] = [{ pais: 'Estados Unidos', pais_iso: 'US', paises: { nombre_en: 'United States', flag_emoji: '' } }]; return new Function('$', 'console', code)($, console).json; })();
+  ok(outNEN.response.body_html.includes('⚠ NOTIFY NOT ON FILE'), 'tier 4 (EN): marca en inglés');
+  NODES['GET puertos pais'] = [{ pais: 'Brasil', pais_iso: 'BR', paises: { nombre_en: 'Brazil', flag_emoji: '🇧🇷' } }];
+}
+// Sold-to/Ship-to CON dirección (party_dirs) — nombre negrita + dirección debajo
+{
+  const moBase = NODES['GET mailing_orders'][0];
+  NODES['GET mailing_orders'] = [{ ...moBase, contacts_extracted: { sold_to: { name: 'SOLD TO CON DIR', address: 'CALLE FALSA 123, CIUDAD' }, consignee: { name: 'SHIP TO CON DIR', address: 'AV SIEMPRE VIVA 456' } } }];
+  const outAddr = new Function('$', 'console', code)($, console).json;
+  const bAddr = outAddr.response.body_html;
+  ok(bAddr.includes('CALLE FALSA 123, CIUDAD'), 'Sold-to: dirección desde party_dirs (contacts_extracted.sold_to.address)');
+  ok(bAddr.includes('AV SIEMPRE VIVA 456'), 'Ship-to: dirección desde party_dirs (contacts_extracted.consignee.address)');
+  NODES['GET mailing_orders'] = [moBase];
+}
 // degradación: orden pelada sin nada
 NODES['GET mailing_orders'] = [{ order_number: '999999999', status: 'PENDIENTE', contacts_extracted: {} }];
 NODES['GET control BL (latest)'] = [];
@@ -150,7 +211,11 @@ const out2 = new Function('$', 'console', code)($, console).json;
 const b2 = out2.response.body_html;
 ok(b2.includes('—') && !b2.includes('FREE DAYS') && !b2.includes('flagcdn.com/24x18/br'), 'degradación total: "—", sin FREE DAYS ni bandera destino');
 ok(out2.response.send_blocked, 'degradado: send bloqueado');
+// A2: orden pelada → Sold-to/Ship-to degradan a "—" (silencioso, mismo patrón
+// que el resto del template) pero Notify SIGUE mostrando la marca visible
+// (idioma EN acá: puertos pais = {} → sin ISO/nombre → MAIL_LANG 'en')
+ok(b2.includes('⚠ NOTIFY NOT ON FILE'), 'degradación total: Notify NUNCA calla — marca visible aunque no exista ni la orden en mailing_orders');
 
 fs.writeFileSync(SCRATCH + 'mail_t6_preview.html', body);
-console.log(fails.length ? '\nFAIL: ' + fails.length : '\nTODOS LOS ASSERTS PASS (' + (30 - fails.length) + ')');
+console.log(fails.length ? '\nFAIL: ' + fails.length + '/' + total : '\nTODOS LOS ASSERTS PASS (' + total + ')');
 process.exit(fails.length ? 1 : 0);

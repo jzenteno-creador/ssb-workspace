@@ -61,6 +61,18 @@
  *      TEXTUAL de John (verbatim, en portugués — es el texto oficial de la
  *      naviera). REEMPLAZA el concepto P·6: el bloque mailing_naviera_destino
  *      salió del template (Maersk/Hapag se suman cuando John tenga casillas).
+ *  14. A2 (PUT-M2, backlog Log-In R1-R12, 2026-07-18): bloque "Partes" en el
+ *      cuerpo, insertado antes de PRODUCT (agrupa identidad del embarque).
+ *      Sold-to/Ship-to: nombre (mailing_orders, fallback contacts_extracted)
+ *      + dirección (party_dirs — misma fuente ya expuesta en response, no se
+ *      duplica lógica). Notify: NUNCA degrada en silencio — cadena de
+ *      fallbacks bl_extract.notify (BL parseado en Control BL; multilínea,
+ *      LÍNEA 1 = nombre; Maersk ya resuelve "SAME AS CONSIGNEE" río arriba en
+ *      code_inyectar_metadata_maersk.js) → notify_name → contacts_extracted.
+ *      notify.name → sin nada: marca visible L.noNotify. Distinta de
+ *      response.notify (esa es la CLAVE del directorio de contactos, 2
+ *      niveles sin bl_extract — intacta, otro consumidor). PACKS L completos
+ *      (secPa/lSoldTo/lShipTo/lNotify/noNotify) en los tres idiomas.
  * Fechas etd/eta/atd: strings YYYY-MM-DD punta a punta (comparación lexicográfica).
  * atd sale de mailing_orders.atd (escrita SOLO por api/mailing.js confirm_atd);
  * fluye sola al GET (sin select=) y se re-emite en el root para "Evaluar envío"
@@ -259,9 +271,9 @@ const _nomDest = String(pais_destino || '').toUpperCase().trim();
 const MAIL_LANG = (_isoDest === 'BR' || _nomDest === 'BRASIL' || _nomDest === 'BRAZIL') ? 'pt'
   : (ES_LATAM_ISO.includes(_isoDest) || ES_LATAM_NOM.includes(_nomDest)) ? 'es' : 'en';
 const PACKS = {
-  en: { subj:'Shipping Documents · Order', sailed:'Sailed', hdr1:'SHIPPING DOCUMENTS', hdr2:'EXPORT DOCUMENTATION', greet:'Dear Customer,', intro:'Please find attached the documentation corresponding to the following shipment.', kEtd:'ETD', kAtd:'SAILED (ATD)', kEta:'ETA', kTr:'TRANSIT', days:'days', sec1:'SHIPMENT DETAILS', lOrder:'Order', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Freight', secP:'PRODUCT', kgNet:'kg net', bagsW:'bags', palletsW:'pallets', secD:'ATTACHED DOCUMENTS', dFC:'Commercial Invoice', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificate of Origin — digital (ZIP)', dCOp:'Certificate of Origin (PDF)', dPE:'Export Permit (PE)', dSEG:'Insurance Certificate (SEG)', dCOO:'Certificate of Origin (COO)', dCRT:'CRT (Waybill)', follow:'(to follow)', manual:'(manual)', noDocs:'No documents attached yet.', segN:'The Insurance Certificate (SEG) for this shipment will be sent separately.', secF:'FREE DAYS AT DESTINATION', perDay:'/day', close:'Should you have any questions, please do not hesitate to contact us.', conf:'This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.', pre:'Shipping documents for Order' },
-  es: { subj:'Documentación de embarque · Orden', sailed:'Zarpe', hdr1:'DOCUMENTACIÓN DE EMBARQUE', hdr2:'DOCUMENTACIÓN DE EXPORTACIÓN', greet:'Estimados,', intro:'Adjuntamos la documentación correspondiente al siguiente embarque.', kEtd:'ETD', kAtd:'ZARPE (ATD)', kEta:'ETA', kTr:'TRÁNSITO', days:'días', sec1:'DETALLE DEL EMBARQUE', lOrder:'Orden', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Flete', secP:'PRODUCTO', kgNet:'kg netos', bagsW:'bolsas', palletsW:'pallets', secD:'DOCUMENTACIÓN ADJUNTA', dFC:'Factura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origen — digital (ZIP)', dCOp:'Certificado de Origen (PDF)', dPE:'Permiso de Exportación (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origen (COO)', dCRT:'CRT (Carta de Porte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Aún sin documentos adjuntos.', segN:'El Certificado de Seguro (SEG) de este embarque se enviará por separado.', secF:'DÍAS LIBRES EN DESTINO', perDay:'/día', close:'Quedamos a disposición ante cualquier consulta.', conf:'Este correo y sus adjuntos son confidenciales y de uso exclusivo del destinatario. Si lo recibió por error, por favor avísenos y elimínelo.', pre:'Documentación de embarque de la orden' },
-  pt: { subj:'Documentação de embarque · Pedido', sailed:'Embarque', hdr1:'DOCUMENTAÇÃO DE EMBARQUE', hdr2:'DOCUMENTAÇÃO DE EXPORTAÇÃO', greet:'Prezados,', intro:'Segue em anexo a documentação referente ao seguinte embarque.', kEtd:'ETD', kAtd:'EMBARQUE (ATD)', kEta:'ETA', kTr:'TRÂNSITO', days:'dias', sec1:'DETALHES DO EMBARQUE', lOrder:'Pedido', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Frete', secP:'PRODUTO', kgNet:'kg líquidos', bagsW:'sacos', palletsW:'paletes', secD:'DOCUMENTOS ANEXOS', dFC:'Fatura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origem — digital (ZIP)', dCOp:'Certificado de Origem (PDF)', dPE:'Permissão de Exportação (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origem (COO)', dCRT:'CRT (Conhecimento de Transporte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Ainda sem documentos anexos.', segN:'O Certificado de Seguro (SEG) deste embarque será enviado separadamente.', secF:'DIAS LIVRES NO DESTINO', perDay:'/dia', close:'Permanecemos à disposição para qualquer esclarecimento.', conf:'Este e-mail e seus anexos são confidenciais e de uso exclusivo do destinatário. Se recebido por engano, por favor nos avise e apague a mensagem.', pre:'Documentação de embarque do pedido' },
+  en: { subj:'Shipping Documents · Order', sailed:'Sailed', hdr1:'SHIPPING DOCUMENTS', hdr2:'EXPORT DOCUMENTATION', greet:'Dear Customer,', intro:'Please find attached the documentation corresponding to the following shipment.', kEtd:'ETD', kAtd:'SAILED (ATD)', kEta:'ETA', kTr:'TRANSIT', days:'days', sec1:'SHIPMENT DETAILS', lOrder:'Order', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Freight', secPa:'PARTIES', lSoldTo:'Sold-to', lShipTo:'Ship-to', lNotify:'Notify', noNotify:'⚠ NOTIFY NOT ON FILE', secP:'PRODUCT', kgNet:'kg net', bagsW:'bags', palletsW:'pallets', secD:'ATTACHED DOCUMENTS', dFC:'Commercial Invoice', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificate of Origin — digital (ZIP)', dCOp:'Certificate of Origin (PDF)', dPE:'Export Permit (PE)', dSEG:'Insurance Certificate (SEG)', dCOO:'Certificate of Origin (COO)', dCRT:'CRT (Waybill)', follow:'(to follow)', manual:'(manual)', noDocs:'No documents attached yet.', segN:'The Insurance Certificate (SEG) for this shipment will be sent separately.', secF:'FREE DAYS AT DESTINATION', perDay:'/day', close:'Should you have any questions, please do not hesitate to contact us.', conf:'This email and its attachments are confidential and intended solely for the addressee. If you are not the intended recipient, please notify us and delete this message.', pre:'Shipping documents for Order' },
+  es: { subj:'Documentación de embarque · Orden', sailed:'Zarpe', hdr1:'DOCUMENTACIÓN DE EMBARQUE', hdr2:'DOCUMENTACIÓN DE EXPORTACIÓN', greet:'Estimados,', intro:'Adjuntamos la documentación correspondiente al siguiente embarque.', kEtd:'ETD', kAtd:'ZARPE (ATD)', kEta:'ETA', kTr:'TRÁNSITO', days:'días', sec1:'DETALLE DEL EMBARQUE', lOrder:'Orden', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Flete', secPa:'PARTES', lSoldTo:'Sold-to', lShipTo:'Ship-to', lNotify:'Notify', noNotify:'⚠ SIN NOTIFY', secP:'PRODUCTO', kgNet:'kg netos', bagsW:'bolsas', palletsW:'pallets', secD:'DOCUMENTACIÓN ADJUNTA', dFC:'Factura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origen — digital (ZIP)', dCOp:'Certificado de Origen (PDF)', dPE:'Permiso de Exportación (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origen (COO)', dCRT:'CRT (Carta de Porte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Aún sin documentos adjuntos.', segN:'El Certificado de Seguro (SEG) de este embarque se enviará por separado.', secF:'DÍAS LIBRES EN DESTINO', perDay:'/día', close:'Quedamos a disposición ante cualquier consulta.', conf:'Este correo y sus adjuntos son confidenciales y de uso exclusivo del destinatario. Si lo recibió por error, por favor avísenos y elimínelo.', pre:'Documentación de embarque de la orden' },
+  pt: { subj:'Documentação de embarque · Pedido', sailed:'Embarque', hdr1:'DOCUMENTAÇÃO DE EMBARQUE', hdr2:'DOCUMENTAÇÃO DE EXPORTAÇÃO', greet:'Prezados,', intro:'Segue em anexo a documentação referente ao seguinte embarque.', kEtd:'ETD', kAtd:'EMBARQUE (ATD)', kEta:'ETA', kTr:'TRÂNSITO', days:'dias', sec1:'DETALHES DO EMBARQUE', lOrder:'Pedido', lShip:'Shipment', lBook:'Booking', lBl:'Bill of Lading', lInc:'Incoterm', lFr:'Frete', secPa:'PARTES', lSoldTo:'Sold-to', lShipTo:'Ship-to', lNotify:'Notify', noNotify:'⚠ SEM NOTIFY', secP:'PRODUTO', kgNet:'kg líquidos', bagsW:'sacos', palletsW:'paletes', secD:'DOCUMENTOS ANEXOS', dFC:'Fatura Comercial', dPL:'Packing List', dBL:'Bill of Lading', dCOz:'Certificado de Origem — digital (ZIP)', dCOp:'Certificado de Origem (PDF)', dPE:'Permissão de Exportação (PE)', dSEG:'Certificado de Seguro (SEG)', dCOO:'Certificado de Origem (COO)', dCRT:'CRT (Conhecimento de Transporte)', follow:'(a enviar)', manual:'(manual)', noDocs:'Ainda sem documentos anexos.', segN:'O Certificado de Seguro (SEG) deste embarque será enviado separadamente.', secF:'DIAS LIVRES NO DESTINO', perDay:'/dia', close:'Permanecemos à disposição para qualquer esclarecimento.', conf:'Este e-mail e seus anexos são confidenciais e de uso exclusivo do destinatário. Se recebido por engano, por favor nos avise e apague a mensagem.', pre:'Documentação de embarque do pedido' },
 };
 const L = PACKS[MAIL_LANG];
 
@@ -485,6 +497,40 @@ const LOGIN_LINES = [
 const mailify = (txt) => esc(txt).replace(/([\w.+-]+@[\w.-]+\.\w+)/g, '<a href="mailto:$1" style="color:#1C9BD9;text-decoration:none;">$1</a>');
 const loginBlockHtml = isLogin ? `<tr><td style="padding:12px 28px 2px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F9FC;border:1px solid #E9EFF6;border-radius:9px;"><tr><td style="padding:12px 15px;"><div style="${AR}font-size:12px;font-weight:bold;color:#0C2340;margin-bottom:6px;">${esc(LOGIN_HEAD)}</div>${LOGIN_LINES.map((l) => `<div style="${AR}font-size:11.5px;color:#33424F;margin-top:3px;">&#183;&nbsp;&nbsp;${mailify(l)}</div>`).join('')}</td></tr></table></td></tr>` : '';
 
+// ---- A2 (PUT-M2, backlog Log-In R1-R12, 2026-07-18): bloque "Partes" -----
+// Sold-to/Ship-to: nombre YA resuelto arriba para "cliente" (m.*_name), acá
+// se lee explícito por parte + fallback al propio contacts_extracted (ce,
+// definido en la sección "identidad de la orden"). Dirección: MISMA fuente
+// que response.party_dirs (ce.consignee/ce.sold_to .address) — cero lógica
+// duplicada, solo se lee ce de nuevo acá porque el bloque se arma antes del
+// literal de response.
+// Notify es la cadena delicada — NUNCA degrada en silencio (regla de la casa):
+//   1º bl_extract.notify — columna real de bl_controls (ver
+//      code_armar_fila_control_bl.js: bl_extract=login_extract, carrier
+//      adentro — MISMA clave para LOG-IN y MAERSK) expuesta sin select= por
+//      "GET control BL (latest)" (v_bl_controls_latest = select distinct on
+//      * ). Multilínea (blockAfter en login_jscode_original.js / MAERSK
+//      resuelve "SAME AS CONSIGNEE" en code_inyectar_metadata_maersk.js
+//      ANTES de persistir) — la LÍNEA 1 es el nombre, el resto (dirección/
+//      CNPJ/teléfono) se descarta acá a propósito (spec: solo nombre).
+//   2º notify_name (mailing_orders, poblado en "Armar fila Mailing" desde el
+//      notify del Booking Advice — la MISMA fuente que ya usa response.notify).
+//   3º contacts_extracted.notify.name (idem BA, redundante — cubre filas
+//      viejas sin la columna notify_name poblada).
+//   Nada de lo anterior: marca visible L.noNotify (PACKS) — jamás un "—" mudo.
+// (response.notify NO se toca: es la CLAVE del directorio de contactos —2
+// niveles, sin bl_extract— y la usa "Armar fila Mailing" río abajo; este
+// bloque es SOLO para mostrar, no altera esa resolución.)
+const soldToName = pick(m.sold_to_name, ce.sold_to && ce.sold_to.name);
+const shipToName = pick(m.ship_to_name, ce.consignee && ce.consignee.name);
+const soldToAddr = pick(ce.sold_to && ce.sold_to.address);
+const shipToAddr = pick(ce.consignee && ce.consignee.address);
+const notifyBlockRaw = String((bl && bl.bl_extract && bl.bl_extract.notify) || '');
+const notifyLine1 = notifyBlockRaw.split('\n')[0].trim();
+const notifyDisplayName = pick(notifyLine1, m.notify_name, ce.notify && ce.notify.name);
+const partyCol = (label, name, addr, first, warn) => `<td width="${first ? '34' : '33'}%" valign="top" style="padding:11px 12px;${first ? '' : 'border-left:1px solid #E4EAF1;'}${AR}"><div style="font-size:9px;letter-spacing:1.2px;color:#8494A4;font-weight:bold;">${esc(label)}</div><div style="font-size:12.5px;font-weight:bold;color:${warn ? '#8a6d00' : '#0C2340'};margin-top:3px;">${esc(name)}</div>${addr ? `<div style="font-size:10.5px;color:#8494A4;margin-top:3px;line-height:1.4;">${esc(addr)}</div>` : ''}</td>`;
+const partiesHtml = `<tr><td style="padding:14px 28px 2px;">${secHead(esc(L.secPa))}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E4EAF1;border-radius:9px;"><tr>${partyCol(L.lSoldTo, soldToName || '—', soldToAddr, true, false)}${partyCol(L.lShipTo, shipToName || '—', shipToAddr, false, false)}${partyCol(L.lNotify, notifyDisplayName || L.noNotify, null, false, !notifyDisplayName)}</tr></table></td></tr>`;
+
 const refBar = ['ORDER ' + esc(String(order_number)), buqueViaje ? esc(buqueViaje) : null,
   (pol || pod) ? esc([pol, pod].filter(Boolean).join(' → ')) : null].filter(Boolean).join(SEP);
 
@@ -504,7 +550,7 @@ const body_html = `<div style="display:none;max-height:0;overflow:hidden;font-si
 <td width="4%" style="font-size:0;line-height:0;">&nbsp;</td>
 <td width="48%" valign="top"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${drow(L.lBl, bl_number)}${drow(L.lInc, incoterm_show)}${drow(L.lFr, freight_show, true)}</table></td>
 </tr></table></td></tr>
-${productHtml}${docsHtml}${freeDaysHtml}${loginBlockHtml}
+${partiesHtml}${productHtml}${docsHtml}${freeDaysHtml}${loginBlockHtml}
 <tr><td style="padding:16px 28px 4px;${AR}font-size:12.5px;color:#3A4A5A;line-height:1.6;">${esc(L.close)}</td></tr>
 <tr><td style="padding:12px 28px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #E4EAF1;"><tr><td style="padding-top:14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td width="3" valign="top" style="width:3px;background-color:#1C9BD9;font-size:0;line-height:0;">&nbsp;</td><td valign="top" style="padding-left:12px;${AR}"><div style="font-size:12px;font-weight:bold;color:#0C2340;">SSB INTERNATIONAL SA &#183; Freight Forwarder</div><div style="font-size:11.5px;color:#5A6A7A;margin-top:4px;"><a href="mailto:expoarpbb@ssbint.com" style="color:#1C9BD9;text-decoration:none;">expoarpbb@ssbint.com</a><span style="color:#C4D2E0;"> &#183; </span><a href="https://ssbint.com/es" style="color:#1C9BD9;text-decoration:none;">ssbint.com/es</a></div><div style="font-size:10px;color:#9BABBB;margin-top:8px;line-height:1.5;">${esc(L.conf)}</div></td></tr></table></td></tr></table></td></tr>
 </table></td></tr></table>`;
