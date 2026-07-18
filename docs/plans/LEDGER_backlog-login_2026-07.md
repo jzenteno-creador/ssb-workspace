@@ -6,8 +6,8 @@
 
 ## Estado global
 
-- **FASE DE DISEÑO (regla John 18-07): primero se cierra TODO lo visual (mockups aprobados); la implementación de la tanda completa va AL FINAL, solo cuando John la habilite explícitamente. Ningún IMPLEMENT/PUT hasta entonces.**
-- EN CURSO: **D4 en EXPLORE** (2 sub-agentes: UI seguimiento.js + datos vivos DB) → sigue PLAN + mockup. U1/U2 con diseño APROBADO y lockeado. A1 con PLAN listo en HOLD (sin GO). Cero código de la tanda implementado.
+- **✅ FASE 1 (DISEÑO) COMPLETA 18-07 — los 6 visuales LOCKEADOS con mockup de referencia:** U1 (pill límite, opción 1) · U2 (rail sin badges, variante B) · D4 (timeline salidas, v2.1) · D3 (columna ETD + a-rolear) · D1 (desplegable por ítem) · D5 (visor lado a lado). Mockups en `docs/mockups/MOCKUP_*_2026-07-18.html`.
+- **FASE 2 (IMPLEMENTACIÓN): NO habilitada** — John la define por separado. HOLD total: sin PUTs, sin tocar la app, sin push. A1 con PLAN listo esperando. Cero código de la tanda implementado.
 - **TEST_MODE ON toda la tanda.** STOP antes de cualquier push.
 - Pins vivos (verificados 17-07 contra dump): CBL `WVt6gvghL2nFVbt6` = **`9f69b166`** (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = **`943bbc15`** (36, TEST_MODE 3 capas) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = **`b8d997d6`** (43).
 
@@ -156,7 +156,8 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
   - Propósito: guía para el documental — ver las salidas que vienen y cruzar/cargar la info en el schedule antes de los cortes.
 - Comparte la dependencia ETD con D3 (por eso va pegado a D3 en la secuencia). El PLAN debe incluir sugerencias de mejora de Fable si las hay.
 
-### D5 (alias R11) — visor lado a lado Control BL — Estado: `PLAN/MOCKUP presentado 18-07 — espera GO (toggle · default pane B · persistencia · mobile)`
+### D5 (alias R11) — visor lado a lado Control BL — Estado: `DISEÑO LOCKEADO ✅ 18-07 (mockup = referencia) — HOLD hasta fase de implementación`
+- **LOCK John 18-07:** los 4 defaults confirmados: (1) toggle "Lado a lado" en la cabecera junto a "Reprocesar BL draft"; (2) pane derecho abre en BL cuando el izquierdo está en Análisis; (3) el split se MANTIENE al navegar órdenes en la sesión (doc derecho resetea); (4) ≤900px colapsa a un solo documento. Alcance confirmado: dos documentos de la MISMA orden; split horizontal únicamente. Stale `control-bl.js:939` + `control-bl.md` se corrigen en el MISMO commit de D5. Isla CSS + bloque responsive Fase B: NO-TOUCH.
 - **EXPLORE (18-07, agente, verificado):** doc-tabs reales = 6 (`DOC_TABS` `control-bl.js:45-52`: Análisis/BL/Planilla Aduana/Booking/Factura/PE — **NO hay PL ni CO**; CO es módulo aparte). Carga: Análisis = `srcdoc` sandboxed con `body_html` (+cache `_cblBodyCache`); Drive docs = `src` preview SIN sandbox. Singleton `_cblActiveDoc` (:43, 12 usos mapeados) + guard de carrera (:990/:998) + listener delegado (:1015-1032) + ids DOM únicos `#cbl-viewer`/`#cbl-doctabs` → todo pane-aware en el refactor. Compartido entre panes: `_cblSel`/`_cblMode`/`_cblHistSel`/`_cblBodyCache` + chrome del header. "Overrides por orden" NO-TOUCH aclarado: es el bloque responsive Fase B (`index.html:2435-2447`, specificity doblada) — orden = cascada CSS, no orden de BL. Split HORIZONTAL únicamente (alturas 72vh/78vh compatibles a mitad de ancho). **Stale `:939` confirmado con git blame:** comentario del 12-07 dice "Factura/PE no llegan acá" — llegan desde el fix `52797d3` (15-07, `fc_link`/`pe_link`); `control-bl.md:25` doblemente stale (habla de columnas `factura_file_id`/`pe_file_id` que nunca existieron). Ambos se corrigen en el mismo commit de D5.
 - **PLAN/MOCKUP:** `docs/mockups/MOCKUP_D5_visor-split_2026-07-18.html` — botón "Lado a lado" en la cabecera (junto a Reprocesar), split 2 panes misma orden con doc-tabs propias e independientes, default pane B = BL si A está en Análisis, Booking disabled demo, ≤900px colapsa a 1 doc. CSS solo `cbl-split-*` nuevo, isla y Fase B intactos. Smoke: layout/estado headless ✓; contenido Drive real = solo prod con sesión Google. Verificado headless: 1→2→1 panes, independencia por pane (A quieto mientras B cambia a Factura), 2 tabs disabled.
 - Mockup PRIMERO → split `#cbl-viewer`, refactor singleton `_cblActiveDoc` → estado por pane, CSS namespaced `cbl-split-*`.
@@ -176,6 +177,7 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
 
 ## Changelog
 
+- **2026-07-18 (11ª ronda)** — D5 DISEÑO LOCKEADO (4 defaults + alcance misma-orden + fix stale :939/control-bl.md en el mismo commit). **FASE 1 COMPLETA: los 6 visuales lockeados.** FASE 2 NO habilitada — John la define por separado; HOLD total vigente.
 - **2026-07-18 (9ª-10ª ronda)** — D1 LOCKEADO. D5: EXPLORE completo (6 doc-tabs reales — sin PL/CO; singleton + guard + ids mapeados; stale :939 confirmado por blame; "overrides por orden" aclarado = bloque responsive Fase B) → PLAN + mockup presentado (split horizontal, pane-aware, cbl-split-*). Si John da GO a D5 → **FASE 1 COMPLETA** (U1·U2·D4·D3·D1·D5 lockeados) y queda solo la habilitación de la fase de implementación. Nada implementado.
 - **2026-07-18 (8ª ronda)** — D1: EXPLORE completo (keys reales de items verificadas, fixture real 4010755500, cobertura 19/112, writers intocables listados) → PLAN + mockup presentado (3 estados, totales, hint reproceso). Nada implementado.
 - **2026-07-18 (7ª ronda)** — D3 DISEÑO LOCKEADO (3 defaults + migración única confirmada). D1 → EXPLORE (agente: desplegable actual + shape real de `factura_extract->'items'` + fallback `orden_productos`). FASE 1 restante: D1 → D5. Nada implementado.
