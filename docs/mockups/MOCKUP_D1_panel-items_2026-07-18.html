@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup D1 · Desplegable por ítem de factura (18-07)</title>
+<style>
+  :root{
+    --bg:#0b0f17;--surface:#141925;--border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+    --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;
+    --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+    --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+    --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;--purple:#a78bfa;
+    --seg-surface:#1e293b;--seg-surface-2:#161e2b;--seg-line:rgba(255,255,255,.08);--seg-line-strong:rgba(255,255,255,.16);
+    --seg-ink:#e8ecf3;--seg-ink-soft:#8b94a8;--seg-ink-faint:#6b7488;
+    --font:'Inter','system-ui',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;padding:28px 32px 70px;max-width:1240px}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+  .mockband{display:inline-flex;gap:8px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 10px;margin-bottom:10px}
+  .sub{color:var(--muted);font-size:13px;max-width:880px}
+  .sub b{color:var(--text)}
+  section{margin-top:36px}
+  h2{font-size:16px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+  .secsub{color:var(--muted);font-size:12.5px;margin:0 0 14px;max-width:880px}
+  .rec{display:inline-block;background:rgba(94,234,212,.10);color:var(--teal);border:1px solid rgba(94,234,212,.35);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:5px;padding:2px 7px;margin-left:8px;vertical-align:2px}
+
+  /* tabla madre (fiel al Seguimiento) */
+  .twrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px}
+  th{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-soft);text-align:left;padding:6px 9px;border-bottom:1px solid var(--seg-line-strong);white-space:nowrap}
+  td{padding:7px 9px;border-bottom:1px solid var(--seg-line);color:var(--seg-ink);white-space:nowrap}
+  td .soft{color:var(--seg-ink-faint);font-size:11px}
+  .seg-bdg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.03em;border:1px solid transparent;border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .b-warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+  .b-info{background:var(--blue-lt);color:var(--blue)}
+  .b-ok{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+  .chevbtn{background:none;border:1px solid transparent;border-radius:6px;color:var(--seg-ink-faint);cursor:pointer;font-size:11px;padding:2px 7px;font-family:var(--font)}
+  .chevbtn:hover{border-color:var(--seg-line-strong);color:var(--seg-ink)}
+  tr.open .chevbtn{transform:rotate(90deg);color:var(--blue)}
+
+  /* desplegable (fiel a segd-grid) */
+  tr.detail td{background:var(--seg-surface-2);padding:12px 14px;white-space:normal}
+  .dgrid{display:grid;grid-template-columns:1.1fr 1fr;gap:10px}
+  @media(max-width:1100px){ .dgrid{grid-template-columns:1fr} }
+  .dcard{background:var(--seg-surface);border:1px solid var(--seg-line);border-radius:10px;padding:11px 13px}
+  .dcard h4{margin:0 0 8px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--seg-ink-soft)}
+  .dcard h4 .newtag{display:inline-block;background:rgba(94,234,212,.10);color:var(--teal);border:1px solid rgba(94,234,212,.35);font-size:8px;font-weight:800;letter-spacing:.07em;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .dcard.dim{opacity:.55}
+  .dcard.dim h4 .same{color:var(--seg-ink-faint);font-size:8.5px;letter-spacing:.05em;margin-left:6px}
+  .itbl{width:100%;border-collapse:collapse;font-size:11.5px;min-width:0}
+  .itbl th{font-size:9px;padding:4px 8px;border-bottom:1px solid var(--seg-line-strong)}
+  .itbl td{padding:5px 8px;border-bottom:1px solid var(--seg-line);white-space:normal}
+  .itbl tr:last-child td{border-bottom:none}
+  .itbl .num{font-weight:800;color:var(--seg-ink)}
+  .itbl .qty b{color:var(--seg-ink)}
+  .itbl .qty{color:var(--seg-ink-soft);font-size:11px}
+  .itbl tfoot td{border-top:1px solid var(--seg-line-strong);border-bottom:none;font-weight:700;color:var(--seg-ink);background:rgba(255,255,255,.02)}
+  .orig{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:var(--seg-ink)}
+  .co-hint{font-size:9.5px;color:var(--teal);display:block;margin-top:1px}
+  .fallback-note{margin-top:8px;font-size:11px;color:var(--amber);display:flex;gap:6px;align-items:baseline}
+  .fallback-note button{background:none;border:1px solid var(--amber-bd);color:var(--amber);border-radius:6px;font-size:10px;font-weight:700;padding:2px 8px;cursor:pointer;font-family:var(--font)}
+  .empty{color:var(--seg-ink-faint);font-size:12px;padding:6px 0}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px;max-width:880px}
+  .note b{color:var(--text)}
+  .decide{margin-top:40px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:10px;padding:14px 18px;font-size:13px}
+  .decide h2{font-size:14px;margin-bottom:8px}
+  .decide li{margin-bottom:6px}
+  code{font-family:'JetBrains Mono',monospace;font-size:.92em;color:var(--blue)}
+  .srcbox{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:12.5px;max-width:1000px}
+  .srcbox h2{font-size:14px;margin-bottom:8px}
+  .srcbox li{margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="mockband">Mockup estático · nada implementado · para GO de John</div>
+<h1>D1 — Desplegable por ítem de factura (Seguimiento)</h1>
+<p class="sub">La card "▦ Producto — factura" del desplegable pasa a leer <b>el desglose línea por línea</b> de la factura (<code>factura_extract->'items'</code>) en vez del agregado por producto. <b>Datos REALES de prod:</b> la orden <b>4010755500</b> (JATOBA 21/07, shape nuevo del 17-07: 4 ítems completos con nº, GMID, cantidades y origen) y <b>4010708596</b> (shape viejo → fallback como se ve hoy). Las otras dos cards del desplegable (Contenedores y Documentos) <b>no cambian</b>. <b>Probá:</b> click en ▸ de cada orden — tres estados distintos.</p>
+
+<section>
+  <h2>Tres órdenes, tres estados</h2>
+  <p class="secsub">▸ <b>4010755500</b> = desglose nuevo por ítem (real) · ▸ <b>4010708596</b> = orden vieja → fallback agregado como hoy + hint de reproceso · ▸ <b>4010736311</b> = sin factura aún (estado vacío actual, sin cambios).</p>
+  <div class="twrap">
+    <table id="mainTbl">
+      <thead><tr><th></th><th>Orden</th><th>Ship-to</th><th>Destino</th><th>Control BL</th><th>ETD</th><th>Zarpe (ATD) → límite</th><th>Alertas</th></tr></thead>
+      <tbody>
+        <tr class="mrow" data-d="d1"><td><button class="chevbtn" type="button">▸</button></td><td><b>4010755500</b><div class="soft">LOG-IN JATOBA</div></td><td>BRASKEM S.A.</td><td>NAVEGANTES · BR</td><td><span class="seg-bdg b-ok">OK</span></td><td class="soft">mar 21/07</td><td><span class="seg-bdg b-info">límite 25/07</span></td><td><span class="soft">—</span></td></tr>
+        <tr class="detail" id="d1" hidden><td colspan="8">
+          <div class="dgrid">
+            <div class="dcard">
+              <h4>▦ Producto — factura<span class="newtag">POR ÍTEM</span></h4>
+              <table class="itbl">
+                <thead><tr><th>Ítem</th><th>GMID</th><th>Producto</th><th>Cantidad</th><th>Origen</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">1</td><td>374314</td><td>DOW™ LDPE 230N Resin<div class="soft">25 KG Bags · NCM 39011030</div></td><td class="qty"><b>27.000 kg</b> · 1.080 bags · 18 plt</td><td><span class="orig"><i style="font-style:normal;font-size:8px;font-weight:800;border:1px solid var(--seg-line-strong);border-radius:3px;padding:0 3px;color:var(--blue)">AR</i> ARGENTINA</span><span class="co-hint">→ dispara regla CO</span></td></tr>
+                  <tr><td class="num">2</td><td>374314</td><td>DOW™ LDPE 230N Resin<div class="soft">25 KG Bags · NCM 39011030</div></td><td class="qty"><b>27.000 kg</b> · 1.080 bags · 18 plt</td><td><span class="orig"><i style="font-style:normal;font-size:8px;font-weight:800;border:1px solid var(--seg-line-strong);border-radius:3px;padding:0 3px;color:var(--blue)">AR</i> ARGENTINA</span><span class="co-hint">→ dispara regla CO</span></td></tr>
+                  <tr><td class="num">3</td><td>374314</td><td>DOW™ LDPE 230N Resin<div class="soft">25 KG Bags · NCM 39011030</div></td><td class="qty"><b>27.000 kg</b> · 1.080 bags · 18 plt</td><td><span class="orig"><i style="font-style:normal;font-size:8px;font-weight:800;border:1px solid var(--seg-line-strong);border-radius:3px;padding:0 3px;color:var(--blue)">AR</i> ARGENTINA</span><span class="co-hint">→ dispara regla CO</span></td></tr>
+                  <tr><td class="num">4</td><td>374314</td><td>DOW™ LDPE 230N Resin<div class="soft">25 KG Bags · NCM 39011030</div></td><td class="qty"><b>27.000 kg</b> · 1.080 bags · 18 plt</td><td><span class="orig"><i style="font-style:normal;font-size:8px;font-weight:800;border:1px solid var(--seg-line-strong);border-radius:3px;padding:0 3px;color:var(--blue)">AR</i> ARGENTINA</span><span class="co-hint">→ dispara regla CO</span></td></tr>
+                </tbody>
+                <tfoot><tr><td colspan="3">Total factura</td><td class="qty"><b>108.000 kg</b> · 4.320 bags · 72 plt</td><td></td></tr></tfoot>
+              </table>
+            </div>
+            <div class="dcard dim"><h4>▣ Contenedores — Control BL<span class="same">SIN CAMBIOS</span></h4><p class="empty">MSBU8784391 · 27.000 / 27.540 kg …</p></div>
+            <div class="dcard dim" style="grid-column:1/-1"><h4>▤ Documentos para el envío<span class="same">SIN CAMBIOS</span></h4><p class="empty">BL ✓ · Factura ✓ · PL ✓ · PE ✓ · CO …</p></div>
+          </div>
+        </td></tr>
+
+        <tr class="mrow" data-d="d2"><td><button class="chevbtn" type="button">▸</button></td><td><b>4010708596</b><div class="soft">LOG-IN JATOBA</div></td><td>UNIPAR INDUPA</td><td>SANTOS · BR</td><td><span class="seg-bdg b-warn">REVISAR</span></td><td class="soft">mar 21/07</td><td><span class="seg-bdg b-warn">vence 22/07</span></td><td>⚠ REVISAR</td></tr>
+        <tr class="detail" id="d2" hidden><td colspan="8">
+          <div class="dgrid">
+            <div class="dcard">
+              <h4>▦ Producto — factura<span class="newtag" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)">AGREGADO (orden vieja)</span></h4>
+              <table class="itbl">
+                <thead><tr><th>Ítem</th><th>GMID</th><th>Producto</th><th>Cantidad</th><th>Origen</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">—</td><td>374303</td><td>DOW™ LDPE 302R Resin<div class="soft">25 KG Bags</div></td><td class="qty"><b>96.000 kg</b> · 3.840 bags</td><td><span class="soft">—</span></td></tr>
+                </tbody>
+              </table>
+              <div class="fallback-note">⚠ Factura procesada antes del 17-07 — sin desglose por ítem ni origen. <button type="button" title="Liga con el hint de D2/R10">Reprocesar BL para desglosar</button></div>
+            </div>
+            <div class="dcard dim"><h4>▣ Contenedores — Control BL<span class="same">SIN CAMBIOS</span></h4><p class="empty">…</p></div>
+            <div class="dcard dim" style="grid-column:1/-1"><h4>▤ Documentos para el envío<span class="same">SIN CAMBIOS</span></h4><p class="empty">…</p></div>
+          </div>
+        </td></tr>
+
+        <tr class="mrow" data-d="d3"><td><button class="chevbtn" type="button">▸</button></td><td><b>4010736311</b><div class="soft">LOG-IN JATOBA</div></td><td>(real)</td><td>SANTOS · BR</td><td><span class="seg-bdg b-warn">REVISAR</span></td><td class="soft">mar 14/07</td><td><span class="seg-bdg b-warn">vence 17/07</span></td><td>⟳ a rolear</td></tr>
+        <tr class="detail" id="d3" hidden><td colspan="8">
+          <div class="dgrid">
+            <div class="dcard">
+              <h4>▦ Producto — factura</h4>
+              <p class="empty">⏳ Esperando factura — sin datos de producto todavía (estado actual, sin cambios).</p>
+            </div>
+            <div class="dcard dim"><h4>▣ Contenedores — Control BL<span class="same">SIN CAMBIOS</span></h4><p class="empty">…</p></div>
+            <div class="dcard dim" style="grid-column:1/-1"><h4>▤ Documentos para el envío<span class="same">SIN CAMBIOS</span></h4><p class="empty">…</p></div>
+          </div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><b>Cobertura real hoy:</b> 19 de 112 controles tienen el shape nuevo (todo lo procesado desde el 17-07); del lote JATOBA 21/07, 18 de 24 ya lo tienen. El resto cae al fallback agregado hasta que se reprocese — degradación esperada, no bug.</p>
+</section>
+
+<div class="srcbox">
+  <h2>PLAN técnico (verificado en código y DB)</h2>
+  <ul>
+    <li><b>Un solo cambio de fuente:</b> la card Producto pasa a leer <code>factura_extract->'items'</code> del MISMO <code>bl_controls</code> que <code>ensureDetailData()</code> ya trae para la card Contenedores — se suma el campo al select existente, <b>cero round-trips extra</b>.</li>
+    <li><b>Keys reales mapeadas</b> (verificadas en prod): Ítem=<code>item</code> · GMID=<code>material</code> · Producto=<code>description</code>+<code>grade</code> · Cantidad=<code>net_kg</code>/<code>bags</code>/<code>pallets</code> · Origen=<code>origen</code>. Las 5 columnas existen — sin flag rojo de shape.</li>
+    <li><b>Fallback:</b> si la orden no tiene <code>items</code> con shape nuevo → se muestra el agregado de <code>orden_productos</code> (lo de hoy) + hint de reproceso. <code>orden_productos</code>, sus 2 writers n8n (<code>put_t7_d3_rama_fcpe</code> / <code>put_r2c_extract_gd</code>) y el bloque PRODUCT del mail (<code>put_t7_mail_product</code>) <b>NO se tocan</b>.</li>
+    <li>R3c cumplida: el nº de ítem se muestra (decisión firmada 17-07).</li>
+  </ul>
+</div>
+
+<div class="decide">
+  <h2>Qué decide John en este gate</h2>
+  <ul>
+    <li><b>Fila de totales al pie</b> de la card por ítem: ¿entra? (mi reco: sí — chequeo visual rápido contra el total de factura).</li>
+    <li><b>Hint de reproceso en órdenes viejas:</b> ¿queda el botón/aviso "Reprocesar BL para desglosar"? (liga con el hint UX de D2/R10 — mismo mensaje en dos lugares).</li>
+    <li><b>Formato de Cantidad:</b> compacto en una línea ("27.000 kg · 1.080 bags · 18 plt", mi reco) — ¿o en columnas separadas?</li>
+    <li><b>Estética/contenido</b> — lo que quieras ajustar.</li>
+  </ul>
+  Con el GO, D1 queda diseño-lockeado y cierro la FASE 1 con D5 (visor split del Control BL). Implementación: en HOLD.
+</div>
+
+<script>
+'use strict';
+document.querySelectorAll('.mrow').forEach(tr => {
+  const chev = tr.querySelector('.chevbtn');
+  chev.onclick = () => {
+    const det = document.getElementById(tr.dataset.d);
+    const open = det.hidden;
+    det.hidden = !open;
+    tr.classList.toggle('open', open);
+    chev.textContent = open ? '▾' : '▸';
+  };
+});
+</script>
+
+</body>
+</html>
