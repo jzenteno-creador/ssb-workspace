@@ -854,9 +854,28 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     td.appendChild(document.createTextNode(fIni(ini) + ' '));
     td.appendChild(el('span','arr','→'));
     td.appendChild(document.createTextNode(' '));
+    // U1 (18-07, GO John — Opción 1 del mockup docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html):
+    // bucket vencida deja de decir "venció" (queda igual a la variante en-fecha,
+    // "límite [fecha]") → refuerzo no-cromático obligatorio: ícono #i-alert DENTRO
+    // del pill (sprite existente, cero asset nuevo) + tooltip propio + aria-label
+    // para lectores de pantalla. Armado propio (NO mkBadge, que solo hace texto
+    // plano) — mismo code path para marítimo y terrestre, sin bifurcación por `terr`.
+    // Tamaño de ícono 12px vía inline style: no existe regla `.seg-bdg .ic` en la
+    // isla CSS y esta tanda tiene prohibido tocarla (mirror de `.seg-bdg--seal .ic`).
+    if(c.bucket === 'vencida'){
+      const fecha = fIni(r.deadline_envio);
+      const b = el('span', 'seg-bdg seg-bdg--bad');
+      const ic = svgUse('#i-alert', 'ic');
+      ic.style.width = '12px'; ic.style.height = '12px'; ic.style.flexShrink = '0';
+      b.appendChild(ic);
+      b.appendChild(document.createTextNode('límite ' + fecha));
+      b.title = 'Plazo de envío vencido el ' + fecha;
+      b.setAttribute('aria-label', 'Plazo vencido — límite era ' + fecha);
+      td.appendChild(b);
+      return td;
+    }
     let label, variant;
-    if(c.bucket === 'vencida'){ label = 'venció ' + fIni(r.deadline_envio); variant = 'bad'; }
-    else if(c.bucket === 'porvencer'){ label = 'vence ' + fIni(r.deadline_envio); variant = 'warn'; }
+    if(c.bucket === 'porvencer'){ label = 'vence ' + fIni(r.deadline_envio); variant = 'warn'; }
     else if(c.bucket === 'futuro'){ label = terr ? 'inicio futuro · revisar' : 'ATD futuro · revisar'; variant = 'warn'; }
     else { label = 'límite ' + fIni(r.deadline_envio); variant = 'info'; } // enfecha
     const b = mkBadge(variant, label);
