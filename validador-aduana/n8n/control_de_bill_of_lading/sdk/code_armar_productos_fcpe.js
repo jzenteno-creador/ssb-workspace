@@ -39,6 +39,17 @@ c = c || {};
 const fc = (c.factura_extract && typeof c.factura_extract === 'object') ? c.factura_extract : null;
 const pe = (c.pe_extract && typeof c.pe_extract === 'object') ? c.pe_extract : null;
 
+// ---- Tanda BULK (C3 · PUT-C5 · R9, 2026-07-18): espejo EXACTO de isBulk/RE_BULK del COMPARADOR
+// (_comparador.js líneas ~616-624). bl.goods_block_raw SÍ llega a este nodo: `c` es el item json del
+// COMPARADOR, que preserva login_extract/booking_extract del doc de entrada (spread `{...doc,...result}`
+// en el COMPARADOR) — verificado contra workflow_post_c2_volumen.json. Si se toca la detección allá,
+// tocar ACÁ también (mismo patrón de duplicación que numSafe/toNum arriba).
+const bl = (c.login_extract && typeof c.login_extract === 'object') ? c.login_extract : {};
+const ba = (c.booking_extract && typeof c.booking_extract === 'object') ? c.booking_extract : {};
+const RE_BULK = /\b(BULK|BLK)\b/i;
+const isBulk = RE_BULK.test(bl.goods_block_raw || '')
+  || RE_BULK.test(String((ba.producto && (ba.producto.cadena || '')) || '') + ' ' + String((ba.producto && (ba.producto.embalaje || '')) || ''));
+
 const pick = (...xs) => {
   for (const x of xs) { if (x !== undefined && x !== null && String(x).trim() !== '') return x; }
   return null;
@@ -119,8 +130,17 @@ const seguro_pe = pe ? numSafe(pe.seguro_total) : null;
 const incP = pe ? inc3(pe.cond_venta) : '';
 const total_pe = (pe && fob_pe != null) ? fob_pe + (flete_pe || 0) + (seguro_pe || 0) : null;
 
+// Bulk (C3 · PUT-C5 · R9): mismo criterio del COMPARADOR — UNITARIO (USD/kg, tolerancia ±0.005) en vez
+// de igualdad exacta del FOB total, Y peso que no exceda al PE en más de 4% (under-shipment = OK).
+// Sin kg de un lado → cae al comportamiento previo (igualdad exacta, decisión #9 intacta). No-bulk: 0 cambio.
+const kg_fc = fc ? numSafe(fc.totals && fc.totals.gross) : null;
+const kg_pe = pe ? numSafe(pe.peso_bruto) : null;
+const canUnitBulk = isBulk && fob_fc != null && fob_pe != null
+  && kg_fc != null && kg_pe != null && kg_fc > 0 && kg_pe > 0;
 const k_fob = !pe ? 'NO_APLICA'
-  : (fob_fc != null && fob_pe != null && fob_fc === fob_pe) ? 'OK' : 'REVISAR';
+  : canUnitBulk
+    ? ((Math.abs((fob_fc / kg_fc) - (fob_pe / kg_pe)) <= 0.005 && !(kg_fc > kg_pe * 1.04)) ? 'OK' : 'REVISAR')
+    : (fob_fc != null && fob_pe != null && fob_fc === fob_pe) ? 'OK' : 'REVISAR';
 const k_flete = !pe ? 'NO_APLICA'
   : (flete_fc == null && flete_pe == null) ? 'NO_APLICA'
   : (flete_fc === flete_pe) ? 'OK' : 'REVISAR';

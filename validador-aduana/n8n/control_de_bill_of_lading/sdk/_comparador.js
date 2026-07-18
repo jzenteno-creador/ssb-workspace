@@ -1126,12 +1126,38 @@ function buildComparison(doc) {
         [comp('Factura', 'Factura', `FOB ${fcFob} · flete ${fcFlete}`, 'OK'),
          comp('PE', 'PE', `FOB ${peFob} · flete ${peFlete}`, 'OK')], true, txt);
     } else {
-      // #5 FOB total (sólo total — decisión #9; NO por posición)
+      // #5 FOB total (sólo total — decisión #9; NO por posición) · BULK (C3 · PUT-C5 · R9, 2026-07-18):
+      // en granel el pesaje varía por naturaleza de la carga → deja de exigirse IGUALDAD EXACTA de FOB
+      // total y pasa a compararse el UNITARIO (USD/kg, tolerancia ±0.005) — reusa el MISMO isBulk
+      // (RE_BULK sobre goods_block_raw/BA, calculado arriba) sin recomputarlo. El KG se controla APARTE
+      // (fila nueva, debajo): sólo flaggea EXCESO de la Factura sobre el PE > 4% (under-shipment = OK,
+      // variación normal del granel). Si falta el kg de un lado → cae al comportamiento previo (igualdad
+      // exacta de FOB total, decisión #9 intacta, salida byte-idéntica). No-bulk: CERO cambio.
+      const kgFcBulk = isBulk ? numSafe(fc.totals && fc.totals.gross) : null;
+      const kgPeBulk = isBulk ? numSafe(pe.peso_bruto) : null;
+      const canUnitBulk = isBulk && fcFob != null && peFob != null
+        && kgFcBulk != null && kgPeBulk != null && kgFcBulk > 0 && kgPeBulk > 0;
       if (peFob != null || fcFob != null) {
-        const rev = eqR(peFob, fcFob) === false;
+        let rev, msg;
+        if (canUnitBulk) {
+          const uFc = fcFob / kgFcBulk, uPe = peFob / kgPeBulk;
+          rev = Math.abs(uFc - uPe) > 0.005;
+          msg = `Bulk: FOB/kg PE (${uPe.toFixed(4)} USD/kg) ≠ Factura (${uFc.toFixed(4)} USD/kg) — en granel se compara el unitario, no el total (PE ${peFob}/${kgPeBulk}kg vs Factura ${fcFob}/${kgFcBulk}kg)`;
+        } else {
+          rev = eqR(peFob, fcFob) === false;
+          msg = `FOB total PE (${peFob}) ≠ Factura (${fcFob})`;
+        }
         peRow('FOB total (USD)', '',
           [fcFob != null ? comp('Factura', 'Factura', fcFob, 'OK') : null, peFob != null ? comp('PE', 'PE', peFob, 'OK') : null],
-          rev, `FOB total PE (${peFob}) ≠ Factura (${fcFob})`);
+          rev, msg);
+      }
+      // (b) Peso bulk FC↔PE — fila NUEVA e independiente del FOB: sólo flaggea EXCESO (>4%) de la
+      // Factura sobre el PE; under-shipment (Factura < PE) no flaggea (variación normal del granel).
+      if (isBulk && kgFcBulk != null && kgPeBulk != null && kgPeBulk > 0) {
+        const kgRev = kgFcBulk > kgPeBulk * 1.04;
+        peRow('Peso bulk (KG, Factura↔PE)', '',
+          [comp('Factura', 'Factura', kgFcBulk, 'OK'), comp('PE', 'PE', kgPeBulk, 'OK')],
+          kgRev, `Peso Factura (${kgFcBulk} kg) excede al PE (${kgPeBulk} kg) en más de 4% — bulk, verificar sobre-embarque`);
       }
       // #3 flete 3-way (BL prepaid / FC freight_total / PE flete) — sólo incoterm prepaid (regex único)
       if (RE_FLETE_PREPAID.test(fcInc3)) {
