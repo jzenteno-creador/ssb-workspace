@@ -54,7 +54,7 @@ Pin pre `943bbc15` · nodo `Resolver Mailing` `194f0f56` · espejo `code_mailing
 
 ### A2 (alias PUT-M2 · R1) — bloque Partes en el cuerpo — Estado: `✅ IMPLEMENTADO EN VIVO 18-07 — pin 990a5fc4 → 6164fe00 (commit 43cfee1) — smoke datos reales corriendo`
 - Bloque PARTES antes de PRODUCT (caja 3 columnas estilo KPI row): Sold-to/Ship-to (nombre + dirección de la misma fuente que `party_dirs`) + Notify por cadena `bl_extract.notify` línea 1 → `notify_name` → `contacts_extracted.notify.name` → marca visible. Data path verificado: `bl_extract` YA llega vía "GET control BL (latest)" sin select= — cero GETs nuevos. Subject intacto; `response.notify` (clave del directorio) intacta; RFORNE sin tocar. Test t6: 64/64 (14 asserts nuevos).
-- **⚠ DECISIÓN DE COPY ELEVADA A JOHN (aplicada con default, reversible en 1 PUT):** la marca se LOCALIZÓ por idioma — ES "⚠ SIN NOTIFY" · PT "⚠ SEM NOTIFY" · EN "⚠ NOTIFY NOT ON FILE" — en vez del string ES literal en los 3 idiomas (razón: template 100% localizado R2·D, precedente noDocs). John citó el string en ES; si prefiere el literal único, es un cambio de 2 strings.
+- **✅ COPY CONFIRMADO por John 18-07:** la marca de notify ausente va LOCALIZADA por idioma — ES "⚠ SIN NOTIFY" · PT "⚠ SEM NOTIFY" · EN "⚠ NOTIFY NOT ON FILE" — tal como quedó implementada. Cerrado.
 - Iron Law PASS completo + verificado en vivo (Partes + A1 + 3 marcas presentes, orden de bloques OK, active=true).
 
 ## B · CBL extracción
