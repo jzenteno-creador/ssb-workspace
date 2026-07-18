@@ -179,6 +179,8 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
 
 ## Notas transversales (trampas registradas — no re-descubrir)
 
+- **⚠ INCIDENTE OPERATIVO 18-07 (FASE 2, workstream D):** un proceso no identificado corrió `git reset --hard HEAD` sobre el checkout compartido mientras dos agentes trabajaban en paralelo → barrió working-tree no commiteado (WIP de D5 + D2b). Sin pérdida final: ambos agentes re-aplicaron sus cambios (D2b con patch de respaldo) y todo lo commiteado estaba a salvo (disciplina de commit-por-ítem). MITIGACIÓN adoptada: agentes con edición de archivos → secuenciales sobre el mismo checkout + patch de respaldo en scratchpad apenas editan; para paralelo real futuro → `isolation: worktree`. Causa raíz sin identificar (posible hook/proceso externo) — elevado a John.
+
 - Reproceso en modo form SIEMPRE re-manda el mail de control → smokes de reproceso agrupados por workstream.
 - Harness activo: `ssb-workspace/validador-aduana/n8n/control_de_bill_of_lading/sdk/` (56 `put_*.py`); el repo hermano `validador-aduanal` está CONGELADO sin los PUTs de julio. Familia `a2fix` exige `--apply`; `r2_*` ejecutan sin flag.
 - Espejos SDK (`_comparador.js`, `iny_*.js`, `code_mailing_resolver.js`, `code_armar_productos_fcpe.js`) se actualizan en el MISMO commit que su PUT.
