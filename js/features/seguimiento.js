@@ -225,6 +225,19 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return { kind:'pending', text:'pendiente', date:null };
   }
 
+  // D3/D4 (18-07, diseño LOCKEADO, mockup docs/mockups/MOCKUP_D3_etd-rolear_2026-07-18.html):
+  // candidata a "rolear" — ETD vencido, sin zarpe registrado (ATD) y sin roleo ya
+  // registrado, en una orden no archivada. Un solo cálculo, TRES consumidores: la
+  // celda ETD (etdCell, D3), el chip triage "A rolear" (renderTriage, D3) y —
+  // futuro— las cards candidata del timeline (D4). Comparación lexicográfica de
+  // strings YYYY-MM-DD (mismo patrón que sortRows/terrBucket) — nunca Date(). Solo
+  // aplica a marítimo: terrestre no puebla etd, así que la vista naturalmente da
+  // false ahí (r.etd viene null/undefined).
+  function segARolear(r){
+    if(!r || !r.etd) return false;
+    return String(r.etd).slice(0, 10) < hoyBA() && !r.atd && !r.roleo_at && !r.archivada_at;
+  }
+
   // ═══ Carga ═══
   window.loadSeguimiento = async function(){
     if(_loading) return;
@@ -322,6 +335,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const nPendEnvio = active.filter(x => !x.r.first_real_send_at).length;
     const nGi        = active.filter(x => x.c.alerts.includes('despacho_pendiente')).length;
     const nCo        = active.filter(x => x.c.alerts.includes('co_sin_definir')).length;
+    const nARolear   = active.filter(x => segARolear(x.r)).length; // D3: candidatas a rolear (ETD vencido sin ATD, sin registrar)
     const nRoleadas  = active.filter(x => x.c.alerts.includes('roleo_pendiente_bl')).length; // O4/item 14
     const nAlertas   = active.filter(x => x.c.alerts.length > 0).length;
 
@@ -358,7 +372,10 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     ], nPorVencer > 0 ? (nPorVencer + ' por vencer en los próximos días (informativo, no filtra)') : null);
     mkGroup('Planta', [ mkChip('gi', nGi, 'Good Issue pend.', 'registrar fecha de planta', 'blue') ]);
     mkGroup('Cert. de Origen', [ mkChip('co', nCo, 'Definir CO', '¿esta orden lleva certificado?', 'gray') ]);
-    mkGroup('Roleo', [ mkChip('roleo', nRoleadas, 'Roleadas', 'pendiente de BL nuevo', 'amber') ]);
+    mkGroup('Roleo', [
+      mkChip('arolear', nARolear, 'A rolear', 'ETD vencido sin ATD', 'red'),
+      mkChip('roleo', nRoleadas, 'Roleadas', 'pendiente de BL nuevo', 'amber'),
+    ]);
     mkGroup('Resumen', [ mkChip('alertas', nAlertas, 'Alertas', 'ver todas', 'purple') ]);
   }
 
@@ -413,6 +430,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     else if(fa === 'gi'){ if(!x.c.alerts.includes('despacho_pendiente')) return false; }
     else if(fa === 'co'){ if(!x.c.alerts.includes('co_sin_definir')) return false; }
     else if(fa === 'roleo'){ if(!x.c.alerts.includes('roleo_pendiente_bl')) return false; } // item 14/O4
+    else if(fa === 'arolear'){ if(!segARolear(x.r)) return false; } // D3: mismo cálculo que el chip triage
     // T3 (B.7): la sub-solapa activa ES el filtro de transporte (reemplaza _filters.mot)
     if((x.r.mot || 'maritimo') !== _activeMode) return false;
     if(_filters.kind && x.r.order_kind !== _filters.kind) return false;
@@ -426,6 +444,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const FALLBACK = _sortDir === 1 ? '9999-99-99' : '';
     const sortVal = (x) => {
       if(_sortK === 'dl') return x.r.deadline_envio || FALLBACK;
+      if(_sortK === 'etd') return x.r.etd || FALLBACK;
       if(_sortK === 'gi') return x.r.despacho_at || FALLBACK;
       if(_sortK === 'cliente') return (x.r.ship_to_name || '').toLowerCase();
       return (x.r.order_number || '').toLowerCase();
@@ -1017,6 +1036,36 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return td;
   }
 
+  // D3 (18-07, diseño LOCKEADO, mockup docs/mockups/MOCKUP_D3_etd-rolear_2026-07-18.html):
+  // celda ETD — solo marítimo (buildRow la agrega condicionada a `mar`). 3 estados:
+  // candidata a rolear (rojo, segARolear() — mismo cálculo que el chip triage) ·
+  // roleada YA REGISTRADA vía "Informar roleo" en Mailing (ámbar, roleo_at no-null,
+  // muestra roleo_to_etd con el buque nuevo en el tooltip) · fecha normal (día de
+  // semana faint + dd/mm, mismo cálculo UTC-puro que fmtDMdow — sin TZ shift).
+  function etdCell(r){
+    const td = el('td');
+    if(!r.etd){ td.appendChild(el('span','seg-faint','—')); return td; }
+    const iso = String(r.etd).slice(0, 10);
+    if(segARolear(r)){
+      const b = mkBadge('bad', '⟳ a rolear · ' + fmtDM(iso));
+      b.title = 'ETD ' + fmtDM(iso) + ' vencido sin ATD — sin registrar';
+      td.appendChild(b);
+      return td;
+    }
+    if(r.roleo_at){
+      const nuevaIso = r.roleo_to_etd ? String(r.roleo_to_etd).slice(0, 10) : null;
+      const b = mkBadge('warn', nuevaIso ? ('⟳ → ' + fmtDM(nuevaIso)) : '⟳ roleada');
+      b.title = 'Roleada a ' + (r.roleo_to_vessel || 'servicio a confirmar') + ' — nuevo ETD ' + (nuevaIso ? fmtDM(nuevaIso) : 'pendiente');
+      td.appendChild(b);
+      return td;
+    }
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const dow = m ? DOW_AB[new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : '';
+    if(dow) td.appendChild(el('span','seg-faint', dow + ' '));
+    td.appendChild(document.createTextNode(fmtDM(iso)));
+    return td;
+  }
+
   // Envío (item 46) — etiquetas nuevas sobre envioLabel(): pendiente / enviado
   // ✓fecha / enviado (test) diferenciado.
   function envioCell(r){
@@ -1145,6 +1194,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     // mockup aprobado); Docs = badge n/m en ambos modos (inventario por modo).
     if(mar){ const tdCbl = el('td'); tdCbl.appendChild(controlBadge(r)); tr.appendChild(tdCbl); }
     tr.appendChild(docsBadgeCell(r));
+    if(mar) tr.appendChild(etdCell(r));   // D3: columna ETD — solo marítimo (colsFor terrestre no la declara)
 
     tr.appendChild(dlCell(r, c));
     tr.appendChild(envioCell(r));
@@ -1179,6 +1229,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     { label:'Despacho planta', sortKey:'gi', title:'Despacho físico de planta (Good Issue)' },
     { label:'Control BL', sortKey:null },
     { label:'Docs', sortKey:null, title:'Documentos disponibles / esperados — el detalle está en el desplegable (▸)' },
+    { label:'ETD', sortKey:'etd', title:'Salida programada del buque (mailing_orders.etd)' },
     { label:'Zarpe (ATD) → límite', sortKey:'dl', title:'ATD real → límite de envío (ATD+' + SLA_DAYS + ' corridos)' },
     { label:'Envío', sortKey:null },
     { label:'Alertas', sortKey:null },
@@ -1663,6 +1714,15 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     if(urgSel){
       const stale = urgSel.querySelector('option[value="porvencer"]');
       if(stale) stale.remove();
+      // D3: opción "a rolear" — inyectada ANTES de "roleadas" para que quede en el
+      // mismo orden visual que el triage (chip A rolear antes de Roleadas).
+      if(!urgSel.querySelector('option[value="arolear"]')){
+        const optARolear = document.createElement('option');
+        optARolear.value = 'arolear';
+        optARolear.textContent = 'a rolear';
+        const alertasOpt0 = urgSel.querySelector('option[value="alertas"]');
+        urgSel.insertBefore(optARolear, alertasOpt0 || null);
+      }
       if(!urgSel.querySelector('option[value="roleo"]')){
         const optRoleo = document.createElement('option');
         optRoleo.value = 'roleo';
