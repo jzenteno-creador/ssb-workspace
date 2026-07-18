@@ -1,58 +1,44 @@
-# Handoff de sesión — 2026-07-17 (2ª sesión) · ssb-workspace · PLAN BACKLOG LOG-IN R1-R12 CERRADO — SIN IMPLEMENTAR
+# Handoff de sesión — 2026-07-18 · ssb-workspace · 🏁 FASE 2 BACKLOG LOG-IN COMPLETA Y EN PROD
 
-## HECHO
+## HECHO (la tanda entera en un día: diseño FASE 1 + implementación FASE 2)
 
-- **EXPLORE multiagente del backlog R1-R12** (inspección Log-In 13/07): 8 agentes (CBL / Mailing / Gmail→Drive / app / Supabase / docs + 3 verificadores adversariales; 62 claims confirmados, 1 refutado) + 4 verificaciones dirigidas (bulk regex, notify BL, ETD, precisión volúmenes).
-- **Pins VIVOS confirmados contra dump**: CBL `WVt6gvghL2nFVbt6` = **`9f69b166`** (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = **`943bbc15`** (36, TEST_MODE ON — 3 capas) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = **`b8d997d6`** (43). El pin `8a2d0de9` del brief NO existe.
-- **PLAN atómico consolidado** con todas las decisiones de John incorporadas. **CERO bloqueantes. NADA implementado, cero commits de código.**
-- Memoria: `backlog-login-2026-07-17.md` (hechos verificados, no re-derivar).
+- **FASE 1 (diseño):** 6 mockups lockeados con GO de John (U1 · U2 · D4 v2.1 · D3 · D1 · D5) en `docs/mockups/MOCKUP_*_2026-07-18.html` — quedan como REFERENCIA de lo implementado.
+- **FASE 2 (implementación) — 14/14 ítems, todo verificado:**
+  - **7 PUTs n8n, Iron Law PASS todos.** Pins finales: **Mailing `kh6TORgRg9R1Shj1` = `6164fe00`** (943bbc15→990a5fc4 A1 →6164fe00 A2) · **CBL `WVt6gvghL2nFVbt6` = `c14bec3a`** (9f69b166→c1c78576 B1 →7f8b0a69 B2 →72e2f07f C1 →e70794b2 C2 →c14bec3a C3). Harness nuevos en `sdk/put_{a1,a2,b1,b2,c1,c2,c3}*.py`; espejos actualizados mismo commit (+`pe_prompt.txt` nuevo espejo canónico del prompt PE).
+  - **Migración D3+D4 APLICADA Y VERIFICADA en prod:** `v_operacion_estado` + `etd`/`roleo_to_etd`/`contenedores` — **rollback listo en `migrations/2026-07-18-d3d4-etd-contenedores/00_rollback.sql`** (basado en la def VIVA — ojo: `nueva_def.sql` de T3 estaba stale, sin R2G ni doc_pl). Grants intactos (anon 401, authenticated SELECT-only).
+  - **App:** U1 pill "⚠ límite" · U2 rail sin badges · D1 desglose por ítem + totales + fallback con botón reproceso · D2 hint docs faltantes + smoke 118828656 PASS (PE manual levantado de Drive) · D3 columna ETD (3 estados) + chip "A rolear" · D4 timeline de salidas completo (riel de días, cut-offs del schedule, candidatas, schedule-only, filtros buque/POD) · D5 visor split por pane (+ fix stale `:939` y `control-bl.md`).
+- **Smokes reales corridos (11 reprocesos + resolver real-data + headless visual por ítem):** seguro **129,17** ✓ (B1) · MSBU8784391 27.000 OK ✓ (C1) · volumen sin flag ✓ (C2) · **2 órdenes bulk REVISAR→OK** (C3 eliminó su falso flag de FOB) · material 99237508 4/4 ✓ (B2) · 6/6 regresiones sin daño · notify tier-1 cubre 100% de las 80 sin notify_name (A2).
 
-## DECISIONES (John, firmadas 17-07)
+## ESTADO POST-PUSH (cierre 18-07)
 
-- **R9 bulk**: detección = `isBulk` EXISTENTE (`RE_BULK /\b(BULK|BLK)\b/i` sobre `bl.goods_block_raw` — ya matchea 708683 "5 BULK OF 40 HC"). Regla: **unitario FOB/kg idéntico** PE↔FC (prop.: |Δu| ≤ 0.005 USD/kg) + **REVISAR solo si `kg_fc > kg_pe × 1.04`** (exceso; under-shipment OK). No-bulk exacto. BL↔FC sin cambio. Regla en AMBOS sitios: COMPARADOR + T7 `k_fob`.
-- **R8**: fix de unidades (BA `volume_cd3` llega en m³, el comparador dividía ÷1000) + **tolerancia fija |ΔM3| < 1.0**. NO redondeo por lado (artefacto 45.9/46.1). Sin banda %.
-- **R1**: notify se PUEBLA en todas las marítimas — fuente `bl_extract.notify` (112/112 poblado, línea 1 = nombre) → `notify_name` → `contacts_extracted.notify` → si nada "⚠ SIN NOTIFY" marcado. **Control discrepancia notify (118762005 RFORNE on-behalf) NO se toca** — fix operativo, no de código.
-- **R2**: bloque Log-In a PT, copy aprobado: *"Favor entrar em contato com a Login para retirar o BL original."* (las 11 LOGIN_LINES oficiales NO se tocan).
-- **R3c**: SÍ mostrar número de ítem. **R6/R7/R10/R11**: plan aprobado como estaba. **TEST_MODE ON toda la tanda.**
+- **Rama:** `master` = **`0ebff73`** en remoto (fast-forward desde a1ee8a0; rama `feat/plan1-bl-nunca-silencioso` también pusheada como respaldo, mismo commit).
+- **Vercel: DEPLOY OK confirmado por contenido** — prod (`ssb-workspace.vercel.app`) ya sirve los markers nuevos (`seg-vessels-timeline`, `cbl-split-styles`).
+- **TEST_MODE: ON** (Mailing, 3 capas) — el flip a real sigue siendo acción EXCLUSIVA de John.
+- Ledger completo de la tanda (14 ítems con estado/commit/pin/smoke): `docs/plans/LEDGER_backlog-login_2026-07.md`.
 
-## PENDIENTE POR WORKSTREAM (orden de ejecución)
+## PENDIENTE — SMOKES SOLO-PROD (los corre John contra la web desplegada)
 
-### A · Mailing — tier: Sonnet edita, Fable revisa+PUT
-(pin pre `943bbc15`, nodo `Resolver Mailing` 194f0f56; espejo `code_mailing_resolver.js`; derivar PUT de `put_r2_3ab_resolver.py`, assert TEST_MODE true pre/post)
+1. **Seguimiento Marítimo** (`Documentación → Seguimiento Marítimo`): ① timeline "SALIDAS" arriba — cards con datos reales (JATOBA si sigue en ventana), click en buque filtra la tabla, click en un POD suma filtro, candidatas rojas en días previos (las reales: FREEPORT 13/07 + 4 del 14/07); ② columna ETD nueva (pill roja "⟳ a rolear" en candidatas) + chip "A rolear" en el triage; ③ pill "⚠ límite dd/mm" rojo con tooltip en vencidas; ④ rail SIN números; ⑤ desplegable ▸ de una orden post-17-07 (p.ej. 4010755500) → desglose por ítem + totales; una vieja → fallback + botón "Reprocesar BL para desglosar"; ⑥ hint "Reprocesar BL re-busca los documentos en Drive" cuando falta un doc.
+2. **Control BL**: botón "Lado a lado" junto a Reprocesar → dos panes con doc-tabs propias (con sesión Google se ven los PDFs de Drive), persistencia entre órdenes, colapso ≤900px.
+3. **Mailing**: un send TEST → el mail llega con bloque Log-In 100% PT (si carrier LOG-IN) + bloque PARTES (Sold-to/Ship-to/Notify) antes de PRODUCTO; sin notify en ningún nivel → marca localizada ("⚠ SIN NOTIFY"/"SEM NOTIFY"/"NOTIFY NOT ON FILE").
 
-1. **PUT-M1 · R2**: solo `LOGIN_HEAD` ES→PT. Smoke: send test → bloque 100% PT.
-2. **PUT-M2 · R1**: bloque Partes (Sold-to/Ship-to/Notify + party_dirs, labels PACKS en/es/pt, cadena notify c/ marca). Subject intacto. Smoke: 4010746690 + una sin notify_name.
+## PENDIENTE — 4 DECISIONES ELEVADAS (tandas aparte, en este orden sugerido)
 
-### B · CBL extracción — tier: Fable
-(pin encadenado desde `9f69b166`; Iron Law; reproceso = smoke de trigger)
+1. **SEGURIDAD (primero):** `bl_controls` y `v_bl_controls_latest` tienen grants INSERT/UPDATE/DELETE a `anon`+`authenticated` (vista auto-updatable = patrón de ESCALACIÓN, caso vac_* 2026-07-15). Auditar + revocar explícito.
+2. **Regex `amount`** del inyector de factura (`code_inyectar_factura_v2.js`): roto por el mismo layout DFDA de B2 (7/7 amount null). Fix de 1 línea descrito en el ledger (B2).
+3. **`toNum()` 3-decimales**: `45.999` se lee como miles europeos (45999) — preexistente, consecuente para el volumen post-C2. Tocar `toNum` afecta ~15 sitios (no quirúrgico).
+4. **Backfill 7 CIP**: re-correr las otras 7 órdenes CIP con seguro mal extraído (ground truth 129,11×7); de paso ganan el desglose por ítem para D1. Son 7 mails internos a expoarpbb.
 
-3. **PUT-C1 · R6**: Parser PE regla 9 + Ejemplo 2 — ANTES leer PDF PE 118762005 (dónde vive 129.17 vs 2880.04) + validar contra 2-3 PEs CIP OK del backfill T7. Smoke: reproceso 118762005 → seguro 129.17.
-4. **PUT-C4 · R3b**: Parser Factura regla 11 `material` (layout `0099237508` de 729002; fallback determinístico regex SOLO si el prompt no alcanza). Smoke: reproceso 4010729002; regresión 4010726911.
+## Contexto no obvio (trampas de la sesión — no re-descubrir)
 
-### C · CBL comparador — tier: Fable
-(nodo COMPARADOR 76143b4d + T7 `t7-armar-fcpe-01`; espejos `_comparador.js` / `iny_aduana.js` / `code_armar_productos_fcpe.js`; gates bulk B/C/D + prefix4 + decisión #1 INTACTOS)
-
-5. **PUT-C2 · R7**: `buildCompareEquipos` — agregar filas aduana por container (suma neto/bruto); bultos ambiguo en multi-renglón → NODATA (parse cruzado 18/204 en `parseBultosAduana`/iny_aduana). Smoke: reproceso 118762005 → MSBU8784391 OK 27000/27540 + regresión single-product.
-6. **PUT-C3 · R8**: normalización escala + |ΔM3| < 1.0 (cubre LOG-IN y MAERSK por vivir en comparador). Smoke: mismo reproceso 118762005 → sin flag Vol (verifica C2+C3 juntos).
-7. **PUT-C5 · R9**: bulk-aware FOB en COMPARADOR + T7 (isBulk espejado en T7 vía `goods_block_raw`). Smoke: reproceso 708683 → sin flag; regresión 708684/735878/735880/735883/735888 + una no-bulk.
-
-### D · App — tier: Fable mockup/review, Sonnet scaffolding
-(rama nueva desde master; GATE UI: mockup aprobado antes de código; smokes headless con fixtures PostgREST — anon no lee `v_operacion_estado`)
-
-8. **R3 panel por ítem**: `seguimiento.js` `buildDetailRow` (:576-614) lee `bl_controls.factura_extract->'items'` (fila-por-ítem: Ítem/GMID/Producto/Cantidad/Origen), fallback a `orden_productos` si items viejos. NO tocar `orden_productos` ni sus 2 writers espejo ni bloque PRODUCT del mail. Cohorte 13/07 sin origen/item → backfill = reprocesar las que interesen.
-9. **R10**: (a) smoke reproceso 118828656 — PE manual YA a convención en Drive (`26003EC03001409G_118828656_PE.pdf`), debería tomarlo (`doc_pe = pe_extract IS NOT NULL`); ojo re-manda mail interno a expoarpbb; (b) hint UX "Reprocesar BL re-busca los documentos en Drive" cuando un doc falta; (c) OPCIONAL DIFERIDO: PUT CBL para asentar `documentos_orden`.
-10. **R12 ETD + roleo**: migración vista (+`etd` desde `mailing_orders` 105/105; evaluar `roleo_to_etd`) → mockup (col ETD a la IZQUIERDA de ATD, sort, badge "a rolear" = sin ATD ∧ etd vencida [5 casos hoy] + `roleo_*`) → gate John → `seguimiento.js`.
-11. **R11 visor lado a lado**: mockup PRIMERO → split `#cbl-viewer`, refactor singleton `_cblActiveDoc` → estado por pane, CSS namespaced `cbl-split-*`, isla existente y overrides por orden NO-TOUCH; de paso corregir stale `control-bl.js:939` + `control-bl.md`.
+- **Reprocesos**: alias cortos tipo "708683" NO existen en `bl_controls` — usar números completos `40107xxxxx`. El Form Trigger es multipart `field-0=<orden>` a `/form/b8b6e00a-…`; la ejecución fallida devuelve 200 vacío — la confirmación real es la fila NUEVA en `bl_controls`.
+- **REGLA NUEVA permanente (incidente resuelto 18-07):** agentes que editan archivos = SECUENCIALES en el checkout compartido; **PROHIBIDO `git stash` en agentes con trabajo paralelo** (el HEAD-repro se hace con `git show HEAD:archivo`); paralelo real → worktrees. Queda un stash inerte sin dropear (revisable, prescindible).
+- **Receta de fixtures PostgREST para smokes headless de Seguimiento** (anon no lee la vista): scripts en el scratchpad de esta sesión (`smoke_u1.js` y familia) — gotcha clave: en `page.route` gana la ruta registrada ÚLTIMO → catch-all PRIMERO, específicas después. Vale trackearla en el repo si se reusa.
+- El 118762005 sigue REVISAR por 3 motivos AJENOS a los fixes (buque planilla "LOG IN RESILIENTE" ≠ BL "MERCOSUL SUAPE" + discrepancia notify RFORNE conocida) — datos reales, no bugs.
+- `pg_get_viewdef` es la fuente de verdad para migrar vistas — los espejos `.sql` del repo pueden estar stale (pasó con T3).
+- D4: el cruce órdenes↔schedule usa fecha EXACTA — si `mailing_orders.etd` difiere 1 día del schedule, salen cards adyacentes sin fusionar (edge conocido, autocrítica del ítem).
 
 ## PRÓXIMO PASO
 
-1. Entrar por **Workstream A (PUT-M1 · R2, el más chico)** — GO de John por workstream o total.
-2. Smokes de reproceso agrupados al final de cada workstream para minimizar mails a expoarpbb (118762005 verifica C1+C2+C3 de una).
-
-## Contexto no obvio
-
-- Trampas registradas: clon huérfano `'Clasificar Documento y renombrar pdf1'` en Gmail→Drive (jamás grep-por-nombre) · GETs del mailing corren POR ITEM (dedup `allRows`) · harness: familia a2fix exige `--apply`, `r2_*` ejecutan sin flag · reproceso en modo form SIEMPRE re-manda el mail de control.
-- Harness activo = `ssb-workspace/validador-aduana/n8n/control_de_bill_of_lading/sdk/` (56 put_*.py; el repo hermano `validador-aduanal` está CONGELADO sin los PUTs de julio).
-- R3: la extracción de factura YA es por ítem con `origen`+`item` (prompt Y schema, marcador R2-ORIGEN 17-07) — el colapso es de `orden_productos` + panel Seguimiento; el cohorte 13/07 pre-data el cambio de prompt.
-- Espejos SDK se actualizan en el MISMO commit que su PUT (regla espejada).
-- Dumps del EXPLORE (wf_cbl/wf_mailing/wf_gmaildrive.json + evidencia_supabase.md) en scratchpad de la sesión — regenerables con `n8n-cli workflows get <id> --json`.
+1. John corre los smokes solo-prod de arriba; cualquier hallazgo abre sesión nueva.
+2. Próxima tanda sugerida: la de seguridad (#1 de las decisiones elevadas).
