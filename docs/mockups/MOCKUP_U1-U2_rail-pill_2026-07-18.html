@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup U1+U2 · rail sin badges + pill límite (18-07)</title>
+<style>
+  :root{
+    /* tokens copiados 1:1 de index.html (paleta dark) */
+    --bg:#0b0f17;--surface:#141925;--border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+    --blue:#5b9bf5;--blue-lt:#1d2742;
+    --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+    --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+    --green:#3ecf8e;--purple:#a78bfa;
+    --seg-surface:#1e293b;--seg-line:rgba(255,255,255,.08);
+    --seg-ink:#e8ecf3;--seg-ink-soft:#8b94a8;--seg-ink-faint:#6b7488;
+    --rail-bg:#080b12;--rail-border:rgba(255,255,255,.07);
+    --font:'Inter','system-ui',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;padding:28px 32px 70px;max-width:1100px}
+  h1{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+  .mockband{display:inline-flex;align-items:center;gap:8px;background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:4px 10px;margin-bottom:10px}
+  .sub{color:var(--muted);font-size:13px;max-width:760px}
+  section{margin-top:40px}
+  h2{font-size:16px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .id{color:var(--blue);font-family:monospace;font-size:14px;margin-right:8px}
+  .secsub{color:var(--muted);font-size:12.5px;margin:0 0 16px;max-width:760px}
+  .grid{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;min-width:270px}
+  .panel>h3{margin:0 0 12px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .panel.reco{border-color:rgba(94,234,212,.35)}
+  .rec{display:inline-block;background:rgba(94,234,212,.10);color:#5eead4;border:1px solid rgba(94,234,212,.35);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;border-radius:5px;padding:2px 7px;margin-left:8px;vertical-align:2px}
+  /* ── rail excerpt (fiel a .tab-bar expandida) ── */
+  .rail{background:var(--rail-bg);border:1px solid var(--rail-border);border-radius:12px;padding:12px;width:228px;display:flex;flex-direction:column;gap:4px}
+  .rbtn{display:flex;align-items:center;gap:9px;width:100%;height:40px;padding:0 10px;border:1px solid transparent;border-radius:9px;color:rgba(255,255,255,.55);font-size:13px;font-weight:500}
+  .rbtn.active{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+  .rbtn .ic{width:18px;height:18px;flex-shrink:0}
+  .rbtn .lbl{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rsub{display:flex;flex-direction:column;gap:4px;padding-left:14px}
+  .nbadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;background:var(--amber);color:#fff;font-size:10px;font-weight:700;border-radius:9px;line-height:1;margin-left:auto;flex-shrink:0}
+  .railmini{background:var(--rail-bg);border:1px solid var(--rail-border);border-radius:12px;padding:12px;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .rmini{position:relative;width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55)}
+  .rmini .ic{width:18px;height:18px}
+  .rmini .nbadge{position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;font-size:9px;margin:0;border:1.5px solid var(--rail-bg)}
+  svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* ── pills (fiel a .seg-bdg) ── */
+  .seg-bdg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.03em;border:1px solid transparent;border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .b-bad{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+  .b-warn{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+  .b-info{background:var(--blue-lt);color:var(--blue)}
+  .b-solid{background:var(--red);color:#fff}
+  .seg-bdg .ic{width:12px;height:12px;flex-shrink:0}
+  .pillrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 2px}
+  .pillrow .sep{color:var(--seg-ink-faint);font-size:11px}
+  /* ── chip RESUMEN (fiel a .seg-chip) ── */
+  .chip{border-radius:11px;border:1px solid var(--seg-line);background:var(--seg-surface);padding:8px 14px 7px;display:inline-flex;flex-direction:column;min-width:118px}
+  .chip .n{font-size:20px;font-weight:800;line-height:1.15;color:var(--purple)}
+  .chip .l{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--seg-ink-soft)}
+  .chip .a{font-size:10px;color:var(--seg-ink-faint);margin-top:1px}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px;max-width:720px}
+  .note b{color:var(--text)}
+  .keep{color:var(--green);font-weight:700}
+  .warntxt{color:var(--amber)}
+  .optdesc{font-size:12px;color:var(--muted);margin-top:8px;max-width:340px}
+  .decide{margin-top:44px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:10px;padding:14px 18px;font-size:13px}
+  .decide h2{font-size:14px;margin-bottom:8px}
+  .decide li{margin-bottom:4px}
+  code{font-family:'JetBrains Mono',monospace;font-size:.92em;color:var(--blue)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<div class="mockband">Mockup estático · nada implementado · para GO de John</div>
+<h1>U1 + U2 — badges del rail y pill "límite"</h1>
+<p class="sub">Página de decisión (18-07). Estilos y tokens copiados 1:1 del <code>index.html</code> de prod; los números (418/12/258) son los reales de hoy a modo ilustrativo.</p>
+
+<!-- ══════════════ U2 ══════════════ -->
+<section>
+  <h2><span class="id">U2</span>Sacar badges de alertas del menú lateral</h2>
+  <p class="secsub">Decisión ya tomada por John: los badges de los DOS ítems (Marítimo y Terrestre) se van. El card RESUMEN y todos los conteos dentro de la solapa <span class="keep">QUEDAN igual</span>. Falta una sola definición: el badge del <b>grupo Documentación</b> (solo visible con el rail colapsado o el grupo cerrado).</p>
+
+  <div class="grid">
+    <div class="panel">
+      <h3>Hoy (prod)</h3>
+      <div class="rail">
+        <div class="rbtn"><svg class="ic"><use href="#i-folder"/></svg><span class="lbl">Documentación</span><svg class="ic" style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-chev"/></svg></div>
+        <div class="rsub">
+          <div class="rbtn active"><svg class="ic"><use href="#i-package"/></svg><span class="lbl">Seguimiento Marítimo</span><span class="nbadge">418</span></div>
+          <div class="rbtn"><svg class="ic"><use href="#i-route"/></svg><span class="lbl">Seguimiento Terrestre</span><span class="nbadge">12</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel reco">
+      <h3>Propuesta — lo pedido<span class="rec">se implementa</span></h3>
+      <div class="rail">
+        <div class="rbtn"><svg class="ic"><use href="#i-folder"/></svg><span class="lbl">Documentación</span><svg class="ic" style="width:14px;height:14px;transform:rotate(180deg)"><use href="#i-chev"/></svg></div>
+        <div class="rsub">
+          <div class="rbtn active"><svg class="ic"><use href="#i-package"/></svg><span class="lbl">Seguimiento Marítimo</span></div>
+          <div class="rbtn"><svg class="ic"><use href="#i-route"/></svg><span class="lbl">Seguimiento Terrestre</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Dentro de la solapa — queda igual</h3>
+      <div class="chip"><span class="n">258</span><span class="l">Alertas</span><span class="a">ver todas</span></div>
+      <p class="optdesc">El RESUMEN sigue contando <b>órdenes</b> con ≥1 alerta del modo activo. No se toca nada del panel.</p>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:22px">
+    <div class="panel">
+      <h3>Variante A — grupo conserva su número</h3>
+      <div class="railmini">
+        <div class="rmini"><svg class="ic"><use href="#i-folder"/></svg><span class="nbadge">430</span></div>
+      </div>
+      <p class="optdesc">Con el rail colapsado, la carpeta Documentación sigue mostrando la suma marítimo+terrestre (430).</p>
+    </div>
+    <div class="panel reco">
+      <h3>Variante B — cero números en el rail<span class="rec">recomendada</span></h3>
+      <div class="railmini">
+        <div class="rmini"><svg class="ic"><use href="#i-folder"/></svg></div>
+      </div>
+      <p class="optdesc">Se saca también el del grupo: es la MISMA señal ("alertas en el rail") que John pidió sacar, solo que sumada. Dejarla sería incoherente con el pedido.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ U1 ══════════════ -->
+<section>
+  <h2><span class="id">U1</span>Pill "venció [fecha]" → "límite [fecha]"</h2>
+  <p class="secsub">Columna "Zarpe (ATD) → límite" del Seguimiento. Los pills NO vencidos no cambian en ninguna opción. <span class="warntxt">Problema a resolver:</span> la variante en-plazo YA dice "límite [fecha]" (azul) — con el cambio a secas, vencida y en-plazo dicen lo mismo y se distinguen solo por color.</p>
+
+  <div class="panel" style="margin-bottom:20px">
+    <h3>Hoy (prod) — los 4 estados</h3>
+    <div class="pillrow">
+      <span class="seg-bdg b-bad">venció 12/07</span><span class="sep">·</span>
+      <span class="seg-bdg b-warn">vence 20/07</span><span class="sep">·</span>
+      <span class="seg-bdg b-warn">ATD futuro · revisar</span><span class="sep">·</span>
+      <span class="seg-bdg b-info">límite 25/07</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel reco">
+      <h3>Opción 1 — ícono ⚠ + tooltip<span class="rec">recomendada</span></h3>
+      <div class="pillrow">
+        <span class="seg-bdg b-bad" title="Plazo de envío vencido el 12/07"><svg class="ic"><use href="#i-alert"/></svg>límite 12/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-warn">vence 20/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-info">límite 25/07</span>
+      </div>
+      <p class="optdesc">Triángulo del sprite existente (<code>#i-alert</code>, cero assets nuevos) + tooltip al pasar el mouse. Se distingue SIN hover, sobrevive daltonismo e impresión en gris. Es el refuerzo estándar del design system.</p>
+    </div>
+
+    <div class="panel">
+      <h3>Opción 2 — solo texto + tooltip</h3>
+      <div class="pillrow">
+        <span class="seg-bdg b-bad" title="Plazo de envío vencido el 12/07">límite 12/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-warn">vence 20/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-info">límite 25/07</span>
+      </div>
+      <p class="optdesc">La más limpia visualmente, pero el refuerzo solo aparece al pasar el mouse: escaneando la tabla, rojo vs azul es la única diferencia.</p>
+    </div>
+
+    <div class="panel">
+      <h3>Opción 3 — relleno sólido + tooltip</h3>
+      <div class="pillrow">
+        <span class="seg-bdg b-solid" title="Plazo de envío vencido el 12/07">límite 12/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-warn">vence 20/07</span><span class="sep">·</span>
+        <span class="seg-bdg b-info">límite 25/07</span>
+      </div>
+      <p class="optdesc">Fondo rojo pleno con texto blanco: se distingue por peso/contraste aun en escala de grises, pero introduce un estilo de pill que hoy no existe en la tabla (todos son outline).</p>
+    </div>
+  </div>
+  <p class="note"><b>Pasá el mouse por los pills rojos</b> para ver el tooltip. En la implementación además lleva texto accesible para lectores de pantalla (no visible).</p>
+</section>
+
+<div class="decide">
+  <h2>Qué decide John en este gate</h2>
+  <ul>
+    <li><b>U1:</b> opción <b>1</b> (recomendada), <b>2</b> o <b>3</b>.</li>
+    <li><b>U2:</b> variante <b>A</b> (grupo conserva número) o <b>B</b> (recomendada — cero números en el rail).</li>
+  </ul>
+  Con el GO, U1+U2 se implementan de forma autónoma (rama de app, smoke headless pre-commit, STOP antes de push).
+</div>
+
+</body>
+</html>

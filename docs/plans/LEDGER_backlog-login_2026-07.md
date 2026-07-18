@@ -6,7 +6,7 @@
 
 ## Estado global
 
-- **PRÓXIMO: A1 — esperando GO de John.** Ningún ítem arrancado. Cero código de la tanda implementado.
+- **EN CURSO 18-07:** A1 en EXPLORE (sub-agente) · U1+U2 con mockup PRESENTADO esperando decisión de John (`docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html`, servido en `http://localhost:8899/docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html`). Cero código de la tanda implementado.
 - **TEST_MODE ON toda la tanda.** STOP antes de cualquier push.
 - Pins vivos (verificados 17-07 contra dump): CBL `WVt6gvghL2nFVbt6` = **`9f69b166`** (73 nodos) · Mailing `kh6TORgRg9R1Shj1` = **`943bbc15`** (36, TEST_MODE 3 capas) · Gmail→Drive `pBN4Wd1lcTSHNkFg` = **`b8d997d6`** (43).
 
@@ -15,7 +15,7 @@
 - Fable 5 (razonamiento máximo) SOLO orquesta y supervisa; el laburo lo hacen sub-agentes (Task) en tiers más baratos (Sonnet/Opus según complejidad). Nada a mano.
 - Ciclo POR ÍTEM: **EXPLORE → PLAN → [GO John] → IMPLEMENT → VERIFY**. Gates humanos absolutos.
 - Loop de revisión en dos niveles: (1) los sub-agentes iteran propuesta → autocrítica → refinamiento antes de entregar (nunca primer borrador); (2) cada etapa con John es un loop — presentar, feedback, incorporar, re-presentar hasta el GO. Nada one-shot; no se avanza de etapa sin OK explícito.
-- **Gate de UI:** mockup HTML estático aprobado por John ANTES de tocar la app viva.
+- **Gate de mockup (REFORZADO 18-07):** TODO cambio de interfaz — U1, D1, D4, D5 y cualquier otra pantalla — lleva mockup HTML estático aprobado por John ANTES de tocar la app viva. Secuencia por ítem visual: EXPLORE → PLAN → MOCKUP → GO → IMPLEMENT. Una vez aprobados los mockups, la tanda se ejecuta de forma AUTÓNOMA por ítem (Iron Law en cada PUT n8n, STOP pre-push, TEST_MODE ON). El mockup es parte del flujo, no una interrupción.
 - **Verify > recall:** nada de memoria — verificar contra el proyecto y la DB en vivo.
 - **Criterio propio:** mejoras u objeciones al pedido se proponen en el PLAN, con porqué y trade-off. No se aplican por cuenta propia ni se callan por cortesía; John decide.
 - Este ledger se actualiza tras cada paso (columna Estado por ítem).
@@ -40,10 +40,10 @@ A1 → A2 → B1 → B2 → C1 → C2 → [smoke reproceso 118762005: cubre B1+C
 
 Pin pre `943bbc15` · nodo `Resolver Mailing` `194f0f56` · espejo `code_mailing_resolver.js` · derivar PUT de `put_r2_3ab_resolver.py` · assert TEST_MODE true pre/post PUT. Tier: Sonnet edita, Fable revisa+PUT.
 
-### A1 (alias PUT-M1 · R2) — bloque Log-In ES→PT — Estado: `en cola` **← SIGUIENTE**
-- Solo `LOGIN_HEAD`. Copy aprobado por John: *"Favor entrar em contato com a Login para retirar o BL original."*
-- Las 11 LOGIN_LINES oficiales NO se tocan.
-- Smoke: send test → bloque 100% PT.
+### A1 (alias PUT-M1 · R2) — bloque Log-In ES→PT — Estado: `PLAN presentado 18-07 — espera GO de John para IMPLEMENT`
+- Solo `LOGIN_HEAD`. Copy aprobado por John: *"Favor entrar em contato com a Login para retirar o BL original."* Las 11 LOGIN_LINES oficiales NO se tocan.
+- EXPLORE completo 18-07 (sub-agente + cross-check grep): **sin drift espejo↔vivo** (diff byte a byte exit 0), pin vivo confirmado `943bbc15-cc67-49d4-9740-175cd78bb52b` (36 nodos, 24 creds), TEST_MODE true en las 3 capas. `LOGIN_HEAD` = string plano `code_mailing_resolver.js:471`, ÚNICO consumo en `:486` (dentro del bloque `isLogin`); el subject no lo toca. Bug de origen: nació ES en el mismo commit (`9f11ab8`) donde LOGIN_LINES nació PT — omisión, no regresión.
+- PLAN: (1) editar espejo `:471` → copy PT; (2) actualizar **`_t6_resolver_test.cjs:117`** (assert textual ES hardcodeado — FLAG del EXPLORE, mismo commit); (3) derivar `put_a1_login_head.py` del esqueleto `put_r2_3ab_resolver.py` (`EXPECT_VER_PRE="943bbc15-cc67-49d4-9740-175cd78bb52b"`, target único Resolver Mailing, drift-check nodo-por-nodo, rollback, deactivate→activate); (4) correr `--dry-run` SIEMPRE primero — **sin flag ya escribe** (no existe `--apply` en esta familia); (5) PUT real; (6) smoke send test → bloque 100% PT. Snapshots JSON históricos con el ES quedan como están (no gatean nada).
 
 ### A2 (alias PUT-M2 · R1) — bloque Partes en el cuerpo — Estado: `en cola`
 - Sold-to/Ship-to/Notify + party_dirs, labels PACKS en/es/pt, cadena notify con marca.
@@ -87,17 +87,16 @@ Nodo COMPARADOR `76143b4d` + T7 `t7-armar-fcpe-01` · espejos `_comparador.js` /
 
 Tier: Sonnet implementa, Fable revisa. Smoke headless pre-commit (`docs/dev/smoke-headless.md`).
 
-### U1 — pill "venció" → "límite" — Estado: `en cola`
-- Columna "Zarpe (ATD) → límite" del Seguimiento: cuando el plazo pasó, el pill dice "venció [fecha]" → debe decir "límite [fecha]", MANTENIENDO el rojo para no perder la señal.
-- Anclas verificadas 18-07: texto en `js/features/seguimiento.js:858` (`dlCell`, bucket `vencida`, variant `bad` → clase `.seg-bdg--bad`, CSS en isla de index.html).
-- ⚠ Consideración para el PLAN (detectada 18-07): la variante en-fecha YA dice "límite [fecha]" (`seguimiento.js:861`, azul `info`) → tras el cambio, vencida y en-fecha muestran el MISMO texto y se distinguen solo por color (rojo vs azul). Sugerencia a evaluar (decide John): agregar `title`/tooltip o algún refuerzo no-cromático (accesibilidad daltonismo).
+### U1 — pill "venció" → "límite" — Estado: `PLAN/MOCKUP presentado 18-07 — espera decisión John (opción 1/2/3)`
+- DECIDIDO por John 18-07: GO al cambio de texto "venció [fecha]" → "límite [fecha]" manteniendo el rojo. Confirmó la colisión de labels (en-fecha YA dice "límite" en `seguimiento.js:861`, azul) → el refuerzo no-cromático se decide sobre el mockup. NO implementar hasta ese OK.
+- Mockup: `docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html` — Opción 1 (RECOMENDADA: ícono `#i-alert` del sprite + tooltip) · Opción 2 (solo texto + tooltip) · Opción 3 (relleno sólido rojo + tooltip).
+- Anclas verificadas 18-07: texto en `js/features/seguimiento.js:858` (`dlCell`, bucket `vencida`, variant `bad` → `.seg-bdg--bad`). En implementación sumar texto accesible para lectores de pantalla.
 
-### U2 — sacar badge del rail "Seguimiento Marítimo" — Estado: `en cola` (con decisión pendiente de John)
-- Quitar el badge numérico del ítem del rail (`#seg-tab-badge`, `index.html:3471`; lo setea `updateBadge()` en `seguimiento.js:1161`).
-- **HALLAZGO 418 vs 258 (verificado en código 18-07): NO es bug — miden cosas distintas.**
-  - Badge del rail (418) = **instancias de alerta**: `reduce(s + alerts.length)` sobre órdenes marítimas no archivadas (`seguimiento.js:1158`) — una orden con 3 alertas simultáneas aporta 3.
-  - Card RESUMEN (258) = **órdenes con ≥1 alerta** del modo activo (`seguimiento.js:314` filtro `_activeMode` + `:324` `.filter(alerts.length>0).length`).
-- Pendientes de decisión John: (a) ¿el card RESUMEN 258 queda o también se saca? (b) ¿se saca también el badge del ítem Terrestre (`#seg-ter-badge`) por simetría? (c) el badge del grupo Documentación (`#seg-group-badge` = mar+ter, `seguimiento.js:1163`) hoy quedaría — ¿ok?
+### U2 — sacar badges de alertas del rail — Estado: `PLAN/MOCKUP presentado 18-07 — espera variante A/B (badge del grupo)`
+- DECIDIDO por John 18-07: sacar el badge de AMBOS ítems del rail — Marítimo (`#seg-tab-badge`, `index.html:3471`) y Terrestre (`#seg-ter-badge`, `:3472`); los setea `updateBadge()` en `seguimiento.js:1161-1162`. El card RESUMEN (258) y todo conteo DENTRO de la solapa QUEDAN.
+- ÚNICA definición restante (en el mockup): badge del grupo Documentación (`#seg-group-badge` = mar+ter, `seguimiento.js:1163`) — Variante A (queda) vs **Variante B (RECOMENDADA: cero números en el rail — es la misma señal que John pidió sacar, sumada)**.
+- HALLAZGO 418 vs 258 (verificado 18-07, reportado a John): NO es bug — badge = instancias de alerta (`:1158`, una orden puede aportar varias); RESUMEN = órdenes con ≥1 alerta del modo activo (`:314`/`:324`).
+- Bonus observado en el mockup: sin badge, el label "Seguimiento Marítimo" deja de truncarse en el rail pinned de 228px.
 
 ## D · App
 
@@ -125,6 +124,8 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
   - Rango: HOY + próximos 7 días.
   - Muestra las próximas salidas de buques QUE TIENEN CARGA.
   - Por cada salida: el buque, los destinos/puertos donde descargan las órdenes, y las órdenes que embarcan — asociadas por el buque que declara el BL (el que le corresponde).
+  - Detalle por buque (John 18-07): **nombre del barco + cantidad de órdenes asignadas + cantidad de contenedores asignados**.
+  - **Clickeable (John 18-07):** al clickear un buque, FILTRA la lista de órdenes de abajo para mostrar solo las asignadas a ese buque.
   - Propósito: guía para el documental — ver las salidas que vienen y cruzar/cargar la info en el schedule antes de los cortes.
 - Comparte la dependencia ETD con D3 (por eso va pegado a D3 en la secuencia). El PLAN debe incluir sugerencias de mejora de Fable si las hay.
 
@@ -146,4 +147,5 @@ Rama nueva desde master · GATE UI: mockup HTML estático aprobado antes de cód
 
 ## Changelog
 
+- **2026-07-18 (2ª ronda)** — Decisiones John: U2 = sacar badges de AMBOS ítems del rail (RESUMEN queda; resta variante A/B del grupo) · U1 = GO al texto, refuerzo no-cromático a decidir sobre mockup · D4 = spec ampliada (nombre + nº órdenes + nº contenedores por buque; click filtra la lista) · gate de mockup REFORZADO (todo cambio de interfaz; post-aprobación ejecución autónoma). Mockup U1+U2 producido y verificado headless (`docs/mockups/MOCKUP_U1-U2_rail-pill_2026-07-18.html`). A1 → EXPLORE (sub-agente en curso).
 - **2026-07-18** — Ledger creado (rama `feat/plan1-bl-nunca-silencioso`). IDs asignados: A1-A2, B1-B2, C1-C3 (alias PUT-M*/PUT-C* del handoff 17-07 preservados), U1-U2, D1-D5. Sumados por pedido de John: **D4** (timeline próximas salidas), **U1** (pill "límite"), **U2** (badge rail). Verificado en código: anclas U1/U2, hallazgo 418 vs 258 (instancias de alerta vs órdenes con ≥1 alerta — no es bug), `etd` ausente en `seguimiento.js`. Forma de trabajo fijada (orquestación por sub-agentes, gates absolutos, loop de revisión). **Ningún ítem implementado — esperando GO de John para A1.**
