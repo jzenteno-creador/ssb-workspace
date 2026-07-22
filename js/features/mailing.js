@@ -69,6 +69,7 @@
   let _sel = null;        // order_number seleccionado
   let _row = null;        // fila mailing_orders seleccionada
   let _contact = null;    // fila mailing_contacts del par (ship,sold)
+  let _siblings = [];     // tríos hermanos (mismo ship+notify, otro sold) — solo se puebla si el trío exacto no está confirmado
   let _preview = null;    // última respuesta action=preview
   let _to = [], _cc = []; // CONFIRMADOS en edición (enviables al guardar)
   let _blocked = [];      // BLOQUEADOS en edición (exclusión dura persistente)
@@ -284,6 +285,36 @@
       .eq('ship_to_key', row.ship_to_key).eq('sold_to_key', row.sold_to_key || '').maybeSingle();
     if(error){ console.error('[mailing] contacts:', error.message); return null; }
     return data || null;
+  }
+  // ── Asistente "trío hermano" (tanda UI pieza 3): filas de mailing_contacts con
+  // MISMO ship_to_key y notify compatible (exacto + comodín '' — mismo criterio
+  // de match que el resolver del workflow) pero sold_to_key DISTINTO, ya
+  // confirmadas. Cubre el caso real: el mismo cliente aparece con Sold-to
+  // distinto según el documento (ej. DOW BRASIL vs LOG IN LOGISTICA en ciertas
+  // STO) → tríos distintos → la orden cae en "sin directorio" aunque exista uno
+  // casi idéntico ya curado. Se consulta SOLO cuando el trío exacto no tiene
+  // fila confirmada — cero peso en el caso feliz. Si notify_key no existe
+  // (deploy desfasado), PostgREST responde error y esto degrada a [] sin romper.
+  async function fetchSiblingContacts(row){
+    const s = supa(); if(!s || !row || !row.ship_to_key) return [];
+    try {
+      const notifyK = row.notify_key != null ? String(row.notify_key) : '';
+      let q = s.from('mailing_contacts').select('*')
+        .eq('ship_to_key', row.ship_to_key)
+        .neq('sold_to_key', row.sold_to_key || '')
+        .eq('confirmed', true);
+      // notify exacto + comodín ''. OJO (hallazgo smoke): .in() con '' serializa
+      // `in.()` — roto en PostgREST, el string vacío se pierde. El comodín va con
+      // .eq('notify_key','') (mismo `=eq.` vacío que fetchContact ya usa en prod
+      // para sold_to_key). notify_key está normalizada [A-Z0-9 ] por el writer;
+      // si llegara otra cosa, guard regex → degrada al comodín solo (no rompe el
+      // parser del or=).
+      if(notifyK && /^[A-Z0-9 ]+$/i.test(notifyK)) q = q.or('notify_key.eq.' + notifyK + ',notify_key.eq.');
+      else q = q.eq('notify_key', '');
+      const { data, error } = await q.order('updated_at', { ascending: false }).limit(10);
+      if(error){ console.error('[mailing] siblings:', error.message); return []; }
+      return data || [];
+    } catch(e){ console.error('[mailing] siblings:', e.message); return []; }
   }
   async function fetchSends(order){
     const s = supa(); if(!s) return [];
@@ -598,6 +629,59 @@
       status.style.color = 'var(--mail-warn)';
     }
     c.appendChild(status);
+
+    // ── Asistente "trío hermano" (tanda UI pieza 3): sin fila confirmada para el
+    // trío exacto, ofrecer directorios ya curados del MISMO ship_to + notify con
+    // sold_to distinto. SOLO PROPUESTA: el botón precarga _to/_cc/_blocked como
+    // edición sin guardar; confirmar sigue siendo el flujo normal "Guardar
+    // directorio" — nada se confirma ni se envía solo. Render 100% createElement
+    // + textContent (cero HTML interpolado) y clases mail-* existentes (la isla
+    // mailing-styles es NO-TOUCH). ──
+    if(!(_contact && _contact.confirmed) && _siblings.length){
+      const sibBox = el('div','mail-testbox');
+      sibBox.style.marginTop = '10px';
+      const sh = el('div', null, _siblings.length === 1
+        ? 'Directorio de un trío hermano disponible'
+        : 'Directorios de ' + _siblings.length + ' tríos hermanos disponibles');
+      sh.style.fontWeight = '800';
+      sibBox.appendChild(sh);
+      sibBox.appendChild(el('div','mail-status-line','Mismo Ship-to y Notify, otro Sold-to — suele ser el mismo cliente con sold-to distinto según el documento. Usalo como base: revisás y confirmás vos.'));
+      for(const sib of _siblings){
+        const w = el('div');
+        w.style.marginTop = '10px';
+        const head = el('div', null, 'Sold-to: ' + (sib.sold_to_name || sib.sold_to_key || '(comodín — sin sold-to)')
+          + (sib.notify_key === '' && notifyKey ? ' · fila comodín de notify' : ''));
+        head.style.fontWeight = '700'; head.style.fontSize = '12.5px';
+        w.appendChild(head);
+        const lists = el('div','mail-sendlists');
+        const rowS = (kcls, klbl, arr) => {
+          const d = el('div');
+          d.appendChild(el('span','k ' + kcls, klbl));
+          d.appendChild(el('span','v', (arr && arr.length) ? arr.join(', ') : '— ninguno —'));
+          lists.appendChild(d);
+        };
+        rowS('van','TO confirmados', sib.to_emails);
+        rowS('van','CC confirmados', sib.cc_emails);
+        rowS('blq','Bloqueados', sib.blocked_emails || sib.rejected_emails);
+        w.appendChild(lists);
+        const meta = el('div','mail-status-line',
+          'Confirmado' + (sib.updated_by ? ' por ' + sib.updated_by : '') + ' · ' + fmtTs(sib.updated_at) + ' · fuente ' + (sib.source || 'ba'));
+        meta.style.marginTop = '4px';
+        w.appendChild(meta);
+        const br = el('div','mail-btnrow');
+        br.style.marginTop = '6px';
+        const useBt = el('button','mail-btn','Usar este directorio');
+        useBt.type = 'button';
+        useBt.disabled = _busy != null;
+        useBt.title = 'Precarga estas decisiones como propuesta — NO confirma ni envía nada';
+        useBt.onclick = () => { useSiblingDirectory(sib); };
+        br.appendChild(useBt);
+        br.appendChild(el('span','mail-status-line','Precarga como propuesta — confirmás con "Guardar directorio".'));
+        w.appendChild(br);
+        sibBox.appendChild(w);
+      }
+      c.appendChild(sibBox);
+    }
 
     // ── CONFIRMADOS (enviables) — si la fila existe pero confirmed=false (seed
     // a medio curar vía API), el rótulo no debe mentir: se confirman al guardar ──
@@ -993,6 +1077,7 @@
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
     _preview = null; _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
+    _siblings = []; // trío hermano: nunca arrastrar hermanos de la orden anterior
     _extraAtt = []; // items 38/39: adjuntos extra no sobreviven el cambio de orden
     window.__mailTestOff = null;
     renderMaster();
@@ -1001,6 +1086,13 @@
     const contact = await fetchContact(_row);
     if(gen !== _gen) return; // el usuario ya seleccionó otra orden: descartar
     _contact = contact;
+    // Trío hermano: 1 query extra SOLO si el trío exacto no quedó confirmado
+    // (con directorio confirmado el asistente no aplica y no se consulta nada).
+    if(!contact || !contact.confirmed){
+      const sibs = await fetchSiblingContacts(_row);
+      if(gen !== _gen) return;
+      _siblings = sibs;
+    }
     _sends = await fetchSends(order);
     if(gen !== _gen) return;
     // 3 estados: confirmados y bloqueados vienen del directorio GUARDADO;
@@ -1041,6 +1133,31 @@
     else if(dest === 'blocked') _blocked.push(email);
     // dest 'nuevo' = solo sacarlo de donde estaba (si es extraído reaparece derivado)
     _dirty = true;
+    renderDetail();
+  }
+
+  // ── Asistente "trío hermano": precarga las decisiones del hermano como EDICIÓN
+  // SIN GUARDAR (_dirty=true, mismo estado que mover chips a mano) — guardar y
+  // confirmar sigue siendo el flujo humano normal ("Guardar directorio" →
+  // ssbConfirm → save_contacts). JAMÁS auto-confirma ni auto-envía: la
+  // confirmación explícita es la salvaguarda (riesgo = cliente equivocado). ──
+  async function useSiblingDirectory(sib){
+    if(!sib || _busy) return;
+    const gen = _gen, order = _sel;
+    if(_dirty){
+      const ok = await ssbConfirm({
+        title: 'Reemplazar cambios en edición',
+        body: 'Ya tenés cambios de directorio sin guardar en esta orden. Usar el directorio hermano los reemplaza en pantalla (no toca nada guardado).',
+        confirmText: 'Reemplazar',
+      });
+      if(!ok || gen !== _gen || order !== _sel) return; // stale: el usuario cambió de orden durante el confirm
+    }
+    if(gen !== _gen || order !== _sel) return;
+    _to = (sib.to_emails || []).slice();
+    _cc = (sib.cc_emails || []).slice();
+    _blocked = ((sib.blocked_emails || sib.rejected_emails) || []).slice();
+    _dirty = true;
+    ssbToast('Directorio del trío hermano precargado como PROPUESTA — revisá y confirmá con "Guardar directorio".', 'info');
     renderDetail();
   }
 

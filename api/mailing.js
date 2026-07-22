@@ -103,7 +103,11 @@ async function handleConfirmAtd(res, body, userEmail, supaUrl, supaKey) {
   const nowIso = new Date().toISOString();
   const patches = aEscribir.map(async ([order, atd]) => {
     if (!existentes.has(order))
-      return { order_number: order, status: 'no_encontrada', detail: 'sin fila en Mailing — la orden no pasó por el Control BL' };
+      // Copy fix (diagnóstico 23-07): "no pasó por el Control BL" mentía cuando el
+      // control existe pero falta el asiento. El código 'no_encontrada' es CONTRATO
+      // (no cambiar); solo el texto humano. Byte-idéntico al label del front
+      // (despachos.js ATD_SRV_LBL) a propósito: detail===lbl evita duplicar el texto.
+      return { order_number: order, status: 'no_encontrada', detail: 'sin fila en Mailing — control sin asiento o BL nunca procesado (reprocesar el BL la asienta)' };
     const old = existentes.get(order);
     if (old === atd) return { order_number: order, status: 'sin_cambio', atd };
     try {
@@ -268,7 +272,8 @@ async function handleInformarRoleo(res, body, userEmail, supaUrl, supaKey) {
     } catch (e) {
       return { order_number: order, status: 'error', detalle: 'no se pudo leer la orden: ' + e.message };
     }
-    if (!row) return { order_number: order, status: 'no_encontrada', detalle: 'sin fila en Mailing — no pasó por el Control BL' };
+    // Mismo copy fix que confirm_atd (el diagnóstico "no pasó por el Control BL" mentía)
+    if (!row) return { order_number: order, status: 'no_encontrada', detalle: 'sin fila en Mailing — control sin asiento o BL nunca procesado (reprocesar el BL la asienta)' };
 
     let toVessel = toVesselIn;
     let toEtd = toEtdIn;

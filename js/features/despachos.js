@@ -395,7 +395,7 @@
     actualizada:   ['ok',   'ATD confirmado'],
     pisada:        ['warn', 'pisada (tenía otro ATD)'],
     sin_cambio:    ['mut',  'sin cambio (ya tenía ese ATD)'],
-    no_encontrada: ['bad',  'sin fila en Mailing — la orden no pasó por el Control BL (reprocesar el BL la asienta)'],
+    no_encontrada: ['bad',  'sin fila en Mailing — control sin asiento o BL nunca procesado (reprocesar el BL la asienta)'],
     conflicto:     ['bad',  'fechas contradictorias'],
     invalida:      ['bad',  'rechazada por el server'],
     error:         ['bad',  'falló la escritura'],
