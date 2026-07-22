@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Reemplazar documento + avisos de vigencia (Control BL, F3)</title>
+<style>
+  /* ════════════════════════════════════════════════════════════════════
+     Tokens copiados 1:1 de index.html (:root cockpit palette + body.light)
+     grep 2026-07-22. Estos NO son inventados — son los valores reales que
+     hoy pinta la app. La isla Control BL (#cbl-styles, #panel-control-bl)
+     usa además sus PROPIAS vars --cbl-* (paper claro incluso en dark mode
+     del resto de la app) — también copiadas 1:1 más abajo.
+     ════════════════════════════════════════════════════════════════════ */
+  :root{
+    color-scheme:dark;
+    --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
+    --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+    --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
+    --blue-bg:#141f38;--blue-bd:#2a4478;
+    --text-inverse:#fff;
+    --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+    --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+    --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+    --purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+    --orange:#fb923c;--orange-bg:#2a1a0e;--orange-bd:#6b3e18;
+    --font:'Inter','system-ui',sans-serif;--mono:'JetBrains Mono','SFMono-Regular',monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+    --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
+    --lh-tight:1.25;--lh-base:1.5;--lh-loose:1.65;
+    /* isla Control BL — dark: paper propio (#1e293b), autorizado por John (molde #panel-mailing) */
+    --cbl-paper:var(--bg); --cbl-surface:#1e293b; --cbl-surface-2:#161e2b;
+    --cbl-ink:var(--text); --cbl-ink-soft:var(--muted); --cbl-ink-faint:#6b7488;
+    --cbl-line:rgba(255,255,255,.08); --cbl-line-strong:rgba(255,255,255,.16);
+    --cbl-accent:var(--blue); --cbl-accent-soft:var(--blue-lt);
+    --cbl-ok:var(--green); --cbl-ok-bg:var(--green-bg); --cbl-ok-bd:var(--green-bd);
+    --cbl-rev:var(--orange); --cbl-rev-bg:var(--orange-bg); --cbl-rev-bd:var(--orange-bd);
+    --cbl-miss:var(--muted); --cbl-miss-bg:#141925;
+    --cbl-seal:var(--teal); --cbl-seal-bg:rgba(94,234,212,.10); --cbl-seal-bd:rgba(94,234,212,.35);
+    --cbl-shadow:var(--shadow);
+  }
+  body.light{
+    color-scheme:light;
+    --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
+    --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
+    --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
+    --blue-bg:#e8f0fe;--blue-bd:#c3d7f8;
+    --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
+    --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
+    --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
+    --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
+    --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
+    --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+    /* isla Control BL — light: "paper" claro (valores reales del index.html, distintos del resto de la app) */
+    --cbl-paper:#F7F6F2; --cbl-surface:#FFFFFF; --cbl-surface-2:#FBFAF7;
+    --cbl-ink:#1C1B19; --cbl-ink-soft:#6B6863; --cbl-ink-faint:#9C988F;
+    --cbl-line:#E7E4DD; --cbl-line-strong:#D9D5CC;
+    --cbl-accent:#1F5FAE; --cbl-accent-soft:#EAF0F8;
+    --cbl-ok:#3F7A1E; --cbl-ok-bg:#EAF3DE; --cbl-ok-bd:#CFE3BD;
+    --cbl-rev:#C2410C; --cbl-rev-bg:#FBEEDB; --cbl-rev-bd:#ECC79A;
+    --cbl-miss:#8a897f; --cbl-miss-bg:#f0eee8;
+    --cbl-seal:#0F766E; --cbl-seal-bg:#E6F6F3; --cbl-seal-bd:#B7E4DC;
+    --cbl-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-base);line-height:var(--lh-base);padding:28px 28px 90px;transition:background .2s,color .2s}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .page{max-width:1220px;margin:0 auto}
+  h1{font-size:var(--fs-2xl);margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:var(--fs-sm);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:38px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);font-size:11px;font-weight:800;flex-shrink:0}
+  h3{font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--muted);max-width:900px;line-height:1.65}
+  .note b{color:var(--text)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:var(--cbl-ink-faint,#6b7488);max-width:900px;line-height:1.65;margin:2px 0 16px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:80;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--border)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal)}
+
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .muted{color:var(--muted);font-size:12px}
+  .faint{color:var(--cbl-ink-faint,#6b7488);font-size:11.5px}
+
+  /* Icon sprite (subset Lucide, calcado del sprite real de index.html) */
+  .ic{width:16px;height:16px;flex-shrink:0;display:inline-block;vertical-align:-3px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+  .ic-sm{width:13px;height:13px}
+  .ic-lg{width:20px;height:20px}
+
+  /* ── Badge system (calco de .badge/.badge--* real) ── */
+  .badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--font);font-weight:600;font-size:11px;line-height:1;border-radius:6px;padding:4px 8px;border:1px solid transparent;white-space:nowrap}
+  .badge--success{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+  .badge--warning{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+  .badge--danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+  .badge--neutral{background:var(--faint);color:var(--muted);border-color:var(--border)}
+  .badge--purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+  .badge--nuevo{color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;font-size:12.5px;line-height:1.55}
+  .banner .ic{margin-top:1px}
+  .banner.amber{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+  .banner.red{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner.neutral{background:var(--faint);border:1px solid var(--border);color:var(--muted)}
+  .banner .txt{color:var(--text)}
+  .banner .txt b{font-weight:700}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--border);background:var(--faint);color:var(--text)}
+  .btn.pri{background:var(--cbl-accent);border-color:var(--cbl-accent);color:var(--text-inverse)}
+  .btn.ghost{background:var(--cbl-seal-bg);border-color:var(--cbl-seal-bd);color:var(--cbl-seal)}
+  .btn.mini{padding:5px 11px;font-size:11.5px;border-radius:7px}
+
+  /* ════════════ ANOTACIONES numeradas (panel lateral de decisiones) ════════════ */
+  .anno-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+  @media(max-width:980px){.anno-wrap{grid-template-columns:1fr}}
+  .anno-list{display:flex;flex-direction:column;gap:12px;position:sticky;top:64px}
+  .anno-item{display:flex;gap:9px;font-size:12px;line-height:1.55;color:var(--muted)}
+  .anno-item b{color:var(--text)}
+  .anno-num{flex:0 0 auto;width:19px;height:19px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;margin-top:1px}
+  .anno-tag{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);font-size:10.5px;font-weight:800;vertical-align:1px;margin-right:2px}
+
+  /* ════════════ El modal (rd- = reemplazar documento) — calco de vac-modal + tokens cbl ════════════ */
+  .rd-stage{background:var(--faint);border:1px dashed var(--border);border-radius:16px;padding:34px 24px;display:flex;justify-content:center}
+  .rd-modal{width:100%;max-width:560px;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+  .rd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px 20px 14px;border-bottom:1px solid var(--cbl-line)}
+  .rd-title{font-size:16px;font-weight:800;color:var(--cbl-ink);margin:0;letter-spacing:-.01em}
+  .rd-sub{font-size:12px;color:var(--cbl-ink-soft);margin-top:4px}
+  .rd-x{background:none;border:none;color:var(--cbl-ink-soft);cursor:pointer;padding:4px;border-radius:6px;flex-shrink:0}
+  .rd-x:hover{background:var(--cbl-surface-2);color:var(--cbl-ink)}
+  .rd-body{padding:18px 20px;display:flex;flex-direction:column;gap:16px;max-height:70vh;overflow-y:auto}
+  .rd-field{display:flex;flex-direction:column;gap:6px}
+  .rd-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cbl-ink-soft);display:flex;align-items:center;gap:6px}
+  .rd-lbl .anno-tag{margin-right:0}
+
+  .rd-pillrow{display:flex;gap:7px;flex-wrap:wrap}
+  .rd-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid var(--cbl-line-strong);background:var(--cbl-surface-2);color:var(--cbl-ink-soft)}
+  .rd-pill.on{background:var(--cbl-accent-soft);border-color:var(--cbl-accent);color:var(--cbl-accent)}
+  body.light .rd-pill.on{color:var(--cbl-accent)}
+
+  .rd-order{display:flex;align-items:center;gap:10px;background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:10px;padding:10px 13px}
+  .rd-order .ic{color:var(--cbl-ink-faint)}
+  .rd-order-num{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cbl-ink)}
+  .rd-order-meta{font-size:11.5px;color:var(--cbl-ink-soft);margin-left:auto;text-align:right}
+
+  .rd-drop{border:1.5px dashed var(--cbl-line-strong);border-radius:12px;padding:22px 16px;text-align:center;background:var(--cbl-surface-2);cursor:pointer}
+  .rd-drop .ic{color:var(--cbl-accent);width:26px;height:26px}
+  .rd-drop-txt{font-size:12.5px;color:var(--cbl-ink);font-weight:600;margin-top:8px}
+  .rd-drop-sub{font-size:11px;color:var(--cbl-ink-faint);margin-top:3px}
+  .rd-file{display:flex;align-items:center;gap:9px;background:var(--cbl-surface-2);border:1px solid var(--cbl-line-strong);border-radius:10px;padding:9px 12px;margin-top:8px}
+  .rd-file .ic{color:var(--cbl-accent)}
+  .rd-file-name{font-family:var(--mono);font-size:12px;color:var(--cbl-ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rd-file-size{font-size:11px;color:var(--cbl-ink-faint)}
+  .rd-file-x{background:none;border:none;color:var(--cbl-ink-faint);cursor:pointer;flex-shrink:0}
+
+  .rd-alias{border:1px dashed var(--purple-bd);background:var(--purple-bg);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:8px}
+  .rd-alias-tag{align-self:flex-start;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--purple);background:transparent;border:1px solid var(--purple-bd);border-radius:5px;padding:2px 6px}
+  .rd-alias input{font-family:var(--mono);font-size:13px;border:1px solid var(--cbl-line-strong);border-radius:8px;padding:8px 10px;background:var(--cbl-surface);color:var(--cbl-ink)}
+  .rd-alias-help{font-size:11.5px;color:var(--cbl-ink-soft);line-height:1.55;display:flex;gap:7px}
+  .rd-alias-help .ic{flex-shrink:0;margin-top:1px;color:var(--purple)}
+
+  .rd-preview{background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:12px;padding:13px 14px}
+  .rd-preview-row{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;flex-wrap:wrap}
+  .rd-preview-old{color:var(--cbl-ink-faint);text-decoration:line-through}
+  .rd-preview-arrow{color:var(--cbl-ink-faint);font-family:var(--font)}
+  .rd-preview-new{color:var(--cbl-ok);font-weight:700}
+  .rd-preview-note{font-size:11.5px;color:var(--cbl-ink-soft);margin-top:7px;line-height:1.5}
+
+  .rd-note-opt{display:flex;flex-direction:column;gap:6px}
+  .rd-note-opt textarea{font-family:var(--font);font-size:12.5px;border:1px solid var(--cbl-line-strong);border-radius:9px;padding:8px 10px;background:var(--cbl-surface-2);color:var(--cbl-ink);resize:vertical;min-height:44px}
+
+  .rd-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--cbl-line);background:var(--cbl-surface-2)}
+  .rd-foot-note{font-size:11px;color:var(--cbl-ink-faint);line-height:1.5;max-width:280px}
+  .rd-foot-btns{display:flex;gap:8px;flex-shrink:0}
+  .rd-btn{font-family:var(--font);font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--cbl-line-strong)}
+  .rd-btn.cancel{background:none;color:var(--cbl-ink-soft)}
+  .rd-btn.pri{background:var(--cbl-accent);border-color:var(--cbl-accent);color:var(--text-inverse)}
+
+  /* ════════════ Variantes lado a lado ════════════ */
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.vgrid{grid-template-columns:1fr}}
+  .vcol{border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  .vcol.rec{border-color:var(--green-bd)}
+  .vhead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface-hv);border-bottom:1px solid var(--border)}
+  .vhead .vname{font-size:12px;font-weight:800;letter-spacing:.03em;color:var(--text)}
+  .vbody{padding:16px;background:var(--surface)}
+  .vbody p{margin:0}
+
+  /* ════════════ Cadena documento → control → sello ════════════ */
+  .chain{display:flex;align-items:flex-start;gap:0;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:14px;padding:20px 22px}
+  .chain-step{display:flex;flex-direction:column;align-items:center;text-align:center;width:150px;flex-shrink:0}
+  .chain-dot{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--cbl-line-strong);color:var(--cbl-ink-faint);flex-shrink:0}
+  .chain-dot.ok{border-color:var(--cbl-ok);background:var(--cbl-ok-bg);color:var(--cbl-ok)}
+  .chain-dot.bad{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+  .chain-lbl{font-size:11.5px;font-weight:700;color:var(--cbl-ink);margin-top:8px}
+  .chain-ts{font-family:var(--mono);font-size:11px;color:var(--cbl-ink-soft);margin-top:2px}
+  .chain-sub{font-size:10.5px;color:var(--cbl-ink-faint);margin-top:2px;line-height:1.4}
+  .chain-line{flex:1;height:2px;background:var(--cbl-line-strong);margin-top:18px;min-width:20px}
+  .chain-line.ok{background:var(--cbl-ok)}
+  .chain-line.bad{background:var(--red);background-image:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 11px)}
+
+  .chain-v{display:flex;flex-direction:column;gap:0;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:14px;padding:16px 18px}
+  .chain-vrow{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-left:2px solid var(--cbl-line-strong);padding-left:14px;position:relative}
+  .chain-vrow::before{content:"";position:absolute;left:-6px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--cbl-surface);border:2px solid var(--cbl-line-strong)}
+  .chain-vrow.ok::before{border-color:var(--cbl-ok)}
+  .chain-vrow.bad::before{border-color:var(--red)}
+  .chain-vrow .t{font-family:var(--mono);font-size:11px;color:var(--cbl-ink-faint);min-width:78px}
+  .chain-vrow .m{font-size:12px;color:var(--cbl-ink)}
+  .chain-vrow .m .who{color:var(--cbl-seal);font-weight:700}
+
+  kbd{font-family:var(--mono);font-size:10.5px;background:var(--faint);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="page">
+  <h1>Reemplazar documento + avisos de vigencia — Control BL (F3)</h1>
+  <p class="note">
+    Mockup de la pieza <b>F3</b> del rediseño de Control BL (<code>docs/plans/PLAN_REDISENO_CONTROL_BL_2026-07-22.md</code>
+    §3 · <code>docs/explore/ARQUITECTURA_CONTROL_BL_2026-07-22.md</code> §"reemplazar documento de una orden").
+    Hoy, cuando llega un documento nuevo con nombre distinto (refactura, PE redocumentado), <b>alguien tiene que entrar a Drive
+    y pisar el archivo a mano</b> — si no lo hace o lo hace tarde, el control valida contra el documento equivocado
+    <b>en silencio</b>. F3 reemplaza ese paso manual por un formulario en la app que registra la versión nueva en
+    <code>documentos_orden</code> (columna <code>vigente</code>) vía el RPC <code>registrar_documento_version</code> —
+    la anterior <b>nunca se borra</b>, queda marcada <code>reemplazado_at</code> como histórico inmutable.
+    <b>Todo lo nuevo reusa tokens/clases de la isla <code>#cbl-styles</code> (<code>--cbl-*</code>) — cero CSS nuevo
+    en <code>index.html</code></b>, este mockup aproxima los estilos reales con su propia hoja.
+  </p>
+
+  <div class="subnav">
+    <a href="#s1">① Punto de entrada</a>
+    <a href="#s2">② El modal</a>
+    <a href="#s3">③ VARIANTE — dónde vive</a>
+    <a href="#s4">④ Avisos en el detalle</a>
+    <a href="#s5">⑤ Cadena doc→control→sello</a>
+    <a href="#notas">Notas para John</a>
+  </div>
+
+  <!-- ============ SECCIÓN 1 ============ -->
+  <h2 id="s1"><span class="num">1</span>Punto de entrada — botón en el header del expediente</h2>
+  <p class="intent">El botón vive junto a "Marcar como revisado", en el header del expediente abierto (<code>.cbl-exp-head</code>). Mismo gate cosmético que el sello (RBAC UI) — el permiso real lo valida <code>/api/seguimiento</code> (Bearer JWT + gate <code>vac_employees</code>), igual que las demás acciones de escritura del módulo.</p>
+
+  <div class="card" style="max-width:640px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700">118847302</div>
+        <div class="muted" style="margin-top:5px">LOG-IN · LOG-IN JATOBA 285N · Booking LA0538291</div>
+      </div>
+      <span class="badge badge--danger">● REVISAR · 1</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn ghost mini"><svg class="ic ic-sm"><use href="#i-stamp"/></svg>Marcar como revisado</button>
+      <button class="btn pri mini"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Reemplazar documento</button>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">Habilitado siempre que el expediente tenga <code>order_number</code> resuelto (no aplica a "fantasmas" sin orden — para esas, la acción correcta es esperar el <code>reasignar_documento</code> automático del alias o, en R2 (dominio de Seguimiento), corregir la atribución a mano).</p>
+
+  <!-- ============ SECCIÓN 2 ============ -->
+  <h2 id="s2"><span class="num">2</span>El modal — los 6 elementos pedidos</h2>
+  <p class="intent">Un solo formulario para los 4 tipos de documento que hoy se controlan (Factura / PE / Booking / Planilla de aduana). La orden viene precargada y NO es editable — es el expediente que tenías abierto. El campo de alias (④) solo aparece con la combinación exacta <b>Factura + orden que empieza con "1"</b>.</p>
+
+  <div class="anno-wrap">
+    <div class="rd-stage">
+      <div class="rd-modal">
+        <div class="rd-head">
+          <div>
+            <p class="rd-title">Reemplazar documento</p>
+            <p class="rd-sub">Orden 4010736311 · queda registrado con tu usuario</p>
+          </div>
+          <button class="rd-x"><svg class="ic"><use href="#i-x"/></svg></button>
+        </div>
+        <div class="rd-body">
+
+          <div class="rd-field">
+            <span class="rd-lbl"><span class="anno-tag">1</span>Tipo de documento</span>
+            <div class="rd-pillrow">
+              <span class="rd-pill on"><svg class="ic ic-sm"><use href="#i-file-text"/></svg>Factura</span>
+              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-lock"/></svg>PE</span>
+              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-package"/></svg>Booking</span>
+              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-file-spread"/></svg>Planilla</span>
+            </div>
+          </div>
+
+          <div class="rd-field">
+            <span class="rd-lbl"><span class="anno-tag">2</span>Orden</span>
+            <div class="rd-order">
+              <svg class="ic"><use href="#i-lock"/></svg>
+              <span class="rd-order-num">4010736311</span>
+              <span class="rd-order-meta">MAERSK · HAPAG PRAGA 412W<br>tomada del expediente abierto</span>
+            </div>
+          </div>
+
+          <div class="rd-field">
+            <span class="rd-lbl"><span class="anno-tag">3</span>Archivo</span>
+            <div class="rd-drop">
+              <svg class="ic ic-lg" style="margin:0 auto"><use href="#i-upload"/></svg>
+              <div class="rd-drop-txt">Arrastrá el PDF acá o hacé clic para elegir</div>
+              <div class="rd-drop-sub">Solo PDF · se sube a la carpeta Drive de la orden con nombre canónico</div>
+            </div>
+            <div class="rd-file">
+              <svg class="ic"><use href="#i-file-text"/></svg>
+              <span class="rd-file-name">F002_4010736311_FC.pdf</span>
+              <span class="rd-file-size">386 KB</span>
+              <button class="rd-file-x"><svg class="ic ic-sm"><use href="#i-x"/></svg></button>
+            </div>
+          </div>
+
+          <div class="rd-field">
+            <span class="rd-lbl">Nota <span class="badge badge--neutral" style="font-size:9.5px;padding:1px 5px">opcional</span></span>
+            <div class="rd-note-opt">
+              <textarea placeholder="ej. refactura por corrección de FOB — avisado por Comex" readonly>Factura nueva por corrección de FOB (aviso de Comex 21/07)</textarea>
+            </div>
+          </div>
+
+          <div class="rd-field">
+            <span class="rd-lbl"><span class="anno-tag">5</span>Preview del resultado</span>
+            <div class="rd-preview">
+              <div class="rd-preview-row">
+                <span class="rd-preview-new">F002_4010736311_FC</span>
+                <span class="rd-preview-arrow">reemplaza a</span>
+                <span class="rd-preview-old">F001_4010736311_FC</span>
+              </div>
+              <div class="rd-preview-note">La versión anterior queda como histórico (<code>reemplazado_at</code>) — nunca se borra, sigue disponible en el modo Histórico del buscador. El control BL vuelve a leer <b>este</b> archivo la próxima vez que corra.</div>
+            </div>
+          </div>
+
+        </div>
+        <div class="rd-foot">
+          <span class="rd-foot-note">Se registra con tu usuario (<code>naara@ssbint.com</code>) y dispara el aviso "se generó una nueva factura" en el expediente.</span>
+          <div class="rd-foot-btns">
+            <button class="rd-btn cancel">Cancelar</button>
+            <button class="rd-btn pri"><span class="anno-tag" style="background:transparent;border-color:rgba(255,255,255,.5);color:#fff">6</span>Confirmar reemplazo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="anno-list">
+      <div class="anno-item"><span class="anno-num">1</span><span><b>Selector de tipo</b> — 4 pills, mismo look que <code>.rd-pill</code>/<code>.cbl-fchip</code>. Cambiar de tipo resetea archivo + preview (son formularios distintos por dentro).</span></div>
+      <div class="anno-item"><span class="anno-num">2</span><span><b>Orden precargada, no editable</b> — viene del expediente que tenías abierto (<code>__segPendingOrder</code>-style). Evita el error de tipear mal el número de orden a mano en una acción que escribe DB.</span></div>
+      <div class="anno-item"><span class="anno-num">3</span><span><b>Drag&amp;drop + selector</b> — mismo patrón visual que <code>i-upload</code> en Cert. de Origen. Un solo PDF; valida mimetype client-side (no es la seguridad real, esa vive en <code>/api/seguimiento</code>).</span></div>
+      <div class="anno-item"><span class="anno-num">4</span><span><b>Alias de PO (condicional)</b> — NO aparece acá porque 4010736311 es una orden STO. Ver <a href="#s2b" style="color:var(--blue)">caso B</a> más abajo con una orden trade.</span></div>
+      <div class="anno-item"><span class="anno-num">5</span><span><b>Preview</b> — texto literal pedido: <code>F002_..._FC reemplaza a F001_..._FC</code>. Se arma en el cliente antes de confirmar (llamando a un endpoint de "siguiente nombre" o derivándolo del <code>doc_ref</code> tipeado — a definir con el harness de F1/F2).</span></div>
+      <div class="anno-item"><span class="anno-num">6</span><span><b>Confirmación</b> — un solo click, sin doble-confirm tipo <code>ssbConfirm</code> (la acción es reversible: la versión anterior no se borra, se puede re-promover a mano). Nota opcional, no bloqueante.</span></div>
+    </div>
+  </div>
+
+  <h3 id="s2b" style="margin-top:28px">Caso B — Factura de orden TRADE (empieza con "1"): aparece el campo alias</h3>
+  <p class="intent">Misma orden 118847302 del punto ①. SAP le generó una <b>nueva referencia de PO</b> al refacturar — el campo pedido en el ítem (4) de la tarea.</p>
+  <div class="rd-stage" style="padding:24px 20px">
+    <div class="rd-modal" style="max-width:520px">
+      <div class="rd-head">
+        <div>
+          <p class="rd-title">Reemplazar documento</p>
+          <p class="rd-sub">Orden 118847302 · Factura · orden TRADE</p>
+        </div>
+        <button class="rd-x"><svg class="ic"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="rd-body">
+        <div class="rd-field">
+          <span class="rd-lbl">Tipo de documento</span>
+          <div class="rd-pillrow"><span class="rd-pill on"><svg class="ic ic-sm"><use href="#i-file-text"/></svg>Factura</span></div>
+        </div>
+        <div class="rd-field">
+          <span class="rd-lbl">Orden</span>
+          <div class="rd-order">
+            <svg class="ic"><use href="#i-lock"/></svg>
+            <span class="rd-order-num">118847302</span>
+            <span class="rd-order-meta">LOG-IN · LOG-IN JATOBA 285N</span>
+          </div>
+        </div>
+        <div class="rd-field">
+          <span class="rd-lbl">Archivo</span>
+          <div class="rd-file">
+            <svg class="ic"><use href="#i-file-text"/></svg>
+            <span class="rd-file-name">F14829_118847302_FC.pdf</span>
+            <span class="rd-file-size">401 KB</span>
+            <button class="rd-file-x"><svg class="ic ic-sm"><use href="#i-x"/></svg></button>
+          </div>
+        </div>
+        <div class="rd-alias">
+          <span class="rd-alias-tag"><span class="anno-tag" style="width:15px;height:15px;font-size:9px;margin-right:4px">4</span>SOLO factura + orden trade</span>
+          <span class="rd-lbl" style="color:var(--purple)">Nueva referencia de PO (refactura SAP)</span>
+          <input type="text" value="118851930" readonly>
+          <div class="rd-alias-help">
+            <svg class="ic ic-sm"><use href="#i-alert"/></svg>
+            <span>Al refacturar una orden <b>trade</b> (empieza con "1"), SAP genera una <b>PO nueva</b> — no es la orden original. Si cargás la factura sin este alias, el documento queda "colgado" de la PO nueva y el sistema puede crear una <b>orden fantasma</b> aparte. Completando este campo, la PO nueva se vincula a la orden original en <code>orden_po_alias</code> y <b>cualquier documento que ya haya llegado</b> bajo esa PO se re-atribuye automáticamente.</span>
+          </div>
+        </div>
+        <div class="rd-field">
+          <span class="rd-lbl">Preview del resultado</span>
+          <div class="rd-preview">
+            <div class="rd-preview-row">
+              <span class="rd-preview-new">F14829_118847302_FC</span>
+              <span class="rd-preview-arrow">reemplaza a</span>
+              <span class="rd-preview-old">F09215_118847302_FC</span>
+            </div>
+            <div class="rd-preview-note">+ PO <b>118851930</b> vinculada a la orden original <b>118847302</b> — si ya había una factura o un booking cargados bajo 118851930, se re-atribuyen a 118847302 sin perder el extract pagado.</div>
+          </div>
+        </div>
+      </div>
+      <div class="rd-foot">
+        <span class="rd-foot-note">Refactura trade — motivo por defecto <code>'refactura'</code> en <code>orden_po_alias</code>.</span>
+        <div class="rd-foot-btns"><button class="rd-btn cancel">Cancelar</button><button class="rd-btn pri">Confirmar reemplazo</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 3 ============ -->
+  <h2 id="s3"><span class="num">3</span>VARIANTE — dónde vive el formulario</h2>
+  <p class="intent">Decisión de UX todavía abierta: ¿el reemplazo interrumpe la pantalla (modal overlay) o convive con el expediente (panel inline)? Las dos usan los mismos componentes internos (①-⑥) — cambia solo el contenedor.</p>
+
+  <div class="vgrid">
+    <div class="vcol rec">
+      <div class="vhead"><span class="vname">VARIANTE A — Modal overlay</span><span class="badge badge--success">✓ recomendada</span></div>
+      <div class="vbody">
+        <p class="muted" style="margin-bottom:10px">Es lo que se ve arriba en ②. Fondo oscurecido, foco total en la acción — mismo patrón que <code>.vac-modal-overlay</code> (Vacaciones) y <code>.tt-modal-overlay</code> (Tarifas Terrestres), ya validado en la app.</p>
+        <div class="faint">+ Consistente con el resto de la app<br>+ La acción escribe DB y reemplaza el vigente — merece foco exclusivo, sin distracción del expediente detrás<br>− Tapa momentáneamente el expediente que se está reemplazando (mitigable: mostrar order+vessel en el header del modal, como está)</div>
+      </div>
+    </div>
+    <div class="vcol">
+      <div class="vhead"><span class="vname">VARIANTE B — Panel inline expandible</span></div>
+      <div class="vbody">
+        <p class="muted" style="margin-bottom:10px">El botón "Reemplazar documento" abre una sección que empuja el contenido del <code>.cbl-detail</code> hacia abajo (como un accordion), sin tapar el header del expediente ni los doc-tabs.</p>
+        <div class="faint">+ Mantenés visible el resultado del último control mientras cargás el reemplazo (útil para comparar a ojo)<br>− Layout nuevo en un componente ya complejo (<code>.cbl-detail</code> tiene doc-tabs + viewer + sello) → más superficie de CSS para romper<br>− En pantallas angostas el formulario queda muy comprimido</div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">Recomendación: <b>VARIANTE A</b>. Es una escritura sensible (reemplaza el documento que vigencia todo el control) y ya existe el patrón de modal en 2 módulos — cero componente nuevo. B se reconsidera solo si en la práctica el ida-y-vuelta "cerrar modal → mirar expediente → volver a abrir" resulta incómodo.</p>
+
+  <!-- ============ SECCIÓN 4 ============ -->
+  <h2 id="s4"><span class="num">4</span>Avisos en el detalle de una orden</h2>
+  <p class="intent">De los 7 avisos que derivan del modelo nuevo (PLAN v2 §2), estos 3 son los que pediste ver en contexto de UI. Viven como banners apilados arriba del header del expediente (<code>.cbl-exp-head</code>), mismo lugar que hoy usa el banner de "roleada".</p>
+
+  <div class="card" style="max-width:680px;display:flex;flex-direction:column;gap:10px">
+    <div class="banner amber">
+      <svg class="ic"><use href="#i-alert"/></svg>
+      <span class="txt"><b>Se generó una nueva factura</b> — recontrolá antes de enviar</span>
+    </div>
+    <div class="banner amber">
+      <svg class="ic"><use href="#i-alert"/></svg>
+      <span class="txt"><b>2 permisos activos</b> — la planilla de aduana referencia <code>26003EC01004851X</code></span>
+    </div>
+    <div class="banner neutral">
+      <svg class="ic"><use href="#i-clock"/></svg>
+      <span class="txt">Documento reemplazado re-llegó por mail <span class="faint">(ignorado)</span></span>
+    </div>
+  </div>
+
+  <div class="wrap" style="margin-top:16px">
+    <div class="card" style="max-width:330px">
+      <h3>① "Se generó una nueva factura"</h3>
+      <p class="muted">Dispara cuando entra un documento con <code>document_ts</code> más nuevo que el último control (por mail automático en STO, o por este modal). Es la cara visible de la <b>cadena rota</b> — ver sección ⑤. <b>Se apaga solo</b> al recontrolar (botón "Recontrolar" ya existente).</p>
+    </div>
+    <div class="card" style="max-width:330px">
+      <h3>② "2 permisos activos"</h3>
+      <p class="muted">Regla dura: PE(planilla) = PE(factura) = PE(BL) = PE(doc PE). Si hay más de un PE con <code>vigente=true</code> para la orden (redocumentación en curso), se avisa cuál dice la planilla — es la fuente de verdad. <b>Se apaga solo</b> cuando el control vuelve a cruzar en verde contra ese PE.</p>
+    </div>
+    <div class="card" style="max-width:330px">
+      <h3>③ "Documento reemplazado re-llegó"</h3>
+      <p class="muted">Guarda D2 #3 ("nunca revivir"): si alguien reenvía por error un mail viejo con un documento ya superado, el RPC actualiza metadata pero <b>no</b> lo vuelve a poner vigente. Este aviso es informativo — nada que hacer, solo que quede visible que pasó (evita el "¿por qué no cambió nada?").</p>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 5 ============ -->
+  <h2 id="s5"><span class="num">5</span>Cadena documento → control → sello — regla de habilitación del mailing</h2>
+  <p class="intent">Regla P2 (fijada por John, variante ESTRICTA): el envío se habilita SOLO si <code>document_ts</code> del vigente ≤ <code>created_at</code> del último control ≤ <code>sellado_at</code> del sello. Si llega un documento más nuevo, la cadena se rompe <b>aunque ya hubiera sello</b> — hay que recontrolar y volver a sellar. Este indicador resume ese estado de un vistazo.</p>
+
+  <h3 style="margin-top:22px">Estado OK — habilita mailing</h3>
+  <div class="chain">
+    <div class="chain-step">
+      <div class="chain-dot ok"><svg class="ic"><use href="#i-file-text"/></svg></div>
+      <div class="chain-lbl">Documento</div>
+      <div class="chain-ts">21/07 09:14</div>
+      <div class="chain-sub">F002_4010736311_FC</div>
+    </div>
+    <div class="chain-line ok"></div>
+    <div class="chain-step">
+      <div class="chain-dot ok"><svg class="ic"><use href="#i-check"/></svg></div>
+      <div class="chain-lbl">Control</div>
+      <div class="chain-ts">21/07 09:40</div>
+      <div class="chain-sub">OK · +26 min sobre el doc</div>
+    </div>
+    <div class="chain-line ok"></div>
+    <div class="chain-step">
+      <div class="chain-dot ok"><svg class="ic"><use href="#i-stamp"/></svg></div>
+      <div class="chain-lbl">Sello</div>
+      <div class="chain-ts">21/07 10:02</div>
+      <div class="chain-sub">naara · +22 min sobre el control</div>
+    </div>
+  </div>
+  <div class="banner green" style="max-width:680px;margin-top:10px"><svg class="ic"><use href="#i-check"/></svg><span class="txt">Cadena en orden — <b>habilitado para mailing</b></span></div>
+
+  <h3 style="margin-top:26px">Estado BLOQUEADO — cadena rota</h3>
+  <div class="chain">
+    <div class="chain-step">
+      <div class="chain-dot bad"><svg class="ic"><use href="#i-file-text"/></svg></div>
+      <div class="chain-lbl">Documento</div>
+      <div class="chain-ts">22/07 08:05</div>
+      <div class="chain-sub">F003_4010736311_FC · nuevo</div>
+    </div>
+    <div class="chain-line bad"></div>
+    <div class="chain-step">
+      <div class="chain-dot bad"><svg class="ic"><use href="#i-x"/></svg></div>
+      <div class="chain-lbl">Control</div>
+      <div class="chain-ts">21/07 09:40</div>
+      <div class="chain-sub">más viejo que el doc actual</div>
+    </div>
+    <div class="chain-line bad"></div>
+    <div class="chain-step">
+      <div class="chain-dot bad"><svg class="ic"><use href="#i-x"/></svg></div>
+      <div class="chain-lbl">Sello</div>
+      <div class="chain-ts">21/07 10:02</div>
+      <div class="chain-sub">sellado sobre el control viejo — ya no cuenta</div>
+    </div>
+  </div>
+  <div class="banner red" style="max-width:680px;margin-top:10px"><svg class="ic"><use href="#i-alert"/></svg><span class="txt">Cadena rota — <b>bloqueado</b> ("hay documento más nuevo que el control — recontrolá"). <code>block_reason</code> tiene precedencia sobre el sello, aunque el sello exista.</span></div>
+
+  <h3 style="margin-top:26px">VARIANTE de presentación del indicador</h3>
+  <div class="vgrid">
+    <div class="vcol rec">
+      <div class="vhead"><span class="vname">VARIANTE A — Stepper horizontal</span><span class="badge badge--success">✓ recomendada</span></div>
+      <div class="vbody">
+        <p class="muted">Es lo que se ve arriba. Compacto, entra en el <code>.cbl-exp-head</code> junto al badge OK/REVISAR sin agrandar la card. De un vistazo se ve DÓNDE se rompió la cadena (el primer ✗ de izquierda a derecha).</p>
+      </div>
+    </div>
+    <div class="vcol">
+      <div class="vhead"><span class="vname">VARIANTE B — Timeline vertical</span></div>
+      <div class="vbody">
+        <div class="chain-v" style="margin-bottom:10px">
+          <div class="chain-vrow ok"><span class="t">21/07 09:14</span><span class="m">Documento vigente <b>F002_4010736311_FC</b></span></div>
+          <div class="chain-vrow ok"><span class="t">21/07 09:40</span><span class="m">Control <b>OK</b></span></div>
+          <div class="chain-vrow ok"><span class="t">21/07 10:02</span><span class="m"><span class="who">naara</span> sella el control</span></div>
+        </div>
+        <p class="muted">Más espacio para detalle (quién selló, motivo) pero ocupa mucho más alto — solo cabría dentro del detalle expandido, no en el header compacto.</p>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">Recomendación: <b>VARIANTE A</b> en el header del expediente (siempre visible) + <b>VARIANTE B</b> reusada dentro del modo Histórico ya existente (sección ③ del mockup <code>mockup_controlbl_plancompleto.html</code>), que ya es una timeline vertical — no hay que inventar un componente nuevo, se le agrega la fila de sello a la que ya existe.</p>
+
+  <!-- ============ NOTAS ============ -->
+  <h2 id="notas"><span class="num">✎</span>Notas para John — decisiones tomadas / dudas abiertas</h2>
+  <p class="note">
+    · <b>Confirmación de un solo click</b> (sin <code>ssbConfirm</code> con motivo obligatorio, a diferencia del sello) — asumí que como la versión anterior nunca se borra, el reemplazo es de menor fricción que sellar. Si preferís exigir motivo obligatorio igual que el sello (auditoría más fuerte), es un cambio chico: el campo "Nota" ya está en el layout, solo pasa de opcional a requerido.<br>
+    · <b>Convención de nombre de archivo</b> <code>{Nº doc}_{orden}_FC</code> la tomo textual de <code>ARQUITECTURA_CONTROL_BL_2026-07-22.md</code> — para PE/Booking/Planilla <b>asumí</b> sufijos análogos (no confirmados en los docs que leí). Confirmame los sufijos reales o si estos 3 tipos usan otro esquema.<br>
+    · <b>Preview del nombre nuevo</b>: en el mockup el nombre "F002_..." ya viene armado — en la implementación real hace falta definir SI el número de factura lo tipea el usuario, lo lee del PDF (extracción), o lo arma el sistema incrementando; afecta si el campo "Archivo" necesita un input de texto adicional para el nº de documento.<br>
+    · <b>Alias de PO</b>: el mockup asume que John/Comex ya tiene la PO nueva a mano al momento de cargar (dato que llega de SAP). Si a veces se sube la factura ANTES de tener la PO nueva, hace falta un flujo de "completar alias después" — no cubierto acá.<br>
+    · Los otros 4 avisos del listado de 7 (doc-post-control, doc nuevo sobre vigente manual, control OK/sellado hace &gt;N horas sin fila en <code>mailing_orders</code>) no están en este mockup por pedido explícito — si los querés ver en UI, aviso y hago una vuelta corta.<br>
+    · Sección ⑤ (cadena) es la representación visual de una regla que hoy <b>no existe en el modelo</b> — depende de que F1 (DDL) y la columna <code>sellado_at</code>/lógica de <code>block_reason</code> estén implementadas. Este mockup es aspiracional sobre datos que hoy no se calculan así.
+  </p>
+</div>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+  <symbol id="i-file-spread" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M10 9H8"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+</svg>
+</body>
+</html>

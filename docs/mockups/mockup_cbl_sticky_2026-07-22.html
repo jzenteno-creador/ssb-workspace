@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Control BL, panel derecho sticky (2026-07-22)</title>
+<style>
+  /* ===== Tokens copiados 1:1 de index.html :root / body.light (grep 2026-07-22) ===== */
+  :root{
+    --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;
+    --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+    --teal:#5eead4;--accent:#a78bfa;--blue:#5b9bf5;--blue-lt:#1d2742;
+    --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+    --orange:#fb923c;--orange-bg:#2a1a0e;--orange-bd:#6b3e18;
+    --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+    --purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+    --font:'Inter','system-ui',sans-serif;--mono:'JetBrains Mono','SFMono-Regular',monospace;
+    --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+    --topbar-h:60px;
+    /* namespace --cbl-* copiado de index.html:2472-2481 (dark) */
+    --cbl-paper:var(--bg);--cbl-surface:#1e293b;--cbl-surface-2:#161e2b;
+    --cbl-ink:var(--text);--cbl-ink-soft:var(--muted);--cbl-ink-faint:#6b7488;
+    --cbl-line:rgba(255,255,255,.08);--cbl-line-strong:rgba(255,255,255,.16);
+    --cbl-accent:var(--blue);--cbl-accent-soft:var(--blue-lt);
+    --cbl-ok:var(--green);--cbl-ok-bg:var(--green-bg);--cbl-ok-bd:var(--green-bd);
+    --cbl-rev:var(--orange);--cbl-rev-bg:var(--orange-bg);--cbl-rev-bd:var(--orange-bd);
+    --cbl-miss:var(--muted);--cbl-miss-bg:#141925;--cbl-miss-dot:#6b7488;--cbl-miss-spine:rgba(255,255,255,.16);
+    --cbl-seal:var(--teal);--cbl-seal-bg:rgba(94,234,212,.10);--cbl-seal-bd:rgba(94,234,212,.35);
+    --cbl-shadow:var(--shadow);
+  }
+  body.light{
+    --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;
+    --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
+    --teal:#06b6d4;--accent:#6d28d9;--blue:#2563eb;--blue-lt:#e8f0fe;
+    --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
+    --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
+    --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
+    --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
+    --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+    /* namespace --cbl-* copiado de index.html:2484-2493 (light) */
+    --cbl-paper:#F7F6F2;--cbl-surface:#FFFFFF;--cbl-surface-2:#FBFAF7;
+    --cbl-ink:#1C1B19;--cbl-ink-soft:#6B6863;--cbl-ink-faint:#9C988F;
+    --cbl-line:#E7E4DD;--cbl-line-strong:#D9D5CC;
+    --cbl-accent:#1F5FAE;--cbl-accent-soft:#EAF0F8;
+    --cbl-ok:#3F7A1E;--cbl-ok-bg:#EAF3DE;--cbl-ok-bd:#CFE3BD;
+    --cbl-rev:#C2410C;--cbl-rev-bg:#FBEEDB;--cbl-rev-bd:#ECC79A;
+    --cbl-miss:#8a897f;--cbl-miss-bg:#f0eee8;--cbl-miss-dot:#b0afa4;--cbl-miss-spine:#cfccc4;
+    --cbl-seal:#0F766E;--cbl-seal-bg:#E6F6F3;--cbl-seal-bd:#B7E4DC;
+    --cbl-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-base);line-height:1.5;padding:28px 28px 90px;transition:background .2s,color .2s}
+  *:focus{outline:none}
+  *:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .page{max-width:1220px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 8px}
+  h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:38px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue);font-size:11px;font-weight:800}
+  h3{font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .note{font-size:12.5px;color:var(--muted);max-width:900px;line-height:1.65}
+  .note b{color:var(--text)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:12px;color:#6b7488;max-width:900px;line-height:1.6;margin:2px 0 14px;font-style:italic}
+
+  .toggle{position:fixed;top:18px;right:18px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:50;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--border)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;font-size:12.5px;line-height:1.6}
+  .banner.amber{background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner .ic{flex:0 0 auto;margin-top:1px;font-size:15px}
+  .banner .txt{color:var(--text)}
+  .banner b{color:inherit}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;border-radius:999px;padding:3px 11px;white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+  .badge--a{color:var(--blue);background:var(--blue-lt);border:1px solid var(--blue)}
+  .badge--b{color:var(--purple);background:var(--purple-bg);border:1px solid var(--purple-bd)}
+  .badge--rec{color:#04211c;background:var(--teal);border:1px solid var(--teal);font-weight:900}
+  body.light .badge--rec{color:#fff}
+
+  /* ===== chrome de "ventana de navegador" que envuelve cada demo ===== */
+  .browser{border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);background:var(--surface);margin:14px 0 6px}
+  .browser-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--surface-hv);border-bottom:1px solid var(--border)}
+  .browser-dot{width:9px;height:9px;border-radius:50%;background:var(--border)}
+  .browser-topbar{height:34px;background:var(--bg);display:flex;align-items:center;padding:0 14px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  .browser-label{margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--mono);font-weight:400;text-transform:none;letter-spacing:0}
+  .scroll-hint{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);padding:9px 14px 0}
+  .scroll-hint .arrow{display:inline-block;animation:bounce 1.4s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+  @media (prefers-reduced-motion:reduce){.scroll-hint .arrow{animation:none}}
+
+  /* ===== ventana de scroll — hace de "página real" (equivalente a .main{overflow-y:auto}) ===== */
+  .demo-scroll{height:560px;overflow-y:auto;overflow-x:hidden;padding:18px;background:var(--cbl-paper)}
+  .demo-scroll::-webkit-scrollbar{width:11px}
+  .demo-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:6px;border:3px solid var(--cbl-paper)}
+
+  /* ===== barra de filtros decorativa (contexto, no interactiva) ===== */
+  .mini-fbar{display:flex;gap:7px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .mini-fchip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;border-radius:20px;padding:4px 11px;border:1px solid var(--cbl-line-strong);background:var(--cbl-surface);color:var(--cbl-ink-soft)}
+  .mini-fchip.on{background:var(--cbl-accent-soft);border-color:var(--cbl-accent);color:var(--cbl-accent)}
+  .mini-fsum{margin-left:auto;font-size:11.5px;color:var(--cbl-ink-soft)}
+  .mini-fsum b{color:var(--cbl-ink)}
+
+  /* ===== layout real: cbl-layout 330px/1fr (index.html:2538) ===== */
+  .cbl-layout{display:grid;grid-template-columns:330px 1fr;gap:20px;align-items:start}
+  .cbl-master{display:flex;flex-direction:column;gap:8px}
+
+  /* ===== cards de orden — copiado de #panel-control-bl .cbl-ctrl* (index.html:2544-2568) ===== */
+  .cbl-ctrl{position:relative;display:block;width:100%;text-align:left;cursor:pointer;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:12px;padding:11px 13px 11px 17px;overflow:hidden;font-family:var(--font)}
+  .cbl-ctrl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cbl-line-strong)}
+  .cbl-ctrl.is-ok::before{background:var(--cbl-ok)}
+  .cbl-ctrl.is-rev::before{background:var(--cbl-rev)}
+  .cbl-ctrl.is-missing::before{background:var(--cbl-miss-spine)}
+  .cbl-ctrl.is-missing{border-style:dashed;background:var(--cbl-surface-2)}
+  .cbl-ctrl--sel{border-color:var(--cbl-ink);box-shadow:var(--cbl-shadow)}
+  .cbl-ctrl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+  .cbl-ctrl-order{font-family:var(--mono);font-size:14px;font-weight:500;letter-spacing:-.02em;color:var(--cbl-ink)}
+  .cbl-ctrl.is-missing .cbl-ctrl-order{color:var(--cbl-ink-soft)}
+  .cbl-ctrl-carrier{font-size:10.5px;font-weight:600;color:var(--cbl-ink-soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:1px}
+  .cbl-ctrl-vessel{font-size:12px;color:var(--cbl-ink);font-weight:500}
+  .cbl-ctrl-route{font-size:11px;color:var(--cbl-ink-faint);font-family:var(--mono)}
+  .cbl-badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.02em;white-space:nowrap}
+  .cbl-badge .cbl-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .cbl-badge.ok{background:var(--cbl-ok-bg);color:var(--cbl-ok);border:1px solid var(--cbl-ok-bd)}
+  .cbl-badge.rev{background:var(--cbl-rev-bg);color:var(--cbl-rev);border:1px solid var(--cbl-rev-bd)}
+  .cbl-badge.miss{background:var(--cbl-miss-bg);color:var(--cbl-miss);border:1px solid var(--cbl-line-strong)}
+  .cbl-badge.seal{background:var(--cbl-seal-bg);color:var(--cbl-seal);border:1px solid var(--cbl-seal-bd)}
+
+  /* ===== detalle — copiado de #panel-control-bl .cbl-detail/.cbl-exp-*/.cbl-doctab* ===== */
+  .cbl-detail{background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:14px;box-shadow:var(--cbl-shadow);overflow:hidden}
+  .cbl-exp-head{position:relative;padding:16px 18px 14px;border-bottom:1px solid var(--cbl-line)}
+  .cbl-exp-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cbl-rev)}
+  .cbl-exp-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+  .cbl-exp-order{font-family:var(--mono);font-size:21px;font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--cbl-ink)}
+  .cbl-exp-line{font-size:12.5px;color:var(--cbl-ink-soft);margin-top:6px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .cbl-exp-line b{color:var(--cbl-ink);font-weight:600}
+  .cbl-exp-line .cbl-mono{font-family:var(--mono);font-size:11.5px}
+  .cbl-pip{width:3px;height:3px;border-radius:50%;background:var(--cbl-line-strong);display:inline-block}
+  .cbl-exp-status{text-align:right;flex-shrink:0}
+  .cbl-exp-status .cbl-badge{font-size:11.5px;padding:5px 11px}
+  .cbl-doctabs{display:flex;gap:3px;padding:9px 16px 0;background:var(--cbl-surface-2);border-bottom:1px solid var(--cbl-line);overflow-x:auto}
+  .cbl-doctab{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;font-size:12.5px;font-weight:500;color:var(--cbl-ink-soft);background:none;border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;white-space:nowrap;position:relative;top:1px}
+  .cbl-doctab--active{color:var(--cbl-accent);font-weight:600;background:var(--cbl-surface);border-color:var(--cbl-line)}
+  .cbl-doctab[disabled]{color:var(--cbl-ink-faint);opacity:.5}
+
+  /* ===== panel de verificación (tally + issue-rows) — copiado de control-bl.js cblBadge()/tally ===== */
+  .cbl-verify{padding:14px 16px;background:var(--cbl-surface)}
+  .cbl-tally{font-size:12px;color:var(--cbl-ink-soft);margin:0 0 10px;font-family:var(--mono)}
+  .cbl-tally b.ok{color:var(--cbl-ok)}
+  .cbl-tally b.rev{color:var(--cbl-rev)}
+  .cbl-issue-row{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--cbl-rev-bd);background:var(--cbl-rev-bg);border-radius:9px;padding:8px 11px;margin-bottom:6px;font-size:12px;color:var(--cbl-rev);line-height:1.5}
+  .cbl-issue-row .ic{flex-shrink:0}
+  .cbl-seal-btn{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#fff;background:var(--cbl-seal);border:1px solid var(--cbl-seal);border-radius:9px;padding:7px 14px;cursor:pointer;margin-top:4px}
+
+  /* ===== visor — copiado de .cbl-frame (72vh real, acá escala fija representativa) ===== */
+  .cbl-viewer{padding:14px 16px 16px;background:var(--cbl-surface-2)}
+  .cbl-viewer-hint{font-size:11px;color:var(--cbl-ink-faint);margin:0 2px 9px}
+  .cbl-frame{width:100%;height:400px;border:1px solid var(--cbl-line);border-radius:10px;background:repeating-linear-gradient(135deg,#fff,#fff 22px,#f3f2ee 22px,#f3f2ee 44px);display:flex;align-items:center;justify-content:center;color:#8a897f;font-size:12.5px;font-weight:600}
+
+  /* ===== WRAPPERS que difieren entre variantes (acá está el pedido real del mockup) ===== */
+  .A .cbl-detail-sticky{position:sticky;top:0;max-height:524px;overflow-y:auto}
+  .B .cbl-detail-col{display:flex;flex-direction:column}
+  .B .cbl-sticky-top{position:sticky;top:0;z-index:2;background:var(--cbl-surface)}
+  .B .cbl-sticky-top .cbl-verify{border-bottom:1px solid var(--cbl-line)}
+  .gone-note{display:none;position:sticky;top:0;margin-top:8px;background:var(--red-bg);color:var(--red);border:1px dashed var(--red-bd);border-radius:9px;padding:8px 12px;font-size:11.5px;font-weight:600;text-align:center}
+
+  /* ===== comparación lado a lado ===== */
+  .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.cmp-grid{grid-template-columns:1fr}}
+  .cmp-col{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .cmp-col.reco{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+  .cmp-col h3{display:flex;align-items:center;gap:8px;justify-content:space-between}
+  .cmp-list{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.75}
+  .cmp-list b{color:var(--text)}
+  .cmp-list.pro li::marker{color:var(--green)}
+  .cmp-list.con li::marker{color:var(--red)}
+  .cmp-sub{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 4px}
+
+  .side-panel{position:fixed;right:18px;top:70px;width:230px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 15px;box-shadow:var(--shadow);font-size:11.5px;color:var(--muted);line-height:1.6;display:none}
+  @media(min-width:1560px){.side-panel{display:block}}
+  .side-panel b{color:var(--text)}
+  .side-panel h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text)}
+
+  ol.decisions{padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.85;max-width:900px}
+  ol.decisions li{margin-bottom:8px}
+  ol.decisions b{color:var(--text)}
+  ol.decisions code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="side-panel">
+  <h4>Qué estás viendo</h4>
+  Dos ventanas de navegador ficticias con <b>scroll real</b> (position:sticky funcional, no un GIF). Meté el mouse adentro de cada recuadro y scrolleá con la rueda — el efecto es el que se vería en prod.
+</div>
+
+<div class="page">
+  <h1>Control BL — panel derecho fijo al scrollear (2026-07-22)</h1>
+  <p class="note">Hoy en <code>#panel-control-bl</code> el layout es un grid <code>330px / 1fr</code> (<code>index.html:2538</code>, clase <code>.cbl-layout</code>) dentro de <code>.main</code> (el contenedor real que scrollea — <code>overflow-y:auto</code>, <code>index.html:383</code>, no la ventana). Lista de órdenes a la izquierda, detalle completo a la derecha (header + pestañas Análisis/Aduana/Booking/Factura/PE + panel de verificación + visor de 72vh). Todo eso scrollea junto como un bloque único: si estás revisando la orden 12 de una lista de 30, para ver la próxima tenés que scrollear hasta abajo del visor gigante y perdés de vista lo que estabas viendo. <b>El pedido: fijar el panel derecho mientras la lista de la izquierda scrollea sola.</b> La pregunta que este mockup resuelve con vos es <b>hasta dónde exactamente</b> queda fijo — no es lo mismo fijar TODO que fijar solo el header.</p>
+
+  <div class="subnav">
+    <a href="#s1">① Por qué importa</a>
+    <a href="#s2">② Variante A — todo sticky</a>
+    <a href="#s3">③ Variante B — solo header+verificación</a>
+    <a href="#s4">④ Comparación y recomendación</a>
+    <a href="#s5">⑤ Notas para John</a>
+  </div>
+
+  <!-- ============ SECCIÓN 1 ============ -->
+  <h2 id="s1"><span class="num">1</span>Por qué importa — el caso de uso real</h2>
+  <p class="intent">Naara (u otra persona del equipo) sella órdenes en lote: abre la orden, mira el visor (BL/planilla/booking), coteja contra el panel de verificación, sella "Revisado" o marca REVISAR, y pasa a la siguiente — muchas veces seguidas, en una sola sesión. Cuantas más órdenes tenga que scrollear sin perder el visor de vista, mejor. Ese es el criterio que decide entre las dos variantes de abajo.</p>
+
+  <!-- ============ SECCIÓN 2 — VARIANTE A ============ -->
+  <h2 id="s2"><span class="num">2</span><span class="badge badge--a">Variante A</span>Todo el panel derecho es sticky <span class="badge badge--rec">✓ recomendada</span></h2>
+  <p class="intent">Header + pestañas + panel de verificación + visor viajan juntos como UN bloque fijo (<code>position:sticky;top:0</code> sobre el propio <code>.cbl-detail</code>). Si ese bloque no entra completo en la altura visible, tiene <b>su propio scroll interno</b> — nunca empuja a la lista ni se corta.</p>
+
+  <div class="browser A">
+    <div class="browser-topbar">Control BL <span class="browser-label">#panel-control-bl · .main scrollea</span></div>
+    <div class="scroll-hint"><span class="arrow">↕</span> Scrolleá acá adentro (mouse sobre el recuadro) — mirá que el panel derecho NUNCA se mueve</div>
+    <div class="demo-scroll">
+      <div class="mini-fbar">
+        <span class="mini-fchip on">● Todos</span>
+        <span class="mini-fchip">● OK</span>
+        <span class="mini-fchip">● REVISAR</span>
+        <span class="mini-fsum"><b>28</b> órdenes · <span style="color:var(--green)">15 OK</span> · <span style="color:var(--orange)">9 a revisar</span> · <span style="color:var(--muted)">4 sin control</span></span>
+      </div>
+      <div class="cbl-layout">
+        <div class="cbl-master" id="list-a"></div>
+        <div class="cbl-detail cbl-detail-sticky" id="detail-a"></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Contá: mientras scrolleás las 28 órdenes de la izquierda hasta el final, el visor de la orden <b>4010874521</b> sigue ahí, siempre visible, en el mismo lugar.</p>
+
+  <!-- ============ SECCIÓN 3 — VARIANTE B ============ -->
+  <h2 id="s3"><span class="num">3</span><span class="badge badge--b">Variante B</span>Solo header + pestañas + verificación sticky — el visor scrollea con la página</h2>
+  <p class="intent">Header, pestañas y panel de verificación quedan pegados arriba. El visor (72vh) sigue en el flujo normal, debajo. Como el visor ya es grande, el bloque completo de la derecha (verificación + visor) mide más o menos lo mismo que 7-8 cards de la izquierda — apenas scrolleás un poco más que eso, <b>toda la columna derecha (incluido el header sticky) se termina y desaparece</b>, porque ya no queda columna a la que pegarse.</p>
+
+  <div class="browser B">
+    <div class="browser-topbar">Control BL <span class="browser-label">#panel-control-bl · .main scrollea</span></div>
+    <div class="scroll-hint"><span class="arrow">↕</span> Scrolleá acá adentro — mirá que a partir de cierto punto el visor Y el header desaparecen juntos</div>
+    <div class="demo-scroll">
+      <div class="mini-fbar">
+        <span class="mini-fchip on">● Todos</span>
+        <span class="mini-fchip">● OK</span>
+        <span class="mini-fchip">● REVISAR</span>
+        <span class="mini-fsum"><b>28</b> órdenes · <span style="color:var(--green)">15 OK</span> · <span style="color:var(--orange)">9 a revisar</span> · <span style="color:var(--muted)">4 sin control</span></span>
+      </div>
+      <div class="cbl-layout">
+        <div class="cbl-master" id="list-b"></div>
+        <div class="cbl-detail-col">
+          <div class="cbl-detail" id="detail-b"></div>
+          <div class="gone-note" id="gone-note-b">↑ acá termina la columna derecha de esta orden — de acá para abajo, lista sola sin detalle a la vista</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Pasado ese punto, para volver a ver el visor de la orden 4010874521 hay que scrollear <b>hacia arriba</b> de nuevo. En un caso real con 28-30 órdenes cargadas es justo el escenario que se quiere evitar.</p>
+
+  <!-- ============ SECCIÓN 4 ============ -->
+  <h2 id="s4"><span class="num">4</span>Comparación y recomendación</h2>
+  <div class="cmp-grid">
+    <div class="cmp-col reco">
+      <h3><span class="badge badge--a">Variante A</span><span class="badge badge--rec">recomendada</span></h3>
+      <p class="cmp-sub">A favor</p>
+      <ul class="cmp-list pro">
+        <li>El visor <b>nunca desaparece</b> mientras revisás la lista — es el punto central del caso de uso (sellar muchas órdenes seguidas).</li>
+        <li>Un solo comportamiento que aprender: "la derecha no se mueve, punto".</li>
+        <li>Con documentos largos (PDF multipágina en <code>.cbl-frame</code>), el scroll interno del bloque no interfiere con el scroll de la lista — son dos scrolls independientes, cada uno donde el mouse está parado.</li>
+      </ul>
+      <p class="cmp-sub">En contra</p>
+      <ul class="cmp-list con">
+        <li>Bloque con <b>dos scrollbars visibles</b> a la vez (lista + detalle) — hay que dejarlo claro visualmente (ya lo hace: el scrollbar del detalle queda contenido adentro de su propio borde redondeado).</li>
+        <li>Si el visor es muy alto y la ventana es baja (notebook chico), el bloque sticky puede ocupar casi toda la altura y dejar poco margen — mitigable con <code>max-height</code> conservador.</li>
+      </ul>
+    </div>
+    <div class="cmp-col">
+      <h3><span class="badge badge--b">Variante B</span></h3>
+      <p class="cmp-sub">A favor</p>
+      <ul class="cmp-list pro">
+        <li>Un solo scrollbar (el de la página) — comportamiento más "clásico"/predecible para quien no espera scroll anidado.</li>
+        <li>Menos CSS nuevo: solo el bloque de header+tabs+verificación necesita <code>position:sticky</code>, el visor queda intacto.</li>
+      </ul>
+      <p class="cmp-sub">En contra</p>
+      <ul class="cmp-list con">
+        <li><b>El visor se pierde de vista</b> apenas se scrollea más que la altura de esa columna — contradice el caso de uso principal (sellar mirando el documento).</li>
+        <li>Cuando el header desaparece junto con el visor, se pierde también el acceso al botón "Marcar como revisado" — hay que scrollear para arriba para sellar.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="banner green" style="margin-top:16px"><span class="ic">✓</span><span class="txt"><b>Recomendación: Variante A.</b> El caso de uso de este módulo es específicamente sellar muchas órdenes seguidas mirando el visor — es lo que justifica el pedido en primer lugar. La Variante B resuelve "el header no se mueve" pero no resuelve el problema real, que es "no perder el documento de vista".</span></div>
+
+  <!-- ============ SECCIÓN 5 ============ -->
+  <h2 id="s5"><span class="num">5</span>Notas para John — decisiones tomadas y dudas abiertas</h2>
+  <ol class="decisions">
+    <li><b>Alcance del cambio: 100% CSS</b> sobre <code>#panel-control-bl .cbl-detail</code> (agregar <code>position:sticky;top:0;max-height:…;overflow-y:auto</code>) — no toca <code>js/features/control-bl.js</code> ni la estructura del DOM que arma <code>cblRenderDetail</code>. Coherente con el contrato de la isla <code>#cbl-styles</code> ("no-touch"): esto va en el bloque de overrides EXTERNOS que ya existe arriba de la isla (<code>index.html:2453-2465</code>, mismo patrón de responsive Fase B), no adentro de la isla.</li>
+    <li><b>El contenedor que scrollea es <code>.main</code></b> (<code>overflow-y:auto</code>, <code>index.html:383</code>), no la ventana — el topbar (<code>.topbar</code>, <code>index.html:133</code>) vive AFUERA de <code>.main</code>, así que <code>top:0</code> alcanza sin offset ni cálculo con <code>--topbar-h</code>. Confirmado leyendo el CSS real, no asumido.</li>
+    <li><b>Breakpoint:</b> propongo activar el sticky recién en <code>&gt;900px</code>, mismo corte que ya existe en Fase B (<code>index.html:2456-2460</code>). Por debajo de 900px el grid ya colapsa a 1 columna y <code>.cbl-master</code> ya tiene su propio <code>max-height:45vh;overflow-y:auto</code> — meterle sticky al detalle ahí complicaría un layout que ya resuelve el mismo problema de otra forma. <b>¿Ok con dejar mobile/tablet sin este cambio por ahora?</b></li>
+    <li><b><code>max-height</code> del bloque sticky (Variante A):</b> en este mockup usé un valor fijo de referencia — en la app real sería <code>calc(100vh - var(--topbar-h) - padding)</code> o el equivalente vía <code>calc(100% - …)</code> sobre <code>.main</code>. Falta decidir el margen exacto (cuánto aire dejar abajo antes de activar el scroll interno) — es un número de afinamiento visual, no una decisión de arquitectura.</li>
+    <li><b>Duda abierta:</b> con Variante A, ¿el botón "Marcar como revisado" queda DENTRO del bloque sticky (siempre visible, como en este mockup) o fuera, al pie del visor (hay que scrollear el detalle para llegar)? Este mockup lo puso adentro por conveniencia de sellado rápido, pero es una decisión de UX aparte.</li>
+    <li>Datos de este mockup son ficticios (órdenes, buques, bookings, permisos) — no representan operaciones reales.</li>
+  </ol>
+</div>
+
+<script>
+(function(){
+  var CARRIERS = ['MAERSK','LOG-IN','HAPAG LLOYD','MSC'];
+  var VESSELS = ['LOG-IN JATOBA 285N','MAERSK FREEPORT 628N','AS SABINE 528W','MSC PHOENIX 2623N','HAPAG LLOYD LIMA 114E','LOG-IN RESILIENTE 041N','MAERSK LOTA 630N'];
+  var PORTS = ['SANTOS','ITAJAI','NAVEGANTES','PARANAGUA','RIO GRANDE'];
+
+  function pad(n,w){ n=String(n); while(n.length<w) n='0'+n; return n; }
+  function mkOrder(i){
+    return (i%2===0) ? ('4010874'+pad(500+i*3,3)) : ('118'+pad(962600+i*7,6));
+  }
+  function mkDate(i){
+    var d = 8 + (i%20);
+    return pad(d,2)+'/07 '+pad(8+(i%10),2)+':'+pad((i*13)%60,2);
+  }
+
+  var ORDERS = [];
+  for(var i=0;i<28;i++){
+    var st = (i===4) ? 'rev' : (i%9===8) ? 'miss' : (i%3===0 ? 'rev' : 'ok');
+    ORDERS.push({
+      order: mkOrder(i),
+      carrier: CARRIERS[i%CARRIERS.length],
+      vessel: VESSELS[i%VESSELS.length],
+      port: PORTS[i%PORTS.length],
+      date: mkDate(i),
+      status: st,
+      revCount: st==='rev' ? (1+(i%3)) : 0,
+      sel: i===4
+    });
+  }
+
+  function renderCard(o){
+    var cls = 'cbl-ctrl is-'+(o.status==='miss'?'missing':o.status)+(o.sel?' cbl-ctrl--sel':'');
+    var badge;
+    if(o.status==='ok') badge='<span class="cbl-badge ok"><span class="cbl-dot"></span>OK</span>';
+    else if(o.status==='rev') badge='<span class="cbl-badge rev"><span class="cbl-dot"></span>REVISAR · '+o.revCount+'</span>';
+    else badge='<span class="cbl-badge miss"><span class="cbl-dot"></span>Sin control</span>';
+    return '<div class="'+cls+'">'+
+      '<div class="cbl-ctrl-top"><span class="cbl-ctrl-order">'+o.order+'</span>'+badge+'</div>'+
+      '<div class="cbl-ctrl-carrier">'+o.carrier+'</div>'+
+      '<div class="cbl-ctrl-vessel">'+o.vessel+'</div>'+
+      '<div class="cbl-ctrl-route">'+o.port+' · '+o.date+'</div>'+
+    '</div>';
+  }
+
+  var listHtml = ORDERS.map(renderCard).join('');
+  document.getElementById('list-a').innerHTML = listHtml;
+  document.getElementById('list-b').innerHTML = listHtml;
+
+  var HEAD =
+    '<div class="cbl-exp-head">'+
+      '<div class="cbl-exp-top">'+
+        '<div>'+
+          '<div class="cbl-exp-order">4010874521</div>'+
+          '<div class="cbl-exp-line">LOG-IN <span class="cbl-pip"></span> <b>LOG-IN JATOBA 285N</b> <span class="cbl-pip"></span> <span class="cbl-mono">BL SSBJAT002215</span> <span class="cbl-pip"></span> <span class="cbl-mono">Booking LA05118442</span></div>'+
+        '</div>'+
+        '<div class="cbl-exp-status"><span class="cbl-badge rev"><span class="cbl-dot"></span>REVISAR · 2</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="cbl-doctabs">'+
+      '<span class="cbl-doctab cbl-doctab--active">Análisis</span>'+
+      '<span class="cbl-doctab">BL</span>'+
+      '<span class="cbl-doctab">Planilla Aduana</span>'+
+      '<span class="cbl-doctab">Booking</span>'+
+      '<span class="cbl-doctab">Factura</span>'+
+      '<span class="cbl-doctab">Permiso (PE)</span>'+
+    '</div>'+
+    '<div class="cbl-verify">'+
+      '<div class="cbl-tally"><b class="ok">5</b> coinciden · <b class="rev">2</b> a revisar</div>'+
+      '<div class="cbl-issue-row"><span class="ic">⚠️</span><span>Peso bruto: BL 24.850&nbsp;KG ≠ Booking 24.900&nbsp;KG</span></div>'+
+      '<div class="cbl-issue-row"><span class="ic">⚠️</span><span>Cliente Notify difiere entre BL y Planilla Aduana</span></div>'+
+      '<button class="cbl-seal-btn">✓ Marcar como revisado</button>'+
+    '</div>';
+
+  var VIEWER =
+    '<div class="cbl-viewer">'+
+      '<p class="cbl-viewer-hint">Vista previa del documento activo (Análisis) — en prod es un iframe de 72vh</p>'+
+      '<div class="cbl-frame">BILL OF LADING — vista previa · SSBJAT002215</div>'+
+    '</div>';
+
+  document.getElementById('detail-a').innerHTML = HEAD + VIEWER;
+  document.getElementById('detail-b').innerHTML =
+    '<div class="cbl-sticky-top">'+HEAD+'</div>'+VIEWER;
+
+  // Variante B: mostrar la nota de "acá se corta" cuando el bloque derecho
+  // salió del viewport del demo-scroll (ilustra el corte real de la sticky range).
+  var scrollB = document.querySelectorAll('.B .demo-scroll')[0];
+  var colB = document.querySelector('.B .cbl-detail-col');
+  var noteB = document.getElementById('gone-note-b');
+  if(scrollB && colB && noteB){
+    scrollB.addEventListener('scroll', function(){
+      var colBottom = colB.getBoundingClientRect().bottom;
+      var scrollTop = scrollB.getBoundingClientRect().top;
+      noteB.style.display = (colBottom < scrollTop + 40) ? 'block' : 'none';
+    });
+  }
+})();
+</script>
+</body>
+</html>

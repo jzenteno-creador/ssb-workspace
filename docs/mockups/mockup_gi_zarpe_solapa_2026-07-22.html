@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup — Solapa "Despachos" (Good Issue + Confirmación de zarpe)</title>
+<style>
+  /* ===== Tokens copiados 1:1 de index.html (grep :root / body.light, 2026-07-22) ===== */
+  :root{
+    color-scheme:dark;
+    --bg:#0b0f17;--surface:#141925;--surface-hv:#1a2132;--faint:#10151f;
+    --border:#1f2634;--text:#e8ecf3;--muted:#8b94a8;
+    --blue:#5b9bf5;--blue-lt:#1d2742;--teal:#5eead4;--accent:#a78bfa;
+    --blue-bg:#141f38;--blue-bd:#2a4478;
+    --green:#3ecf8e;--green-bg:#0f2a1d;--green-bd:#1e5c3a;
+    --amber:#f5a623;--amber-bg:#2a1f0a;--amber-bd:#6b4a12;
+    --red:#ef6461;--red-bg:#2a1515;--red-bd:#5a2020;
+    --purple:#a78bfa;--purple-bg:#1c1533;--purple-bd:#4d3a8a;
+    --orange:#fb923c;--orange-bg:#2a1a0e;--orange-bd:#6b3e18;
+    --font:'Inter','system-ui',sans-serif;--mono:'JetBrains Mono','SFMono-Regular',monospace;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.35);
+    --fs-2xs:10px;--fs-xs:11px;--fs-sm:12px;--fs-md:13px;--fs-base:14px;--fs-lg:15px;--fs-xl:17px;--fs-2xl:22px;
+    /* Rail — constante en ambos temas, igual que la app real */
+    --rail-bg:#080b12;--rail-border:rgba(255,255,255,.07);--rail-w:64px;--rail-w-exp:228px;
+  }
+  body.light{
+    color-scheme:light;
+    --bg:#f7f8fa;--surface:#ffffff;--surface-hv:#f0f2f6;--faint:#f0f3f8;
+    --border:#e4e7ec;--text:#0b0f17;--muted:#5b6478;
+    --blue:#2563eb;--blue-lt:#e8f0fe;--teal:#06b6d4;--accent:#6d28d9;
+    --blue-bg:#e8f0fe;--blue-bd:#c3d7f8;
+    --green:#0d9e80;--green-bg:#e6f9f4;--green-bd:#b2e8d8;
+    --amber:#c87a00;--amber-bg:#fff8e6;--amber-bd:#f4d98a;
+    --red:#c0392b;--red-bg:#fff0f0;--red-bd:#f5c0bb;
+    --purple:#6d28d9;--purple-bg:#f3f0ff;--purple-bd:#c4b5fd;
+    --orange:#d14d00;--orange-bg:#fff4ee;--orange-bd:#ffc9a8;
+    --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 14px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-md);line-height:1.55;padding:26px 26px 100px;transition:background .2s,color .2s}
+  .page{max-width:1220px;margin:0 auto}
+  h1{font-size:var(--fs-2xl);margin:0 0 6px;letter-spacing:-.01em}
+  h2{font-size:var(--fs-sm);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:38px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);font-size:11px;font-weight:800;flex-shrink:0}
+  h3{font-size:var(--fs-sm);font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .note{font-size:var(--fs-sm);color:var(--muted);max-width:900px;line-height:1.65}
+  .note b{color:var(--text)}
+  .note code{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono)}
+  .intent{font-size:var(--fs-xs);color:var(--muted);opacity:.85;max-width:900px;line-height:1.6;margin:2px 0 16px;font-style:italic}
+
+  .toggle{position:fixed;top:16px;right:16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;z-index:80;box-shadow:var(--shadow)}
+  .subnav{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;gap:6px;background:var(--bg);padding:12px 0;margin-bottom:6px;border-bottom:1px solid var(--border)}
+  .subnav a{font-size:11.5px;font-weight:700;color:var(--muted);text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+  .subnav a:hover{color:var(--teal);border-color:var(--teal)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .wrap{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+  .muted{color:var(--muted);font-size:12px}
+  .faint{color:var(--muted);opacity:.75;font-size:11.5px}
+
+  /* ===== badge system real (A2, index.html:420) — mono, 10px, radius 4 ===== */
+  .badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-weight:700;white-space:nowrap;line-height:1.4;padding:2px 7px;border-radius:4px;border:1px solid transparent;font-size:10px;letter-spacing:.02em}
+  .badge--pill{padding:4px 9px;border-radius:20px;letter-spacing:.05em}
+  .badge--lg{font-size:11.5px;padding:5px 12px;border-radius:20px}
+  .badge--success{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+  .badge--warning{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+  .badge--danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+  .badge--neutral{background:var(--faint);color:var(--muted);border-color:var(--border)}
+  .badge--purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd)}
+  .badge--new{color:var(--blue);background:var(--blue-bg);border:1px dashed var(--blue-bd);font-family:var(--font);text-transform:uppercase;font-size:9px;letter-spacing:.04em}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;font-size:12.5px;line-height:1.55}
+  .banner.amber{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber)}
+  .banner.green{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--green)}
+  .banner.blue{background:var(--blue-bg);border:1px solid var(--blue-bd);color:var(--blue)}
+  .banner .ic{flex:0 0 auto;margin-top:1px}
+  .banner .txt{color:var(--text)}
+  .ic{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:8px;padding:8px 15px;cursor:pointer;border:1px solid var(--border);background:var(--faint);color:var(--text)}
+  .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.clear{border:1.5px solid var(--border);background:var(--faint);color:var(--muted)}
+  .btn.clear:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+  .btn.mini{padding:5px 11px;font-size:11.5px;border-radius:7px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+
+  /* ============ SECCIÓN — simulación del rail ============ */
+  .rail-demo-row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+  .railsim-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .railsim{background:var(--rail-bg);border:1px solid var(--rail-border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+  .railsim.collapsed{width:64px}
+  .railsim.expanded{width:228px}
+  .rail-btn{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;border:1px solid transparent;border-radius:9px;background:none;color:rgba(255,255,255,.55);font-family:var(--font);font-size:12.5px;font-weight:500;white-space:nowrap;position:relative;flex-shrink:0}
+  .rail-btn.active{background:#151b28;border-color:rgba(255,255,255,.09);color:#5b9bf5}
+  .rail-btn.active::before{content:'';position:absolute;left:-12px;top:10px;width:3px;height:20px;border-radius:2px;background:#5b9bf5}
+  .rail-btn .ric,.rail-group-hd .ric{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rail-btn .rlbl{overflow:hidden;text-overflow:ellipsis}
+  .railsim.collapsed .rlbl{display:none}
+  .rail-sep{height:1px;background:rgba(255,255,255,.08);margin:4px 6px}
+  .rail-ellipsis{color:rgba(255,255,255,.32);font-size:11px;padding:2px 10px;font-family:var(--mono)}
+  .railsim.collapsed .rail-ellipsis{text-align:center;padding:2px 0}
+  .rail-group-hd{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:500}
+  .railsim.collapsed .rail-group-hd .rlbl{display:none}
+
+  /* ============ SECCIÓN — variantes lado a lado ============ */
+  .variant-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:860px){.variant-grid{grid-template-columns:1fr}}
+  .variant{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--surface);position:relative}
+  .variant.rec{border-color:var(--green-bd);box-shadow:0 0 0 1px var(--green-bd) inset}
+  .variant-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .variant-tag{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .variant-diagram{background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:10px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:6px;min-height:120px}
+  .vd-block{background:var(--surface-hv);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text)}
+  .vd-tabs{display:flex;gap:4px}
+  .vd-tabs span{flex:1;text-align:center;padding:6px;border-radius:6px 6px 0 0;background:var(--surface-hv);border:1px solid var(--border);font-size:10.5px}
+  .vd-tabs span.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);font-weight:700}
+  .vd-body{background:var(--surface-hv);border:1px solid var(--border);border-radius:0 0 6px 6px;padding:10px;font-size:10.5px;min-height:64px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+
+  /* ============ SECCIÓN — cards de lote (GI / ATD) ============ */
+  .batch-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;max-width:920px}
+  .batch-hd{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .batch-hd .bic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--blue)}
+  .batch-hd h3{margin:0;color:var(--text);font-size:14.5px;text-transform:none;letter-spacing:0}
+  .batch-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .ta-wrap{position:relative}
+  textarea.batch-ta{width:100%;min-height:152px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--text);background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:11px 13px;outline:none}
+  textarea.batch-ta:focus{border-color:var(--blue)}
+  .ta-hint{font-size:11px;color:var(--muted);margin-top:5px}
+  .apply-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;background:var(--faint);border:1px dashed var(--border);border-radius:9px}
+  .apply-row label{font-size:12px;color:var(--muted)}
+  .apply-row input[type=date]{font-family:var(--font);font-size:12.5px;color:var(--text);background:var(--surface-hv);border:1px solid var(--border);border-radius:7px;padding:6px 9px}
+
+  table.prev-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
+  table.prev-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border)}
+  table.prev-tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+  table.prev-tbl tr.conflict td{background:var(--red-bg)}
+  table.prev-tbl td.ord{font-family:var(--mono);font-weight:600}
+  .mot-ic{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;vertical-align:-2px;margin-right:3px}
+  .src-tag{font-size:9.5px;color:var(--muted);margin-left:4px}
+  .src-tag.override{color:var(--blue);font-weight:700}
+
+  .batch-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+
+  /* ============ compact report (badges) ============ */
+  .compact-report{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+  .detail-toggle{font-size:11.5px;color:var(--blue);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0}
+  .detail-tbl-wrap{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
+
+  /* ============ panel colapsable persistente ============ */
+  .collapse-panel{border:1px solid var(--amber-bd);border-radius:10px;margin-top:14px;overflow:hidden}
+  .cp-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:var(--amber-bg);cursor:pointer}
+  .cp-hd .cp-title{font-size:12.5px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:7px}
+  .cp-chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .15s}
+  .cp-hd.is-open .cp-chev{transform:rotate(90deg)}
+  .cp-body{padding:12px 13px;font-size:12px}
+  .persist-tag{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--teal);background:rgba(94,234,212,.1);border:1px dashed var(--teal);border-radius:5px;padding:1px 6px}
+  .roleo-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border)}
+  .roleo-row:last-of-type{border-bottom:none}
+  .roleo-row .ord{font-family:var(--mono);font-weight:600}
+
+  /* ============ antes/después mini-fix ============ */
+  .fix-grid{display:grid;grid-template-columns:22px 1fr 1fr;gap:0 14px;align-items:start;margin-top:10px}
+  .fix-num{width:22px;height:22px;border-radius:50%;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:2px}
+  .fix-col{padding:10px 12px;border-radius:9px;font-size:12px;line-height:1.55;margin-bottom:10px}
+  .fix-antes{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--text)}
+  .fix-despues{background:var(--green-bg);border:1px solid var(--green-bd);color:var(--text)}
+  .fix-lbl{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+  .fix-antes .fix-lbl{color:var(--red)}
+  .fix-despues .fix-lbl{color:var(--green)}
+
+  code.k{background:rgba(148,163,184,.15);border-radius:4px;padding:1px 6px;font-size:11.5px;font-family:var(--mono);color:var(--text)}
+  *:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
+
+<div class="page">
+  <h1>Solapa nueva "Despachos" — Good Issue + Confirmación de zarpe (2026-07-22)</h1>
+  <p class="note">Propuesta: <b>una solapa nueva en el rail</b> que junta las dos acciones de lote que hoy viven repartidas — el modal Good Issue (hoy dentro de <code class="k">Seguimiento</code>) y el panel de Confirmación de zarpe / ATD (hoy dentro de <code class="k">Mailing</code>). Mismo motivo para las dos: son cargas manuales por lote que un operador hace en tandas ("pegar la planilla de despachos de la mañana", "pegar los ATD que llegaron de la naviera"), no forman parte de la <i>lectura</i> de esos módulos — separarlas les da su propio lugar sin que compitan por espacio con el resto de Seguimiento/Mailing. <b>Ningún parser ni endpoint cambia</b>: <code class="k">parseGiGrid</code> + <code class="k">/api/seguimiento::alta_despacho</code> y <code class="k">parseAtdGrid</code> + <code class="k">/api/mailing::confirm_atd</code> se reusan tal cual — esto es 100% reubicación de UI + 3 fixes puntuales sobre el panel ATD (sección 5).</p>
+
+  <div class="subnav">
+    <a href="#s1">① El rail</a>
+    <a href="#s2">② Layout — apiladas vs tabs</a>
+    <a href="#s3">③ Good Issue (lote)</a>
+    <a href="#s4">④ Confirmación de zarpe (lote)</a>
+    <a href="#s5">⑤ 3 defectos resueltos</a>
+    <a href="#s6">Qué se muda</a>
+    <a href="#notas">Notas para John</a>
+  </div>
+
+  <!-- ============ SECCIÓN 1 — RAIL ============ -->
+  <h2 id="s1"><span class="num">1</span>El rail — dónde entra el ítem nuevo</h2>
+  <p class="intent">Simulación con los tokens reales del rail (<code class="k">--rail-bg:#080b12</code>, constante en ambos temas — probá el toggle de arriba, el rail no cambia). Se ubica como ítem de <b>primer nivel</b>, después del grupo "Documentación", no anidado adentro: no es una vista de documentación, es una pantalla de carga (acción diaria repetida), más parecida a un formulario que a un visor.</p>
+
+  <div class="rail-demo-row">
+    <div>
+      <div class="railsim-label">Colapsado (icon-only, 64px)</div>
+      <div class="railsim collapsed">
+        <button class="rail-btn"><svg class="ric"><use href="#i-ship"/></svg></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-calendar"/></svg></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-route"/></svg></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-truck"/></svg></button>
+        <div class="rail-ellipsis">⋯</div>
+        <div class="rail-sep"></div>
+        <div class="rail-group-hd"><svg class="ric"><use href="#i-folder"/></svg></div>
+        <button class="rail-btn active"><svg class="ric"><use href="#i-check"/></svg></button>
+        <div class="rail-sep"></div>
+        <button class="rail-btn"><svg class="ric"><use href="#i-database"/></svg></button>
+      </div>
+    </div>
+    <div>
+      <div class="railsim-label">Pineado / expandido (228px)</div>
+      <div class="railsim expanded">
+        <button class="rail-btn"><svg class="ric"><use href="#i-ship"/></svg><span class="rlbl">Tarifas marítimas</span></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-calendar"/></svg><span class="rlbl">EFA</span></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-route"/></svg><span class="rlbl">Schedule</span></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-truck"/></svg><span class="rlbl">Tarifas Terrestres</span></button>
+        <div class="rail-ellipsis">⋯ 4 módulos más</div>
+        <div class="rail-sep"></div>
+        <div class="rail-group-hd"><svg class="ric"><use href="#i-folder"/></svg><span class="rlbl">Documentación ▾</span></div>
+        <button class="rail-btn active"><svg class="ric"><use href="#i-check"/></svg><span class="rlbl">Despachos</span><span class="badge badge--new" style="margin-left:auto">nuevo</span></button>
+        <div class="rail-sep"></div>
+        <button class="rail-btn"><svg class="ric"><use href="#i-database"/></svg><span class="rlbl">Estructura DB</span></button>
+        <button class="rail-btn"><svg class="ric"><use href="#i-sliders"/></svg><span class="rlbl">Administración</span></button>
+      </div>
+    </div>
+    <div class="card" style="max-width:340px">
+      <h3>Ícono propuesto</h3>
+      <p class="muted" style="margin:0 0 8px">Candidato principal: <svg class="ic" style="width:15px;height:15px;color:var(--blue)"><use href="#i-check"/></svg> <b style="color:var(--text)">i-check</b> — genérico, cubre tanto GI (planta, M/T) como zarpe (solo marítimo); no repite el ícono de ningún tab existente.</p>
+      <p class="faint">Alternativa evaluada: <svg class="ic" style="width:14px;height:14px"><use href="#i-anchor"/></svg> i-anchor — más literal para "zarpe", pero GI no es un evento marítimo (aplica también a despachos terrestres) → queda menos preciso como ícono único de la solapa combinada.</p>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 2 — VARIANTES DE LAYOUT ============ -->
+  <h2 id="s2"><span class="num">2</span>Layout interno — secciones apiladas vs. tabs internos</h2>
+  <p class="intent">Decisión de composición: ¿las dos secciones (GI / ATD) conviven en una sola página con scroll, o se separan en tabs internos tipo "single/lote" del modal GI actual?</p>
+
+  <div class="variant-grid">
+    <div class="variant">
+      <div class="variant-hd"><span class="variant-tag">Variante A — Apiladas</span></div>
+      <div class="variant-diagram">
+        <div class="vd-block">📥 Good Issue — lote</div>
+        <div class="vd-block" style="opacity:.7">textarea + preview + confirmar</div>
+        <div class="vd-block">⚓ Confirmación de zarpe — lote</div>
+        <div class="vd-block" style="opacity:.7">textarea + preview + confirmar</div>
+      </div>
+      <p class="muted" style="margin-top:10px">Una sola página, scroll vertical, ancla sticky (como este mismo mockup). Las dos secciones visibles a la vez.</p>
+    </div>
+    <div class="variant">
+      <div class="variant-hd"><span class="variant-tag">Variante B — Tabs internos</span></div>
+      <div class="variant-diagram">
+        <div class="vd-tabs"><span class="on">Good Issue</span><span>Confirmación de zarpe</span></div>
+        <div class="vd-body">contenido de la tab activa — la otra queda oculta</div>
+      </div>
+      <p class="muted" style="margin-top:10px">Mismo patrón que el modal GI actual (tabs Individual/Lote), pero para GI-vs-ATD.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">
+    <b style="color:var(--green)">Recomendación: Variante A (apiladas).</b> Los dos flujos los corre <b>la misma persona en la misma sesión de trabajo</b> ("primero pego los GI de la mañana, después los ATD que mandó la naviera") — con tabs, cada vez que hay que cruzar un dato entre ambos (ej. una orden que hoy sale de planta y hoy mismo zarpa) obliga a cambiar de tab y perder el estado visual del otro. Apiladas, ambos preview quedan a la vista sin clicks extra. El costo es una página más larga — mitigado con el subnav sticky (② / ③ arriba) igual que en este mockup.
+  </p>
+
+  <!-- ============ SECCIÓN 3 — GOOD ISSUE ============ -->
+  <h2 id="s3"><span class="num">3</span>Good Issue — despacho de planta (lote)</h2>
+  <p class="intent">Réplica 1:1 del tab "Lote" del modal <code class="k">seg-modal</code> actual (<code class="k">parseGiGrid</code>): formato <code class="k">orden␉fecha␉transporte(M/T opcional)</code>, una fecha discrepante para la misma orden = fila en rojo, "aplicar a todas" para filas sin fecha. Se elimina la tab "Individual" (alta de una sola orden) — queda cubierta por la fila de una sola línea en el mismo textarea; ver duda en Notas.</p>
+
+  <div class="batch-card">
+    <div class="batch-hd">
+      <svg class="bic"><use href="#i-package"/></svg>
+      <h3>Good Issue — pegado por lote</h3>
+    </div>
+    <p class="muted" style="margin:0">Pegá <code class="k">orden</code> + <code class="k">fecha</code> (+ <code class="k">M</code>/<code class="k">T</code> opcional si el transporte de esa orden difiere del modo activo) desde la planilla de planta.</p>
+
+    <div class="ta-wrap">
+<textarea class="batch-ta" aria-label="Pegado por lote de Good Issue: orden, fecha, transporte" spellcheck="false" readonly>4010045821	21/07/2026	M
+4010045822	21/07/2026
+4010045901	22/07/2026	T
+4010045821	22/07/2026
+118034562
+118034899	22/07/2026	T</textarea>
+      <div class="ta-hint">6 líneas pegadas · separador tab o ≥2 espacios · fecha DD/MM/AAAA · <code class="k">M</code>/<code class="k">T</code> = override de transporte por fila</div>
+    </div>
+
+    <div class="apply-row">
+      <label>Aplicar esta fecha a las que no traen:</label>
+      <input type="date" id="gi-applydate-demo" aria-label="Fecha a aplicar a las filas sin fecha (GI)" value="2026-07-22" readonly>
+      <button class="btn mini">Aplicar</button>
+      <span class="faint">→ completa <code class="k">118034562</code>, que vino sin fecha</span>
+    </div>
+
+    <table class="prev-tbl">
+      <thead><tr><th>Orden</th><th>Fecha GI</th><th>Transporte</th><th>Estado del lote</th></tr></thead>
+      <tbody>
+        <tr class="conflict">
+          <td class="ord">4010045821</td>
+          <td>21/07/2026 ≠ 22/07/2026</td>
+          <td>—</td>
+          <td><span class="badge badge--danger">conflicto: 2 fechas — no se escribe</span></td>
+        </tr>
+        <tr>
+          <td class="ord">4010045822</td>
+          <td>21/07/2026</td>
+          <td><svg class="mot-ic" style="color:var(--blue)"><use href="#i-ship"/></svg>marítimo<span class="src-tag">(lote)</span></td>
+          <td><span class="badge badge--success">lista</span></td>
+        </tr>
+        <tr>
+          <td class="ord">4010045901</td>
+          <td>22/07/2026</td>
+          <td><svg class="mot-ic" style="color:var(--amber)"><use href="#i-truck"/></svg>terrestre<span class="src-tag override">· override fila</span></td>
+          <td><span class="badge badge--success">lista</span></td>
+        </tr>
+        <tr>
+          <td class="ord">118034562</td>
+          <td>22/07/2026 <span class="faint">(aplicada)</span></td>
+          <td><svg class="mot-ic" style="color:var(--blue)"><use href="#i-ship"/></svg>marítimo<span class="src-tag">(lote)</span></td>
+          <td><span class="badge badge--success">lista</span></td>
+        </tr>
+        <tr>
+          <td class="ord">118034899</td>
+          <td>22/07/2026</td>
+          <td><svg class="mot-ic" style="color:var(--amber)"><use href="#i-truck"/></svg>terrestre<span class="src-tag override">· override fila</span></td>
+          <td><span class="badge badge--success">lista</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="batch-footer">
+      <button class="btn">Cancelar</button>
+      <button class="btn pri">Registrar despacho (4 filas)</button>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 4 — ATD ============ -->
+  <h2 id="s4"><span class="num">4</span>Confirmación de zarpe (ATD) — mismo formato que Good Issue</h2>
+  <p class="intent">Hoy el panel ATD de Mailing (<code class="k">parseAtdGrid</code>) es más limitado que el de GI: NO tiene "aplicar fecha a todas" (toda fila sin fecha es un error duro), y usa <code class="k">orden␉fecha</code> sin columna de transporte (el ATD es siempre zarpe marítimo). Esta pieza suma el "aplicar a todas" para emparejar la UX con GI — el resto (detección de conflicto por 2 fechas, "sin fila en Mailing" cuando la orden no pasó por Control BL) se mantiene igual.</p>
+
+  <div class="batch-card">
+    <div class="batch-hd">
+      <svg class="bic"><use href="#i-anchor"/></svg>
+      <h3>Confirmación de zarpe — pegado por lote</h3>
+    </div>
+    <p class="muted" style="margin:0">Pegá <code class="k">orden</code> + <code class="k">ATD</code> desde el aviso de zarpe de la naviera. Buque de referencia en este lote: <b style="color:var(--text)">LOG-IN JATOBA 285N</b> · booking <code class="k">LA05812340</code>.</p>
+
+    <div class="ta-wrap">
+<textarea class="batch-ta" aria-label="Pegado por lote de confirmación de zarpe: orden, ATD" spellcheck="false" readonly>4010098210	20/07/2026
+4010098340	20/07/2026
+4010098455	19/07/2026
+4010098455	20/07/2026
+118041207</textarea>
+      <div class="ta-hint">5 líneas pegadas · separador tab · fecha DD/MM/AAAA</div>
+    </div>
+
+    <div class="apply-row">
+      <label>Aplicar esta fecha a las que no traen:<span class="badge badge--new" style="margin-left:6px">nuevo</span></label>
+      <input type="date" id="atd-applydate-demo" aria-label="Fecha a aplicar a las filas sin ATD" value="2026-07-20" readonly>
+      <button class="btn mini">Aplicar</button>
+      <span class="faint">→ completa <code class="k">118041207</code>, que vino sin ATD</span>
+    </div>
+
+    <div class="batch-actions">
+      <button class="btn clear">🧹 Limpiar</button>
+      <button class="btn">Validar lote</button>
+      <button class="btn pri" disabled title="Validá el lote primero">Confirmar zarpe</button>
+    </div>
+    <p class="ta-hint" style="margin-top:-4px">"Limpiar" vacía el textarea Y el reporte de un solo click — visible siempre, sin depender de si el lote quedó 100% limpio (fix ④.2, ver sección 5).</p>
+
+    <div class="compact-report">
+      <span class="badge badge--success badge--lg">3 confirmadas</span>
+      <span class="badge badge--danger badge--lg">1 conflicto (2 fechas)</span>
+      <span class="badge badge--neutral badge--lg">1 aplicada por lote</span>
+      <button class="detail-toggle" onclick="var w=document.getElementById('atd-detail-demo');var open=w.style.display!=='none';w.style.display=open?'none':'block';this.querySelector('span').textContent=open?'Ver detalle fila por fila':'Ocultar detalle';this.querySelector('svg').style.transform=open?'':'rotate(90deg)'">
+        <svg class="ic" style="transition:transform .15s"><use href="#i-chev"/></svg> <span>Ver detalle fila por fila</span>
+      </button>
+    </div>
+
+    <div class="detail-tbl-wrap" style="display:none" id="atd-detail-demo">
+      <table class="prev-tbl">
+        <thead><tr><th>Orden</th><th>ATD</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td class="ord">4010098210</td><td>20/07/2026</td><td><span class="badge badge--success">confirmado</span></td></tr>
+          <tr><td class="ord">4010098340</td><td>20/07/2026</td><td><span class="badge badge--success">confirmado</span></td></tr>
+          <tr class="conflict"><td class="ord">4010098455</td><td>19/07/2026 ≠ 20/07/2026</td><td><span class="badge badge--danger">conflicto — se excluye del lote</span></td></tr>
+          <tr><td class="ord">118041207</td><td>20/07/2026 <span class="faint">(aplicada)</span></td><td><span class="badge badge--success">confirmado</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Panel roleo (item 31) colapsable con estado persistido -->
+    <div class="collapse-panel" id="roleo-demo">
+      <div class="cp-hd is-open" onclick="this.classList.toggle('is-open');document.getElementById('roleo-body').style.display=this.classList.contains('is-open')?'block':'none'">
+        <span class="cp-title"><svg class="cp-chev"><use href="#i-chev"/></svg>⚠️ 2 hermanas del mismo buque siguen sin ATD confirmado</span>
+        <span class="persist-tag">estado persiste</span>
+      </div>
+      <div class="cp-body" id="roleo-body">
+        <p class="muted" style="margin:0 0 8px">LOG-IN JATOBA 285N — quedaron sin confirmar en este buque:</p>
+        <div class="roleo-row"><input type="checkbox" id="roleo-cb-1" checked aria-label="Incluir orden 4010098599 en el informe de roleo"><span class="ord">4010098599</span><span class="faint">· MOLYSTAR AR · booking LA05812355</span></div>
+        <div class="roleo-row"><input type="checkbox" id="roleo-cb-2" checked aria-label="Incluir orden 4010098612 en el informe de roleo"><span class="ord">4010098612</span><span class="faint">· DOW QUIMICA AR · booking LA05812361</span></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn mini pri">Informar roleo (2)</button>
+          <button class="btn mini">Descartar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECCIÓN 5 — 3 defectos resueltos ============ -->
+  <h2 id="s5"><span class="num">5</span>3 defectos actuales — mostrados resueltos</h2>
+  <p class="intent">Los tres viven hoy en el panel ATD de Mailing. Se muestran acá ya arreglados, como parte de la migración a "Despachos" (no son cambios adicionales sueltos — van en el mismo commit que mueve el panel).</p>
+
+  <div class="fix-grid">
+    <div class="fix-num">1</div>
+    <div class="fix-col fix-antes"><span class="fix-lbl">✕ Antes</span>El panel "hermanas sin confirmar" (roleo, item 31) siempre arranca <b>expandido</b> en cada re-render — no hay forma de dejarlo colapsado mientras seguís trabajando el resto del lote.</div>
+    <div class="fix-col fix-despues"><span class="fix-lbl">✓ Después</span>Header clickeable con chevron. El abierto/cerrado se guarda en <code class="k">localStorage</code> y sobrevive un refresh — lo colapsás una vez y queda así.</div>
+
+    <div class="fix-num">2</div>
+    <div class="fix-col fix-antes"><span class="fix-lbl">✕ Antes</span>El textarea solo se vacía automáticamente si el lote confirmó <b>100% limpio</b> (cero conflictos/errores/no-encontradas). Con cualquier fila sucia, hay que seleccionar y borrar el texto a mano para arrancar el próximo lote.</div>
+    <div class="fix-col fix-despues"><span class="fix-lbl">✓ Después</span>Botón <b>"🧹 Limpiar"</b> fijo en la barra de acciones (sección 4) — vacía textarea + reporte de un click, siempre visible, sin condición.</div>
+
+    <div class="fix-num">3</div>
+    <div class="fix-col fix-antes"><span class="fix-lbl">✕ Antes</span>El reporte es una tabla fila-por-fila desde la primera fila — en lotes grandes (30-50 órdenes) hay que escrollear para saber si estuvo todo bien.</div>
+    <div class="fix-col fix-despues"><span class="fix-lbl">✓ Después</span>Resumen con badges grandes arriba (confirmadas / conflictos / aplicadas) escaneable de un vistazo + "Ver detalle fila por fila" para expandir la tabla completa solo si hace falta.</div>
+  </div>
+
+  <!-- ============ SECCIÓN 6 — QUÉ SE MUDA ============ -->
+  <h2 id="s6"><span class="num">✎</span>Qué se muda — sin tocar lógica</h2>
+  <p class="note">
+    · <b>Desde Seguimiento:</b> el modal <code class="k">seg-modal</code> completo (tabs Individual/Lote, <code class="k">parseGiGrid</code>, <code class="k">renderGiPreview</code>, <code class="k">submitGi</code> → <code class="k">/api/seguimiento::alta_despacho</code>) se traslada tal cual a la sección Good Issue de "Despachos". El botón de la card "Registrar despacho de planta" en Seguimiento deja de abrir un modal — pasa a un link que navega a <code class="k">Despachos</code> con la orden prellenada (mismo patrón que hoy usa <code class="k">openGiModal(prefillOrder)</code>, solo cambia el destino).<br>
+    · El chip de estado <b>"Good Issue pend."</b> y la columna de progreso de la card en Seguimiento <b>NO se tocan</b> — siguen leyendo <code class="k">despacho_at</code> igual que hoy, solo cambia dónde se carga el dato.<br>
+    · <b>Desde Mailing:</b> el card/card-section "Confirmar zarpe" (<code class="k">mail-atd-ta</code>, <code class="k">parseAtdGrid</code>, <code class="k">atdParse</code>, <code class="k">atdConfirm</code> → <code class="k">/api/mailing::confirm_atd</code>, y el panel de roleo <code class="k">checkRoleoCandidatas</code>/<code class="k">renderRoleoPanel</code>) se traslada completo a la sección Confirmación de zarpe.<br>
+    · Las secciones "En cola" / "Esperando zarpe" del master de Mailing (que hoy leen <code class="k">atd</code> para ordenar la cola de envío) <b>NO se mueven</b> — siguen en Mailing, son lectura/seguimiento del pipeline de envío, no carga.<br>
+    · Ningún RPC, endpoint ni tabla cambia de forma. Es <b>reubicación de dos bloques de UI + 3 fixes locales al bloque ATD</b> (sección 5) — cero cambios de contrato con <code class="k">/api/seguimiento</code> o <code class="k">/api/mailing</code>.
+  </p>
+
+  <!-- ============ NOTAS ============ -->
+  <h2 id="notas"><span class="num">?</span>Notas para John — decisiones abiertas</h2>
+  <p class="note">
+    · <b>Nombre de la solapa:</b> "Despachos" — ¿va bien, o preferís algo más explícito tipo "GI / Zarpe"? "Despachos" es ambiguo con "Control BL" o "Despacho de aduana" para alguien nuevo en el equipo.<br>
+    · <b>Posición en el rail:</b> propuesta standalone después del grupo "Documentación" (sección 1) — ¿o preferís que viva ADENTRO del grupo Documentación como 5º ítem, ya que toca las mismas tablas que Seguimiento/Mailing?<br>
+    · <b>Ícono:</b> <code class="k">i-check</code> propuesto, alternativa <code class="k">i-anchor</code> — ver sección 1.<br>
+    · <b>Layout:</b> Variante A (apiladas) recomendada — confirmar antes de construir (sección 2).<br>
+    · <b>Tab "Individual" de GI:</b> el modal actual tiene una tab para cargar 1 sola orden sin pasar por el textarea. Esta propuesta la <b>elimina</b> (una línea en el textarea cubre el mismo caso) — ¿la mantenemos como atajo aparte, o se resuelve completo por el textarea?<br>
+    · <b>Botones de origen:</b> tanto el botón de Seguimiento ("Registrar despacho de planta") como el de Mailing ("Confirmar zarpe") dejan de abrir su modal/panel propio y pasan a redirigir a <code class="k">Despachos</code> con la orden prellenada — ¿aceptable, o preferís mantener también un atajo rápido inline en la card para no perder el clic-directo?<br>
+    · <b>Badge de conteo en el rail:</b> los otros ítems tienen contador de pendientes (ej. Documentación cuenta alertas activas) — ¿"Despachos" también debería mostrar un número (GI pendientes + ATD pendientes sumados, o dos badges separados)?
+  </p>
+</div>
+
+<!-- Sprite mínimo — mismos ids/paths que index.html (copiados 1:1 para que los íconos se vean idénticos) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M12 8v14"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+    <symbol id="i-ship" viewBox="0 0 24 24"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4"/><path d="M12 2v3"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  </defs>
+</svg>
+</body>
+</html>
