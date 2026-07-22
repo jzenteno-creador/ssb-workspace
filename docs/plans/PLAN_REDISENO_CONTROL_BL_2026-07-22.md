@@ -308,7 +308,13 @@ dos caminos y ambos terminan bien: registrado en DB (ruta nueva) o no registrado
    simulación exacta del caso de transición → su PASS demuestra la paridad de la rama vieja dentro
    del wiring nuevo. Hueco declarado: la rama de ERROR del GET (DB caída) no se ejercita en la
    regresión (el clon usa fixture); queda cubierta por diseño con la misma semántica best-effort ya
-   probada en prod por los nodos existentes.
+   probada en prod por los nodos existentes. **CIERRE EMPÍRICO — EJECUTADO 22-07 (exec 34594, clon):**
+   corrida forzada con "base caída" — fixture reemplazado por un GET real con URL inválida (mismo
+   alwaysOutputData + continueRegularOutput del nodo F2 de prod) sobre la orden golden 4010746690:
+   el GET emitió un item solo-`error`, los 3 parsers IA corrieron (fallback total), ejecución
+   success y veredicto idéntico al baseline (diff exit 0). Segunda corrida forzada (exec 34592):
+   `throw` inyectado en el boundary PE → 0 items por main, 1 por error output → Parser PE (IA)
+   tomó el relevo → PASS. Ambas rutas de error del wiring F2 verificadas empíricamente.
 
 ```sql
 -- Población en vuelo al momento del corte (read-only):
