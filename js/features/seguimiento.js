@@ -84,6 +84,17 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   let _scheduleRows = [];
   let _holidayMap = null;
   let _carrierMap = new Map();
+  // Pieza 2 (22-07, mockup APROBADO docs/mockups/mockup_timeline_tarifa_2026-07-22.html):
+  // _tarifaRows = v_tarifas_maritimas (naviera + vigencia_desde/hasta — las carga
+  // Admin BID, misma vista que lee tarifas.js) para la línea de corte de tarifa
+  // del riel. null hasta el primer load; [] = vista consultada sin datos o no
+  // legible en este contexto (degrade: el marcador no se dibuja, nada rompe).
+  // _hideSched = toggle "ocultar buques sin órdenes" persistido en localStorage
+  // (patrón ssb-rail-pinned: leer al cargar, escribir en cada change, try/catch).
+  let _tarifaRows = null;
+  const VTL_HIDE_SCHED_KEY = 'ssb-vtl-hide-sched';
+  let _hideSched = false;
+  try { _hideSched = localStorage.getItem(VTL_HIDE_SCHED_KEY) === '1'; } catch(_){ /* storage bloqueado — arranca apagado */ }
 
   // hoyBA/diasDesde/SLA_DAYS/SLA_WARN/ssbSlaBucket: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
@@ -361,7 +372,11 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
 
     const roleadaRows = rowsMar.filter(r => !segARolear(r) && r.roleo_at && r.roleo_to_vessel && r.roleo_to_etd
       && String(r.roleo_to_etd).slice(0, 10) >= backStart && String(r.roleo_to_etd).slice(0, 10) <= fwdEnd);
-    const normalRows = rowsMar.filter(r => !segARolear(r) && !r.roleo_at && r.etd
+    // FIX (diagnóstico 23-07): !r.atd — una orden con ATD confirmado YA ZARPÓ y no
+    // puede figurar como salida futura aunque su etd venga >= hoy (dato-malo). El
+    // zarpe real manda sobre el ETD programado. Caso real: JATOBA 285 zarpó 21/07
+    // y 2 órdenes con etd=27/07 la mostraban como salida programada.
+    const normalRows = rowsMar.filter(r => !segARolear(r) && !r.roleo_at && !r.atd && r.etd
       && String(r.etd).slice(0, 10) >= hoy && String(r.etd).slice(0, 10) <= fwdEnd);
 
     const groupsByDate = new Map();
@@ -602,6 +617,146 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     return a.dow + ' ' + a.dm + ' → ' + b.dow + ' ' + b.dm + ' · hoy es ' + h.dow + ' ' + h.dm;
   }
 
+  // ═══════════ Pieza 2 (22-07): línea de corte de tarifa BID + toggle + altura ═══════════
+  // Mockup APROBADO: docs/mockups/mockup_timeline_tarifa_2026-07-22.html (versión
+  // final: trazo sólido EN EL GAP entre columnas + chip único sobre la fecha de
+  // inicio de vigencia). CSS propio en index.html: <style id="vtl-tarifa-styles">
+  // (namespace .vtl-*) — la isla seg-vtl original no se toca.
+
+  const VTL_RAIL_GAP = 5;   // = gap del flex .seg-vtl-rail (isla D4) — si cambia allá, cambia acá
+  // purple/orange lockeados en el mockup (no chocan con rojo=candidata, ámbar=feriado,
+  // azul=hoy); teal = 3ª naviera simultánea (nota 3 del mockup pedía definirlo).
+  const VTL_TARIFA_COLORS = ['var(--purple)', 'var(--orange)', 'var(--teal)'];
+
+  // Cortes por naviera desde _tarifaRows — función PURA sobre (_tarifaRows, hoy),
+  // molde segARolear (comparación lexicográfica YYYY-MM-DD, nunca Date()).
+  // Corte relevante = día en que arranca la tarifa nueva: el siguiente al fin de
+  // la vigente (max vigencia_hasta entre las vigentes hoy), o la vigencia_desde
+  // futura más próxima si arranca antes (solape de vigencias).
+  function segVtlTarifaCuts(hoy){
+    if(!_tarifaRows || !_tarifaRows.length) return [];
+    const byNav = new Map();
+    for(const t of _tarifaRows){
+      const nav = String(t.naviera || '').trim().toUpperCase();
+      if(!nav) continue;
+      if(!byNav.has(nav)) byNav.set(nav, []);
+      byNav.get(nav).push(t);
+    }
+    const cuts = [];
+    for(const [nav, rows] of byNav){
+      let maxHasta = null, nextDesde = null, nVig = 0;
+      for(const t of rows){
+        const desde = t.vigencia_desde ? String(t.vigencia_desde).slice(0, 10) : null;
+        const hasta = t.vigencia_hasta ? String(t.vigencia_hasta).slice(0, 10) : null;
+        if(desde && hasta && desde <= hoy && hasta >= hoy){
+          nVig++;
+          if(!maxHasta || hasta > maxHasta) maxHasta = hasta;
+        }
+        if(desde && desde > hoy && (!nextDesde || desde < nextDesde)) nextDesde = desde;
+      }
+      let cut = maxHasta ? isoPlus(maxHasta, 1) : null;
+      if(nextDesde && (!cut || nextDesde < cut)) cut = nextDesde;
+      if(!cut) continue;
+      cuts.push({ nav, cut, maxHasta, nextDesde, nVig });
+    }
+    cuts.sort((a, b) => a.cut < b.cut ? -1 : a.cut > b.cut ? 1 : a.nav.localeCompare(b.nav));
+    return cuts;
+  }
+  // La vista dice 'LOGIN' (sin guión — dato verificado 22-07); el riel muestra
+  // 'LOG IN' como el resto de la app (decisión del mockup, nota sección 3).
+  function segVtlNavLabel(nav){ return nav === 'LOGIN' ? 'LOG IN' : nav; }
+  function segVtlTarifaTip(c){
+    const dpc = segVtlDayParts(c.cut);
+    let tip = segVtlNavLabel(c.nav) + ' — ';
+    if(c.maxHasta){
+      const dph = segVtlDayParts(c.maxHasta);
+      tip += 'tarifa vigente (' + c.nVig + (c.nVig === 1 ? ' tarifa' : ' tarifas') + ') hasta ' + dph.dow + ' ' + dph.dm + '. ';
+      if(c.nextDesde){
+        const dpn = segVtlDayParts(c.nextDesde);
+        tip += 'La nueva rige desde ' + dpn.dow + ' ' + dpn.dm + '.';
+      } else {
+        tip += 'Sin tarifa siguiente cargada aún — desde ' + dpc.dow + ' ' + dpc.dm + ' queda sin vigencia.';
+      }
+    } else {
+      tip += 'sin tarifa vigente hoy — la próxima rige desde ' + dpc.dow + ' ' + dpc.dm + '.';
+    }
+    return tip + ' Fuente: vigencias de Admin BID (v_tarifas_maritimas).';
+  }
+
+  // Línea + chip en el GAP entre columnas: x = offsetLeft de la columna donde
+  // ARRANCA la vigencia − gap/2 (offsets reales del layout final, no matemática
+  // a mano). En el gap no hay cards → el trazo sólido nunca queda ni por delante
+  // ni por detrás de una (decisión final del mockup). 2+ navieras el mismo día:
+  // trazos más finos repartidos en el gap y chips lado a lado.
+  function segVtlPlaceTarifaMarks(rail, backStart, fwdEnd){
+    const cuts = segVtlTarifaCuts(hoyBA()).filter(c => c.cut > backStart && c.cut <= fwdEnd);
+    if(!cuts.length) return;
+    // panel sin layout (oculto): offsets en 0, no hay dónde dibujar — el próximo
+    // render con el panel visible los repone (renderAll re-corre entero).
+    if(!rail.offsetWidth) return;
+    rail.classList.add('vtl-has-tarifa');   // abre el renglón superior para los chips
+    const byDate = new Map();
+    for(const c of cuts){ if(!byDate.has(c.cut)) byDate.set(c.cut, []); byDate.get(c.cut).push(c); }
+    let colorIdx = 0;
+    for(const [iso, group] of byDate){
+      // iso lo genera isoPlus (YYYY-MM-DD) — jamás input de usuario en el selector
+      const col = rail.querySelector('.seg-vtl-day[data-iso="' + iso + '"]');
+      if(!col) continue;
+      const x = col.offsetLeft;
+      const w = group.length > 1 ? 1.5 : 2;
+      let chipLeft = x;
+      for(let k = 0; k < group.length; k++){
+        const c = group[k];
+        const color = VTL_TARIFA_COLORS[colorIdx % VTL_TARIFA_COLORS.length];
+        colorIdx++;
+        const center = Math.max(1, x - VTL_RAIL_GAP + (VTL_RAIL_GAP / (group.length + 1)) * (k + 1));
+        const line = el('div', 'vtl-tline');
+        line.style.setProperty('--tclr', color);
+        line.style.width = w + 'px';
+        line.style.left = (center - w / 2) + 'px';
+        rail.appendChild(line);
+        const chip = el('span', 'vtl-tchip', segVtlNavLabel(c.nav));
+        chip.style.setProperty('--tclr', color);
+        chip.style.left = chipLeft + 'px';
+        // data-vtip PROPIO (no data-tip): el [data-tip] global (index.html ~900)
+        // posiciona hacia ARRIBA con translateX(-50%) — acá lo recorta el
+        // overflow-x del riel y sus props no-pisadas rompen el layout del ::after.
+        chip.dataset.vtip = segVtlTarifaTip(c);   // dataset = texto plano; attr() lo pinta como texto, sin HTML
+        rail.appendChild(chip);
+        chipLeft += chip.offsetWidth + 4;        // mismo día: chips apilados lado a lado
+      }
+    }
+  }
+
+  // Cards de altura uniforme (queja estética del review del mockup): mide la card
+  // más alta del riel YA EN EL DOM y la fija como min-height de todas vía
+  // --vtl-minh (isla vtl-tarifa-styles) — el sobrante queda como respiro interno.
+  function segVtlEqualizeHeights(rail){
+    let max = 0;
+    rail.querySelectorAll('.seg-vtl-card').forEach(c => { const h = c.getBoundingClientRect().height; if(h > max) max = h; });
+    if(max) rail.style.setProperty('--vtl-minh', Math.ceil(max) + 'px');
+  }
+
+  // Toggle "ocultar buques sin órdenes" — switch accesible (input real + track
+  // CSS), persistido. Solo re-renderiza el riel: tabla/triage no cambian.
+  function segVtlToggle(nSched){
+    const lab = el('label', 'vtl-tg');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = _hideSched;
+    cb.setAttribute('aria-label', 'Ocultar buques sin órdenes');
+    cb.addEventListener('change', () => {
+      _hideSched = cb.checked;
+      try { localStorage.setItem(VTL_HIDE_SCHED_KEY, _hideSched ? '1' : '0'); } catch(_){ /* storage bloqueado — vive solo en memoria */ }
+      renderVesselTimeline();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(el('span', 'vtl-tg-track'));
+    lab.appendChild(document.createTextNode(' Ocultar buques sin órdenes '));
+    lab.appendChild(el('span', 'vtl-tg-count', '(' + nSched + ')'));
+    return lab;
+  }
+
   // ═══ Render del timeline — vacía y repuebla su div (patrón de la casa) ═══
   function renderVesselTimeline(){
     const box = $('seg-vessels-timeline'); if(!box) return;
@@ -610,9 +765,18 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     while(box.firstChild) box.removeChild(box.firstChild);
 
     const { hoy, backStart, fwdEnd, groupsByDate } = segD4WindowAndGroups();
-    let totalCards = 0;
-    for(const arr of groupsByDate.values()) totalCards += arr.length;
-    if(!totalCards){
+    // Pieza 2: el toggle filtra las cards "programado (schedule)" ANTES de armar
+    // el riel — las columnas que quedan sin cards colapsan solas a slim (acá el
+    // render es propio; no hace falta el :has() del mockup estático).
+    let nSched = 0, totalCards = 0;
+    const visibleByDate = new Map();
+    for(const [iso, arr] of groupsByDate){
+      for(const g of arr) if(g.kind === 'sched') nSched++;
+      const vis = _hideSched ? arr.filter(g => g.kind !== 'sched') : arr;
+      if(vis.length) visibleByDate.set(iso, vis);
+      totalCards += vis.length;
+    }
+    if(!totalCards && !nSched){
       box.appendChild(el('div', 'seg-vtl-empty', 'Sin salidas próximas ni candidatas a roleo en esta ventana.'));
       renderVtlChips();
       return;
@@ -622,11 +786,21 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const head = el('div', 'seg-vtl-head');
     head.appendChild(el('span', 'seg-vtl-title', 'Salidas'));
     head.appendChild(el('span', 'seg-vtl-range', segVtlRangeLabel(backStart, fwdEnd, hoy)));
+    // Pieza 2: el toggle vive en el head SIEMPRE que haya algo (si ocultó todo,
+    // es la única vía de volver — jamás desaparece junto con lo que ocultó).
+    head.appendChild(segVtlToggle(nSched));
     wrap.appendChild(head);
+
+    if(!totalCards){
+      wrap.appendChild(el('div', 'seg-vtl-empty', 'Sin salidas con órdenes en esta ventana — ' + nSched + ' programada(s) del schedule ocultas por el filtro.'));
+      box.appendChild(wrap);
+      renderVtlChips();
+      return;
+    }
 
     const rail = el('div', 'seg-vtl-rail');
     for(let iso = backStart; iso <= fwdEnd; iso = isoPlus(iso, 1)){
-      const groups = groupsByDate.get(iso) || [];
+      const groups = visibleByDate.get(iso) || [];
       const isToday = iso === hoy;
       const holidayName = _holidayMap ? _holidayMap.get(iso) : null;
       const isWe = isoIsWeekend(iso);
@@ -636,6 +810,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
         + (isWe ? ' seg-vtl-day--we' : '')
         + (holidayName ? ' seg-vtl-day--fer' : '')
         + (!hasContent ? ' seg-vtl-day--slim' : ''));
+      col.dataset.iso = iso;   // Pieza 2: ancla de la línea de corte de tarifa
       const dp = segVtlDayParts(iso);
       if(hasContent){
         col.appendChild(el('span', 'seg-vtl-day-lbl', dp.dow + ' ' + dp.dm + (isToday ? ' · HOY' : '') + (holidayName ? ' · FERIADO' : '')));
@@ -650,6 +825,11 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
     wrap.appendChild(rail);
     box.appendChild(wrap);
+    // Pieza 2 — ambos DESPUÉS de estar en el DOM: alturas y offsets reales del
+    // layout final (medir antes daría 0). equalize no cambia anchos → los
+    // offsetLeft que lee placeTarifaMarks siguen válidos.
+    segVtlEqualizeHeights(rail);
+    segVtlPlaceTarifaMarks(rail, backStart, fwdEnd);
     renderVtlChips();
   }
 
@@ -711,6 +891,20 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
             _carrierMap = new Map();
             if(!res.error && res.data) for(const c of res.data) if(c.carrier) _carrierMap.set(c.order_number, c.carrier);
           }, () => { _carrierMap = new Map(); }),
+        // Pieza 2 (22-07): vigencias de tarifa BID (v_tarifas_maritimas — las
+        // carga Admin BID; misma vista que lee tarifas.js con el cliente global)
+        // para la línea de corte del riel. Best-effort: si la vista no es legible
+        // en este contexto (p.ej. anon en local sin sesión), el marcador no se
+        // dibuja — degradación silenciosa, smoke completo solo prod/con-sesión.
+        s.from('v_tarifas_maritimas').select('naviera, vigencia_desde, vigencia_hasta')
+          .then(res => {
+            if(res.error || !res.data){
+              _tarifaRows = [];
+              console.debug('seguimiento: v_tarifas_maritimas no legible — sin línea de corte de tarifa', res.error && res.error.message);
+              return;
+            }
+            _tarifaRows = res.data;
+          }, () => { _tarifaRows = []; }),
       ]);
       if(error){
         console.error('seguimiento:load', error);

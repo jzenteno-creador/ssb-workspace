@@ -3507,6 +3507,58 @@ body.light #panel-admin-co{ --adm-surface:#FFFFFF; --adm-line:#E7E4DD; --adm-lin
 @media (min-width:1101px){ html.rail-pinned .tab-bar .desp-minis{display:none !important} }
 @media (max-width:700px){ .tab-bar .desp-minis{display:none !important} }
 </style>
+<style id="vtl-tarifa-styles">
+/* ═══ Pieza 2 (22-07) — Timeline Salidas: línea de corte de tarifa BID + toggle
+   "ocultar sin órdenes" + cards de altura uniforme. Isla autocontenida, namespace
+   .vtl-* (regla: nunca clases genéricas). Mockup APROBADO:
+   docs/mockups/mockup_timeline_tarifa_2026-07-22.html. Overrides ADITIVOS sobre la
+   isla seg-vtl del bloque principal (que NO se toca); las islas #mailing-styles /
+   #cbl-styles / #cbl-sticky-styles / #despachos-styles quedan intactas.
+   Lógica: js/features/seguimiento.js (segVtlPlaceTarifaMarks / segVtlToggle /
+   segVtlEqualizeHeights). Tokens: --purple/--orange/--teal + --seg-* (scoped en
+   #panel-seguimiento, por eso TODA regla de acá cuelga de ese id). */
+
+/* el riel pasa a contexto de posicionamiento para línea/chip absolutos (aditivo);
+   el renglón superior de chips solo se abre cuando HAY marcas de tarifa */
+#panel-seguimiento .seg-vtl-rail{position:relative}
+#panel-seguimiento .seg-vtl-rail.vtl-has-tarifa{padding-top:30px}
+
+/* cards de altura uniforme: --vtl-minh la setea segVtlEqualizeHeights() con la
+   card más alta del riel — el sobrante queda como respiro interno abajo */
+#panel-seguimiento .seg-vtl-rail .seg-vtl-card{min-height:var(--vtl-minh,auto)}
+
+/* línea de corte: trazo SÓLIDO que vive en el GAP entre columnas — en el gap no
+   hay cards, nunca queda ni por delante ni por detrás de una (versión final) */
+#panel-seguimiento .vtl-tline{position:absolute;top:26px;bottom:0;width:2px;background:var(--tclr);border-radius:1px;z-index:2;pointer-events:none}
+
+/* chip de naviera, una sola vez, sobre la fecha donde ARRANCA la vigencia.
+   Tooltip hacia ABAJO: hacia arriba lo recorta el overflow-x del riel.
+   ATRIBUTO PROPIO data-vtip (NUNCA data-tip): el sistema global [data-tip]
+   (~L900) posiciona arriba con translateX(-50%) y sus props no-pisadas
+   (bottom/min-width/transform) rompen este ::after — verificado en headless. */
+#panel-seguimiento .vtl-tchip{position:absolute;top:7px;left:0;z-index:5;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;color:var(--tclr);background:color-mix(in srgb,var(--tclr) 14%,var(--seg-surface));border:1px solid color-mix(in srgb,var(--tclr) 45%,transparent);border-radius:5px;padding:2px 7px;cursor:default}
+#panel-seguimiento .vtl-tchip::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--tclr);flex-shrink:0}
+#panel-seguimiento .vtl-tchip[data-vtip]:hover::after{content:attr(data-vtip);position:absolute;top:calc(100% + 9px);left:0;width:230px;white-space:normal;font-size:11px;font-weight:500;line-height:1.45;color:var(--seg-ink);background:var(--seg-surface);border:1px solid var(--seg-line-strong);border-radius:8px;padding:9px 11px;box-shadow:var(--shadow);z-index:20}
+/* flecha del tooltip: resetea el punto redondo del ::before base (el mockup no lo
+   reseteaba y en hover quedaba un blob — fix acá) */
+#panel-seguimiento .vtl-tchip[data-vtip]:hover::before{position:absolute;top:calc(100% + 4px);left:12px;width:0;height:0;border-radius:0;background:none;border:5px solid transparent;border-bottom-color:var(--seg-line-strong);z-index:20}
+
+/* toggle "ocultar buques sin órdenes" — switch accesible (input real oculto +
+   track), persistido en localStorage['ssb-vtl-hide-sched'] */
+#panel-seguimiento .vtl-tg{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:var(--fs-xs);color:var(--seg-ink-soft);font-weight:600;user-select:none;margin-left:auto}
+#panel-seguimiento .vtl-tg input{position:absolute;opacity:0;width:1px;height:1px}
+#panel-seguimiento .vtl-tg-track{width:34px;height:19px;border-radius:999px;background:var(--seg-surface-2);border:1px solid var(--seg-line-strong);position:relative;transition:background .15s,border-color .15s;flex-shrink:0;align-self:center}
+#panel-seguimiento .vtl-tg-track::after{content:'';position:absolute;top:1px;left:1px;width:15px;height:15px;border-radius:50%;background:var(--seg-ink-faint);transition:transform .15s,background .15s}
+#panel-seguimiento .vtl-tg input:checked + .vtl-tg-track{background:var(--blue-bg);border-color:var(--blue)}
+#panel-seguimiento .vtl-tg input:checked + .vtl-tg-track::after{transform:translateX(15px);background:var(--blue)}
+#panel-seguimiento .vtl-tg input:focus-visible + .vtl-tg-track{outline:2px solid var(--teal);outline-offset:2px}
+#panel-seguimiento .vtl-tg-count{color:var(--seg-ink-faint);font-weight:500}
+
+@media (prefers-reduced-motion:reduce){
+  #panel-seguimiento .vtl-tg-track,
+  #panel-seguimiento .vtl-tg-track::after{transition:none}
+}
+</style>
 </head>
 <body>
 
