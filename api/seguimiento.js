@@ -22,7 +22,8 @@
 // POWERS (decididos en el gate): employee = alta_despacho, editar_despacho,
 // set_requiere_co, archivar, desarchivar, sellar_control, reprocesar_bl (PLAN1
 // FIX 3 — lo usa la operatoria diaria), refactura_trade (rediseño CBL F3 —
-// operatoria diaria de refacturas trade). ADMIN-ONLY = anular_alta, co_config_*,
+// operatoria diaria de refacturas trade), reportar_bug (pack UI 22-07 —
+// cualquier empleado puede reportar). ADMIN-ONLY = anular_alta, co_config_*,
 // anular_sello.
 //
 // NOTA upsert de config: el unique de seguimiento_co_config es un índice PARCIAL de
@@ -1093,6 +1094,97 @@ async function handleRefacturaTrade(res, body, userEmail, base, svcHeaders) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// reportar_bug — single — EMPLOYEE (pack UI Control BL, tanda 22-07)
+// { order_number?, tab?, descripcion, screenshot_b64?, contexto? }
+// Reenvía al mini-WF n8n "UI Bug Report" (env N8N_BUG_REPORT_URL — contrato y
+// nodos en scripts/tanda-ui/put_bugreport_wf.py): el mail a John ES el registro,
+// sin DDL ni tabla nueva. reported_by = email del JWT validado — JAMÁS del body.
+// GOTCHA n8n de la casa: ejecución fallida con responseNode = HTTP 200 con
+// CUERPO VACÍO → vacío/no-JSON JAMÁS se trata como éxito acá.
+// ─────────────────────────────────────────────────────────────────────────────
+const BUG_DESC_MAX = 4000;
+const BUG_SHOT_MAX_B64 = Math.ceil((8 * 1024 * 1024 * 4) / 3) + 64; // 8 MB decodificados ≈ 10,7M chars base64 (espejo del throw del WF)
+const BUG_CTX_KEYS = ['control_created_at', 'overall_result', 'url_hash']; // passthrough SANEADO — solo claves conocidas
+
+async function handleReportarBug(res, body, userEmail, req) {
+  const wfUrl = process.env.N8N_BUG_REPORT_URL;
+  if (!wfUrl) return res.status(500).json({ error: 'N8N_BUG_REPORT_URL no configurada.' });
+
+  const descripcion = strOrNull(body.descripcion);
+  if (!descripcion) return res.status(400).json({ error: 'descripcion obligatoria' });
+  if (descripcion.length > BUG_DESC_MAX)
+    return res.status(400).json({ error: `descripcion demasiado larga (máx ${BUG_DESC_MAX} caracteres)` });
+
+  // order_number es opcional (un bug puede no ser de una orden) — si viene, mismo
+  // saneo normalizar-PRIMERO + regex espejo del CHECK que el resto del endpoint.
+  let order = null;
+  if (strOrNull(body.order_number) !== null) {
+    order = normalizeOrden(body.order_number);
+    if (!ORDEN_NORM_RE.test(order))
+      return res.status(400).json({ error: 'order_number inválido (normalizado: 7-12 dígitos sin 0 inicial)' });
+  }
+
+  const tab = strOrNull(body.tab) || 'control-bl';
+  if (tab.length > 60) return res.status(400).json({ error: 'tab inválida (máx 60 caracteres)' });
+
+  let screenshot = null;
+  if (strOrNull(body.screenshot_b64) !== null) {
+    screenshot = String(body.screenshot_b64).trim();
+    if (!screenshot.startsWith('data:image/'))
+      return res.status(400).json({ error: 'screenshot_b64 debe ser un data-URL de imagen (data:image/...)' });
+    if (screenshot.length > BUG_SHOT_MAX_B64)
+      return res.status(400).json({ error: 'captura demasiado grande (máx 8 MB)' });
+  }
+
+  const ctxIn = body.contexto && typeof body.contexto === 'object' ? body.contexto : {};
+  const contexto = {};
+  for (const k of BUG_CTX_KEYS)
+    if (ctxIn[k] !== undefined && ctxIn[k] !== null) contexto[k] = String(ctxIn[k]).slice(0, 300);
+  contexto.ua = String((req.headers && req.headers['user-agent']) || '').slice(0, 300); // server-side, nunca del body
+
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20000); // el WF manda el Gmail ANTES de responder (responseNode al final)
+  try {
+    const wRes = await fetch(wfUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reported_by: userEmail, // SIEMPRE del JWT validado
+        tab,
+        order_number: order,
+        descripcion,
+        screenshot_b64: screenshot,
+        contexto,
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    const raw = await wRes.text();
+    if (!wRes.ok)
+      return res.status(502).json({ error: `El workflow de bug report respondió ${wRes.status}`, detail: raw.slice(0, 200) });
+    // REGLA DE LA CASA: ejecución n8n fallida = 200 con cuerpo vacío → error duro.
+    if (!raw || !raw.trim())
+      return res.status(502).json({ error: 'El workflow de bug report respondió 200 con cuerpo VACÍO (ejecución n8n fallida) — el reporte NO llegó, reintentá' });
+    let out;
+    try {
+      out = JSON.parse(raw);
+    } catch {
+      return res.status(502).json({ error: 'El workflow de bug report respondió no-JSON (ejecución n8n fallida)', detail: raw.slice(0, 200) });
+    }
+    if (!out || out.ok !== true)
+      return res.status(502).json({ error: 'El workflow de bug report no confirmó ok:true', detail: raw.slice(0, 200) });
+    console.log(`seguimiento reportar_bug: ${tab}${order ? ' orden ' + order : ''} reportado por ${userEmail}`);
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    clearTimeout(t);
+    if (e.name === 'AbortError')
+      return res.status(502).json({ error: 'El workflow de bug report no respondió en 20 s — reintentá' });
+    console.error('seguimiento reportar_bug error:', e.message);
+    return res.status(502).json({ error: 'No se pudo enviar el bug report', detail: String(e.message || '').slice(0, 200) });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -1154,6 +1246,7 @@ export default async function handler(req, res) {
     case 'sellar_control':   return handleSellarControl(res, b, user.email, base, svcHeaders);
     case 'reprocesar_bl':    return handleReprocesarBl(res, b, user.email);
     case 'refactura_trade':  return handleRefacturaTrade(res, b, user.email, base, svcHeaders);
+    case 'reportar_bug':     return handleReportarBug(res, b, user.email, req);
     case 'anular_sello':     return handleAnularSello(res, b, user.email, base, svcHeaders);
     case 'co_config_list':   return handleCoConfigList(res, base, svcHeaders);
     case 'co_config_upsert': return handleCoConfigUpsert(res, b, user.email, base, svcHeaders);

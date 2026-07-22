@@ -52,8 +52,14 @@
   //    mantiene mientras dure la sesión (variable de módulo, se pierde solo con reload).
   let _cblDoc = { a: 'analisis', b: 'bl' };
   let _cblSplit = false; // toggle "Lado a lado" (cabecera, junto a "Reprocesar BL draft")
+  // Pieza 4 (tanda UI 22-07) — zoom del visor POR PANE (uso real: verificar precintos
+  // letra por letra). Se conserva al cambiar de doc-tab dentro de la misma orden (para
+  // comparar dos documentos al mismo aumento) y se resetea junto con los panes al
+  // cambiar de control (cblResetPaneDocs). Sin persistencia — decisión de la pieza.
+  let _cblpZoom = { a: 1, b: 1 };
+  const CBLP_ZOOM_MIN = 0.5, CBLP_ZOOM_MAX = 3, CBLP_ZOOM_STEP = 0.25;
   function cblDefaultDocB(docA){ return docA === 'analisis' ? 'bl' : 'analisis'; }
-  function cblResetPaneDocs(){ _cblDoc = { a: 'analisis', b: cblDefaultDocB('analisis') }; }
+  function cblResetPaneDocs(){ _cblDoc = { a: 'analisis', b: cblDefaultDocB('analisis') }; _cblpZoom = { a: 1, b: 1 }; }
   // ≤900px colapsa a un solo documento (decisión D5) — mismo breakpoint que el bloque
   // responsive Fase B de cbl-layout (index.html, NO-TOUCH), evaluado en JS porque acá
   // decide un booleano de comportamiento (deshabilita el botón), no solo CSS.
@@ -445,7 +451,10 @@
       return card;
     }
     const st = cblStatusOf(row);
-    const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
+    // Pieza 4 (fix bug Naara): la card refleja el sello vigente con la espina teal
+    // (.cblp-seal, isla cbl-pack-styles) — antes solo el badge cambiaba y la espina
+    // quedaba con el naranja del REVISAR crudo (el detalle ya usaba is-seal).
+    const card = el('button', ['cbl-ctrl', STATUS_CLASS[st], cblSelloDe(row) ? 'cblp-seal' : ''].filter(Boolean).join(' '));
     card.type = 'button';
     if(row.order_number === _cblSel) card.classList.add('cbl-ctrl--sel');
     const top = el('div', 'cbl-ctrl-top');
@@ -646,6 +655,16 @@
       anular.onclick = () => cblStartAnular(row, sello);
       right.appendChild(anular);
     }
+    // Pieza 4 — "Reportar bug": cualquier empleado, junto a las acciones del
+    // expediente (donde se revisan los controles). Modal con descripción +
+    // captura Ctrl+V + contexto auto → POST /api/seguimiento action=reportar_bug.
+    const bugBtn = el('button', 'cblp-bugbtn');
+    bugBtn.type = 'button';
+    bugBtn.title = 'Reportar un problema de esta pantalla a John (con captura y contexto de la orden)';
+    bugBtn.appendChild(svgUse('#i-alert'));
+    bugBtn.appendChild(document.createTextNode('Reportar bug'));
+    bugBtn.onclick = () => cblpOpenBugReport(row);
+    right.appendChild(bugBtn);
     topRow.appendChild(right);
 
     head.appendChild(topRow);
@@ -926,12 +945,19 @@
     return data.result;
   }
 
+  // Repinta lo que muestra sellos (lista + detalle del modo activo) con el mapa
+  // _cblSellos vigente. Lo usan el re-fetch de abajo Y el update local inmediato
+  // de sellar/anular (pieza 4 — fix tiempo real).
+  function cblRerenderSellosUi(){
+    if(_cblMode === 'historico'){ cblRenderHistList(); cblRenderHistDetail(); }
+    else cblAfterDataChange();
+  }
+
   // Re-fetch SOLO de sellos (el bl_file_id no cambió) + re-render de lo que esté
   // seleccionado. Camino simple para 'sellada'/'anulada': no hace falta releer bl_controls.
   async function cblRefreshSellos(){
     await cblFetchSellos();
-    if(_cblMode === 'historico'){ cblRenderHistList(); cblRenderHistDetail(); }
-    else cblAfterDataChange();
+    cblRerenderSellosUi();
   }
 
   // Re-fetch de LOS CONTROLES por el loader activo (búsqueda si hay una en curso, si no
@@ -983,7 +1009,22 @@
     switch(result.status){
       case 'sellada':
         ssbToast('Control marcado como revisado.', 'success');
-        await cblRefreshSellos();
+        // FIX tiempo real (pieza 4 — bug Naara): el mapa local se actualiza ACÁ MISMO
+        // con los datos de la respuesta y se repinta al instante — el badge/espina de
+        // la lista ya no depende de que el re-fetch de sellos salga bien (si ese GET
+        // fallaba, cblFetchSellos hacía return dejando _cblSellos VIEJO en silencio y
+        // el color quedaba naranja hasta F5). El re-fetch queda como reconciliación
+        // en background: si trae la verdad del server, pisa el mapa; si falla, el
+        // estado local ya es el correcto.
+        _cblSellos[cblSelloKey(row.order_number, row.bl_file_id)] = {
+          order_number: row.order_number,
+          bl_file_id: row.bl_file_id,
+          sellado_by: result.sellado_por || (window.__ssbAuth && window.__ssbAuth.email) || '—',
+          sellado_at: result.sellado_at || new Date().toISOString(),
+          motivo: r.reason,
+        };
+        cblRerenderSellosUi();
+        cblRefreshSellos().catch(() => {});
         break;
       case 'ya_sellado':
         ssbToast('Este control ya estaba revisado.', 'info');
@@ -1028,7 +1069,11 @@
     switch(result.status){
       case 'anulada':
         ssbToast('Sello anulado — la orden vuelve a REVISAR.', 'success');
-        await cblRefreshSellos();
+        // FIX tiempo real (pieza 4): espejo de 'sellada' — sacar el sello del mapa
+        // local y repintar YA; el re-fetch queda como reconciliación en background.
+        delete _cblSellos[cblSelloKey(row.order_number, row.bl_file_id)];
+        cblRerenderSellosUi();
+        cblRefreshSellos().catch(() => {});
         break;
       case 'no_encontrada':
         ssbToast('No había sello activo para anular (¿ya se había anulado?).', 'info');
@@ -1439,6 +1484,207 @@
     poInput.focus();
   }
 
+  // ════════════ Pieza 4 (tanda UI 22-07) — modal "Reportar bug" ════════════
+  // Molde estructural de cblOpenRefactura (overlay singleton dentro de
+  // #panel-control-bl para heredar las vars --cbl-*, focus-trap, Escape cierra)
+  // pero con clases .cblp-* de la isla cbl-pack-styles en vez de estilo inline.
+  // Todo el contenido va por createElement/textContent (cero interpolación HTML).
+  // Envío: cblApiSeguimiento (MISMO Bearer JWT que sellar/anular) con
+  // action=reportar_bug; ante error el modal QUEDA ABIERTO (lo escrito no se pierde).
+  function cblpOpenBugReport(row){
+    if(document.getElementById('cblp-bug-overlay')) return; // singleton
+    const panel = document.getElementById('panel-control-bl');
+    if(!panel) return;
+    const orderNumber = String(row.order_number || '');
+    const prevFocus = document.activeElement;
+    let busy = false;
+    let shotDataUrl = null; // dataURL de la captura pegada (o null)
+
+    const overlay = el('div', 'cblp-ov');
+    overlay.id = 'cblp-bug-overlay';
+    const box = el('div', 'cblp-box');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'cblp-bug-title');
+
+    // ── head ──
+    const head = el('div', 'cblp-head');
+    const headTxt = el('div');
+    const title = el('p', 'cblp-title', 'Reportar un bug');
+    title.id = 'cblp-bug-title';
+    headTxt.appendChild(title);
+    headTxt.appendChild(el('p', 'cblp-sub', 'Le llega directo a John con el contexto de la orden ' + (orderNumber || '—')));
+    head.appendChild(headTxt);
+    const xBtn = el('button', 'cblp-xbtn');
+    xBtn.type = 'button';
+    xBtn.setAttribute('aria-label', 'Cerrar');
+    xBtn.appendChild(svgUse('#i-x'));
+    head.appendChild(xBtn);
+    box.appendChild(head);
+
+    // ── body ──
+    const body = el('div', 'cblp-body');
+
+    // (a) descripción — obligatoria
+    const fDesc = el('div', 'cblp-field');
+    const lDesc = el('label', 'cblp-lbl', 'Qué pasó (obligatorio)');
+    lDesc.htmlFor = 'cblp-bug-desc';
+    fDesc.appendChild(lDesc);
+    const ta = el('textarea', 'cblp-ta');
+    ta.id = 'cblp-bug-desc';
+    ta.rows = 4;
+    ta.maxLength = 4000; // espejo del límite server-side
+    ta.placeholder = 'ej: marqué el control como revisado y el color de la lista quedó naranja';
+    fDesc.appendChild(ta);
+    const descErr = el('div', 'cblp-err', 'Contanos qué pasó — la descripción es obligatoria.');
+    descErr.hidden = true;
+    fDesc.appendChild(descErr);
+    body.appendChild(fDesc);
+
+    // (b) captura pegada con Ctrl+V — opcional, solo image/*, máx 8 MB
+    const fShot = el('div', 'cblp-field');
+    fShot.appendChild(el('span', 'cblp-lbl', 'Captura (opcional)'));
+    const paste = el('div', 'cblp-paste', 'Hacé click acá y pegá una captura con Ctrl+V — solo imágenes, máx. 8 MB.');
+    paste.tabIndex = 0; // enfocable: el paste va a parar al elemento con foco y burbujea al overlay
+    fShot.appendChild(paste);
+    const shotRow = el('div', 'cblp-shot');
+    shotRow.hidden = true;
+    const shotImg = document.createElement('img');
+    shotImg.alt = 'Captura pegada';
+    shotRow.appendChild(shotImg);
+    const quitarBtn = el('button', 'cblp-btn ghost sm', 'Quitar captura');
+    quitarBtn.type = 'button';
+    shotRow.appendChild(quitarBtn);
+    fShot.appendChild(shotRow);
+    body.appendChild(fShot);
+
+    // (c) contexto AUTO no editable (en chico) — orden, resultado, fecha, tab
+    const fCtx = el('div', 'cblp-field');
+    fCtx.appendChild(el('span', 'cblp-lbl', 'Contexto (se adjunta solo)'));
+    const ctxBox = el('div', 'cblp-ctx');
+    [
+      ['Orden', orderNumber || '—'],
+      ['Resultado del control', row.overall_result ? String(row.overall_result) : '—'],
+      ['Fecha del control', cblFmtCorrida(row.created_at)],
+      ['Módulo', 'control-bl'],
+    ].forEach(([k, val]) => {
+      const line = el('div');
+      line.appendChild(el('b', null, k + ': '));
+      line.appendChild(document.createTextNode(val));
+      ctxBox.appendChild(line);
+    });
+    fCtx.appendChild(ctxBox);
+    body.appendChild(fCtx);
+    box.appendChild(body);
+
+    // ── foot ──
+    const foot = el('div', 'cblp-foot');
+    const cancelBtn = el('button', 'cblp-btn ghost', 'Cancelar');
+    cancelBtn.type = 'button';
+    const sendBtn = el('button', 'cblp-btn solid', 'Enviar reporte');
+    sendBtn.type = 'button';
+    foot.appendChild(cancelBtn);
+    foot.appendChild(sendBtn);
+    box.appendChild(foot);
+
+    overlay.appendChild(box);
+    panel.appendChild(overlay); // dentro del panel: hereda las vars --cbl-* (scoped)
+
+    // ── comportamiento ──
+    function setShot(dataUrl){
+      shotDataUrl = dataUrl || null;
+      if(shotDataUrl){
+        shotImg.src = shotDataUrl; // dataURL image/* ya validado — propiedad DOM, no interpolación
+        shotRow.hidden = false;
+        paste.hidden = true;
+      } else {
+        shotImg.removeAttribute('src');
+        shotRow.hidden = true;
+        paste.hidden = false;
+      }
+    }
+    quitarBtn.onclick = () => setShot(null);
+
+    function onPaste(e){
+      const items = (e.clipboardData && e.clipboardData.items) || [];
+      for(const it of items){
+        if(it.kind === 'file' && /^image\//.test(it.type || '')){
+          const f = it.getAsFile();
+          if(!f) continue;
+          e.preventDefault(); // la imagen es nuestra; los pastes de texto siguen su curso normal
+          if(f.size > 8 * 1024 * 1024){
+            ssbToast('La captura pesa más de 8 MB — recortá la zona del problema y pegala de nuevo.', 'error');
+            return;
+          }
+          const rd = new FileReader();
+          rd.onload = () => setShot(String(rd.result || ''));
+          rd.readAsDataURL(f);
+          return;
+        }
+      }
+    }
+    overlay.addEventListener('paste', onPaste); // paste burbujea desde el elemento con foco
+
+    function close(){
+      if(busy) return; // no cerrar con el POST en vuelo
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      try { if(prevFocus && prevFocus.focus) prevFocus.focus(); } catch(_){}
+    }
+    // Escape cierra + focus-trap — mismo espíritu que cblOpenRefactura
+    function onKey(e){
+      if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); return; }
+      if(e.key !== 'Tab') return;
+      const items = [...box.querySelectorAll('button, textarea, [tabindex="0"]')].filter(n => !n.disabled && !n.hidden && n.offsetParent !== null);
+      if(!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      const cur = document.activeElement;
+      if(!box.contains(cur)){ e.preventDefault(); first.focus(); return; }
+      if(e.shiftKey && cur === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && cur === last){ e.preventDefault(); first.focus(); }
+    }
+    function setBusyUi(on){
+      busy = on;
+      sendBtn.disabled = on; cancelBtn.disabled = on; xBtn.disabled = on;
+      ta.disabled = on; quitarBtn.disabled = on;
+      sendBtn.textContent = on ? 'Enviando…' : 'Enviar reporte';
+    }
+    async function submit(){
+      if(busy) return;
+      const desc = ta.value.trim();
+      if(!desc){ descErr.hidden = false; ta.focus(); return; }
+      setBusyUi(true);
+      try {
+        await cblApiSeguimiento({
+          action: 'reportar_bug',
+          order_number: orderNumber,
+          tab: 'control-bl',
+          descripcion: desc,
+          screenshot_b64: shotDataUrl || null,
+          contexto: {
+            control_created_at: row.created_at || null,
+            overall_result: row.overall_result || null,
+            url_hash: location.hash || '',
+          },
+        });
+        setBusyUi(false);
+        ssbToast('Reporte enviado ✓ — le llegó a John con tu usuario y el contexto de la orden.', 'success');
+        close();
+      } catch(e){
+        // error → el modal QUEDA ABIERTO con todo lo escrito (no perder el reporte)
+        setBusyUi(false);
+        ssbToast('No se pudo enviar el reporte: ' + (e.message || 'error de red') + ' — lo escrito sigue en el formulario, reintentá.', 'error');
+      }
+    }
+    ta.addEventListener('input', () => { descErr.hidden = true; });
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('mousedown', e => { if(e.target === overlay) close(); });
+    xBtn.onclick = close;
+    cancelBtn.onclick = close;
+    sendBtn.onclick = submit;
+    ta.focus();
+  }
+
   // file-id desde un link de Drive (.../d/{id}/...) o null
   function cblFileId(url){
     if(!url) return null;
@@ -1486,6 +1732,47 @@
     });
   }
 
+  // ── Pieza 4 (tanda UI 22-07) — zoom del visor: monta [barra +/−/reset] +
+  // [wrap scrolleable > box escalable > iframe] dentro del .cbl-viewer del pane.
+  // Técnica: transform scale con origin top-left sobre un wrapper INTERNO
+  // (.cblp-zoombox); el contenedor (.cblp-zoomwrap) mantiene overflow:auto para
+  // panear — el overflow visual de un transform cuenta para el scroll area del
+  // ancestro, y la altura de LAYOUT del iframe (72/78vh de la isla) no cambia,
+  // así el resto de la página no se corre. El iframe NO se toca (mismo nodo,
+  // mismas clases, sandbox/srcdoc intactos) y NO se recarga al zoomear: solo
+  // muta el style.transform del wrapper. Rango 50–300%, paso 25%. ──
+  function cblpMountViewerZoom(v, frame, pane){
+    const bar = el('div', 'cblp-zoombar');
+    const minus = el('button', 'cblp-zbtn', '−');
+    minus.type = 'button'; minus.title = 'Alejar (−25%)'; minus.setAttribute('aria-label', 'Alejar');
+    const pct = el('button', 'cblp-zpct');
+    pct.type = 'button'; pct.title = 'Volver al 100%'; pct.setAttribute('aria-label', 'Restablecer zoom al 100%');
+    const plus = el('button', 'cblp-zbtn', '+');
+    plus.type = 'button'; plus.title = 'Acercar (+25%)'; plus.setAttribute('aria-label', 'Acercar');
+    bar.appendChild(minus); bar.appendChild(pct); bar.appendChild(plus);
+    const wrap = el('div', 'cblp-zoomwrap');
+    const box = el('div', 'cblp-zoombox');
+    box.appendChild(frame);
+    wrap.appendChild(box);
+    const apply = () => {
+      const z = _cblpZoom[pane] || 1;
+      box.style.transform = z === 1 ? '' : 'scale(' + z + ')';
+      pct.textContent = Math.round(z * 100) + '%';
+      minus.disabled = z <= CBLP_ZOOM_MIN;
+      plus.disabled = z >= CBLP_ZOOM_MAX;
+    };
+    const set = z => {
+      _cblpZoom[pane] = Math.min(CBLP_ZOOM_MAX, Math.max(CBLP_ZOOM_MIN, Math.round(z * 100) / 100));
+      apply();
+    };
+    minus.onclick = () => set((_cblpZoom[pane] || 1) - CBLP_ZOOM_STEP);
+    plus.onclick = () => set((_cblpZoom[pane] || 1) + CBLP_ZOOM_STEP);
+    pct.onclick = () => set(1);
+    apply(); // el zoom por pane persiste entre doc-tabs de la misma orden
+    v.appendChild(bar);
+    v.appendChild(wrap);
+  }
+
   // ── Visor: Análisis (body_html on-demand) · resto → visor Drive. D5: recibe el
   // pane ('a'/'b') — el guard de carrera del fetch de Análisis (dos fetches pueden
   // estar en vuelo a la vez, uno por pane) queda pane-aware. ──
@@ -1516,7 +1803,7 @@
       frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
       frame.setAttribute('allow', 'autoplay');
       frame.title = label + ' · ' + (row.order_number || '');
-      v.appendChild(frame);
+      cblpMountViewerZoom(v, frame, pane); // pieza 4: zoom — el iframe viaja intacto adentro del wrap
       return;
     }
 
@@ -1578,7 +1865,7 @@
     frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.title = 'Análisis del control ' + orderNumber;
-    v.appendChild(frame);
+    cblpMountViewerZoom(v, frame, pane); // pieza 4: zoom — sandbox/srcdoc intactos, solo se envuelve
     frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (html es un documento completo — no se escapa)
   }
 
@@ -1860,7 +2147,8 @@
 
   function cblHistMakeCard(row){
     const st = cblStatusOf(row);
-    const card = el('button', ('cbl-ctrl ' + STATUS_CLASS[st]).trim());
+    // Pieza 4: misma espina teal que cblMakeCard cuando la corrida tiene sello vigente
+    const card = el('button', ['cbl-ctrl', STATUS_CLASS[st], cblSelloDe(row) ? 'cblp-seal' : ''].filter(Boolean).join(' '));
     card.type = 'button';
     if(row.id === _cblHistSel) card.classList.add('cbl-ctrl--sel');
     const top = el('div', 'cbl-ctrl-top');
