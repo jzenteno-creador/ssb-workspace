@@ -114,6 +114,14 @@
   // en el borde — autocrítica del verify de tanda B).
   const MAX_EXTRA_BYTES = 3 * 1024 * 1024;
   const EXTRA_EXT_RE = /\.(pdf|zip|jpe?g|png|xlsx|docx)$/i;
+  // ── FIX 1 (2026-07-23, autorización explícita de John): único usuario habilitado
+  // a destildar el Modo TEST (envío REAL por-request). jsrojas (admin) NO incluido,
+  // a pedido de John. Espejo front de TEST_OFF_ALLOWED en api/mailing.js (el server
+  // responde 403 si otro usuario fuerza test_mode:false por consola/fetch). El
+  // candado llave-1 (__mailTestOff + test_reasons del workflow — HARD LOCK de
+  // arriba) sigue INTACTO: esto es una condición ADICIONAL en testLockState, no un
+  // reemplazo. ──
+  const TEST_OFF_EMAIL = 'jzenteno@ssbint.com';
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -868,6 +876,11 @@
   }
 
   function testLockState(){
+    // FIX 1 (23-07): llave de IDENTIDAD primero — es invariante de la sesión; si no
+    // sos jzenteno@, las otras razones ("generá un preview…") mentirían: nunca vas
+    // a poder destildar TEST aunque las cumplas todas. El server replica con 403.
+    const authEmail = String((window.__ssbAuth && window.__ssbAuth.email) || '').toLowerCase();
+    if(authEmail !== TEST_OFF_EMAIL) return { offOk:false, why:'El modo real solo lo habilita ' + TEST_OFF_EMAIL + ' — tus envíos salen siempre en TEST.' };
     if(!_preview) return { offOk:false, why:'Generá un Preview primero para habilitar el modo real.' };
     const reasons = _preview.test_reasons || [];
     if(reasons.some(t => String(t).includes('candado'))) return { offOk:false, why:'El candado TEST_MODE del workflow está ON: apagarlo requiere un PUT deliberado. Todo envío sale a expoarpbb.' };
@@ -989,6 +1002,10 @@
         docLine.style.color = 'var(--mail-warn)';
       }
       c.appendChild(docLine);
+      // FIX 3 (23-07): aviso del flujo — con faltantes, al clickear Enviar se pide
+      // autorización POR documento (y si va en un próximo correo). La vista previa
+      // NO refleja esa decisión: la aplica el envío (Resolver server-side).
+      if(missN) c.appendChild(el('p','mail-note','Al enviar se te va a pedir autorización por cada documento faltante (y si va en un próximo correo). La vista previa no refleja esa decisión — se aplica recién en el envío; si cancelás, no viaja nada.'));
     }
 
     // ── Adjuntos extra (items 38/39): documentación puntual (COA, etc.) que NO
@@ -1258,20 +1275,61 @@
     if(_dirty){ ssbToast('Tenés cambios de directorio sin guardar: guardalos (o descartalos re-seleccionando la orden) antes de enviar.', 'warning'); return; }
     const tg = $('mail-test-toggle');
     const testMode = !tg || tg.checked;
-    // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
-    // puede confirmar sin ver qué va, qué quedó sin decidir y qué está excluido.
     const rcp = _preview.recipients || { to:[], cc:[], nuevos:[], bloqueados_excluidos:[] };
     const sr = !!rcp.sendable_real;
+    // Pre-lock ANTES del confirm: ssbConfirm no bloquea el hilo como confirm()
+    // nativo — sin esto, una segunda invocación (Enter con autorepeat / doble
+    // click) pasaba el guard de entrada y encolaba un segundo envío. Movido
+    // arriba de la cadena de FIX 3 para que también la cubra.
+    _busy = 'confirm'; renderDetail();
+    // gen/order capturados ANTES de la cadena de confirms (antes se capturaban
+    // recién post-confirm): todo lo que el operador autoriza pertenece a ESTA
+    // orden — si cambia de orden en el medio, se aborta sin enviar nada.
+    const gen = _gen, order = _sel;
+
+    // ── FIX 3 (23-07): autorización POR ENVÍO cuando faltan documentos. Por cada
+    // tipo de attachments.missing (ids del resolver: 'bl_draft'/'factura'/
+    // 'packing_list'/'co_zip'/'co_pdf'/'pe'…) dos preguntas encadenadas:
+    //   1) ¿autorizás enviar sin este doc? — Cancelar aborta TODO el envío (nada viaja).
+    //   2) ¿va en un próximo correo? — Sí → 'leyenda' (el mail lo dice) · No → 'silencio'.
+    // La decisión viaja en overrides.missing_auth {tipo → 'leyenda'|'silencio'}
+    // (el server forwardea overrides opaco); la aplica el Resolver del workflow
+    // server-side — la VISTA PREVIA ya generada NO la refleja. Sin faltantes, el
+    // flujo es byte-idéntico al de siempre. ──
+    const missing = (_preview.attachments && _preview.attachments.missing) || [];
+    const missingAuth = {};
+    for(const mtipo of missing){
+      const lbl = DOC_LABELS[mtipo] || mtipo;
+      const okDoc = await ssbConfirm({
+        title: 'Falta ' + lbl,
+        body: 'Falta ' + lbl + '. ¿Autorizás enviar la documentación sin este documento?',
+        confirmText: 'Autorizar', cancelText: 'Cancelar envío', danger: true,
+      });
+      if(gen !== _gen || order !== _sel){ _busy = null; renderDetail(); return; } // stale: cambió la orden durante el confirm
+      if(!okDoc){ _busy = null; renderDetail(); return; } // Cancelar = abortar TODO el envío
+      const despues = await ssbConfirm({
+        title: 'Falta ' + lbl,
+        body: '¿' + lbl + ' se va a enviar en un próximo correo?\n\nSí → el mail avisa que va después (leyenda). No → el mail no lo menciona.',
+        confirmText: 'Sí, va después', cancelText: 'No',
+      });
+      if(gen !== _gen || order !== _sel){ _busy = null; renderDetail(); return; }
+      missingAuth[mtipo] = despues ? 'leyenda' : 'silencio';
+    }
+    // Línea-resumen del confirm final: "Sin FC (con leyenda)" / "Sin PE (sin mención)"
+    const missSecc = missing.length
+      ? '\n── Docs faltantes autorizados: ' + missing.map(m => 'Sin ' + (DOC_LABELS[m] || m) + ' (' + (missingAuth[m] === 'leyenda' ? 'con leyenda' : 'sin mención') + ')').join(' · ') +
+        '\n(La vista previa NO refleja estas decisiones — el Resolver las aplica al enviar.)'
+      : '';
+
+    // El confirm SIEMPRE muestra las 3 categorías (test y real): el operador no
+    // puede confirmar sin ver qué va, qué quedó sin decidir y qué está excluido.
     const secc =
       '── ENVIABLES (van): ' + (sr ? (rcp.to.join(', ') + (rcp.cc.length ? ' · CC: ' + rcp.cc.join(', ') : '')) : '— ninguno (directorio sin confirmar: solo TEST) —') +
       '\n── NUEVOS sin decidir (NO van): ' + ((rcp.nuevos || []).join(', ') || '—') +
       '\n── BLOQUEADOS excluidos (NO van): ' + ((rcp.bloqueados_excluidos || []).join(', ') || '—') +
       (_extraAtt.length ? '\n── Adjuntos extra (' + _extraAtt.length + '): ' + _extraAtt.map(f => f.name).join(', ') : '') +
+      missSecc +
       '\n(El envío se re-resuelve contra el directorio vigente al momento de enviar.)';
-    // Pre-lock ANTES del confirm: ssbConfirm no bloquea el hilo como confirm()
-    // nativo — sin esto, una segunda invocación (Enter con autorepeat / doble
-    // click) pasaba el guard de entrada y encolaba un segundo envío.
-    _busy = 'confirm'; renderDetail();
     const sendOk = await ssbConfirm(testMode
       ? { title:'Enviar en MODO TEST', body:'Va a expoarpbb@ssbint.com.\n\n' + secc + '\n\nAsunto:\n' + (_preview.gmail_preview ? _preview.gmail_preview.subject : ''), confirmText:'Enviar TEST' }
       : { title:'⚠ ENVÍO REAL AL CLIENTE ⚠', body: secc, confirmText:'Enviar al cliente', danger:true });
@@ -1282,7 +1340,9 @@
       if(!(await ssbConfirm({title:'Reenvío', body:'Esta orden YA tuvo un envío REAL al cliente.', confirmText:'Reenviar igual', danger:true}))){ _busy = null; renderDetail(); return; }
       overrides.resend = true;
     }
-    const gen = _gen, order = _sel;
+    // FIX 3: la decisión por-doc viaja junto a lo que ya viajara en overrides
+    // (p.ej. resend) — el server la forwardea opaca al workflow, que la resuelve.
+    if(Object.keys(missingAuth).length) overrides.missing_auth = missingAuth;
     _busy = 'send'; renderDetail();
     let result = null;
     try {
