@@ -275,8 +275,9 @@ BYPASS_JS_TPL = r"""/**
  * Emula el boundary del chainLlm+outputParserStructured: { output: { __ROOT__: <extract v1> } }.
  * El "Inyectar" existente corre VERBATIM después, sobre el texto fresco del MISMO archivo vigente
  * (re-extraído río arriba) — cero re-implementación del enriquecimiento (spec §0/§4).
- * onError: continueRegularOutput → si el extract se corrompió, degrada al patrón continue-on-fail
- * del Inyectar (extract null → missing/REVISAR), nunca corta el control.
+ * onError: continueErrorOutput → main[1] va al PARSER REAL (fallback): timeout del task-runner,
+ * extract corrupto o pairing roto = 1 llamada IA extra, JAMÁS un control degradado en silencio.
+ * (Fix regresión 22-07 — caso 4010736311: timeout 60s + continueRegularOutput = passthrough mudo.)
  */
 const ROOT = '__ROOT__';
 let extract = ($json && $json._f2_vig && $json._f2_vig.extract) || null;
@@ -560,10 +561,16 @@ def build_new_nodes():
                              "={{ $json.%s === true }}" % d["flag"],
                              "f2-bypass-%s" % d["key"].lower()))
 
+        # FIX regresión 22-07 (caso 4010736311): un timeout del task-runner en este Code con
+        # continueRegularOutput se convertía en PASSTHROUGH silencioso (item sin {output} → el
+        # Inyectar quedaba sin extract → columnas PE desaparecidas). Semántica corregida:
+        # cualquier error del bypass manda el item al PARSER REAL (fallback) por main[1] —
+        # costo = 1 llamada IA (como hoy), jamás un control degradado. El registrar posterior
+        # es no-op por idempotencia (mismo drive_file_id, mismo contenido).
         nodes.append(mknode(dname(d, "bypass"), "n8n-nodes-base.code", 2, p["bypass"], {
             "mode": "runOnceForEachItem",
             "jsCode": BYPASS_JS_TPL.replace("__ROOT__", d["root"]),
-        }, on_error="continueRegularOutput"))
+        }, on_error="continueErrorOutput"))
 
         reg_js = (REGISTRAR_JS_TPL
                   .replace("__KEY__", d["key"]).replace("__PARSER__", d["parser"])
@@ -629,6 +636,7 @@ def planned_edges():
         add.append((dname(d, "ifbypass"), "main", 0, dname(d, "bypass"), 0))
         add.append((dname(d, "ifbypass"), "main", 1, d["parser"], 0))
         add.append((dname(d, "bypass"), "main", 0, d["inyectar"], 0))
+        add.append((dname(d, "bypass"), "main", 1, d["parser"], 0))  # error → Parser real (fix 22-07)
         add.append((d["parser"], "main", 0, dname(d, "reg"), 0))
         add.append((dname(d, "reg"), "main", 0, dname(d, "rpc"), 0))
         add.append((dname(d, "reg"), "main", 1, N_ALERTA, 0))
@@ -813,7 +821,10 @@ def apply_transforms(pre):
             [{"node": dname(d, "bypass"), "type": "main", "index": 0}],
             [{"node": d["parser"], "type": "main", "index": 0}],
         ])
-        set_branch(dname(d, "bypass"), [[{"node": d["inyectar"], "type": "main", "index": 0}]])
+        set_branch(dname(d, "bypass"), [
+            [{"node": d["inyectar"], "type": "main", "index": 0}],
+            [{"node": d["parser"], "type": "main", "index": 0}],  # error → Parser real (fix 22-07)
+        ])
         # Parser conserva Inyectar como PRIMER target y suma el registrar (aditivo)
         conns[d["parser"]]["main"][0].append({"node": dname(d, "reg"), "type": "main", "index": 0})
         set_branch(dname(d, "reg"), [
