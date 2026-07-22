@@ -2676,6 +2676,55 @@ body.light #panel-control-bl{
   #panel-control-bl .cbl-split-wrap.is-split{grid-template-columns:1fr}
 }
 </style>
+<style id="cbl-sticky-styles">
+/* ═══ Control BL — panel derecho sticky (Variante A, 2026-07-22) ═══
+   Mockup aprobado: docs/mockups/mockup_cbl_sticky_2026-07-22.html (Variante A: TODO el
+   .cbl-detail — header + pestañas + verificación + visor — viaja como UN bloque fijo con
+   scroll interno propio). MISMO patrón de capas que #cbl-split-styles: bloque NUEVO pegado
+   DESPUÉS de las islas #cbl-styles y #cbl-split-styles (NO-TOUCH absoluto) — gana por orden
+   de cascada; donde piso una regla de la isla sobre el mismo selector (.cbl-detail) doblo
+   la clase (.cbl-detail.cbl-detail) para ganar también por specificity (patrón D8/Fase B).
+
+   SCROLLER REAL (MEDIDO headless 2026-07-22, no asumido — resolvió dos análisis previos
+   contradictorios): a escritorio scrollea el DOCUMENTO (html/viewport): scrollingElement=HTML,
+   scrollHeight 3165 vs clientHeight 900 con contenido fixture, window.scrollTo efectivo.
+   #panel-control-bl NO vive dentro de .main — el único .main del DOM es #main-tarifas,
+   interno a #panel-tarifas; los .tab-panel son hijos directos de <body> (flex column,
+   min-height:100vh, crece con el contenido). El comment del precedente mailing
+   (index.html, "scroller real (.main)") nombra mal el scroller pero el MECANISMO es el
+   mismo y sigue válido: .tab-panel{overflow:hidden} crea el contenedor de clip que mata
+   el sticky → overflow:visible scoped, igual que #panel-mailing{overflow:visible}.
+   El topbar va EN FLUJO (position:static, no fixed) y scrollea afuera de la vista →
+   top chico de aire, SIN descontar --topbar-h.
+
+   Solo desktop >900px (decisión de John): ≤900px el layout ya colapsa a 1 columna con
+   .cbl-master{max-height:45vh} (Fase B) — mobile/tablet quedan intactos.
+
+   El botón "Marcar como revisado" se crea en .cbl-exp-head (cblRenderDetail, js/features/
+   control-bl.js) — ya nace DENTRO del bloque fijo. Para que quede SIEMPRE visible aunque
+   se scrollee el visor con el scroll interno (decisión 3), el header completo del
+   expediente queda sticky DENTRO del scroller interno (segundo nivel de sticky, cero
+   cambios de DOM/JS): sello + contexto de la orden + Reprocesar nunca se van de vista. */
+@media (min-width:901px){
+  /* rompe el clip de .tab-panel{overflow:hidden} para que el sticky ancle contra el
+     scroller real (el documento) — mismo fix que el precedente #panel-mailing */
+  #panel-control-bl{overflow:visible}
+  #panel-control-bl .cbl-detail.cbl-detail{
+    position:sticky;
+    top:12px;                          /* aire, no offset de topbar: el topbar scrollea afuera */
+    max-height:calc(100vh - 24px);     /* 12px de margen arriba y abajo */
+    overflow-y:auto;                   /* scroll interno propio cuando no entra (overflow-x sigue hidden de la isla) */
+    overscroll-behavior:contain;       /* la rueda sobre el detalle no arrastra a la página al tocar borde */
+  }
+  @supports (height:100dvh){
+    #panel-control-bl .cbl-detail.cbl-detail{max-height:calc(100dvh - 24px)}
+  }
+  /* header del expediente pinned dentro del scroll interno: mantiene visibles el botón
+     "Marcar como revisado", el badge y Reprocesar. background explícito: la isla lo deja
+     transparente sobre .cbl-detail (el contenido scrolleado se vería a través). */
+  #panel-control-bl .cbl-detail .cbl-exp-head{position:sticky;top:0;z-index:3;background:var(--cbl-surface)}
+}
+</style>
 <style id="mailing-styles">
 /* ═══════════ Mailing — estilos scoped (T3, patrón isla #cbl-styles) ═══════════ */
 /* Todo bajo #panel-mailing, clases mail-*. DARK-AWARE (T3.1, a diferencia del CBL
