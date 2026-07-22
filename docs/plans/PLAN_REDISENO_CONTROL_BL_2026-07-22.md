@@ -21,17 +21,23 @@
 8. **Toda orden marítima va a mailing** (STO y trade).
 9. Los mails adjuntan **siempre la versión vigente** — requisito rector.
 
-## 0.b Preguntas NUEVAS para John (surgidas de la revisión adversarial)
+## 0.b Preguntas de la revisión adversarial — estado (22-07, tarde)
 
-- **P1 — Embarques parciales:** ¿puede una orden marítima tener DOS facturas legítimas a la vez
-  (parciales por shipment)? Si sí, la vigencia debe keyear también por `shipment_number`; si "1 orden
-  = 1 embarque/factura" es invariante, lo escribimos como regla y el aviso de refactura alcanza.
-- **P2 — Sello vs recontrol:** hoy el sello "Revisado" keyea por `bl_file_id`; si recontrolás porque
-  llegó una factura nueva y el BL no cambió, **el sello viejo seguiría habilitando el mailing**.
-  Propuesta: un control posterior al sello lo invalida para habilitar envío (re-sello humano si el
-  resultado nuevo da REVISAR). ¿Confirmás ese cambio de semántica del sello?
-- **P3 — ZCB3 re-emitido** (roleo/granelero con cantidades nuevas): ¿el último ZCB3 pisa `despacho_at`
-  automáticamente, o solo avisa para corrección manual? (El GI manual SIEMPRE pisa a ambos.)
+- **P1 — RESUELTA por John:** 1 orden = 1 factura en el 99,99% de los casos → **invariante del
+  modelo**. La vigencia keyea `(order_number, tipo)` firme, sin shipment. El caso restante (0,01%) lo
+  cubre el aviso "se generó una nueva factura" + override manual.
+- **P2 — PENDIENTE (única decisión abierta) — regla propuesta "la cadena en orden":** el envío se
+  habilita solo cuando la cadena **documento → control → sello** está en orden cronológico:
+  `document_ts del vigente ≤ created_at del último control ≤ sellado_at del sello`. Consecuencias:
+  (1) llega factura nueva ⇒ el envío se BLOQUEA solo, aunque haya sello ("hay documento más nuevo que
+  el control — recontrolá"); (2) recontrolás ⇒ el sello anterior al control nuevo DEJA de habilitar
+  (hay que re-sellar mirando el resultado nuevo); (3) se habilita recién cuando doc ≤ control ≤ sello.
+  Cambia la regla X actual (sello por `bl_file_id`): se le suma la condición temporal
+  `sellado_at > created_at del último control`.
+- **P3 — RESUELTA por John:** el **último ZCB3 pisa** al anterior automáticamente. Verificación
+  gratis que aporta el dominio: el nº de shipment es **creciente** — el ZCB3 más nuevo trae shipment
+  de numeración más alta. Guarda derivada para la ingesta: un ZCB3 entrante con `shipment_number`
+  MENOR al registrado NO pisa (mail viejo fuera de orden) + aviso. GI manual sigue pisando a todos.
 
 ---
 
@@ -67,8 +73,8 @@ CREATE UNIQUE INDEX uq_documentos_orden_drive_file
 
 - El **estado actual se deriva SOLO de `vigente`**; `reemplazado_at/por` son historia inmutable (el
   override manual NUNCA los limpia — evita ciclos A→B→A en la cadena de versiones).
-- Si P1 = "hay parciales", el índice de vigencia pasa a `(order_number, tipo, shipment_number)
-  NULLS NOT DISTINCT` — decisión pendiente de John.
+- P1 resuelta: **1 orden = 1 factura es invariante** → la key de vigencia `(order_number, tipo)`
+  queda firme, sin shipment.
 - **Costo de revertir:** aditivo, droppable. BAJO.
 
 ### D2 — RPC de supersede: **"último DOCUMENTO gana", nunca "última llamada gana"** (reescrito v2)
@@ -134,7 +140,7 @@ triggers · sin FK en cascada. Volumen: ~2.000 filas/año — trivial a década 
 | Evento | Actor | Escribe |
 |---|---|---|
 | Llega doc por mail | Gmail→Drive (F1) | Drive + `registrar_documento_version` con extract. ⬥ **ZCB1 NO se parsea** (solo disponibilidad, como hoy) — parser solo para ZCB3, factura, PE |
-| Llega ZCB3 | Gmail→Drive (F4) | `despacho_at` si null (`despacho_source='zcb3'`). ⬥ Precedencia: **GI manual SIEMPRE pisa**; ZCB3 re-emitido → P3 de John. ⬥ Verificar/arreglar el dead-end actual de la rama ZCB3 como prerequisito |
+| Llega ZCB3 | Gmail→Drive (F4) | `despacho_at`: **el último ZCB3 pisa** (P3 resuelta) con guarda monotónica — shipment_number MENOR al registrado = mail fuera de orden, NO pisa + aviso. **GI manual SIEMPRE pisa a todos** (`despacho_source='gi-manual'`). ⬥ Verificar/arreglar el dead-end actual de la rama ZCB3 como prerequisito |
 | ⬥ Nace la orden / se registra alias | alta_despacho / alta ZCB3 / F3 | **Re-attach**: filas con `order_number NULL` que matcheen por PO/alias/shipment se re-asignan vía RPC (el extract pagado no se tira) |
 | Carga manual | App → `/api/seguimiento` (F3) | Drive (nombre canónico) + RPC (`source='app-upload'`) + alias si refactura trade |
 | Control BL corre | WF Control BL (F2) | LEE vigentes. ⬥ **Freshness check barato** antes de usar cada extract: GET metadata del `drive_file_id` (sin IA); si md5/modifiedTime cambió → re-parsea y re-asienta + aviso. Falta extract → fallback (comportamiento actual + registrar con guarda 6) |
@@ -211,13 +217,14 @@ Hoy ≈92 llamadas IA/día → post-F2 ≈65-70 (-25%, control 5→2) → post-v
 5→1). Lo que se compra: control ~25s (hoy ~80s), re-controles casi gratis, **vigencia correcta en
 control Y mailing**. El freshness check agrega GETs de metadata Drive (sin IA, centavos).
 
-## 6. Qué necesita GO de John
+## 6. Qué necesita GO de John (actualizado 22-07 tarde — P1 y P3 ya resueltas)
 
-1. GO al plan v2 — en particular D2 (las 7 guardas), el orden QW→F1→F3→F2→F4, y las respuestas a
-   **P1 (parciales), P2 (sello vs recontrol), P3 (ZCB3 re-emitido)**.
-2. GO puntual antes de cada fase (DDL, PUTs n8n).
-3. Pendientes previos en cola: cerrar RLS `configuracion`/`operaciones`/`contenedores` + vaciar la
-   key vieja de la tabla · backfill `mailing_orders` de `118957318` y `4010708596`.
+1. **P2** — sí/no a la regla "la cadena en orden" (§0.b). Única decisión de diseño abierta.
+2. **GO al plan v2 completo** → habilita arrancar por QW; cada fase pide además su GO puntual antes
+   de tocar prod (DDL, PUTs n8n).
+3. GO cierre RLS `configuracion`/`operaciones`/`contenedores` + vaciar la key vieja de la tabla.
+4. GO backfill `mailing_orders` de `118957318` y `4010708596`.
+5. Push de los commits de docs acumulados (o quedan locales hasta el próximo break).
 
 ## 7. Changelog v1 → v2 (revisión adversarial, 3 lentes, 22 hallazgos)
 
