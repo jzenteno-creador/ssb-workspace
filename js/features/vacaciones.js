@@ -2556,7 +2556,7 @@
       const dates = document.createElement('div');
       dates.className = 'vac-item-dates';
       const d = new Date(a.created_at);
-      dates.textContent = `${d.toISOString().slice(0,10)} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
+      dates.textContent = `${formatDmy(d.toISOString().slice(0,10))} · ${(a.delta_days >= 0 ? '+' : '') + a.delta_days} días`;
       item.appendChild(dates);
 
       const meta = document.createElement('div');
