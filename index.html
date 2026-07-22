@@ -826,7 +826,7 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 /* Responsive: bajo 900px la tabla scrollea horizontal (head+rows comparten el wrap → no desalinean) */
 @media (max-width:900px){
   #panel-schedule-rt .sched-table-wrap{overflow-x:auto}
-  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:900px}
+  #panel-schedule-rt .sched-table-head,#panel-schedule-rt .sched-row-wrap,#panel-schedule-rt .sched-main-row{min-width:940px}
 }
 /* Fase C responsive (2026-07-04) — Detention + Admin BID usables en teléfono.
    Admin BID: h-scroll interno del wrap (patrón Fase B de arriba). Tradeoff aceptado:
@@ -860,6 +860,21 @@ body.light .efa-period.expiring .ep-amt{color:#92400e}
 .rt-no{color:var(--red);font-weight:700;font-size:11px}
 .rt-disp-btn{font-family:var(--font);font-size:10px;padding:1px 5px;margin-left:3px;border:1px solid var(--border);border-radius:5px;background:var(--faint);color:var(--muted);cursor:pointer;transition:all .12s}
 .rt-disp-btn:hover{border-color:var(--red);color:var(--red)}
+/* Selección múltiple (acciones en lote) del Schedule Realtime */
+.rt-chk-cell{display:flex;align-items:center;justify-content:center;padding:0}
+.rt-chk,.rt-chk-all{width:15px;height:15px;margin:0;cursor:pointer;accent-color:var(--teal)}
+.rt-bulk-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--teal);border-radius:10px;box-shadow:var(--shadow)}
+.rt-bulk-count{font-size:13px;color:var(--text)}
+.rt-bulk-count b{color:var(--teal);font-size:15px}
+.rt-bulk-actions{display:flex;gap:8px;flex-wrap:wrap}
+.rt-bulk-btn{font-family:var(--font);font-size:12px;font-weight:600;padding:6px 12px;border:1px solid var(--border);border-radius:7px;background:var(--faint);color:var(--text);cursor:pointer;transition:all .12s}
+.rt-bulk-btn:hover{border-color:var(--muted)}
+.rt-bulk-baja{color:var(--red);border-color:var(--red-bd)}
+.rt-bulk-baja:hover{background:var(--red-bg);border-color:var(--red)}
+.rt-bulk-hide{color:#fff;background:var(--red);border-color:var(--red)}
+.rt-bulk-hide:hover{filter:brightness(.92)}
+.rt-bulk-clear{margin-left:auto;font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline}
+.rt-bulk-clear:hover{color:var(--text)}
 .sched-trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:100%}
 /* changed cell highlight */
 .changed-cell{background:var(--changed);border-radius:4px;padding:1px 4px;border:1px solid var(--changed-bd);cursor:help}
@@ -3893,6 +3908,15 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
         <span id="rt-live-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);animation:blink .9s infinite"></span>
         <span style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em">EN VIVO</span>
       </div>
+    </div>
+    <div id="rt-bulk-bar" class="rt-bulk-bar" hidden role="region" aria-label="Acciones en lote sobre las salidas seleccionadas">
+      <span class="rt-bulk-count"><b id="rt-bulk-n">0</b>&nbsp;seleccionada<span id="rt-bulk-s">s</span></span>
+      <div class="rt-bulk-actions">
+        <button type="button" id="rt-bulk-baja" class="rt-bulk-btn rt-bulk-baja">⊘ Dar de baja</button>
+        <button type="button" id="rt-bulk-react" class="rt-bulk-btn">↺ Reactivar</button>
+        <button type="button" id="rt-bulk-hide" class="rt-bulk-btn rt-bulk-hide">✕ Quitar del schedule</button>
+      </div>
+      <button type="button" id="rt-bulk-clear" class="rt-bulk-clear">Deseleccionar</button>
     </div>
     <div id="sched-rt-list">
       <!-- A7: Skeleton rows while Supabase Realtime connects -->

@@ -64,6 +64,7 @@
   let _rtNavSet = new Set();
   let _rtChannel = null;
   let _rtFilterTimer = null;
+  let _rtSelected = new Set();   // ids tildados para acciones en lote (persiste entre re-renders)
 
   // esc(): usa la global de SSB CORE HELPERS (superset & < > " ').
   // Delta consciente: la vieja local hacía s||'' (esc(0)=''); la global hace
@@ -169,6 +170,77 @@
     else rtToggleDisp(id, isBaja);
   });
 
+  // ── Selección múltiple (acciones en lote) ─────────────────────────────
+  // Sobre las filas tildadas, vía RPC set_schedule_flags_bulk (cliente
+  // AUTENTICADO global, mismo gate auth.role()='authenticated' que
+  // set_schedule_disponible). 3 acciones: baja (disponible=false, roja),
+  // reactivar (disponible=true), quitar (activo=false, oculta).
+  function _rtUpdateBulkBar() {
+    const bar = document.getElementById('rt-bulk-bar');
+    if(!bar) return;
+    const n = _rtSelected.size;
+    bar.hidden = n === 0;
+    const nEl = document.getElementById('rt-bulk-n'); if(nEl) nEl.textContent = n;
+    const sEl = document.getElementById('rt-bulk-s'); if(sEl) sEl.textContent = n===1 ? '' : 's';
+  }
+  function _rtSyncChkAll() {
+    const all = document.querySelector('#sched-rt-list .rt-chk-all');
+    if(!all) return;
+    const boxes = [...document.querySelectorAll('#sched-rt-list .rt-chk')];
+    const sel = boxes.filter(b => _rtSelected.has(b.dataset.id)).length;
+    all.checked = boxes.length > 0 && sel === boxes.length;
+    all.indeterminate = sel > 0 && sel < boxes.length;
+  }
+  async function _rtBulk(action) {
+    const gsupa = window.__ssb && window.__ssb.supa;
+    if(!gsupa){ ssbToast('Sesión no disponible. Reingresá.', 'error'); return; }
+    const ids = [..._rtSelected];
+    if(!ids.length) return;
+    let params, verb;
+    if(action === 'baja'){ params = { p_ids: ids, p_disponible: false }; verb = 'dadas de baja'; }
+    else if(action === 'react'){ params = { p_ids: ids, p_disponible: true }; verb = 'reactivadas'; }
+    else { params = { p_ids: ids, p_activo: false }; verb = 'quitadas del schedule'; }
+    if(action === 'hide'){
+      const ok = await ssbConfirm({ title:'Quitar del schedule', body:'Vas a ocultar ' + ids.length + ' fila' + (ids.length!==1?'s':'') + '. Desaparecen de la vista (para restaurarlas hay que re-subir el Excel). ¿Seguir?', confirmText:'Quitar', danger:true });
+      if(!ok) return;
+    }
+    try{
+      const { error } = await gsupa.rpc('set_schedule_flags_bulk', params);
+      if(error) throw error;
+      _rtSelected.clear();
+      _rtUpdateBulkBar();
+      ssbToast(ids.length + ' fila' + (ids.length!==1?'s':'') + ' ' + verb + '.', 'success');
+      if(window.loadScheduleRT) window.loadScheduleRT();
+    }catch(e){ ssbToast('No se pudo completar la acción: ' + (e.message||e), 'error'); }
+  }
+
+  // Delegación de checkboxes en el mismo container estático (#sched-rt-list).
+  document.getElementById('sched-rt-list')?.addEventListener('change', e => {
+    const t = e.target;
+    if(t.classList.contains('rt-chk-all')){
+      document.querySelectorAll('#sched-rt-list .rt-chk').forEach(b => {
+        b.checked = t.checked;
+        if(t.checked) _rtSelected.add(b.dataset.id); else _rtSelected.delete(b.dataset.id);
+      });
+      _rtUpdateBulkBar();
+    } else if(t.classList.contains('rt-chk')){
+      if(t.checked) _rtSelected.add(t.dataset.id); else _rtSelected.delete(t.dataset.id);
+      _rtSyncChkAll();
+      _rtUpdateBulkBar();
+    }
+  });
+
+  // Barra de acción: elementos ESTÁTICOS en index.html → se cablean una sola vez.
+  document.getElementById('rt-bulk-baja')?.addEventListener('click', () => _rtBulk('baja'));
+  document.getElementById('rt-bulk-react')?.addEventListener('click', () => _rtBulk('react'));
+  document.getElementById('rt-bulk-hide')?.addEventListener('click', () => _rtBulk('hide'));
+  document.getElementById('rt-bulk-clear')?.addEventListener('click', () => {
+    _rtSelected.clear();
+    document.querySelectorAll('#sched-rt-list .rt-chk').forEach(b => b.checked = false);
+    _rtSyncChkAll();
+    _rtUpdateBulkBar();
+  });
+
   window.applyRtFilter = function() {
     clearTimeout(_rtFilterTimer);
     _rtFilterTimer = setTimeout(_doApplyRtFilter, 250);
@@ -195,6 +267,8 @@
     const ct = document.getElementById('sched-rt-ct');
     if(ct) ct.textContent = rows.length + ' salida' + (rows.length!==1?'s':'') + ' encontrada' + (rows.length!==1?'s':'');
     renderScheduleRt(rows);
+    _rtSyncChkAll();
+    _rtUpdateBulkBar();
   }
 
   function renderScheduleRt(rows) {
@@ -206,7 +280,7 @@
       return;
     }
 
-    const COLS = '0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr .62fr';
+    const COLS = '32px 0.7fr 1.4fr 1.2fr 1.7fr .85fr .85fr .85fr .85fr 1fr 1.2fr .62fr';
     const today = new Date().toISOString().split('T')[0];
 
     const cutStyle = d => {
@@ -220,6 +294,7 @@
 
     el.innerHTML = `<div class="sched-table-wrap">
       <div class="sched-table-head" style="grid-template-columns:${COLS}">
+        <span class="sth rt-chk-cell"><input type="checkbox" class="rt-chk-all" title="Seleccionar todos los mostrados" aria-label="Seleccionar todos los mostrados"></span>
         <span class="sth" style="text-align:center">MES ETD</span>
         <span class="sth">Buque</span>
         <span class="sth">Naviera / Servicio</span>
@@ -244,6 +319,7 @@
 
         return `<div class="sched-row-wrap${r.disponible===false?' rt-baja':''}">
           <div class="sched-main-row" style="grid-template-columns:${COLS}">
+            <div class="rt-chk-cell"><input type="checkbox" class="rt-chk" data-id="${esc(r.id)}"${_rtSelected.has(r.id)?' checked':''} aria-label="Seleccionar fila"></div>
             <div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600">${esc(fMesEtd(r.mes_etd))}</div>
             <div class="sr vessel">${esc(r.buque)||'—'}</div>
             <div style="min-width:0">
@@ -300,6 +376,8 @@
     }
 
     _rtData = data;
+    // Podar la selección a ids aún presentes (los quitados por activo=false ya no vienen en la query).
+    if(_rtSelected.size) _rtSelected = new Set([..._rtSelected].filter(id => data.some(r => r.id === id)));
     window._rtAcOpts = {
       origen: [...new Set(data.map(r=>r.puerto_origen).filter(Boolean))].sort(),
       destino: [...new Set(data.map(r=>r.puerto_destino).filter(Boolean))].sort(),
