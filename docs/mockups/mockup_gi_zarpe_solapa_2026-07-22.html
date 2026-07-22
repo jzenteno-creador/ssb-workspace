@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mockup — Solapa "Despachos" (Good Issue + Confirmación de zarpe)</title>
+<link rel="icon" href="data:,">
 <style>
   /* ===== Tokens copiados 1:1 de index.html (grep :root / body.light, 2026-07-22) ===== */
   :root{
@@ -99,8 +100,22 @@
   .rail-sep{height:1px;background:rgba(255,255,255,.08);margin:4px 6px}
   .rail-ellipsis{color:rgba(255,255,255,.32);font-size:11px;padding:2px 10px;font-family:var(--mono)}
   .railsim.collapsed .rail-ellipsis{text-align:center;padding:2px 0}
-  .rail-group-hd{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:500}
+  .rail-group-hd{position:relative;display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 10px;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:500}
   .railsim.collapsed .rail-group-hd .rlbl{display:none}
+  /* ítem ANIDADO dentro de un grupo del rail (patrón árbol pinned del grupo Documentación) */
+  .railsim.expanded .rail-btn.sub{width:calc(100% - 12px);margin-left:12px;border-left:1px solid rgba(255,255,255,.08);border-radius:0 9px 9px 0}
+  .railsim.expanded .rail-btn.sub.active{border-left-color:#5b9bf5}
+  .railsim.expanded .rail-btn.sub.active::before{display:none}
+  /* contadores de pendientes — DOS pills separadas (GI azul / ATD ámbar), nunca un número sumado.
+     Rail constant-dark → hex fijos, nunca vars que flipen en body.light */
+  .rail-cnt{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;font-weight:700;line-height:1.5;padding:1px 5px;border-radius:8px;letter-spacing:.02em;white-space:nowrap}
+  .rail-cnt .ic{width:9px;height:9px;vertical-align:0}
+  .rail-cnt.gi{background:#141f38;color:#5b9bf5;border:1px solid #2a4478}
+  .rail-cnt.atd{background:#2a1f0a;color:#f5a623;border:1px solid #6b4a12}
+  .rail-minis{position:absolute;top:3px;right:3px;display:flex;flex-direction:column;gap:2px}
+  .rail-mini{min-width:14px;padding:0 3px;height:12px;border-radius:7px;font-family:var(--mono);font-size:8px;font-weight:700;line-height:12px;text-align:center}
+  .rail-mini.gi{background:#141f38;color:#5b9bf5;border:1px solid #2a4478}
+  .rail-mini.atd{background:#2a1f0a;color:#f5a623;border:1px solid #6b4a12}
 
   /* ============ SECCIÓN — variantes lado a lado ============ */
   .variant-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -128,7 +143,13 @@
   .ta-hint{font-size:11px;color:var(--muted);margin-top:5px}
   .apply-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;background:var(--faint);border:1px dashed var(--border);border-radius:9px}
   .apply-row label{font-size:12px;color:var(--muted)}
-  .apply-row input[type=date]{font-family:var(--font);font-size:12.5px;color:var(--text);background:var(--surface-hv);border:1px solid var(--border);border-radius:7px;padding:6px 9px}
+  /* Campo de fecha DD/MM/AAAA — input de TEXTO estilizado como campo de fecha. NUNCA input[type=date] nativo:
+     el nativo se renderiza según el locale del navegador (en-US → MM/DD/AAAA) y no se puede forzar por HTML.
+     El input real parsea/formatea DD/MM en el código. */
+  .date-field{display:inline-flex;align-items:center;gap:7px;background:var(--surface-hv);border:1px solid var(--border);border-radius:7px;padding:6px 9px}
+  .date-field:focus-within{border-color:var(--blue)}
+  .date-field input{border:none;background:none;outline:none;color:var(--text);font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;width:92px;padding:0}
+  .date-field .ic{color:var(--muted);width:13px;height:13px;flex-shrink:0}
 
   table.prev-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
   table.prev-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border)}
@@ -157,6 +178,14 @@
   .roleo-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;border-bottom:1px solid var(--border)}
   .roleo-row:last-of-type{border-bottom:none}
   .roleo-row .ord{font-family:var(--mono);font-weight:600}
+  /* NUEVO — tarjeta "Roleo sugerido": próximo buque de la misma línea / mismo POL / mismo POD */
+  .roleo-sug{margin-top:12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:10px;padding:12px 14px}
+  .roleo-sug .rs-hd{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:8px}
+  .rs-route{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .rs-vessel{font-family:var(--mono);font-weight:700;font-size:13.5px;color:var(--text)}
+  .rs-meta{font-size:11.5px;color:var(--muted)}
+  .rs-note{font-size:10.5px;color:var(--muted);margin:9px 0 0;line-height:1.6}
+  .rs-note b{color:var(--text)}
 
   /* ============ antes/después mini-fix ============ */
   .fix-grid{display:grid;grid-template-columns:22px 1fr 1fr;gap:0 14px;align-items:start;margin-top:10px}
@@ -177,7 +206,7 @@
 
 <div class="page">
   <h1>Solapa nueva "Despachos" — Good Issue + Confirmación de zarpe (2026-07-22)</h1>
-  <p class="note">Propuesta: <b>una solapa nueva en el rail</b> que junta las dos acciones de lote que hoy viven repartidas — el modal Good Issue (hoy dentro de <code class="k">Seguimiento</code>) y el panel de Confirmación de zarpe / ATD (hoy dentro de <code class="k">Mailing</code>). Mismo motivo para las dos: son cargas manuales por lote que un operador hace en tandas ("pegar la planilla de despachos de la mañana", "pegar los ATD que llegaron de la naviera"), no forman parte de la <i>lectura</i> de esos módulos — separarlas les da su propio lugar sin que compitan por espacio con el resto de Seguimiento/Mailing. <b>Ningún parser ni endpoint cambia</b>: <code class="k">parseGiGrid</code> + <code class="k">/api/seguimiento::alta_despacho</code> y <code class="k">parseAtdGrid</code> + <code class="k">/api/mailing::confirm_atd</code> se reusan tal cual — esto es 100% reubicación de UI + 3 fixes puntuales sobre el panel ATD (sección 5).</p>
+  <p class="note">Propuesta aprobada: <b>una solapa nueva "Despachos", anidada dentro del grupo Documentación del rail</b>, que junta las dos acciones de lote que hoy viven repartidas — el modal Good Issue (hoy dentro de <code class="k">Seguimiento</code>) y el panel de Confirmación de zarpe / ATD (hoy dentro de <code class="k">Mailing</code>). Mismo motivo para las dos: son cargas manuales por lote que un operador hace en tandas ("pegar la planilla de despachos de la mañana", "pegar los ATD que llegaron de la naviera"), no forman parte de la <i>lectura</i> de esos módulos — separarlas les da su propio lugar sin que compitan por espacio con el resto de Seguimiento/Mailing. <b>Ningún parser ni endpoint cambia</b>: <code class="k">parseGiGrid</code> + <code class="k">/api/seguimiento::alta_despacho</code> y <code class="k">parseAtdGrid</code> + <code class="k">/api/mailing::confirm_atd</code> se reusan tal cual — esto es 100% reubicación de UI + 3 fixes puntuales sobre el panel ATD (sección 5).</p>
 
   <div class="subnav">
     <a href="#s1">① El rail</a>
@@ -186,12 +215,12 @@
     <a href="#s4">④ Confirmación de zarpe (lote)</a>
     <a href="#s5">⑤ 3 defectos resueltos</a>
     <a href="#s6">Qué se muda</a>
-    <a href="#notas">Notas para John</a>
+    <a href="#notas">✓ Decisiones cerradas</a>
   </div>
 
   <!-- ============ SECCIÓN 1 — RAIL ============ -->
   <h2 id="s1"><span class="num">1</span>El rail — dónde entra el ítem nuevo</h2>
-  <p class="intent">Simulación con los tokens reales del rail (<code class="k">--rail-bg:#080b12</code>, constante en ambos temas — probá el toggle de arriba, el rail no cambia). Se ubica como ítem de <b>primer nivel</b>, después del grupo "Documentación", no anidado adentro: no es una vista de documentación, es una pantalla de carga (acción diaria repetida), más parecida a un formulario que a un visor.</p>
+  <p class="intent">Simulación con los tokens reales del rail (<code class="k">--rail-bg:#080b12</code>, constante en ambos temas — probá el toggle de arriba, el rail no cambia). <b>Decisión cerrada (John, 22/07/2026):</b> "Despachos" va <b>anidada dentro del grupo Documentación</b>, como 5º ítem junto a Seguimiento / Control BL / Mailing / Cert. de Origen — comparte tablas y flujo con esos módulos. Nombre "Despachos" e ícono <code class="k">i-check</code> confirmados. Contadores de pendientes: <b>dos pills separadas</b> — "GI pendientes" (azul) y "ATD pendientes" (ámbar) — nunca un número único sumado.</p>
 
   <div class="rail-demo-row">
     <div>
@@ -203,11 +232,11 @@
         <button class="rail-btn"><svg class="ric"><use href="#i-truck"/></svg></button>
         <div class="rail-ellipsis">⋯</div>
         <div class="rail-sep"></div>
-        <div class="rail-group-hd"><svg class="ric"><use href="#i-folder"/></svg></div>
-        <button class="rail-btn active"><svg class="ric"><use href="#i-check"/></svg></button>
+        <div class="rail-group-hd"><svg class="ric"><use href="#i-folder"/></svg><span class="rail-minis"><span class="rail-mini gi" title="GI pendientes">4</span><span class="rail-mini atd" title="ATD pendientes">2</span></span></div>
         <div class="rail-sep"></div>
         <button class="rail-btn"><svg class="ric"><use href="#i-database"/></svg></button>
       </div>
+      <p class="faint" style="max-width:190px;margin:8px 0 0">Colapsado: "Despachos" vive en el <b>flyout</b> del grupo Documentación (como Control BL / Mailing hoy); los dos contadores suben al ícono del grupo como pills separadas — GI azul, ATD ámbar.</p>
     </div>
     <div>
       <div class="railsim-label">Pineado / expandido (228px)</div>
@@ -219,26 +248,31 @@
         <div class="rail-ellipsis">⋯ 4 módulos más</div>
         <div class="rail-sep"></div>
         <div class="rail-group-hd"><svg class="ric"><use href="#i-folder"/></svg><span class="rlbl">Documentación ▾</span></div>
-        <button class="rail-btn active"><svg class="ric"><use href="#i-check"/></svg><span class="rlbl">Despachos</span><span class="badge badge--new" style="margin-left:auto">nuevo</span></button>
+        <button class="rail-btn sub"><svg class="ric"><use href="#i-package"/></svg><span class="rlbl">Seguimiento</span></button>
+        <button class="rail-btn sub"><svg class="ric"><use href="#i-file-text"/></svg><span class="rlbl">Control BL</span></button>
+        <button class="rail-btn sub"><svg class="ric"><use href="#i-mail"/></svg><span class="rlbl">Mailing</span></button>
+        <button class="rail-btn sub"><svg class="ric"><use href="#i-stamp"/></svg><span class="rlbl">Cert. de Origen</span></button>
+        <button class="rail-btn sub active"><svg class="ric"><use href="#i-check"/></svg><span class="rlbl">Despachos</span><span style="margin-left:auto;display:inline-flex;gap:4px"><span class="rail-cnt gi" title="GI pendientes"><svg class="ic"><use href="#i-package"/></svg>4</span><span class="rail-cnt atd" title="ATD pendientes"><svg class="ic"><use href="#i-anchor"/></svg>2</span></span></button>
         <div class="rail-sep"></div>
         <button class="rail-btn"><svg class="ric"><use href="#i-database"/></svg><span class="rlbl">Estructura DB</span></button>
         <button class="rail-btn"><svg class="ric"><use href="#i-sliders"/></svg><span class="rlbl">Administración</span></button>
       </div>
     </div>
     <div class="card" style="max-width:340px">
-      <h3>Ícono propuesto</h3>
-      <p class="muted" style="margin:0 0 8px">Candidato principal: <svg class="ic" style="width:15px;height:15px;color:var(--blue)"><use href="#i-check"/></svg> <b style="color:var(--text)">i-check</b> — genérico, cubre tanto GI (planta, M/T) como zarpe (solo marítimo); no repite el ícono de ningún tab existente.</p>
-      <p class="faint">Alternativa evaluada: <svg class="ic" style="width:14px;height:14px"><use href="#i-anchor"/></svg> i-anchor — más literal para "zarpe", pero GI no es un evento marítimo (aplica también a despachos terrestres) → queda menos preciso como ícono único de la solapa combinada.</p>
+      <h3>Ícono y contadores — confirmados</h3>
+      <p class="muted" style="margin:0 0 8px"><svg class="ic" style="width:15px;height:15px;color:var(--blue)"><use href="#i-check"/></svg> <b style="color:var(--text)">i-check</b> confirmado — genérico, cubre tanto GI (planta, M/T) como zarpe (solo marítimo); no repite el ícono de ningún tab existente.</p>
+      <p class="muted" style="margin:0 0 8px">Contadores del rail: <span class="rail-cnt gi" style="vertical-align:1px"><svg class="ic"><use href="#i-package"/></svg>4</span> <span class="rail-cnt atd" style="vertical-align:1px"><svg class="ic"><use href="#i-anchor"/></svg>2</span> — dos pills separadas, cada una con ícono y color propio (azul + paquete = <b style="color:var(--text)">GI pendientes</b>, ámbar + ancla = <b style="color:var(--text)">ATD pendientes</b>), <b style="color:var(--text)">nunca un número único sumado</b>.</p>
+      <p class="faint">Alternativa evaluada y descartada: <svg class="ic" style="width:14px;height:14px"><use href="#i-anchor"/></svg> i-anchor — más literal para "zarpe", pero GI no es un evento marítimo (aplica también a despachos terrestres).</p>
     </div>
   </div>
 
   <!-- ============ SECCIÓN 2 — VARIANTES DE LAYOUT ============ -->
   <h2 id="s2"><span class="num">2</span>Layout interno — secciones apiladas vs. tabs internos</h2>
-  <p class="intent">Decisión de composición: ¿las dos secciones (GI / ATD) conviven en una sola página con scroll, o se separan en tabs internos tipo "single/lote" del modal GI actual?</p>
+  <p class="intent">Decisión de composición — <b>cerrada (John, 22/07/2026): Variante A</b>, secciones apiladas GI arriba / ATD abajo con subnav sticky. Se conserva la comparación como registro de la evaluación.</p>
 
   <div class="variant-grid">
-    <div class="variant">
-      <div class="variant-hd"><span class="variant-tag">Variante A — Apiladas</span></div>
+    <div class="variant rec">
+      <div class="variant-hd"><span class="variant-tag">Variante A — Apiladas</span><span class="badge badge--success">✓ elegida — decisión cerrada</span></div>
       <div class="variant-diagram">
         <div class="vd-block">📥 Good Issue — lote</div>
         <div class="vd-block" style="opacity:.7">textarea + preview + confirmar</div>
@@ -248,7 +282,7 @@
       <p class="muted" style="margin-top:10px">Una sola página, scroll vertical, ancla sticky (como este mismo mockup). Las dos secciones visibles a la vez.</p>
     </div>
     <div class="variant">
-      <div class="variant-hd"><span class="variant-tag">Variante B — Tabs internos</span></div>
+      <div class="variant-hd"><span class="variant-tag">Variante B — Tabs internos</span><span class="badge badge--neutral">descartada</span></div>
       <div class="variant-diagram">
         <div class="vd-tabs"><span class="on">Good Issue</span><span>Confirmación de zarpe</span></div>
         <div class="vd-body">contenido de la tab activa — la otra queda oculta</div>
@@ -257,12 +291,17 @@
     </div>
   </div>
   <p class="note" style="margin-top:14px">
-    <b style="color:var(--green)">Recomendación: Variante A (apiladas).</b> Los dos flujos los corre <b>la misma persona en la misma sesión de trabajo</b> ("primero pego los GI de la mañana, después los ATD que mandó la naviera") — con tabs, cada vez que hay que cruzar un dato entre ambos (ej. una orden que hoy sale de planta y hoy mismo zarpa) obliga a cambiar de tab y perder el estado visual del otro. Apiladas, ambos preview quedan a la vista sin clicks extra. El costo es una página más larga — mitigado con el subnav sticky (② / ③ arriba) igual que en este mockup.
+    <b style="color:var(--green)">Decisión cerrada: Variante A (apiladas).</b> Los dos flujos los corre <b>la misma persona en la misma sesión de trabajo</b> ("primero pego los GI de la mañana, después los ATD que mandó la naviera") — con tabs, cada vez que hay que cruzar un dato entre ambos (ej. una orden que hoy sale de planta y hoy mismo zarpa) obliga a cambiar de tab y perder el estado visual del otro. Apiladas, ambos preview quedan a la vista sin clicks extra. El costo es una página más larga — mitigado con el subnav sticky (② / ③ arriba) igual que en este mockup.
   </p>
 
   <!-- ============ SECCIÓN 3 — GOOD ISSUE ============ -->
   <h2 id="s3"><span class="num">3</span>Good Issue — despacho de planta (lote)</h2>
-  <p class="intent">Réplica 1:1 del tab "Lote" del modal <code class="k">seg-modal</code> actual (<code class="k">parseGiGrid</code>): formato <code class="k">orden␉fecha␉transporte(M/T opcional)</code>, una fecha discrepante para la misma orden = fila en rojo, "aplicar a todas" para filas sin fecha. Se elimina la tab "Individual" (alta de una sola orden) — queda cubierta por la fila de una sola línea en el mismo textarea; ver duda en Notas.</p>
+  <p class="intent">Réplica 1:1 del tab "Lote" del modal <code class="k">seg-modal</code> actual (<code class="k">parseGiGrid</code>): formato <code class="k">orden␉fecha␉transporte(M/T opcional)</code>, una fecha discrepante para la misma orden = fila en rojo, "aplicar a todas" para filas sin fecha. <b>Decisión cerrada:</b> la tab "Individual" se <b>elimina por completo</b> — cargar una sola orden = pegar una línea en el textarea; el lote es la única entrada. <b>Botón de origen:</b> "Registrar despacho de planta" en Seguimiento <b>deja de abrir su modal propio</b> — redirige a esta solapa con la orden prellenada.</p>
+
+  <div class="banner blue" style="max-width:920px;margin:0 0 14px">
+    <svg class="ic"><use href="#i-calendar"/></svg>
+    <span class="txt"><b>Regla del sistema — todas las fechas DD/MM/AAAA</b>, sin excepción (aplica a las secciones ③ y ④ completas). El campo "aplicar esta fecha" es un <b>input de texto</b> que parsea/formatea DD/MM en el código — <b>no se delega al locale del navegador</b>: el <code class="k">&lt;input type="date"&gt;</code> nativo se renderiza según el locale (en un navegador en-US muestra MM/DD/AAAA) y no se puede forzar a DD/MM por HTML → prohibido en esta solapa.</span>
+  </div>
 
   <div class="batch-card">
     <div class="batch-hd">
@@ -272,7 +311,7 @@
     <p class="muted" style="margin:0">Pegá <code class="k">orden</code> + <code class="k">fecha</code> (+ <code class="k">M</code>/<code class="k">T</code> opcional si el transporte de esa orden difiere del modo activo) desde la planilla de planta.</p>
 
     <div class="ta-wrap">
-<textarea class="batch-ta" aria-label="Pegado por lote de Good Issue: orden, fecha, transporte" spellcheck="false" readonly>4010045821	21/07/2026	M
+<textarea class="batch-ta" id="gi-batch-ta-demo" aria-label="Pegado por lote de Good Issue: orden, fecha, transporte" spellcheck="false" readonly>4010045821	21/07/2026	M
 4010045822	21/07/2026
 4010045901	22/07/2026	T
 4010045821	22/07/2026
@@ -282,8 +321,8 @@
     </div>
 
     <div class="apply-row">
-      <label>Aplicar esta fecha a las que no traen:</label>
-      <input type="date" id="gi-applydate-demo" aria-label="Fecha a aplicar a las filas sin fecha (GI)" value="2026-07-22" readonly>
+      <label for="gi-applydate-demo">Aplicar esta fecha a las que no traen:</label>
+      <span class="date-field"><input type="text" id="gi-applydate-demo" inputmode="numeric" aria-label="Fecha a aplicar a las filas sin fecha (GI) — formato DD/MM/AAAA" value="22/07/2026" placeholder="DD/MM/AAAA" readonly><svg class="ic"><use href="#i-calendar"/></svg></span>
       <button class="btn mini">Aplicar</button>
       <span class="faint">→ completa <code class="k">118034562</code>, que vino sin fecha</span>
     </div>
@@ -332,7 +371,7 @@
 
   <!-- ============ SECCIÓN 4 — ATD ============ -->
   <h2 id="s4"><span class="num">4</span>Confirmación de zarpe (ATD) — mismo formato que Good Issue</h2>
-  <p class="intent">Hoy el panel ATD de Mailing (<code class="k">parseAtdGrid</code>) es más limitado que el de GI: NO tiene "aplicar fecha a todas" (toda fila sin fecha es un error duro), y usa <code class="k">orden␉fecha</code> sin columna de transporte (el ATD es siempre zarpe marítimo). Esta pieza suma el "aplicar a todas" para emparejar la UX con GI — el resto (detección de conflicto por 2 fechas, "sin fila en Mailing" cuando la orden no pasó por Control BL) se mantiene igual.</p>
+  <p class="intent">Hoy el panel ATD de Mailing (<code class="k">parseAtdGrid</code>) es más limitado que el de GI: NO tiene "aplicar fecha a todas" (toda fila sin fecha es un error duro), y usa <code class="k">orden␉fecha</code> sin columna de transporte (el ATD es siempre zarpe marítimo). Esta pieza suma el "aplicar a todas" para emparejar la UX con GI — el resto (detección de conflicto por 2 fechas, "sin fila en Mailing" cuando la orden no pasó por Control BL) se mantiene igual. <b>Botón de origen:</b> "Confirmar zarpe" en Mailing <b>deja de abrir su panel propio</b> — redirige a esta solapa con la orden prellenada.</p>
 
   <div class="batch-card">
     <div class="batch-hd">
@@ -342,7 +381,7 @@
     <p class="muted" style="margin:0">Pegá <code class="k">orden</code> + <code class="k">ATD</code> desde el aviso de zarpe de la naviera. Buque de referencia en este lote: <b style="color:var(--text)">LOG-IN JATOBA 285N</b> · booking <code class="k">LA05812340</code>.</p>
 
     <div class="ta-wrap">
-<textarea class="batch-ta" aria-label="Pegado por lote de confirmación de zarpe: orden, ATD" spellcheck="false" readonly>4010098210	20/07/2026
+<textarea class="batch-ta" id="atd-batch-ta-demo" aria-label="Pegado por lote de confirmación de zarpe: orden, ATD" spellcheck="false" readonly>4010098210	20/07/2026
 4010098340	20/07/2026
 4010098455	19/07/2026
 4010098455	20/07/2026
@@ -351,8 +390,8 @@
     </div>
 
     <div class="apply-row">
-      <label>Aplicar esta fecha a las que no traen:<span class="badge badge--new" style="margin-left:6px">nuevo</span></label>
-      <input type="date" id="atd-applydate-demo" aria-label="Fecha a aplicar a las filas sin ATD" value="2026-07-20" readonly>
+      <label for="atd-applydate-demo">Aplicar esta fecha a las que no traen:<span class="badge badge--new" style="margin-left:6px">nuevo</span></label>
+      <span class="date-field"><input type="text" id="atd-applydate-demo" inputmode="numeric" aria-label="Fecha a aplicar a las filas sin ATD — formato DD/MM/AAAA" value="20/07/2026" placeholder="DD/MM/AAAA" readonly><svg class="ic"><use href="#i-calendar"/></svg></span>
       <button class="btn mini">Aplicar</button>
       <span class="faint">→ completa <code class="k">118041207</code>, que vino sin ATD</span>
     </div>
@@ -388,7 +427,7 @@
     <!-- Panel roleo (item 31) colapsable con estado persistido -->
     <div class="collapse-panel" id="roleo-demo">
       <div class="cp-hd is-open" onclick="this.classList.toggle('is-open');document.getElementById('roleo-body').style.display=this.classList.contains('is-open')?'block':'none'">
-        <span class="cp-title"><svg class="cp-chev"><use href="#i-chev"/></svg>⚠️ 2 hermanas del mismo buque siguen sin ATD confirmado</span>
+        <span class="cp-title"><svg class="cp-chev"><use href="#i-chev"/></svg>⚠️ 2 órdenes del mismo buque siguen sin ATD confirmado</span>
         <span class="persist-tag">estado persiste</span>
       </div>
       <div class="cp-body" id="roleo-body">
@@ -398,6 +437,21 @@
         <div style="display:flex;gap:8px;margin-top:10px">
           <button class="btn mini pri">Informar roleo (2)</button>
           <button class="btn mini">Descartar</button>
+        </div>
+
+        <!-- NUEVO — sugerencia de próximo buque para roleo (feature a construir) -->
+        <div class="roleo-sug">
+          <div class="rs-hd"><svg class="ic"><use href="#i-route"/></svg>Roleo sugerido<span class="badge badge--new">nuevo</span></div>
+          <div class="rs-route">
+            <span class="rs-vessel">LOG-IN POLARIS 286N</span>
+            <span class="badge badge--neutral">misma línea · LOG-IN</span>
+            <span class="rs-meta">Buenos Aires → Navegantes · ETD 27/07/2026 <span class="faint">· siguiente salida después de LOG-IN JATOBA 285N</span></span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn mini pri">Confirmar roleo ahora</button>
+            <button class="btn mini">Confirmar más tarde</button>
+          </div>
+          <p class="rs-note">Regla (John): el próximo buque es la <b>siguiente salida de la misma línea marítima</b> (LOG-IN), del <b>mismo puerto de origen</b> (Buenos Aires) al <b>mismo destino</b> (Navegantes) — con esos tres datos fijos el buque queda casi determinado: lo fija la línea, no cambia por orden.</p>
         </div>
       </div>
     </div>
@@ -409,7 +463,7 @@
 
   <div class="fix-grid">
     <div class="fix-num">1</div>
-    <div class="fix-col fix-antes"><span class="fix-lbl">✕ Antes</span>El panel "hermanas sin confirmar" (roleo, item 31) siempre arranca <b>expandido</b> en cada re-render — no hay forma de dejarlo colapsado mientras seguís trabajando el resto del lote.</div>
+    <div class="fix-col fix-antes"><span class="fix-lbl">✕ Antes</span>El panel "órdenes sin confirmar" (roleo, item 31) siempre arranca <b>expandido</b> en cada re-render — no hay forma de dejarlo colapsado mientras seguís trabajando el resto del lote.</div>
     <div class="fix-col fix-despues"><span class="fix-lbl">✓ Después</span>Header clickeable con chevron. El abierto/cerrado se guarda en <code class="k">localStorage</code> y sobrevive un refresh — lo colapsás una vez y queda así.</div>
 
     <div class="fix-num">2</div>
@@ -424,23 +478,25 @@
   <!-- ============ SECCIÓN 6 — QUÉ SE MUDA ============ -->
   <h2 id="s6"><span class="num">✎</span>Qué se muda — sin tocar lógica</h2>
   <p class="note">
-    · <b>Desde Seguimiento:</b> el modal <code class="k">seg-modal</code> completo (tabs Individual/Lote, <code class="k">parseGiGrid</code>, <code class="k">renderGiPreview</code>, <code class="k">submitGi</code> → <code class="k">/api/seguimiento::alta_despacho</code>) se traslada tal cual a la sección Good Issue de "Despachos". El botón de la card "Registrar despacho de planta" en Seguimiento deja de abrir un modal — pasa a un link que navega a <code class="k">Despachos</code> con la orden prellenada (mismo patrón que hoy usa <code class="k">openGiModal(prefillOrder)</code>, solo cambia el destino).<br>
+    · <b>Desde Seguimiento:</b> el modal <code class="k">seg-modal</code> (<code class="k">parseGiGrid</code>, <code class="k">renderGiPreview</code>, <code class="k">submitGi</code> → <code class="k">/api/seguimiento::alta_despacho</code>) se traslada a la sección Good Issue de "Despachos"; la tab "Individual" se <b>elimina por completo</b> — una sola orden = una línea pegada en el textarea de lote, única entrada. El botón de la card "Registrar despacho de planta" en Seguimiento deja de abrir un modal — <b>redirige</b> a <code class="k">Despachos</code> con la orden prellenada (mismo patrón que hoy usa <code class="k">openGiModal(prefillOrder)</code>, solo cambia el destino).<br>
     · El chip de estado <b>"Good Issue pend."</b> y la columna de progreso de la card en Seguimiento <b>NO se tocan</b> — siguen leyendo <code class="k">despacho_at</code> igual que hoy, solo cambia dónde se carga el dato.<br>
-    · <b>Desde Mailing:</b> el card/card-section "Confirmar zarpe" (<code class="k">mail-atd-ta</code>, <code class="k">parseAtdGrid</code>, <code class="k">atdParse</code>, <code class="k">atdConfirm</code> → <code class="k">/api/mailing::confirm_atd</code>, y el panel de roleo <code class="k">checkRoleoCandidatas</code>/<code class="k">renderRoleoPanel</code>) se traslada completo a la sección Confirmación de zarpe.<br>
+    · <b>Desde Mailing:</b> el card/card-section "Confirmar zarpe" (<code class="k">mail-atd-ta</code>, <code class="k">parseAtdGrid</code>, <code class="k">atdParse</code>, <code class="k">atdConfirm</code> → <code class="k">/api/mailing::confirm_atd</code>, y el panel de roleo <code class="k">checkRoleoCandidatas</code>/<code class="k">renderRoleoPanel</code>) se traslada completo a la sección Confirmación de zarpe. El botón "Confirmar zarpe" en Mailing deja de abrir su panel propio — <b>redirige</b> a <code class="k">Despachos</code> con la orden prellenada.<br>
     · Las secciones "En cola" / "Esperando zarpe" del master de Mailing (que hoy leen <code class="k">atd</code> para ordenar la cola de envío) <b>NO se mueven</b> — siguen en Mailing, son lectura/seguimiento del pipeline de envío, no carga.<br>
     · Ningún RPC, endpoint ni tabla cambia de forma. Es <b>reubicación de dos bloques de UI + 3 fixes locales al bloque ATD</b> (sección 5) — cero cambios de contrato con <code class="k">/api/seguimiento</code> o <code class="k">/api/mailing</code>.
   </p>
 
   <!-- ============ NOTAS ============ -->
-  <h2 id="notas"><span class="num">?</span>Notas para John — decisiones abiertas</h2>
+  <h2 id="notas"><span class="num">✓</span>Decisiones cerradas (John, 22/07/2026)</h2>
   <p class="note">
-    · <b>Nombre de la solapa:</b> "Despachos" — ¿va bien, o preferís algo más explícito tipo "GI / Zarpe"? "Despachos" es ambiguo con "Control BL" o "Despacho de aduana" para alguien nuevo en el equipo.<br>
-    · <b>Posición en el rail:</b> propuesta standalone después del grupo "Documentación" (sección 1) — ¿o preferís que viva ADENTRO del grupo Documentación como 5º ítem, ya que toca las mismas tablas que Seguimiento/Mailing?<br>
-    · <b>Ícono:</b> <code class="k">i-check</code> propuesto, alternativa <code class="k">i-anchor</code> — ver sección 1.<br>
-    · <b>Layout:</b> Variante A (apiladas) recomendada — confirmar antes de construir (sección 2).<br>
-    · <b>Tab "Individual" de GI:</b> el modal actual tiene una tab para cargar 1 sola orden sin pasar por el textarea. Esta propuesta la <b>elimina</b> (una línea en el textarea cubre el mismo caso) — ¿la mantenemos como atajo aparte, o se resuelve completo por el textarea?<br>
-    · <b>Botones de origen:</b> tanto el botón de Seguimiento ("Registrar despacho de planta") como el de Mailing ("Confirmar zarpe") dejan de abrir su modal/panel propio y pasan a redirigir a <code class="k">Despachos</code> con la orden prellenada — ¿aceptable, o preferís mantener también un atajo rápido inline en la card para no perder el clic-directo?<br>
-    · <b>Badge de conteo en el rail:</b> los otros ítems tienen contador de pendientes (ej. Documentación cuenta alertas activas) — ¿"Despachos" también debería mostrar un número (GI pendientes + ATD pendientes sumados, o dos badges separados)?
+    · <b>Nombre de la solapa:</b> "Despachos" — confirmado.<br>
+    · <b>Posición en el rail:</b> anidada <b>dentro del grupo Documentación</b>, como 5º ítem junto a Seguimiento / Control BL / Mailing / Cert. de Origen (sección 1) — NO standalone de primer nivel.<br>
+    · <b>Ícono:</b> <code class="k">i-check</code> — confirmado (sección 1).<br>
+    · <b>Layout:</b> Variante A — secciones apiladas GI arriba / ATD abajo, subnav sticky (sección 2).<br>
+    · <b>Tab "Individual" de GI:</b> eliminada por completo — cargar una sola orden se hace pegando una línea en el textarea de lote, que queda como única entrada (sección 3).<br>
+    · <b>Botones de origen:</b> "Registrar despacho de planta" (Seguimiento) y "Confirmar zarpe" (Mailing) dejan de abrir su modal/panel propio — <b>redirigen a Despachos con la orden prellenada</b> (sección 6).<br>
+    · <b>Badge de conteo en el rail:</b> DOS contadores separados — pill azul "GI pendientes" + pill ámbar "ATD pendientes" — nunca un número único sumado (sección 1).<br>
+    · <b>Fechas:</b> regla dura <b>DD/MM/AAAA en toda la solapa</b> — el campo de fecha es un input de texto que parsea/formatea DD/MM en el código; prohibido <code class="k">&lt;input type="date"&gt;</code> nativo, que se renderiza según el locale del navegador (banner en sección 3).<br>
+    · <b>Feature nueva a construir:</b> sugerencia de próximo buque para roleo — siguiente salida de la misma línea, mismo POL, mismo POD (tarjeta en sección 4).
   </p>
 </div>
 
@@ -457,6 +513,9 @@
     <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></symbol>
     <symbol id="i-sliders" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
     <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
     <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   </defs>
 </svg>
