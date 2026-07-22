@@ -1,0 +1,840 @@
+{
+ "order_number": "118984866",
+ "bl_number": "285N904414295",
+ "carrier": "LOG-IN",
+ "created_at": "2026-07-20T19:12:49.385+00:00",
+ "overall_result": "REVISAR",
+ "ok_count": 24,
+ "revisar_count": 1,
+ "comparison": {
+  "campos": [
+   {
+    "bl": {
+     "valor": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA, CUIT: 30560254195",
+     "multiline": true
+    },
+    "fmt": "",
+    "num": "2",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "SHIPPER / EXPORTER",
+    "comparaciones": [
+     {
+      "doc": "Factura",
+      "nota": "Embarcador = Exportador (BL = Factura)",
+      "label": "Factura (exportador)",
+      "valor": "PBBPOLISUR S.R.L.\nCALLE BOUCHARD 710, PISO 11\nC1106ABL CIUDAD DE BUENOS AIRES CAPITAL FEDERAL\nARGENTINA",
+      "estado": "OK",
+      "multiline": true
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "HUHTAMAKI EMBALAGENS FLEXIVEIS DO BRASIL LTDA\nLADO DIR ENTRONC ROD BR 101 E SN\n304 BLOCO A DIST INDL\n59150-000 PARNAMIRIM - RN - BRAZIL\nCNPJ: 05.553.211/0001-75",
+     "multiline": true
+    },
+    "fmt": "",
+    "num": "3",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "CONSIGNEE",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking (consignee)",
+      "valor": "HUHTAMAKI EMBALAGENS FLEXIVEIS DO BRASIL LTDA\nLADO DIR ENTRONC ROD BR 101 E SN\n304 BLOCO A\n59150-000 PARNAMIRIM - RN\nBRAZIL\nCNPJ 05553211000175",
+      "estado": "OK",
+      "multiline": true
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura (Ship To)",
+      "valor": "HUHTAMAKI EMBALAGENS FLEXIVEIS DO BRASIL LTDA\nCNPJ 05553211000175",
+      "estado": "OK",
+      "multiline": true
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "RFORNE ON BEHALF OF HUHTAMAKI EMBALAGENS FLEXIVEIS DO BRASIL LTDA\nRUA ASTÉRIO RUFINO ALVES, 100, SALA 02 - SANTANA\nCEP: 52060-470 - RECIFE - PE\nA/C: ROBERTO FORNE - DPTO IMPORTAÇÃO\nCNPJ: 01.668.810/0001-83 IMPORTACAO@RFORNE.COM.BR",
+     "multiline": true
+    },
+    "fmt": "",
+    "num": "4",
+    "nota": "",
+    "subs": [
+     {
+      "texto": "Control intra-Booking · el BA declara notify distinto en el campo estructurado y en las instrucciones — validar cuál va",
+      "estado": "REVISAR"
+     }
+    ],
+    "tipo": "comparacion",
+    "estado": "REVISAR",
+    "titulo": "NOTIFY PARTY",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "Coincide por CNPJ (empresa correcta); si el email puntual difiere, verificar la casilla",
+      "label": "Booking (notify)",
+      "valor": "RFORNE SERVICOS ADUANEIROS\nR SANTANNA SALAS 201 E 202 267\nEMPRESARIAL SANTANA\nSANTANA\n52060-460 RECIFE - PE\nBRAZIL\nimportacao@rforne.com.br",
+      "estado": "OK",
+      "multiline": true
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "LA0504470",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "5",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "BOOKING NO.",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking Advice",
+      "valor": "LA0504470",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "285N904414295",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "5A",
+    "nota": "",
+    "subs": [],
+    "tipo": "informativo",
+    "estado": "INFO",
+    "titulo": "BILL OF LADING NO.",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "118984866 / 48436928",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "6",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "EXPORT REFERENCES",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "118984866",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "118984866",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "118984866",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "7",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "FORWARDING AGENT / FMC NO.",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "Argentina",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "8",
+    "nota": "",
+    "subs": [],
+    "tipo": "informativo",
+    "estado": "INFO",
+    "titulo": "POINT AND COUNTRY",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "9",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "ALSO NOTIFY / INSTRUCTIONS",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "9A",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "FINAL DESTINATION",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "10",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "LOADING PIER / TERMINAL",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "DESTINO",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "10A",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "ORIGINALS TO BE RELEASED AT",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking (instrucciones)",
+      "valor": "DESTINO",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "FCL/FCL",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "11",
+    "nota": "",
+    "subs": [],
+    "tipo": "informativo",
+    "estado": "INFO",
+    "titulo": "TYPE OF MOVE",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "12",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "PLACE OF RECEIPT",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "13",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "FINAL PORT OF LOADING",
+    "comparaciones": []
+   },
+   {
+    "bl": {
+     "valor": "LOG-IN JATOBA 285N",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "14",
+    "nota": "Informativo — Aduana puede traer el feeder/buque distinto al del BL; no marca estado",
+    "subs": [],
+    "tipo": "informativo",
+    "estado": "INFO",
+    "titulo": "VESSEL VOYAGE",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "LOG IN JATOBA",
+      "estado": "INFO",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "BUENOS AIRES",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "15",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "PORT OF LOADING",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking (POL)",
+      "valor": "Buenos Aires Port",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "SUAPE",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "16",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "PORT OF DISCHARGE",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking (POD)",
+      "valor": "Suape Port",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "17",
+    "nota": "",
+    "subs": [],
+    "tipo": "vacio",
+    "estado": "INFO",
+    "titulo": "PLACE OF DELIVERY",
+    "comparaciones": []
+   }
+  ],
+  "totales": [
+   {
+    "bl": {
+     "valor": "27000",
+     "multiline": false
+    },
+    "fmt": "kg",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Peso Neto Total (KG)",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "27000",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "27000",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "27000",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "27540",
+     "multiline": false
+    },
+    "fmt": "kg",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Peso Bruto Total (KG)",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "27540",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "27540",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "27540",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "1080",
+     "multiline": false
+    },
+    "fmt": "num",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Bolsas totales",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "",
+      "estado": "NODATA",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "1080",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "1080",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "18",
+     "multiline": false
+    },
+    "fmt": "num",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Pallets totales",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana (bultos)",
+      "valor": "18",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "",
+      "estado": "NODATA",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "18",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "3901",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "",
+    "nota": "",
+    "subs": [
+     {
+      "texto": "Posición arancelaria completa PE↔Factura: {39011030000X} vs {39011030000X}",
+      "estado": "OK"
+     }
+    ],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "HS / NCM (4 dígitos)",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "",
+      "estado": "NODATA",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "39011030",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "39011030000X",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "PE",
+      "nota": "",
+      "label": "PE",
+      "valor": "39011030000X",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "26003EC03001680H",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Permiso de Embarque (PE)",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "26003EC03001680H",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "26003EC03001680H",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "PE",
+      "nota": "",
+      "label": "PE",
+      "valor": "26003EC03001680H",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "Bags",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "",
+    "nota": "BL: derivado del bloque de mercadería",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Embalaje",
+    "comparaciones": [
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "Bags",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "25 KG Bags",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "BRAZIL",
+     "multiline": false
+    },
+    "fmt": "",
+    "num": "",
+    "nota": "",
+    "subs": [
+     {
+      "texto": "Incoterm CIP vs Ocean Freight del BL (PREPAID ⇒ esperado C/D)",
+      "estado": "OK"
+     },
+     {
+      "texto": "La Factura es el ancla del cruce (aporta incoterm + consignee + país) · Incoterm CIP (grupo C/D) → el place de la Factura (SUAPE) valida el Port of Discharge (16): coincide con el POD del BL (SUAPE)",
+      "estado": "OK"
+     }
+    ],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Destino (País) · Incoterm",
+    "comparaciones": [
+     {
+      "doc": "Aduana",
+      "nota": "",
+      "label": "Aduana",
+      "valor": "BRAZIL",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Booking",
+      "nota": "",
+      "label": "Booking",
+      "valor": "BRAZIL",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "BRAZIL · Incoterm CIP SUAPE",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "num",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "FOB total (USD)",
+    "comparaciones": [
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "51484.1",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "PE",
+      "nota": "",
+      "label": "PE",
+      "valor": "51484.1",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "1066",
+     "multiline": false
+    },
+    "fmt": "num",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Flete total (USD)",
+    "comparaciones": [
+     {
+      "doc": "Factura",
+      "nota": "",
+      "label": "Factura",
+      "valor": "1066",
+      "estado": "OK",
+      "multiline": false
+     },
+     {
+      "doc": "PE",
+      "nota": "",
+      "label": "PE",
+      "valor": "1066",
+      "estado": "OK",
+      "multiline": false
+     }
+    ]
+   },
+   {
+    "bl": {
+     "valor": "",
+     "multiline": false
+    },
+    "fmt": "num",
+    "num": "",
+    "nota": "",
+    "subs": [],
+    "tipo": "comparacion",
+    "estado": "OK",
+    "titulo": "Seguro (USD)",
+    "comparaciones": []
+   }
+  ]
+ },
+ "equipment_comparison": [
+  {
+   "net": {
+    "BL": 27000,
+    "stAD": "OK",
+    "stBA": "OK",
+    "stBL": "OK",
+    "Aduana": 27000,
+    "Booking": 27000
+   },
+   "meas": {
+    "stBA": "DIFF",
+    "stBL": "DIFF",
+    "BA_m3": 45522,
+    "BL_m3": 45.522
+   },
+   "seal": {
+    "BL": "BAD37031",
+    "stAD": "OK",
+    "stBL": "OK",
+    "Aduana": "BAD37031"
+   },
+   "gross": {
+    "BL": 27540,
+    "stAD": "OK",
+    "stBA": "OK",
+    "stBL": "OK",
+    "Aduana": 27540,
+    "Booking": 27540
+   },
+   "notas": "Measurement difiere",
+   "estado": "REVISAR",
+   "wooden": {
+    "BL": "YES / TREATED AND CERTIFIED",
+    "st": "OK"
+   },
+   "container": "GESU6211561",
+   "contenido": [
+    {
+     "bolsas": 80,
+     "pallets": 1,
+     "producto": "DOWLEX NG 2038B Polyethylene Resin"
+    }
+   ],
+   "container_aduana": "GESU6211561"
+  }
+ ]
+}
