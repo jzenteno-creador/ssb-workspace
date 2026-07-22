@@ -77,6 +77,7 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `cert-origen` | Certificado de Origen — ZIP COD en Drive → PDF pdf-lib + registro (Supabase `certificados_origen`) | `docs/modules/certificado-origen.md` · el ZIP jamás se modifica |
 | `schema` | Estructura DB — browser read-only del schema public (`/api/schema` → RPC F0, queries fijas sin input) | `docs/modules/schema-viewer.md` · el endpoint jamás acepta parámetros |
 | `admin-co` | Administración (solo admins, `.ssb-admin-only` + guard isAdmin) — config de CO: excepciones por dimensión (`seguimiento_co_config`) + override por orden como válvula; actions `set_requiere_co`/`co_config_*` en `/api/seguimiento` | módulo `js/features/admin-co.js` (R2·G/T8, 2026-07-17) · regla CO viva: origen AR ⇒ requerido, excepciones por PAÍS y CLIENTE |
+| `despachos` | Despachos — GI y confirmación de zarpe por LOTE, fuera de Mailing (grupo Documentación, #i-check): pegar órdenes + una fecha DD/MM/AAAA, indicador N/M/faltan, panel roleo + sugerencia próximo buque (schedules_master), badges GI/ATD; writes por `/api/seguimiento::alta_despacho` y `/api/mailing::confirm_atd` | módulo `js/features/despachos.js` (tanda UI 23-07); Mailing/Seguimiento redirigen con `__segPendingOrder` + `__despPendingTarget` |
 
 Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global". Cliente Supabase global: `window.__ssb.supa`.
 
@@ -270,6 +271,7 @@ Diagnóstico original **verificado en prod** (`xkppkzfxgtfsmfooozsm`, 2026-07-01
 - innerHTML sin escape en renderAdminBID() y otros renderers
 - Estado global mutable: rates, efaSheet, schedule, selC, selE
 - Archivo supera 5000 líneas — candidato a modularización futura
+- **Zoom del visor CBL: REVERTIDO de prod 23-07** (transform scale sobre iframe de Drive magnifica borroso) — pendiente de rediseño (caso de uso real: leer precintos; probable render propio del PDF). El resto del pack CBL (sello tiempo-real, reportar bug → WF `j3Zf7msI7xQkLgUw` + env `N8N_BUG_REPORT_URL`) quedó en prod.
 - Responsive por tiers desde 2026-07-04: rail ≥1101 (pin) / rail colapsado 701-1100 / drawer ≤700; clock compacta ≤820, marca-ícono ≤480. Fase B: h-scroll interno en schedule-rt/tt-dow (≤900), chats 1-col y tarifas 2-col (≤700), EFA labels 140px. **Detention y Admin BID siguen no-usables en teléfono** (grid inline JS ~8400 y tabla 1388px — Fase C diferida, rompe el boundary solo-CSS)
 
 ## Decisiones de diseño inamovibles
