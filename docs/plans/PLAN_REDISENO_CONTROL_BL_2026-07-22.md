@@ -177,8 +177,35 @@ o el extract matchea el archivo más reciente; el resto `vigente=false` (F2 cae 
 `detected_at`/`extracted_at` = `created_at` de la corrida origen (**nunca now()** — si no, el
 block_reason explota en masa el día uno). Criterio: cero block_reasons nuevos el día del backfill.
 
-### F3 — App "Reemplazar documento" + alias + avisos (adelantada)
-Como v1, más: re-parenting retroactivo del alias (D3) · `retirar_documento_vigente` · los 7 avisos.
+### F3 — App "Reemplazar documento" + alias + avisos (adelantada) — **REDEFINIDA por John 22-07 tras revisión del mockup**
+
+**El modal NO sube PDFs — ningún tipo de documento requiere upload manual:**
+- **Factura TRADE (el único caso con acción manual):** la refactura YA llega por mail y la ingesta
+  YA la guarda en la carpeta fija con los 5 dígitos del correlativo AFIP correctos — pero nombrada
+  con la **PO nueva** de SAP. El modal pide SOLO la PO nueva (alias): el sistema (1) ubica en la
+  carpeta la factura `{5díg}_{PO_nueva}_FC`, (2) la **RENOMBRA** dejando el nº de **orden ORIGINAL**
+  (conserva los 5 dígitos AFIP — así el robot la reconoce igual que hoy), (3) la vincula vigente a
+  la orden original (alias + `reasignar_documento` + re-parenting de la orden fantasma), (4) **mueve
+  la factura reemplazada a una carpeta de HISTÓRICO** (sale de la carpeta fija; el registro nunca se
+  borra). **UNA sola vía, la automática — prohibido ofrecer "subir PDF a mano"** (decisión de equipo).
+  Sin flujo "alias después": la PO nueva siempre llega junto con la factura.
+- **Factura STO / PE / Booking redocumentados:** llegan por mail → la ingesta F1 los registra sola
+  ("último gana") — sin acción manual. **Planilla de aduana:** se re-sube a la carpeta como siempre;
+  el freshness-check por md5 (F2 guarda 7) detecta el cambio y re-lee.
+- **Nota técnica clave:** `drive_file_id` es estable ante rename/move → el ancla del registro F1 no
+  se rompe; el rename actualiza `file_name` vía el propio RPC (guarda 2, key change in place).
+- **Drive ops server-side:** rename+move via mini-workflow n8n dedicado (webhook llamado por
+  `/api/seguimiento` con Bearer ya validado, cred Drive existente) — el browser jamás toca Drive.
+- **Avisos (ubicación cerrada):** los banners van ARRIBA del header del expediente abierto (mismo
+  lugar que el banner "roleada" hoy), NO en las tarjetas del listado.
+- **Link directo desde el bloqueo de Mailing (nuevo, John 22-07):** el aviso "documento más nuevo
+  que el último control" es CLICKEABLE → abre el Control BL directo en ese documento; al resolver
+  (OK o refactura) y volver, el envío se habilita EN EL MOMENTO, sin F5 — se implementa junto con
+  el fix de reactividad del preview (bug F5 ya diagnosticado en mailing.js:1419).
+- Confirmación de un click con nota opcional (cerrado). Variante A modal + stepper A (cerrados).
+- **Pendiente de John:** nombre/ubicación de la carpeta de histórico (propuesta: subcarpeta
+  `HISTORICO` dentro de `FACTURAS EXPORTACION`).
+Más lo de v1: re-parenting retroactivo del alias (D3) · `retirar_documento_vigente` · los 7 avisos.
 
 ### F2 — Control BL lee de DB (el paso delicado)
 Como v1, más ⬥:
@@ -241,6 +268,55 @@ engineering") con cortes mínimos; smokes de prod los hace él. Estructura:
 - **Mockups (tanda UI del pedido §4.2/4.4/4.5 + F3):** se construyen en paralelo por agentes desde
   YA (archivos estáticos en docs/mockups/, cero riesgo) y se presentan JUNTOS para revisión async de
   John — no bloquean QW/F1.
+
+## 8. PLAN DE TRANSICIÓN — contingencia explícita para el corte a prod (exigida por John 22-07)
+
+**El principio: no existe "estado intermedio".** Para cada documento de cada control, hay exactamente
+dos caminos y ambos terminan bien: registrado en DB (ruta nueva) o no registrado (ruta vieja INTACTA).
+
+1. **Orden controlada DESPUÉS del cambio con docs llegados ANTES (nunca registrados):** el GET de
+   vigentes devuelve vacío para esos tipos → cada doc cae a su rama **FALLBACK = la cadena actual
+   COMPLETA, preservada nodo por nodo** (búsqueda QW + download + extractFromFile + parser Claude +
+   Inyectar → COMPARADOR). El control NO falla ni queda a medias: se comporta EXACTAMENTE como hoy,
+   con el mismo costo. Y además ASIENTA el extracto (`source='control-fallback'`; sin vigente previo,
+   promueve — guarda 6, probada en branch C6) → **el segundo control de esa orden ya va por DB**.
+   El fallback ES el backfill, ejecutado perezosamente en el momento exacto, con el documento que el
+   control realmente eligió (post-QW, el más reciente). Decisión POR DOCUMENTO, no por orden: una
+   misma corrida puede ir factura-por-DB y PE-por-fallback. **Planilla y BL: sin cambio alguno**
+   (siempre se parsean) — fuera de esta preocupación.
+2. **Alcance del fallback:** cubre la transición Y todos los huecos permanentes — doc que nunca llegó
+   por mail, archivo pisado en Drive (freshness md5/modifiedTime lo detecta → stale → re-extrae,
+   guarda 7, test C7), extract con schema viejo, y **DB caída** (GET con `alwaysOutputData` +
+   `onError: continueRegularOutput` = vacío limpio → fallback total; verificado en el JSON construido).
+   **Convivencia de la doble vía: PERMANENTE por diseño** — no es muleta de transición que se
+   desarma después; es la red estructural (§5.6 "cero dependencia dura"). El uso del fallback decae
+   solo a medida que la ingesta puebla; la rama queda para siempre.
+3. **Backfill: NO NECESARIO para correctitud, y DESCARTADO por calidad.** Población real al 22-07:
+   138 órdenes controladas en 14 días, 0 con vigentes → el 100% usará fallback en su próximo control
+   (costo = idéntico a hoy, UNA vez) y queda sanada. Sembrar masivamente desde corridas pre-QW puede
+   consagrar el archivo equivocado (hallazgo de la revisión adversarial); el fallback registra lo que
+   el control post-QW realmente leyó — mejor procedencia. Órdenes que nunca se re-controlan: nunca
+   necesitan el registro (nada lo lee).
+4. **Identificación y auditoría de la transición:** (a) query de población en vuelo (órdenes con
+   control reciente sin vigentes) — 1 SELECT, en este doc; (b) cada sanación queda AUDITADA sola:
+   filas con `source='control-fallback'` = el rastro exacto de la transición; (c) cada ejecución del
+   WF registra qué ruta corrió cada doc. **Reproceso manual requerido: NINGUNO.** Alerta anti-silencio:
+   si un asiento del fallback falla, mail (assert F1). Compromiso operativo: conteo diario
+   DB-vs-fallback los primeros 3 días post-corte.
+5. **Evidencia empírica:** guardas probadas 11/11 en branch real (C6 fallback-no-compite, C7 pisado);
+   la regresión golden incluye 2 órdenes deliberadamente SIN fixture (118833340, 4010746682) =
+   simulación exacta del caso de transición → su PASS demuestra la paridad de la rama vieja dentro
+   del wiring nuevo. Hueco declarado: la rama de ERROR del GET (DB caída) no se ejercita en la
+   regresión (el clon usa fixture); queda cubierta por diseño con la misma semántica best-effort ya
+   probada en prod por los nodos existentes.
+
+```sql
+-- Población en vuelo al momento del corte (read-only):
+SELECT count(*) FILTER (WHERE order_number NOT IN
+  (SELECT DISTINCT order_number FROM documentos_orden WHERE vigente AND order_number IS NOT NULL))
+  AS iran_a_fallback_en_su_proximo_control
+FROM (SELECT DISTINCT order_number FROM bl_controls WHERE created_at > now() - interval '14 days') t
+```
 
 ## 7. Changelog v1 → v2 (revisión adversarial, 3 lentes, 22 hallazgos)
 
