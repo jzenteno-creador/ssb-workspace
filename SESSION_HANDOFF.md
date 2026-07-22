@@ -1,7 +1,11 @@
-# Handoff — 2026-07-21 · ssb-workspace · ⏸️ FEATURE "columna ACTIVO del Excel → baja roja" LISTA EN LOCAL, PENDIENTE GO-LIVE
+# Handoff — 2026-07-22 · ssb-workspace · 🟢 FEATURE "columna ACTIVO del Excel → baja roja" — WORKFLOW EN PROD, FALTA SUBIDA DE JOHN
 
-> **Estado:** todo preparado y verificado en LOCAL. **NO se tocó producción** (ni push, ni `update_workflow`).
-> John pidió dejarlo listo y hacer la **subida real** cuando se reconecte desde casa. Esta sesión reconectada ejecuta el GO-LIVE de abajo con su OK.
+> **PROGRESO GO-LIVE (2026-07-22, John dio OK "continue"):**
+> - ✅ **Workflow n8n PATCHEADO + PUBLICADO en prod.** `LI5dLhoYdM1jLXDo` activeVersion **`94168a69`** (era `80245566`). El nodo Map ahora escribe `disponible` desde `ACTIVO`. Verificado vía `get_workflow_details` (`versionId==activeVersionId`, línea `disponible:` presente, resto intacto). Cred Gmail seteada explícito a "Gmail account 3" (`wWZzmUj5MQLrECH0`) vía `setNodeCredential`. Warning pre-existente del Gmail (falta `parameters.operation`) NO bloquea.
+> - ✅ **Docs del invariante actualizados** (`n8n-schedule-excel.md`, `schedule-realtime.md` — reflejan doble-escritor last-write-wins).
+> - ✅ **Front** (`1aa0eb4`) + docs listos para push.
+> - ⏳ **FALTA (John, en la UI de n8n + la app):** (1) eyeball del cred Gmail en el nodo "Send Email Notification" (el MCP lo redacta, no lo pude verificar; se lo seteó explícito pero confirmar); (2) **subir el Excel real** (`.xlsx` binario, nombre nuevo, a la carpeta Drive `1THlFd6BpZ61_27xysSzH8dg_E0TjU401`).
+> - ⏳ **FALTA (Claude):** correr la verificación DB post-subida (§ Verificación; usar `vigente_desde = current_date` = 2026-07-22).
 
 ## QUÉ ES EL CAMBIO (1 frase)
 Cablear la columna nueva **`ACTIVO`** del Excel de schedules: `ACTIVO="no"` ⇒ `schedules_master.disponible=false` ⇒ la salida se ve **en rojo pero visible** ("fuera de servicio, pero existió") en la solapa Schedule Realtime. Hoy esa columna del Excel es **inerte** (no la lee nadie).
@@ -156,7 +160,7 @@ Notas: `activo` intacto (calculado por ETD). `? false : true` garantiza booleano
 ```sql
 -- (a) ACTIVO='no' -> disponible=false. Esperado: 18
 select count(*) as debe_ser_18 from public.schedules_master
-where vigente_desde = '2026-07-21' and disponible = false;
+where vigente_desde = current_date and disponible = false;
 
 -- (b) septiembre insertado. Esperado: 28
 select count(*) as sep from public.schedules_master
@@ -172,16 +176,16 @@ where buque ilike 'LOG-IN POLARIS 134' and mes_etd='2026-08' order by puerto_des
 
 -- (d) 0 duplicados por clave de 5 en el set nuevo
 select naviera,buque,puerto_origen,puerto_destino,mes_etd,count(*) from public.schedules_master
-where vigente_desde='2026-07-21' group by 1,2,3,4,5 having count(*)>1;
+where vigente_desde=current_date group by 1,2,3,4,5 having count(*)>1;
 
 -- (e) filas tocadas + desglose. Total 317; disp_false total 18
 select mes_etd,count(*) n,count(*) filter(where disponible) disp_true,
        count(*) filter(where not disponible) disp_false
-from public.schedules_master where vigente_desde='2026-07-21' group by mes_etd order by mes_etd;
+from public.schedules_master where vigente_desde=current_date group by mes_etd order by mes_etd;
 
 -- (f) ninguna histórica <julio tocada / con disponible=false
 select count(*) as hist_tocadas_0 from public.schedules_master
-where vigente_desde='2026-07-21' and etd < '2026-07-01';
+where vigente_desde=current_date and etd < '2026-07-01';
 ```
 Además: revisar el log del Code node (§ Predicción).
 

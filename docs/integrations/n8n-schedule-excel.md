@@ -53,47 +53,65 @@ procesa (antes sí, p.ej. el caso 2026-04-28). Subir siempre el .xlsx.
 `docs/superpowers/specs/2026-07-04-migracion-schedule-brandmap-design.md`) —
 mientras viva, el GAS sigue creando ~1 copia temporal por apertura de la app.
 
-## Invariante — `disponible` FUERA del mapRow (baja manual)
+## `disponible` — doble escritor, last-write-wins (desde 2026-07-22)
 
-La columna `schedules_master.disponible` es la **baja manual de salidas** desde
-el panel Schedule Realtime (`rtToggleDisp` / `rtBajaViaje` → RPC
-`set_schedule_disponible`, cliente autenticado). **Debe quedar FUERA del payload
-del nodo Map Columns, a propósito.** Verificado contra el workflow publicado
-(activeVersion) el 2026-07-04: el payload no incluye `disponible`, y el nodo
-Upsert usa `Prefer: resolution=merge-duplicates,return=minimal` con
+> **CAMBIO 2026-07-22 (activeVersion `94168a69`):** hasta el 2026-07-21 la ingesta
+> NUNCA escribía `disponible` (era baja manual UI-only). **Ahora el nodo Map SÍ lo
+> escribe**, desde la columna Excel **`ACTIVO`** (col R): `ACTIVO="no"` ⇒
+> `disponible=false`; vacío/cualquier otra cosa ⇒ `disponible=true`. Historial del
+> invariante viejo abajo, por si hay que revertir.
+
+La columna `schedules_master.disponible` marca la **salida fuera de servicio**:
+`disponible=false` ⇒ fila **visible + roja** (`.rt-baja`) en el panel Schedule
+Realtime (no se oculta; el front filtra `activo=true`, no `disponible`). Ahora
+tiene **DOS escritores** sobre la MISMA columna:
+1. **Excel** vía el nodo Map: `disponible: (String(input['ACTIVO'] ?? input['ACTIVO '] ?? '').trim().toLowerCase() === 'no') ? false : true`.
+2. **UI autenticada** vía botón ⊘ (`rtToggleDisp` / `rtBajaViaje` → RPC `set_schedule_disponible`).
+
+**Semántica: last-write-wins** (decisión John 2026-07-22, "Opción A"). Ambos hacen
+escritura directa; gana el más reciente. El Excel puede pisar una baja manual y
+viceversa. El Upsert manda `disponible` en el payload junto al resto (claves
+homogéneas) con `Prefer: resolution=merge-duplicates,return=minimal` +
 `on_conflict=naviera,buque,puerto_origen,puerto_destino,mes_etd`.
 
-**Mecanismo:** el merge-duplicates de PostgREST solo actualiza las columnas
-PRESENTES en el payload → una columna ausente queda preservada en cada
-re-ingesta. Por eso la baja manual sobrevive al workflow. La tabla no tiene
-triggers que toquen `disponible`; las filas nuevas nacen con default `true`.
+**CONSECUENCIA a comunicar al equipo:** una baja manual (⊘) sobre una fila julio+
+se **revierte** en la próxima subida si el Excel trae esa fila con `ACTIVO` vacío.
+El Excel es la **fuente de verdad** de la baja; el ⊘ queda para cambios efímeros
+entre subidas. (Exposición al aplicar = 0: `disponible=false` total en prod era 0.)
 
-**El contrato tiene DOS condiciones — romper cualquiera pisa las bajas manuales
-en silencio en la siguiente ingesta:**
-1. `disponible` NO aparece en el payload del Map. Agregarla invertiría la
-   semántica: cada Excel re-activaría todas las salidas dadas de baja.
-2. El header `Prefer` se mantiene en `resolution=merge-duplicates`. Otra
-   estrategia de resolución reescribiría la fila completa.
+**Nombre engañoso — clave:** la columna Excel se llama `ACTIVO` pero mapea a la
+columna DB **`disponible`**, NO a la columna DB `activo`. `activo` sigue
+**calculada por el workflow** (`activo = etd >= 1º del mes`, in-window) y es su
+dueño; mapear "ACTIVO=no" a `activo` **ocultaría** la fila (el front filtra
+`activo=true`) — lo contrario del pedido. Columnas distintas, semánticas distintas.
 
-**No confundir con `activo`:** `activo` la escribe el workflow (in-window por
-ETD, Fix C) y es su dueño. `disponible` la escribe SOLO la UI autenticada.
-Columnas distintas, dueños distintos.
+**Header case-sensitive (fragilidad silenciosa):** el Map solo matchea `ACTIVO` o
+`ACTIVO ` (trailing space). Un Excel futuro con `Activo`/`activo`/` ACTIVO` apaga
+el feature en silencio (todo `disponible=true`). Solo el token exacto `"no"`
+(trim+lowercase) marca baja.
+
+**Upgrade path** si algún día molesta que el Excel pise bajas manuales: cambiar el
+`DO UPDATE` a `disponible = schedules_master.disponible AND excluded.disponible`
+(la baja manual gana) o mover disponibilidad a tabla propia fuera del upsert.
 
 **Matices del keying por mes** (el `on_conflict` incluye `mes_etd`):
-- Reprogramación de un viaje a OTRO mes → el upsert crea una fila NUEVA (con
-  `disponible=true` por default). La baja aplicada a la salida vieja NO
-  persigue la reprogramación: la baja es de la salida concreta, no del viaje
-  lógico.
-- Dentro del mismo mes la fila se actualiza en su lugar y la baja persiste.
+- Reprogramación de un viaje a OTRO mes → el upsert crea una fila NUEVA (con su
+  `disponible` según el `ACTIVO` de esa fila). La baja de la salida vieja no
+  persigue la reprogramación.
+- Dentro del mismo mes la fila se actualiza en su lugar (incluida `disponible`).
 
-> Candado: el workflow `LI5dLhoYdM1jLXDo` es UI-only — no editarlo a mano ni
-> desde acá; verificaciones solo por canal read-only (`n8n-cli workflows get`).
+> **Canal de escritura del workflow:** este workflow tiene trigger Google Drive
+> (NO IMAP/Control BL) → el Iron Law del PUT harness NO aplica. `update_workflow`
+> vía MCP está **aprobado** (ver `HANDOFF_schedule_ingestion.md`). Regla permanente:
+> tras cada `update_workflow`, re-confirmar el credential Gmail del nodo
+> "Send Email Notification" = "Gmail account 3" (`wWZzmUj5MQLrECH0`) — el MCP lo
+> redacta, verificar en UI o con un run real. Lecturas/debug: `n8n-cli` read-only.
 
 ## Checklist antes de publicar cualquier workflow n8n Excel→Supabase:
 1. Validar headers del Excel vs columnas de la tabla (si difieren, agregar nodo Code de mapeo)
 2. RLS policy: usar `FOR INSERT WITH CHECK (true)` para service role
 3. Verificar manualmente cada credencial (no confiar en auto-asignadas)
 4. Testear workflow completo en modo manual antes de Publish
-5. El payload del upsert NO debe incluir `disponible` y el `Prefer` debe seguir
-   en `resolution=merge-duplicates` — ver Invariante arriba: la baja manual
-   depende de ambas condiciones
+5. `disponible` viaja en el payload del upsert desde la columna Excel `ACTIVO`
+   (last-write-wins con la baja manual UI) y el `Prefer` debe seguir en
+   `resolution=merge-duplicates` — ver sección "`disponible` — doble escritor" arriba
