@@ -26,7 +26,7 @@
 - **P1 — RESUELTA por John:** 1 orden = 1 factura en el 99,99% de los casos → **invariante del
   modelo**. La vigencia keyea `(order_number, tipo)` firme, sin shipment. El caso restante (0,01%) lo
   cubre el aviso "se generó una nueva factura" + override manual.
-- **P2 — PENDIENTE (única decisión abierta) — regla propuesta "la cadena en orden":** el envío se
+- **P2 — RESUELTA por John (22-07, variante ESTRICTA):** regla "la cadena en orden" — el envío se
   habilita solo cuando la cadena **documento → control → sello** está en orden cronológico:
   `document_ts del vigente ≤ created_at del último control ≤ sellado_at del sello`. Consecuencias:
   (1) llega factura nueva ⇒ el envío se BLOQUEA solo, aunque haya sello ("hay documento más nuevo que
@@ -217,14 +217,30 @@ Hoy ≈92 llamadas IA/día → post-F2 ≈65-70 (-25%, control 5→2) → post-v
 5→1). Lo que se compra: control ~25s (hoy ~80s), re-controles casi gratis, **vigencia correcta en
 control Y mailing**. El freshness check agrega GETs de metadata Drive (sin IA, centavos).
 
-## 6. Qué necesita GO de John (actualizado 22-07 tarde — P1 y P3 ya resueltas)
+## 6. Modo de ejecución acordado (22-07 noche) — autónomo multiagente con CORTES MÍNIMOS
 
-1. **P2** — sí/no a la regla "la cadena en orden" (§0.b). Única decisión de diseño abierta.
-2. **GO al plan v2 completo** → habilita arrancar por QW; cada fase pide además su GO puntual antes
-   de tocar prod (DDL, PUTs n8n).
-3. GO cierre RLS `configuracion`/`operaciones`/`contenedores` + vaciar la key vieja de la tabla.
-4. GO backfill `mailing_orders` de `118957318` y `4010708596`.
-5. Push de los commits de docs acumulados (o quedan locales hasta el próximo break).
+P1/P2/P3 resueltas (P2 = variante estricta). John pidió máxima autonomía multiagente ("loop
+engineering") con cortes mínimos; smokes de prod los hace él. Estructura:
+
+- **Loop por fase:** agentes constructores (Sonnet para lo mecánico, capacidad completa para lo
+  delicado) escriben código/migraciones/workflows en el repo → verificación adversarial + checks en
+  main thread → paquete listo → **CORTE** (GO de John) → los writes de PROD los aplica SOLO el main
+  thread (DDL vía MCP, PUTs vía harness Iron Law) → John smoke en prod → siguiente fase.
+- **Regla permanente respetada:** agentes sin git paralelo (cada uno escribe solo sus archivos
+  nuevos; commits centralizados en main thread). Writes de producción JAMÁS desde subagentes.
+- **Cortes (4 en total):**
+  1. **Corte 0 (un solo "dale"):** GO formal plan v2 + seguridad validador (vaciar key vieja +
+     cerrar RLS ×3) + backfill `mailing_orders` ×2 + push de docs + branches efímeras Supabase
+     (centavos/hora, create→test→delete).
+  2. **Corte 1:** paquete QW+F1 verificado (migración probada en branch efímera, PUTs preparados,
+     golden set exportado) → aplico → smoke John.
+  3. **Corte 2:** paquete F3+F2 (mockup "Reemplazar documento" aprobado, front+api, regresión golden
+     verde en clon) → aplico → smoke John.
+  4. **Corte 3:** paquete F4 (cadena-en-orden en mailing + ZCB3 despacho) → aplico → smoke John
+     (TEST_MODE sigue ON).
+- **Mockups (tanda UI del pedido §4.2/4.4/4.5 + F3):** se construyen en paralelo por agentes desde
+  YA (archivos estáticos en docs/mockups/, cero riesgo) y se presentan JUNTOS para revisión async de
+  John — no bloquean QW/F1.
 
 ## 7. Changelog v1 → v2 (revisión adversarial, 3 lentes, 22 hallazgos)
 
