@@ -20,13 +20,13 @@ export const config = { maxDuration: 60 }; // el send con adjuntos tarda ~10-15s
 const PROXY_ACTIONS = new Set(['preview', 'send', 'save_contacts', 'confirm_schedule']);
 // FIX 1 (2026-07-23, autorización explícita de John): únicos usuarios habilitados a
 // pedir envío REAL por-request (action 'send' con test_mode estrictamente false).
-// jsrojas (admin) NO incluido, a pedido de John. Espejo server del testLockState del
+// jzenteno + jsrojas (John lo sumó 23-07). Espejo server del testLockState del
 // front (js/features/mailing.js) — la UI deshabilita el toggle, esto cierra el
 // bypass por fetch/consola. El candado maestro (Config TEST_MODE del workflow n8n)
 // queda INTACTO y por encima de este flag por-request. Respuesta 403 honesta — NO
 // degradar a TEST en silencio (recomendación nuestra, a confirmar por John: un 200
 // "enviado" que en realidad salió TEST le esconde el problema al operador).
-const TEST_OFF_ALLOWED = ['jzenteno@ssbint.com'];
+const TEST_OFF_ALLOWED = ['jzenteno@ssbint.com', 'jsrojas@ssbint.com'];
 const MAX_ATD_ROWS = 200;
 const MIN_ATD = '2020-01-01';
 const MAX_ROLEO_VESSELS = 20;
@@ -381,7 +381,7 @@ export default async function handler(req, res) {
   // estrictamente false (el default del contrato es TEST: payload.test_mode =
   // b.test_mode !== false). user.email es confiable: viene de /auth/v1/user. ──
   if (action === 'send' && b.test_mode === false && !TEST_OFF_ALLOWED.includes(String(user.email).toLowerCase()))
-    return res.status(403).json({ error: 'Modo real: solo autorizado para jzenteno@ssbint.com. El envío NO se realizó.' });
+    return res.status(403).json({ error: 'Modo real: solo autorizado para jzenteno@ y jsrojas@. El envío NO se realizó.' });
 
   // ── confirm_atd: se resuelve ACÁ (PostgREST, service key) — no pasa por el webhook ──
   if (action === 'confirm_atd') return handleConfirmAtd(res, b, user.email, supaUrl, supaKey);

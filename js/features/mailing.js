@@ -114,14 +114,14 @@
   // en el borde — autocrítica del verify de tanda B).
   const MAX_EXTRA_BYTES = 3 * 1024 * 1024;
   const EXTRA_EXT_RE = /\.(pdf|zip|jpe?g|png|xlsx|docx)$/i;
-  // ── FIX 1 (2026-07-23, autorización explícita de John): único usuario habilitado
-  // a destildar el Modo TEST (envío REAL por-request). jsrojas (admin) NO incluido,
-  // a pedido de John. Espejo front de TEST_OFF_ALLOWED en api/mailing.js (el server
+  // ── FIX 1 (2026-07-23, autorización explícita de John): usuarios habilitados
+  // a destildar el Modo TEST (envío REAL por-request): jzenteno + jsrojas (John
+  // sumó a Jorge el 23-07). Espejo front de TEST_OFF_ALLOWED en api/mailing.js (el server
   // responde 403 si otro usuario fuerza test_mode:false por consola/fetch). El
   // candado llave-1 (__mailTestOff + test_reasons del workflow — HARD LOCK de
   // arriba) sigue INTACTO: esto es una condición ADICIONAL en testLockState, no un
   // reemplazo. ──
-  const TEST_OFF_EMAIL = 'jzenteno@ssbint.com';
+  const TEST_OFF_EMAILS = ['jzenteno@ssbint.com', 'jsrojas@ssbint.com'];
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -880,7 +880,7 @@
     // sos jzenteno@, las otras razones ("generá un preview…") mentirían: nunca vas
     // a poder destildar TEST aunque las cumplas todas. El server replica con 403.
     const authEmail = String((window.__ssbAuth && window.__ssbAuth.email) || '').toLowerCase();
-    if(authEmail !== TEST_OFF_EMAIL) return { offOk:false, why:'El modo real solo lo habilita ' + TEST_OFF_EMAIL + ' — tus envíos salen siempre en TEST.' };
+    if(!TEST_OFF_EMAILS.includes(authEmail)) return { offOk:false, why:'El modo real solo lo habilitan jzenteno@ y jsrojas@ — tus envíos salen siempre en TEST.' };
     if(!_preview) return { offOk:false, why:'Generá un Preview primero para habilitar el modo real.' };
     const reasons = _preview.test_reasons || [];
     if(reasons.some(t => String(t).includes('candado'))) return { offOk:false, why:'El candado TEST_MODE del workflow está ON: apagarlo requiere un PUT deliberado. Todo envío sale a expoarpbb.' };
