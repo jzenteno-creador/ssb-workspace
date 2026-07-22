@@ -3419,6 +3419,94 @@ body.light #panel-admin-co{ --adm-surface:#FFFFFF; --adm-line:#E7E4DD; --adm-lin
   #panel-schema .sch-head{flex-direction:column}
 }
 </style>
+<style id="despachos-styles">
+/* ═══ DESPACHOS (solapa nueva 2026-07-22 — mockup mockup_gi_zarpe_solapa_2026-07-22.html) ═══
+   Isla autocontenida, namespace .desp-* (regla: nunca clases genéricas). Reusa tokens
+   globales (--surface/--border/--blue/…) y el sistema .badge para los estados. */
+#panel-despachos .desp-root{max-width:1100px;margin:0 auto;padding:6px 4px 40px}
+#panel-despachos .desp-head{margin-bottom:14px}
+#panel-despachos .desp-title{font-size:var(--fs-2xl);font-weight:800;letter-spacing:-.01em;margin:0}
+#panel-despachos .desp-sub{color:var(--muted);font-size:var(--fs-md);margin:4px 0 0;max-width:780px;line-height:var(--lh-base)}
+#panel-despachos .desp-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:16px}
+#panel-despachos .desp-card>summary{display:flex;align-items:center;gap:9px;padding:13px 16px;cursor:pointer;font-size:14px;font-weight:800;letter-spacing:.02em;color:var(--text);list-style:none;user-select:none}
+#panel-despachos .desp-card>summary::-webkit-details-marker{display:none}
+#panel-despachos .desp-card>summary>.ic{width:17px;height:17px;color:var(--blue);flex-shrink:0}
+#panel-despachos .desp-card>summary .desp-hint{font-weight:400;font-size:12px;color:var(--muted);margin-left:auto;text-align:right}
+#panel-despachos .desp-card>summary .desp-chev{width:14px;height:14px;color:var(--muted);transition:transform .15s;flex-shrink:0}
+#panel-despachos .desp-card[open]>summary{border-bottom:1px solid var(--border)}
+#panel-despachos .desp-card[open]>summary .desp-chev{transform:rotate(90deg)}
+#panel-despachos .desp-body{padding:14px 16px}
+#panel-despachos .desp-ta{width:100%;min-height:120px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:var(--text);background:var(--faint);border:1px solid var(--border);border-radius:9px;padding:11px 13px;outline:none}
+#panel-despachos .desp-ta:focus{border-color:var(--blue)}
+#panel-despachos .desp-tahint{font-size:11px;color:var(--muted);margin-top:5px}
+#panel-despachos .desp-loteinfo{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--text);margin:8px 0 0;min-height:16px}
+#panel-despachos .desp-applyrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;padding:10px 12px;background:var(--faint);border:1px dashed var(--border);border-radius:9px;font-size:12px;color:var(--muted)}
+/* Campo de fecha DD/MM/AAAA — input de TEXTO estilizado (NUNCA input[type=date] nativo:
+   se renderiza según el locale del navegador — en-US muestra MM/DD, regla dura John) */
+#panel-despachos .desp-date{display:inline-flex;align-items:center;gap:7px;background:var(--surface-hv);border:1px solid var(--border);border-radius:7px;padding:6px 9px}
+#panel-despachos .desp-date:focus-within{border-color:var(--blue)}
+#panel-despachos .desp-date input{border:none;background:none;outline:none;color:var(--text);font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;width:96px;padding:0}
+#panel-despachos .desp-date .ic{color:var(--muted);width:13px;height:13px;flex-shrink:0}
+#panel-despachos .desp-btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:8px;padding:8px 15px;cursor:pointer;border:1px solid var(--border);background:var(--faint);color:var(--text)}
+#panel-despachos .desp-btn:hover{background:var(--surface-hv)}
+#panel-despachos .desp-btn.pri{background:var(--blue);border-color:var(--blue);color:var(--text-inverse)}
+#panel-despachos .desp-btn.pri:hover{filter:brightness(1.08)}
+#panel-despachos .desp-btn.mini{padding:5px 11px;font-size:11.5px;border-radius:7px}
+#panel-despachos .desp-btn.clear{border-width:1.5px;color:var(--muted)}
+#panel-despachos .desp-btn.clear:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+#panel-despachos .desp-btn:disabled{opacity:.45;cursor:not-allowed}
+#panel-despachos .desp-btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+#panel-despachos .desp-motseg{display:inline-flex;gap:2px;background:var(--surface-hv);border:1px solid var(--border);border-radius:8px;padding:2px}
+#panel-despachos .desp-motseg button{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:12px;font-weight:600;border:none;border-radius:6px;background:none;color:var(--muted);padding:6px 12px;cursor:pointer}
+#panel-despachos .desp-motseg button.is-on{background:var(--blue-bg);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue-bd)}
+#panel-despachos table.desp-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px}
+#panel-despachos table.desp-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border)}
+#panel-despachos table.desp-tbl td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+#panel-despachos table.desp-tbl tr.desp-conflict td{background:var(--red-bg)}
+#panel-despachos table.desp-tbl td.desp-ord{font-family:var(--mono);font-weight:600}
+#panel-despachos .desp-report{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+#panel-despachos .desp-report>.badge{font-size:11.5px;padding:5px 12px;border-radius:20px}
+#panel-despachos .desp-detoggle{font-size:11.5px;color:var(--blue);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:var(--font)}
+#panel-despachos .desp-detoggle .ic{width:12px;height:12px;transition:transform .15s}
+#panel-despachos .desp-detoggle.open .ic{transform:rotate(90deg)}
+#panel-despachos .desp-alert{background:var(--amber-bg);border:1px solid var(--amber-bd);color:var(--amber);border-radius:10px;padding:10px 13px;font-size:12.5px;margin-top:12px}
+#panel-despachos .desp-faint{color:var(--muted);font-size:11.5px}
+/* panel roleo colapsable con estado persistido (fix ④.1 Naara) */
+#panel-despachos .desp-cp{border:1px solid var(--amber-bd);border-radius:10px;margin-top:14px;overflow:hidden}
+#panel-despachos .desp-cp-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;background:var(--amber-bg);cursor:pointer;border:none;width:100%;font-family:var(--font);text-align:left}
+#panel-despachos .desp-cp-hd .t{font-size:12.5px;font-weight:700;color:var(--amber);display:flex;align-items:center;gap:7px}
+#panel-despachos .desp-cp-hd .t .ic{width:14px;height:14px;transition:transform .15s;flex-shrink:0}
+#panel-despachos .desp-cp-hd.open .t .ic{transform:rotate(90deg)}
+#panel-despachos .desp-cp-body{padding:12px 13px;font-size:12px;color:var(--text)}
+#panel-despachos .desp-roleo-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--border);cursor:pointer}
+#panel-despachos .desp-roleo-row:last-of-type{border-bottom:none}
+#panel-despachos .desp-ord{font-family:var(--mono);font-weight:600}
+/* tarjeta "Roleo sugerido" — próximo buque de la misma línea / mismo POL / mismo POD */
+#panel-despachos .desp-sug{margin-top:12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:10px;padding:12px 14px}
+#panel-despachos .desp-sug .hd{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--blue);margin-bottom:8px}
+#panel-despachos .desp-sug .hd .ic{width:13px;height:13px}
+#panel-despachos .desp-sug .vessel{font-family:var(--mono);font-weight:700;font-size:13.5px;color:var(--text)}
+#panel-despachos .desp-sug .meta{font-size:11.5px;color:var(--muted)}
+#panel-despachos .desp-sug .note{font-size:10.5px;color:var(--muted);margin:9px 0 0;line-height:1.6}
+@media (max-width:700px){
+  #panel-despachos .desp-card>summary .desp-hint{display:none}
+}
+/* ── Contadores del rail — DOS pills separadas (GI azul + paquete / ATD ámbar + ancla).
+   Rail constant-dark en ambos temas → hex FIJOS, nunca vars que flipen en body.light. ── */
+.tab-bar .desp-cnts{display:inline-flex;gap:4px;margin-left:auto;align-items:center}
+.tab-bar .desp-cnt{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;font-weight:700;line-height:1.5;padding:1px 5px;border-radius:8px;letter-spacing:.02em;white-space:nowrap}
+.tab-bar .desp-cnt .ic{width:9px;height:9px}
+.tab-bar .desp-cnt--gi{background:#141f38;color:#5b9bf5;border:1px solid #2a4478}
+.tab-bar .desp-cnt--atd{background:#2a1f0a;color:#f5a623;border:1px solid #6b4a12}
+.tab-bar .desp-minis{position:absolute;top:3px;right:3px;display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.tab-bar .desp-mini{min-width:14px;padding:0 3px;height:12px;border-radius:7px;font-family:var(--mono);font-size:8px;font-weight:700;line-height:12px;text-align:center}
+.tab-bar .desp-mini--gi{background:#141f38;color:#5b9bf5;border:1px solid #2a4478}
+.tab-bar .desp-mini--atd{background:#2a1f0a;color:#f5a623;border:1px solid #6b4a12}
+/* minis solo en modos icon-only (flyout): en árbol (pinned ≥1101 / drawer ≤700)
+   las pills viven en el ítem Despachos y los minis duplicarían el dato */
+@media (min-width:1101px){ html.rail-pinned .tab-bar .desp-minis{display:none !important} }
+@media (max-width:700px){ .tab-bar .desp-minis{display:none !important} }
+</style>
 </head>
 <body>
 
@@ -3643,7 +3731,11 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
          Las reglas CSS #seg-group-badge de las líneas ~304/312 quedan
          huérfanas a propósito (display:none sobre un id que ya no existe:
          inofensivo, tocar el CSS es riesgo sin beneficio). -->
-    <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg></button>
+    <!-- Despachos (2026-07-22): minis GI/ATD del grupo — DOS contadores separados,
+         nunca sumados (decisión John). Solo visibles en modos icon-only (flyout);
+         en árbol (pinned/drawer) las pills viven en el ítem Despachos. Los pinta
+         paintDespBadges (js/features/despachos.js). -->
+    <button class="tab-btn rail-doc-btn" id="rail-doc-btn" type="button" aria-label="Documentación" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg><span class="tab-lbl">Documentación</span><svg class="ic rail-chev" aria-hidden="true"><use href="#i-chev"/></svg><span class="desp-minis" id="desp-minis" style="display:none" aria-hidden="true"><span class="desp-mini desp-mini--gi" id="desp-mini-gi" title="GI pendientes">0</span><span class="desp-mini desp-mini--atd" id="desp-mini-atd" title="ATD pendientes">0</span></span></button>
     <div class="rail-doc-sub" id="rail-doc-sub">
       <div class="rail-doc-hd" aria-hidden="true">Documentación</div>
       <!-- R2·F: Seguimiento partido en DOS ítems del rail (mockup aprobado 17-07) —
@@ -3653,6 +3745,9 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
       <button class="tab-btn" id="tab-control-bl" onclick="switchTab('control-bl')" aria-label="Control BL"><svg class="ic" aria-hidden="true"><use href="#i-file-text"/></svg><span class="tab-lbl">Control BL</span></button>
       <button class="tab-btn" id="tab-cert-origen" onclick="switchTab('cert-origen')" aria-label="Certificado de Origen"><svg class="ic" aria-hidden="true"><use href="#i-stamp"/></svg><span class="tab-lbl">Cert. de Origen</span></button>
       <button class="tab-btn" id="tab-mailing" onclick="switchTab('mailing')" aria-label="Mailing"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg><span class="tab-lbl">Mailing</span></button>
+      <!-- Despachos (2026-07-22, mockup mockup_gi_zarpe_solapa): GI + Confirmación de
+           zarpe por lote — 5º ítem del grupo. Pills GI (azul) / ATD (ámbar) SEPARADAS. -->
+      <button class="tab-btn" id="tab-despachos" onclick="switchTab('despachos')" aria-label="Despachos"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg><span class="tab-lbl">Despachos</span><span class="desp-cnts" id="desp-rail-cnts" style="display:none"><span class="desp-cnt desp-cnt--gi" id="desp-cnt-gi" title="GI pendientes" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg><span id="desp-cnt-gi-n">0</span></span><span class="desp-cnt desp-cnt--atd" id="desp-cnt-atd" title="ATD pendientes" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-anchor"/></svg><span id="desp-cnt-atd-n">0</span></span></span></button>
     </div>
   </div>
   <button class="tab-btn" id="tab-schema" onclick="switchTab('schema')" aria-label="Estructura DB"><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg><span class="tab-lbl">Estructura DB</span></button>
@@ -4785,22 +4880,18 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
 
     <div class="mail-kpibar" id="mail-kpibar" aria-label="SLA de mailing"></div>
 
-    <details class="mail-atd" id="mail-atd-panel">
-      <summary>
-        <svg class="ic" aria-hidden="true"><use href="#i-ship"/></svg>
-        Confirmar zarpe (ATD)
-        <span class="mail-atd-hint">pegá orden + fecha desde Excel (DD/MM/AAAA) — arranca el reloj de mailing</span>
-      </summary>
-      <div class="mail-atd-body">
-        <textarea class="mail-atd-ta" id="mail-atd-ta" spellcheck="false" placeholder="118962688&#9;05/07/2026&#10;118959520&#9;04/07/2026"></textarea>
-        <div class="mail-btnrow">
-          <button class="mail-btn" type="button" data-act="atd-parse">Validar lote</button>
-          <button class="mail-btn pri" type="button" data-act="atd-confirm" id="mail-atd-confirm" disabled>Confirmar ATD</button>
-          <span class="mail-status-line" id="mail-atd-sum"></span>
-        </div>
-        <div id="mail-atd-report"></div>
-      </div>
-    </details>
+    <!-- SUTURA (2026-07-22, solapa Despachos): el panel "Confirmar zarpe (ATD)"
+         (details#mail-atd-panel: mail-atd-ta / mail-atd-confirm / mail-atd-sum /
+         mail-atd-report) SE MUDÓ a #panel-despachos — parser y acciones viven en
+         js/features/despachos.js (parseAtdGrid → /api/mailing::confirm_atd, roleo
+         item 31 incluido). Acá queda solo el acceso. Las clases .mail-atd* de la
+         isla mailing-styles quedan huérfanas a propósito (isla NO-TOUCH). -->
+    <div class="mail-atd" id="mail-atd-moved" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px">
+      <svg class="ic" aria-hidden="true" style="width:16px;height:16px;color:var(--mail-accent)"><use href="#i-anchor"/></svg>
+      <span style="font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--mail-ink)">Confirmar zarpe (ATD)</span>
+      <span style="font-size:12px;color:var(--mail-ink-faint)">se mudó a la solapa <b>Despachos</b> (grupo Documentación)</span>
+      <button class="mail-btn pri" type="button" onclick="switchTab('despachos')" style="margin-left:auto">Ir a Despachos →</button>
+    </div>
 
     <div class="mail-filterbar" id="mail-filterbar">
       <span class="mail-flabel">Estado:</span>
@@ -4923,78 +5014,95 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     <div class="seg-tablewrap" id="seg-tablewrap"></div>
     <div class="seg-doclegend" id="seg-legend"><b>Docs:</b> FC Factura · PL Packing List · COz/COp Cert. Origen ZIP/PDF (solo si la orden lleva CO) · PE Permiso (solo trade) · CRT doc. de exportación terrestre · COA futuro (ppal. trade) — <span style="font-style:italic">punteado = aún sin dato en el sistema</span> · rayado = falta · <b style="color:var(--green)">verde</b> = presente</div>
 
-    <!-- ═ Modal Good Issue — despacho de planta (molde propio seg-mod-*, NO clon de .efa-mod-*) ═ -->
-    <div class="seg-mod-backdrop" id="seg-modal">
-      <div class="seg-mod" role="dialog" aria-modal="true" aria-labelledby="seg-mod-title-txt">
-        <div class="seg-mod-head">
-          <div class="seg-mod-title"><span id="seg-mod-title-txt">Despacho de planta (Good Issue)</span><button type="button" id="seg-mod-close" aria-label="Cerrar">✕</button></div>
-          <div class="seg-mod-warn">Fecha de <b>Good Issue</b> = salida física de planta — <u>no</u> es la fecha de zarpe. El zarpe (ATD) se confirma en Mailing → Confirmar zarpe.</div>
-          <div class="seg-mod-tabs">
-            <button type="button" class="seg-mod-tab active" id="seg-mod-tab-single" data-target="seg-mod-body-single">Individual</button>
-            <button type="button" class="seg-mod-tab" id="seg-mod-tab-batch" data-target="seg-mod-body-batch">Lote (pegar desde Excel)</button>
-          </div>
-        </div>
-
-        <div class="seg-mod-body" id="seg-mod-body-single">
-          <div class="seg-2col">
-            <div class="seg-field">
-              <label for="seg-gi-orden">Número de orden</label>
-              <input id="seg-gi-orden" style="font-family:var(--mono)" autocomplete="off" inputmode="numeric">
-              <div class="hint">7–12 dígitos · el 0 inicial se quita solo (0118… → 118…)</div>
-              <div class="seg-field-err" id="seg-gi-orden-err" hidden></div>
-            </div>
-            <div class="seg-field">
-              <label for="seg-gi-fecha">Fecha de Good Issue</label>
-              <input type="date" id="seg-gi-fecha">
-              <div class="hint">prefill: hoy · no puede ser &gt; mañana</div>
-            </div>
-          </div>
-          <div class="seg-2col">
-            <div class="seg-field">
-              <label for="seg-gi-mot">Transporte</label>
-              <select id="seg-gi-mot"><option value="maritimo" selected>Marítimo</option><option value="terrestre">Terrestre</option></select>
-            </div>
-            <div class="seg-field">
-              <label for="seg-gi-modo">Cómo salió (opcional)</label>
-              <input id="seg-gi-modo" placeholder="ej: camión ×2 contenedores" autocomplete="off">
-            </div>
-          </div>
-          <div class="seg-field">
-            <label for="seg-gi-notas">Nota (opcional)</label>
-            <input id="seg-gi-notas" placeholder="lo que el próximo que mire la orden tiene que saber" autocomplete="off">
-          </div>
-        </div>
-
-        <div class="seg-mod-body" id="seg-mod-body-batch" style="display:none">
-          <!-- B.1-fix (mockup aprobado 17-07): transporte del lote — antes todo lote
-               caía al default 'maritimo' de la tabla sin decisión del operador -->
-          <div class="seg-field">
-            <label>Transporte del lote</label>
-            <div class="seg-motseg" id="seg-gi-batchmot" role="group" aria-label="Transporte del lote">
-              <button type="button" class="is-on" data-mot="maritimo"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ship"/></svg>Marítimo</button>
-              <button type="button" data-mot="terrestre"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-truck"/></svg>Terrestre</button>
-            </div>
-            <div class="hint">se aplica a todas las filas del pegado — una fila puede traer su propio <b>M</b>/<b>T</b> como 3ª columna (override)</div>
-          </div>
-          <div class="seg-field">
-            <label for="seg-gi-ta">Pegá filas: orden [TAB] fecha [TAB] transporte (opcional: M/T)</label>
-            <textarea id="seg-gi-ta" rows="4" style="font-family:var(--mono);font-size:var(--fs-sm)" spellcheck="false"></textarea>
-          </div>
-          <div class="seg-applyrow">Aplicar <input type="date" id="seg-gi-applydate"> a todas las filas <b>sin fecha</b> <button type="button" id="seg-gi-applybtn">Aplicar</button></div>
-          <div class="seg-grid-prev" id="seg-gi-prev"></div>
-          <div class="seg-field" style="margin-top:10px"><div class="hint">Duplicados <b>idénticos</b> se colapsan con aviso · duplicados con <b>fechas distintas</b> = conflicto por orden (esa orden no se escribe, el resto del lote sigue).</div></div>
-        </div>
-
-        <div class="seg-mod-foot">
-          <button class="seg-btn" type="button" id="seg-mod-cancel">Cancelar</button>
-          <button class="seg-btn seg-btn--primary" type="button" id="seg-mod-submit">Registrar despacho</button>
-        </div>
-      </div>
-    </div>
+    <!-- SUTURA (2026-07-22, solapa Despachos): el modal Good Issue (seg-modal:
+         seg-gi-orden/fecha/mot/modo/notas + tab Lote seg-gi-ta/applydate/prev)
+         SE MUDÓ a #panel-despachos como sección de lote (la tab "Individual" se
+         ELIMINÓ por decisión de John — una orden = una línea pegada). Parser y
+         submit viven en js/features/despachos.js (parseGiGrid →
+         /api/seguimiento::alta_despacho). El botón #seg-gi-open-btn del header
+         y la alerta "Registrar despacho de planta" ahora REDIRIGEN a Despachos
+         (bus __segPendingOrder + __despPendingTarget). Las reglas CSS seg-mod-*
+         de la isla de Seguimiento quedan huérfanas a propósito (precedente
+         #seg-group-badge: tocar CSS ajeno es riesgo sin beneficio). -->
 
   </div>
 </div>
 <!-- ═══════════ FIN TAB: SEGUIMIENTO ═══════════ -->
+
+<!-- ═══════════ TAB: DESPACHOS — GI + Confirmación de zarpe por lote (2026-07-22) ═══════════
+     Mockup aprobado: docs/mockups/mockup_gi_zarpe_solapa_2026-07-22.html (Variante A apilada).
+     Lógica: js/features/despachos.js · CSS: isla #despachos-styles (head). Fechas: SIEMPRE
+     DD/MM/AAAA — los campos de fecha son <input type="text"> parseados en el módulo. -->
+<div class="tab-panel" id="panel-despachos">
+  <div class="desp-root">
+
+    <header class="desp-head">
+      <h1 class="desp-title">Despachos</h1>
+      <p class="desp-sub">Good Issue (salida de planta) y confirmación de zarpe (ATD) — carga por lote: pegá las órdenes desde Excel, una por línea (una sola orden = una línea). Todas las fechas en DD/MM/AAAA.</p>
+    </header>
+
+    <details class="desp-card" id="desp-gi-card" open>
+      <summary>
+        <svg class="ic" aria-hidden="true"><use href="#i-package"/></svg>
+        Good Issue — despacho de planta (lote)
+        <span class="desp-hint">pegá orden + fecha (+ M/T opcional) desde la planilla de planta</span>
+        <svg class="ic desp-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+      </summary>
+      <div class="desp-body">
+        <div class="desp-applyrow" style="margin-top:0">
+          <span>Transporte del lote:</span>
+          <div class="desp-motseg" id="desp-gi-batchmot" role="group" aria-label="Transporte del lote">
+            <button type="button" class="is-on" data-mot="maritimo"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-ship"/></svg>Marítimo</button>
+            <button type="button" data-mot="terrestre"><svg class="ic ic-sm" aria-hidden="true"><use href="#i-truck"/></svg>Terrestre</button>
+          </div>
+          <span class="desp-faint">una fila puede traer su propio <b>M</b>/<b>T</b> como columna extra (override)</span>
+        </div>
+        <textarea class="desp-ta" id="desp-gi-ta" spellcheck="false" aria-label="Pegado por lote de Good Issue: orden, fecha, transporte" placeholder="4010045821&#9;21/07/2026&#9;M&#10;4010045822&#9;21/07/2026&#10;118034562"></textarea>
+        <div class="desp-tahint">separador tab o ≥2 espacios · fecha DD/MM/AAAA · duplicados idénticos se colapsan con aviso · misma orden con fechas distintas = conflicto (esa orden no se escribe, el resto sigue)</div>
+        <div class="desp-loteinfo" id="desp-gi-loteinfo" aria-live="polite"></div>
+        <div class="desp-applyrow">
+          <label for="desp-gi-applydate">Aplicar esta fecha a las filas <b>sin fecha</b>:</label>
+          <span class="desp-date"><input type="text" id="desp-gi-applydate" inputmode="numeric" placeholder="DD/MM/AAAA" aria-label="Fecha a aplicar a las filas sin fecha (GI) — formato DD/MM/AAAA"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
+          <button class="desp-btn mini" type="button" id="desp-gi-applybtn">Aplicar</button>
+        </div>
+        <div id="desp-gi-prev"></div>
+        <div class="desp-btnrow">
+          <button class="desp-btn clear" type="button" id="desp-gi-clear">🧹 Limpiar</button>
+          <button class="desp-btn pri" type="button" id="desp-gi-submit" disabled>Registrar despacho</button>
+          <span class="desp-faint" id="desp-gi-sum"></span>
+        </div>
+      </div>
+    </details>
+
+    <details class="desp-card" id="desp-atd-card" open>
+      <summary>
+        <svg class="ic" aria-hidden="true"><use href="#i-anchor"/></svg>
+        Confirmación de zarpe (ATD) — lote
+        <span class="desp-hint">pegá orden + ATD desde el aviso de la naviera — arranca el reloj de mailing</span>
+        <svg class="ic desp-chev" aria-hidden="true"><use href="#i-chev"/></svg>
+      </summary>
+      <div class="desp-body">
+        <textarea class="desp-ta" id="desp-atd-ta" spellcheck="false" aria-label="Pegado por lote de confirmación de zarpe: orden, ATD" placeholder="118962688&#9;05/07/2026&#10;118959520&#9;04/07/2026"></textarea>
+        <div class="desp-tahint">separador tab · fecha DD/MM/AAAA · solo zarpe marítimo</div>
+        <div class="desp-loteinfo" id="desp-atd-loteinfo" aria-live="polite"></div>
+        <div class="desp-applyrow">
+          <label for="desp-atd-applydate">Aplicar esta fecha a las filas <b>sin fecha</b>:</label>
+          <span class="desp-date"><input type="text" id="desp-atd-applydate" inputmode="numeric" placeholder="DD/MM/AAAA" aria-label="Fecha a aplicar a las filas sin ATD — formato DD/MM/AAAA"><svg class="ic" aria-hidden="true"><use href="#i-calendar"/></svg></span>
+          <button class="desp-btn mini" type="button" id="desp-atd-applybtn">Aplicar</button>
+        </div>
+        <div class="desp-btnrow" style="margin-top:0">
+          <button class="desp-btn clear" type="button" id="desp-atd-clear">🧹 Limpiar</button>
+          <button class="desp-btn" type="button" id="desp-atd-parse">Validar lote</button>
+          <button class="desp-btn pri" type="button" id="desp-atd-confirm" disabled>Confirmar zarpe</button>
+          <span class="desp-faint" id="desp-atd-sum"></span>
+        </div>
+        <div id="desp-atd-report"></div>
+      </div>
+    </details>
+
+  </div>
+</div>
+<!-- ═══════════ FIN TAB: DESPACHOS ═══════════ -->
 
 <!-- ═══════════ TAB: ADMINISTRACIÓN (E.1/T8 — solo flag CO; resto = candidatos futuros) ═══════════ -->
 <div class="tab-panel ssb-admin-only" id="panel-admin-co"><div id="adm-root"></div></div>

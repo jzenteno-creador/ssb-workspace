@@ -21,9 +21,10 @@
    (mkChip('alertas', ...) en renderTriage, sin tocar). Acciones (alta_despacho) vía /api/seguimiento
    con Bearer JWT + gate vac_employees server-side: NO existen en local
    (501) — smoke de esa acción SOLO en prod; loadSeguimiento lee
-   Supabase directo y SÍ es verificable en local. Modal Good Issue con
-   Escape-handler dinámico (_segEscHandler se agrega/quita vía
-   addEventListener/removeEventListener en cada apertura/cierre).
+   Supabase directo y SÍ es verificable en local. DESPACHOS (2026-07-22):
+   el modal Good Issue (seg-modal, parseGiGrid/submitGi/alta_despacho) SE
+   MUDÓ a js/features/despachos.js — los accesos de esta solapa redirigen
+   con __segPendingOrder + __despPendingTarget='gi' (ver sutura interna).
    PLANCOMPLETO TANDA E (migración v3, NO aplicada al momento de este
    commit): consume sold_to_key/sold_to_name/notify_name/pais_destino_final/
    roleo_at/roleo_from_vessel/roleo_to_vessel/roleo_pendiente_bl — columnas
@@ -93,18 +94,8 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
   // normalizeOrden: ESPEJO de api/seguimiento.js (strip de UN 0 inicial) — molde certOrigen.js.
   function normalizeOrdenLocal(raw){ return String(raw || '').trim().replace(/^0(?=\d)/, ''); }
-  const ORDEN_RE = /^[1-9]\d{6,11}$/;
-  // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null — molde parseFechaAr de mailing.
-  function parseFechaArLocal(tok){
-    const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(String(tok || '').trim());
-    if(!m) return null;
-    const d = +m[1], mo = +m[2]; let y = +m[3];
-    if(m[3].length === 3) return null;
-    if(m[3].length === 2) y += 2000;
-    const dt = new Date(Date.UTC(y, mo - 1, d));
-    if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
-    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-  }
+  // ORDEN_RE + parseFechaArLocal: se mudaron a despachos.js con el modal GI
+  // (sus únicos consumidores eran parseGiGrid/submitGi).
   function mkBadge(variant, txt){ return el('span', 'seg-bdg seg-bdg--' + variant, txt); }
 
   // T3 (B.3): bandera flagcdn keyed por iso2 (paises.nombre_es → iso2, _paisMap).
@@ -1400,7 +1391,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
   }
 
   const ALERT_MAP = {
-    despacho_pendiente:  { cls:'act',  icon:'#i-pencil', txt:() => 'Registrar despacho de planta',              action:(r) => openGiModal(r.order_number) },
+    despacho_pendiente:  { cls:'act',  icon:'#i-pencil', txt:() => 'Registrar despacho de planta',              action:(r) => { window.__despPendingTarget = 'gi'; deepLink(r.order_number, 'despachos'); } },
     control_revisar:     { cls:'warn', icon:'#i-alert',  txt:() => 'Control: diferencias',               action:(r) => deepLink(r.order_number, 'control-bl') },
     sin_control:         { cls:'warn', icon:'#i-clock',  txt:(r) => 'GI hace ' + diasDesde(r.despacho_at) + ' días, sin control BL', action:(r) => deepLink(r.order_number, 'control-bl') },
     co_config_conflicto: { cls:'conf', icon:'#i-alert',  txt:() => 'Reglas de CO contradictorias',        action:null },
@@ -1828,200 +1819,20 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     // en vez de código muerto activo recalculando computeAll() para nada).
   }
 
-  // ═══════════ Modal Good Issue — dirty-guard nativo (no clon de .efa-mod-*) ═══════════
-  let _giActiveTab = 'single';
-  let _giBusy = false;
-  let _giBatchApplyDate = null;
-  let _giBatchMot = 'maritimo';   // B.1-fix: transporte default del lote (segmentado)
-  let _giLastParse = null;
-  let _giModalSnapshot = '';
-
-  function _giModalSerialize(){
-    // _giBatchMot va en la serialización: el segmentado son <button> sin .value —
-    // sin esto el dirty-guard descartaría la selección Terrestre sin confirmar.
-    return ['seg-gi-orden','seg-gi-fecha','seg-gi-mot','seg-gi-modo','seg-gi-notas','seg-gi-ta']
-      .map(id => { const e = $(id); return e ? e.value : ''; }).join('|') + '|' + _giBatchMot;
-  }
-  function _giSyncBatchMotUI(){
-    const seg = $('seg-gi-batchmot'); if(!seg) return;
-    seg.querySelectorAll('button[data-mot]').forEach(b => b.classList.toggle('is-on', b.dataset.mot === _giBatchMot));
-  }
-  function _giIsDirty(){ return _giModalSerialize() !== _giModalSnapshot; }
-
-  const _segEscHandler = (e) => {
-    if(e.key !== 'Escape') return;
-    const conf = document.getElementById('ssb-confirm-overlay');
-    if(conf && !conf.hidden) return; // el ssbConfirm está arriba — no robarle el Escape
-    const modal = $('seg-modal');
-    if(!modal || !modal.classList.contains('open')) return;
-    closeGiModalGuarded();
-  };
-
-  async function closeGiModalGuarded(){
-    if(_giIsDirty() && !(await ssbConfirm({ title:'Cambios sin guardar', body:'Tenés cambios sin guardar en este registro de Good Issue.', confirmText:'Descartar', danger:true }))) return;
-    closeGiModal();
-  }
-  function closeGiModal(){
-    const modal = $('seg-modal'); if(modal) modal.classList.remove('open');
-    document.removeEventListener('keydown', _segEscHandler);
-  }
-
-  function segModSwitchTab(target){
-    _giActiveTab = target;
-    const bSingle = $('seg-mod-tab-single'), bBatch = $('seg-mod-tab-batch');
-    if(bSingle) bSingle.classList.toggle('active', target === 'single');
-    if(bBatch) bBatch.classList.toggle('active', target === 'batch');
-    const bodySingle = $('seg-mod-body-single'), bodyBatch = $('seg-mod-body-batch');
-    if(bodySingle) bodySingle.style.display = target === 'single' ? '' : 'none';
-    if(bodyBatch) bodyBatch.style.display = target === 'batch' ? '' : 'none';
-  }
-
-  function openGiModal(prefillOrder){
-    const modal = $('seg-modal'); if(!modal) return;
-    const oi = $('seg-gi-orden'); if(oi) oi.value = prefillOrder || '';
-    const fi = $('seg-gi-fecha'); if(fi){ fi.value = hoyBA(); fi.max = isoPlus(hoyBA(), 1); }
-    // R2·F: el alta hereda el modo de la SOLAPA — selectores de transporte ocultos
-    // (el override M/T por fila del pegado SIGUE vivo para excepciones)
-    const mi = $('seg-gi-mot');
-    if(mi){
-      mi.value = _activeMode;
-      const f = mi.closest('.seg-field'); if(f) f.style.display = 'none';
-    }
-    const segBM = $('seg-gi-batchmot');
-    if(segBM){ const f = segBM.closest('.seg-field'); if(f) f.style.display = 'none'; }
-    const moi = $('seg-gi-modo'); if(moi) moi.value = '';
-    const ni = $('seg-gi-notas'); if(ni) ni.value = '';
-    const ta = $('seg-gi-ta'); if(ta) ta.value = '';
-    const ad = $('seg-gi-applydate'); if(ad) ad.value = '';
-    const errEl = $('seg-gi-orden-err'); if(errEl) errEl.hidden = true;
-    _giBatchApplyDate = null;
-    _giBatchMot = _activeMode;
-    _giSyncBatchMotUI();
-    _giLastParse = null;
-    renderGiPreview();
-    segModSwitchTab('single');
-    modal.classList.add('open');
-    _giModalSnapshot = _giModalSerialize();
-    document.addEventListener('keydown', _segEscHandler);
-    setTimeout(() => oi && oi.focus(), 30);
-  }
-
-  // parser GI local — mismo molde que parseAtdGrid del mailing pero permite filas
-  // SOLO-orden (sin fecha) que se resuelven con "aplicar fecha a todas" = deuda
-  // anotada: unificar con parseAtdGrid (mailing) si ese parser suma fill-date.
-  function parseGiGrid(text, applyDate){
-    const porOrden = new Map(); // orden → { fechas:Set, n, usedApply }
-    const errores = [];
-    const maxFecha = isoPlus(hoyBA(), 1);
-    String(text || '').split(/\r?\n/).forEach((raw, i) => {
-      if(!raw.trim()) return;
-      const nl = i + 1;
-      const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
-      const normMiles = t => /^\d{1,3}([.,]\d{3})+$/.test(t) ? t.replace(/[.,]/g, '') : t;
-      const parts = (toks.length ? toks : raw.trim().split(/\s+/)).map(normMiles);
-      const ords = parts.filter(t => /^\d{7,12}$/.test(t));
-      const fechas = parts.filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t) || /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
-      // B.1-fix: 3ª columna opcional M/T = override de transporte por fila
-      const motToks = parts.filter(t => /^[MT]$/i.test(t));
-      if(!ords.length){ errores.push({ linea:nl, orden:null, motivo:'sin número de orden (7-12 dígitos)' }); return; }
-      if(ords.length > 1){ errores.push({ linea:nl, orden:ords[0], motivo:'más de un número tipo orden en la fila' }); return; }
-      const ordenNorm = normalizeOrdenLocal(ords[0]);
-      if(!ORDEN_RE.test(ordenNorm)){ errores.push({ linea:nl, orden:ords[0], motivo:'orden inválida (7-12 dígitos)' }); return; }
-      if(fechas.length > 1){ errores.push({ linea:nl, orden:ordenNorm, motivo:'más de una fecha en la fila' }); return; }
-      if(motToks.length > 1){ errores.push({ linea:nl, orden:ordenNorm, motivo:'más de un M/T en la fila' }); return; }
-      let iso = null, usedApply = false;
-      if(fechas.length === 1){
-        iso = /^\d{4}-\d{2}-\d{2}$/.test(fechas[0]) ? fechas[0] : parseFechaArLocal(fechas[0]);
-        if(!iso){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha inválida: ' + fechas[0] }); return; }
-      } else if(applyDate){
-        iso = applyDate; usedApply = true;
-      } else {
-        errores.push({ linea:nl, orden:ordenNorm, motivo:'sin fecha — pegala en la fila o usá "aplicar a todas"' }); return;
-      }
-      if(iso > maxFecha){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha futura (> hoy+1) — ¿typo?' }); return; }
-      if(iso < '2020-01-01'){ errores.push({ linea:nl, orden:ordenNorm, motivo:'fecha fuera de rango' }); return; }
-      if(!porOrden.has(ordenNorm)) porOrden.set(ordenNorm, { fechas:new Set(), mots:new Set(), n:0, usedApply:false });
-      const ent = porOrden.get(ordenNorm);
-      ent.fechas.add(iso); ent.n++;
-      if(usedApply) ent.usedApply = true;
-      // conflicto M vs T entre filas duplicadas = espejo del conflicto de fechas
-      if(motToks.length === 1) ent.mots.add(motToks[0].toUpperCase() === 'M' ? 'maritimo' : 'terrestre');
-    });
-    return { porOrden, errores };
-  }
-
-  function renderGiPreview(){
-    const box = $('seg-gi-prev'); if(!box) return;
-    while(box.firstChild) box.removeChild(box.firstChild);
-    if(!_giLastParse) return;
-    const { porOrden, errores } = _giLastParse;
-    if(!porOrden.size && !errores.length) return;
-    const t = el('table');
-    const thead = el('thead'); const trh = el('tr');
-    ['orden','fecha GI','transporte','estado del lote'].forEach(h => trh.appendChild(el('th', null, h)));
-    thead.appendChild(trh); t.appendChild(thead);
-    // B.1-fix: celda transporte — ícono + texto + procedencia (lote vs override fila)
-    const motCell = (ent) => {
-      const td = el('td');
-      const motSet = ent.mots || new Set();
-      if(motSet.size > 1){ td.appendChild(document.createTextNode('M ≠ T')); return { td, conflict:true }; }
-      const isOverride = motSet.size === 1;
-      const mot = isOverride ? [...motSet][0] : _giBatchMot;
-      const ic = svgUse(mot === 'terrestre' ? '#i-truck' : '#i-ship', 'ic ic-sm');
-      ic.style.verticalAlign = 'middle'; ic.style.marginRight = '4px';
-      ic.style.color = mot === 'terrestre' ? 'var(--amber, #f5a623)' : 'var(--blue)';
-      td.appendChild(ic);
-      td.appendChild(document.createTextNode(mot));
-      const src = el('span', null, isOverride ? ' · override fila' : ' (lote)');
-      src.style.cssText = isOverride ? 'color:var(--blue);font-size:10px;font-weight:700' : 'color:var(--seg-ink-faint);font-size:10px';
-      td.appendChild(src);
-      return { td, conflict:false };
-    };
-    const tbody = el('tbody');
-    for(const [orden, ent] of porOrden){
-      const tr = el('tr');
-      tr.appendChild(el('td', null, orden));
-      const mc = motCell(ent);
-      if(ent.fechas.size === 1 && !mc.conflict){
-        const fecha = [...ent.fechas][0];
-        tr.appendChild(el('td', null, fecha + (ent.usedApply ? ' (aplicada)' : '')));
-        tr.appendChild(mc.td);
-        const st = el('td','st');
-        st.appendChild(mkBadge('ok', ent.n > 1 ? ('lista · ×' + ent.n + ' filas (se toma una)') : 'lista'));
-        tr.appendChild(st);
-      } else {
-        tr.appendChild(el('td', null, [...ent.fechas].join(' ≠ ')));
-        tr.appendChild(mc.td);
-        const st = el('td','st');
-        const motivo = mc.conflict ? 'conflicto: M y T — no se escribe' : 'conflicto: 2 fechas — no se escribe';
-        const b = mkBadge('bad', motivo);
-        b.title = 'La misma orden vino con ' + (mc.conflict ? 'transportes distintos (M y T)' : 'fechas distintas') + ' — no se escribe: corregí el pegado.';
-        st.appendChild(b);
-        tr.appendChild(st);
-      }
-      tbody.appendChild(tr);
-    }
-    for(const e of errores){
-      const tr = el('tr');
-      tr.appendChild(el('td', null, e.orden || '—'));
-      tr.appendChild(el('td', null, '—'));
-      tr.appendChild(el('td', null, '—'));
-      const st = el('td','st');
-      st.appendChild(mkBadge('bad', 'inválida: línea ' + e.linea + ' — ' + e.motivo));
-      tr.appendChild(st);
-      tbody.appendChild(tr);
-    }
-    t.appendChild(tbody);
-    box.appendChild(t);
-  }
-
-  function reparseGiTextarea(){
-    const ta = $('seg-gi-ta'); if(!ta) return;
-    _giLastParse = ta.value.trim() ? parseGiGrid(ta.value, _giBatchApplyDate) : null;
-    renderGiPreview();
-  }
-
-  const STATUS_LBL = { creada:'creada(s)', completada:'completada(s)', ya_existia:'ya existía(n)', invalida:'inválida(s)', conflicto:'con conflicto', error:'con error' };
+  /* ── SUTURA (2026-07-22, solapa Despachos) ─────────────────────────────────
+     Acá vivía el modal Good Issue completo (movido a js/features/despachos.js
+     como sección de lote — la tab "Individual" se ELIMINÓ por decisión de John):
+       · estado _gi* + dirty-guard (_giModalSerialize/_giIsDirty/_segEscHandler)
+       · closeGiModal(Guarded) / segModSwitchTab / openGiModal
+       · parseGiGrid (cuerpo intacto en despachos.js; solo renombre
+         parseFechaArLocal→parseFechaAr) / renderGiPreview /
+         reparseGiTextarea / STATUS_LBL / renderGiFooterBusy / submitGi
+         (→ /api/seguimiento::alta_despacho, mismo endpoint, cero cambio)
+     Los accesos de esta solapa REDIRIGEN a Despachos con la orden precargada:
+     ALERT_MAP.despacho_pendiente y #seg-gi-open-btn (bus __segPendingOrder +
+     __despPendingTarget='gi' + deepLink). El markup seg-modal se retiró de
+     index.html; las reglas CSS seg-mod-* quedan huérfanas a propósito
+     (precedente #seg-group-badge). ─────────────────────────────────────────── */
 
   async function apiSeguimiento(body){
     const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
@@ -2065,65 +1876,7 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
   }
 
-  function renderGiFooterBusy(busy){
-    const btn = $('seg-mod-submit'); if(btn){ btn.disabled = busy; btn.textContent = busy ? 'Registrando…' : 'Registrar despacho'; }
-    const cancel = $('seg-mod-cancel'); if(cancel) cancel.disabled = busy;
-  }
-
-  async function submitGi(){
-    if(_giBusy) return;
-    let rows = [];
-    if(_giActiveTab === 'single'){
-      const rawOrden = ($('seg-gi-orden')?.value || '').trim();
-      const norm = normalizeOrdenLocal(rawOrden);
-      const errEl = $('seg-gi-orden-err');
-      if(!ORDEN_RE.test(norm)){
-        if(errEl){ errEl.textContent = 'Orden inválida: 7 a 12 dígitos (el 0 inicial se quita solo).'; errEl.hidden = false; }
-        $('seg-gi-orden')?.focus();
-        return;
-      }
-      if(errEl) errEl.hidden = true;
-      const fecha = $('seg-gi-fecha')?.value || '';
-      if(!fecha){ ssbToast('Falta la fecha de Good Issue.', 'error'); return; }
-      const modo = ($('seg-gi-modo')?.value || '').trim();
-      const notas = ($('seg-gi-notas')?.value || '').trim();
-      const row = { order_number: norm, despacho_at: fecha, mot: $('seg-gi-mot')?.value || 'maritimo' };
-      if(modo) row.modo = modo;
-      if(notas) row.notas = notas;
-      rows = [row];
-    } else {
-      if(!_giLastParse) reparseGiTextarea();
-      if(!_giLastParse){ ssbToast('No hay filas para registrar — pegá el lote primero.', 'error'); return; }
-      for(const [orden, ent] of _giLastParse.porOrden){
-        // B.1-fix: mot = override de fila (M/T) > segmentado del lote; conflicto
-        // M≠T no se escribe (espejo del conflicto de fechas)
-        const motSet = ent.mots || new Set();
-        if(ent.fechas.size === 1 && motSet.size <= 1){
-          rows.push({ order_number: orden, despacho_at: [...ent.fechas][0], mot: motSet.size === 1 ? [...motSet][0] : _giBatchMot });
-        }
-      }
-      if(!rows.length){ ssbToast('No hay filas listas para registrar en el lote.', 'error'); return; }
-    }
-    _giBusy = true;
-    renderGiFooterBusy(true);
-    try {
-      const resp = await apiSeguimiento({ action:'alta_despacho', rows });
-      const s = resp.summary || {};
-      const parts = Object.keys(s).map(k => s[k] + ' ' + (STATUS_LBL[k] || k));
-      ssbToast(parts.length ? parts.join(' · ') : 'Sin cambios.', (s.error || s.invalida || s.conflicto) ? 'warning' : 'success');
-      const problemRows = (resp.results || []).filter(rr => ['invalida','conflicto','error'].includes(rr.status));
-      if(problemRows.length){
-        await ssbAlert({ title:'Algunas filas no se pudieron registrar', body: problemRows.map(rr => (rr.order_number || '(vacía)') + ': ' + (rr.detail || rr.status)).join('\n') });
-      }
-      closeGiModal();
-      window.loadSeguimiento();
-    } catch(e){
-      ssbToast('No se pudo registrar: ' + e.message, 'error');
-    } finally {
-      _giBusy = false;
-      renderGiFooterBusy(false);
-    }
-  }
+  // renderGiFooterBusy + submitGi: MOVIDOS a despachos.js (sutura de arriba).
 
   // Leyenda de Docs (v3): reconstruida en runtime (createElement, sin innerHTML)
   // para sumar BL y el copy nuevo de PL sin tocar el markup estático de index.html.
@@ -2199,7 +1952,9 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     }
 
     $('seg-refresh-btn')?.addEventListener('click', () => window.loadSeguimiento());
-    $('seg-gi-open-btn')?.addEventListener('click', () => openGiModal(null));
+    // Despachos (2026-07-22): el alta de GI vive en la solapa Despachos — el
+    // botón del header redirige (sin orden precargada; el bus queda en null).
+    $('seg-gi-open-btn')?.addEventListener('click', () => { window.__despPendingTarget = 'gi'; deepLink(null, 'despachos'); });
     $('seg-arch-toggle')?.addEventListener('change', (e) => { _showArch = e.target.checked; renderAll(); });
 
     // T3: seg-f-mot murió (sub-solapas B.7) — retirado del markup y del loop
@@ -2218,24 +1973,5 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
       renderAll();   // la sub-solapa activa NO se resetea — es navegación, no filtro
     });
 
-    // Modal
-    $('seg-mod-close')?.addEventListener('click', () => closeGiModalGuarded());
-    $('seg-mod-cancel')?.addEventListener('click', () => closeGiModalGuarded());
-    $('seg-modal')?.addEventListener('click', (e) => { if(e.target.id === 'seg-modal') closeGiModalGuarded(); });
-    $('seg-mod-tab-single')?.addEventListener('click', () => segModSwitchTab('single'));
-    $('seg-mod-tab-batch')?.addEventListener('click', () => segModSwitchTab('batch'));
-    $('seg-gi-orden')?.addEventListener('input', () => { const e = $('seg-gi-orden-err'); if(e) e.hidden = true; });
-    $('seg-gi-ta')?.addEventListener('input', debounce(reparseGiTextarea, 250));
-    $('seg-gi-applybtn')?.addEventListener('click', () => {
-      _giBatchApplyDate = $('seg-gi-applydate')?.value || null;
-      reparseGiTextarea();
-    });
-    // B.1-fix: segmentado transporte del lote (delegado — 2 botones data-mot)
-    $('seg-gi-batchmot')?.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-mot]'); if(!btn) return;
-      _giBatchMot = btn.dataset.mot;
-      _giSyncBatchMotUI();
-      reparseGiTextarea();   // refresca la columna transporte del preview
-    });
-    $('seg-mod-submit')?.addEventListener('click', () => submitGi());
+    // Wiring del modal GI: RETIRADO — el modal se mudó a Despachos (sutura arriba).
   })();

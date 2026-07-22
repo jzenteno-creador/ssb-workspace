@@ -30,3 +30,7 @@ import './features/admin-bid.js';
 
 // E.1/T8 (2026-07-17): solapa Administración — solo flag CO
 import './features/admin-co.js';
+
+// TANDA UI (2026-07-22): solapa Despachos — GI + confirmación de zarpe por lote
+// (movidos desde seguimiento.js/mailing.js; grupo Documentación del rail)
+import './features/despachos.js';

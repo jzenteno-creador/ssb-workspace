@@ -1,7 +1,8 @@
 /* === SSB NAV (js/shared/nav.js — ES Module, B1.3 modularización) ===
-   Navegación completa de la app: switchTab (los 14 tabs, con dirty-guard de
-   TT-Dow y lazy-loaders por tab) + las 2 IIFEs del rail (pin/drawer móvil y
-   grupo Documentación). Movido verbatim desde index.html (S1).
+   Navegación completa de la app: switchTab (todos los tabs — 'despachos'
+   sumado 2026-07-22, con dirty-guard de TT-Dow y lazy-loaders por tab) +
+   las 2 IIFEs del rail (pin/drawer móvil y grupo Documentación).
+   Movido verbatim desde index.html (S1).
    switchTab era function declaration clásica → estaba en window → se
    re-publica (shim al pie): 14 handlers inline onclick="switchTab('x')" +
    S7 (window.switchTab deep-link) + S13 (switchTab pelado) la resuelven vía
@@ -29,7 +30,7 @@ async function switchTab(name) {
   }
   // 'seguimiento-ter' no tiene panel propio: está en la lista SOLO para que su
   // botón del rail se desactive al navegar (R2·F: segGo() maneja el par activo).
-  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','seguimiento-ter','control-bl','mailing','cert-origen','schema','admin-co'].forEach(t => {
+  ['tarifas','efa','admin-bid','schedule-rt','detention','tt-dow','vacaciones','agente','workspace-ia','seguimiento','seguimiento-ter','control-bl','mailing','cert-origen','despachos','schema','admin-co'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     const pan = document.getElementById('panel-'+t);
     if(btn) btn.classList.toggle('active', t===name);
@@ -52,6 +53,7 @@ async function switchTab(name) {
   if(name==='control-bl' && window.loadBlControls){ window.loadBlControls(); }
   if(name==='mailing' && window.loadMailing){ window.loadMailing(); }
   if(name==='cert-origen' && window.loadCertOrigen){ window.loadCertOrigen(); }
+  if(name==='despachos' && window.loadDespachos){ window.loadDespachos(); }
   if(name==='schema' && window.loadSchema){ window.loadSchema(); }
   if(name==='admin-co' && window.loadAdminCo){ window.loadAdminCo(); }
 }
@@ -167,7 +169,7 @@ async function switchTab(name) {
   sub.addEventListener('click', e => { if(e.target.closest('.tab-btn') && !mqTree()){ grp.classList.remove('open'); applyAria(); } });
   // hook para switchTab: resaltar el grupo + auto-expand en árbol
   window.__railDocOnNav = name => {
-    const inside = ['seguimiento','control-bl','mailing','cert-origen'].includes(name);
+    const inside = ['seguimiento','control-bl','mailing','cert-origen','despachos'].includes(name);
     grp.classList.toggle('has-active', inside);
     if(inside && mqTree() && !grp.classList.contains('open')){ grp.classList.add('open'); applyAria(); }
   };

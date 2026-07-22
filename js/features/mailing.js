@@ -22,6 +22,14 @@
    control BL" del gate de regla 16, cardEnvio/blockReasonsBox) para
    deep-linkear a control-bl — mismo patrón que deepLink() de seguimiento.js.
 
+   DESPACHOS (2026-07-22): el ATD-gate completo (parseAtdGrid/atdParse/
+   atdConfirm/renderAtdReport) y el panel de roleo (item 31) SE MUDARON a
+   js/features/despachos.js — mismos endpoints /api/mailing (confirm_atd,
+   roleo_candidatas, informar_roleo), cero cambio de contrato. En esta solapa
+   quedan el acceso "Ir a Despachos" (markup #mail-atd-moved) y el botón por
+   orden "Confirmar zarpe → Despachos" (cardResumen, bus __segPendingOrder +
+   __despPendingTarget='atd').
+
    PLAN COMPLETO tanda B (2026-07-15): dos actions nuevas y locales en
    /api/mailing (roleo_candidatas, informar_roleo — mismo criterio que
    confirm_atd, no pasan por el webhook n8n) + passthrough de
@@ -75,9 +83,10 @@
   const _filters = new Set();
   let _q = '';
   let _loaded = false;
-  // ── ATD-gate (A-c2): lote del paste-grid Confirmar zarpe ──
-  let _atdParsed = null;  // { listas, conflictos, errores, server? } del último "Validar lote"
-  let _atdBusy = false;
+  // SUTURA (2026-07-22, solapa Despachos): el ATD-gate (A-c2) — _atdParsed/_atdBusy,
+  // parseAtdGrid, renderAtdReport, atdParse, atdConfirm — SE MUDÓ a
+  // js/features/despachos.js (mismo endpoint /api/mailing::confirm_atd). Acá quedó
+  // solo el acceso "Ir a Despachos" del markup (#mail-atd-moved).
   // ── ATD-gate (A-c3): filtro SLA del KPI + toggle de Enviadas ──
   let _slaFilter = null;  // null | 'enfecha' | 'porvencer' | 'vencida' | 'futuro' | 'espera'
   let _showSent = false;
@@ -90,13 +99,10 @@
   function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer = setTimeout(runPreview, 400); }
   // ── Chip-bar de docs (A-c5): PDF abierto en el viewer embebido de Drive ──
   let _docOpen = null; // { fid, label } | null
-  // ── Roleo post-confirmación (item 31, PLAN COMPLETO tanda B): tras un lote de
-  // Confirmar zarpe, ¿quedaron órdenes HERMANAS sin confirmar en el MISMO buque?
-  // (atd is.null) — la separación es la señal de que hubo roleo. Panel
-  // descartable, vive en el card de Confirmar zarpe; best-effort, nunca bloquea
-  // el ATD-gate. Se limpia solo al descartarlo o al informar el lote. ──
-  let _roleoPanel = null; // { candidatas:[{order_number,vessel,voyage,pod,ship_to_name,roleo_at}], sel:Set<order_number> } | null
-  let _roleoBusy = false;
+  // SUTURA (2026-07-22, solapa Despachos): el panel de roleo post-confirmación
+  // (item 31 — _roleoPanel/_roleoBusy, checkRoleoCandidatas, informarRoleo,
+  // renderRoleoPanel) SE MUDÓ a js/features/despachos.js junto con el ATD-gate
+  // (mismas actions /api/mailing::roleo_candidatas / informar_roleo).
   // ── Adjuntos extra (items 38/39): documentación puntual (COA, etc.) que NO
   // vive en Drive/certificados — viaja SOLO en este envío, nunca se persiste.
   // Estado en variable de módulo; se limpia al cambiar de orden (selectOrder). ──
@@ -121,17 +127,8 @@
   // locales: la aritmética va por Date.UTC puro — inmune al huso del browser. ──
   // hoyBA/diasDesde: usan las globales de SSB CORE HELPERS.
   const isoPlus = (iso, n) => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
-  // DD/MM/AAAA (tolera D/M, guiones, AA→20AA) → ISO o null; round-trip real: 31/02 y 32/01 → null
-  function parseFechaAr(tok){
-    const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(String(tok || '').trim());
-    if(!m) return null;
-    const d = +m[1], mo = +m[2]; let y = +m[3];
-    if(m[3].length === 3) return null;
-    if(m[3].length === 2) y += 2000;
-    const dt = new Date(Date.UTC(y, mo - 1, d));
-    if(dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
-    return y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-  }
+  // parseFechaAr (DD/MM/AAAA → ISO) se mudó a despachos.js con el ATD-gate — su
+  // único consumidor acá era parseAtdGrid.
 
   // SLA_DAYS/SLA_WARN/diasDesde: usan las globales de SSB CORE HELPERS.
   // wrapper local → helper canónico ssbSlaBucket (CORE HELPERS)
@@ -499,6 +496,16 @@
     if(_row.atd){
       const sb = slaBadge(_row);
       if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
+    } else {
+      // Botón de origen (2026-07-22): el ATD-gate vive en la solapa Despachos —
+      // se navega con la orden precargada (mismo bus __segPendingOrder que
+      // control-bl/cert-origen + __despPendingTarget='atd').
+      const zr = el('p','mail-note');
+      const zb = el('button','mail-btn','Confirmar zarpe → Despachos');
+      zb.type = 'button';
+      zb.onclick = () => { window.__segPendingOrder = _row.order_number; window.__despPendingTarget = 'atd'; switchTab('despachos'); };
+      zr.appendChild(zb);
+      c.appendChild(zr);
     }
     // D.3 alerta (decisión John 17-07): el control factura↔permiso AVISA, NO
     // bloquea — warning visible si el resultado persistido es REVISAR.
@@ -1184,228 +1191,18 @@
     renderDetail();
   }
 
-  // ── Confirmar zarpe (ATD) — parser del paste-grid + lote a confirm_atd (A-c2) ──
-  // Formato confirmado por John: orden TAB fecha (una sola fecha por fila,
-  // DD/MM/AAAA). Defensas: fila con ≥2 tokens tipo-orden (ej. orden+shipment) o
-  // ≥2 fechas → error explícito, jamás adivinar. NUNCA drop silencioso.
-  function parseAtdGrid(text){
-    const porOrden = new Map(); // orden → Set<atd ISO>
-    const errores = [];
-    const maxAtd = isoPlus(hoyBA(), 1); // guarda anti-typo: futura > hoy+1 se rechaza
-    String(text || '').split(/\r?\n/).forEach((raw, i) => {
-      if(!raw.trim()) return; // filas vacías: se ignoran (no son error)
-      const nl = i + 1;
-      const toks = raw.split(/[\t;]+|\s{2,}/).map(s => s.trim()).filter(Boolean);
-      // Orden con separador de miles (columna Excel formateada Número: 10.234.567 /
-      // 10,234,567) → se normaliza a dígitos. Las fechas no matchean este patrón
-      // (grupos de exactamente 3 dígitos), quedan intactas. [fix verify]
-      const normMiles = t => /^\d{1,3}([.,]\d{3})+$/.test(t) ? t.replace(/[.,]/g, '') : t;
-      const parts = (toks.length >= 2 ? toks : raw.trim().split(/\s+/)).map(normMiles);
-      const ords = parts.filter(t => /^\d{7,12}$/.test(t));
-      const fechas = parts.filter(t => /^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(t));
-      if(!ords.length){ errores.push({ linea: nl, orden: null, motivo: 'sin número de orden (7-12 dígitos)' }); return; }
-      if(ords.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de un número tipo orden en la fila (¿orden + shipment?) — pegá solo orden + fecha' }); return; }
-      if(!fechas.length){ errores.push({ linea: nl, orden: ords[0], motivo: 'sin fecha DD/MM/AAAA' }); return; }
-      if(fechas.length > 1){ errores.push({ linea: nl, orden: ords[0], motivo: 'más de una fecha en la fila — ambigua, no se adivina' }); return; }
-      const iso = parseFechaAr(fechas[0]);
-      if(!iso){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha inválida: ' + fechas[0] }); return; }
-      if(iso > maxAtd){ errores.push({ linea: nl, orden: ords[0], motivo: 'ATD futura (' + fmtD(iso) + ' > hoy+1) — ¿typo?' }); return; }
-      if(iso < '2020-01-01'){ errores.push({ linea: nl, orden: ords[0], motivo: 'fecha fuera de rango: ' + fmtD(iso) }); return; }
-      if(!porOrden.has(ords[0])) porOrden.set(ords[0], new Set());
-      porOrden.get(ords[0]).add(iso); // dup misma orden+fecha colapsa solo (Set)
-    });
-    const listas = [], conflictos = [];
-    for(const [orden, fechas] of porOrden){
-      if(fechas.size > 1) conflictos.push({ orden, fechas: [...fechas].sort() });
-      else listas.push({ orden, atd: [...fechas][0] });
-    }
-    return { listas, conflictos, errores };
-  }
-
-  const ATD_SRV_LBL = {
-    actualizada:   ['ok',   'ATD confirmado'],
-    pisada:        ['warn', 'pisada (tenía otro ATD)'],
-    sin_cambio:    ['mut',  'sin cambio (ya tenía ese ATD)'],
-    no_encontrada: ['err',  'sin fila en Mailing — la orden no pasó por el Control BL (reprocesar el BL la asienta)'],
-    conflicto:     ['err',  'fechas contradictorias'],
-    invalida:      ['err',  'rechazada por el server'],
-    error:         ['err',  'falló la escritura'],
-  };
-
-  function renderAtdReport(){
-    const box = $('mail-atd-report'), sum = $('mail-atd-sum'), btn = $('mail-atd-confirm');
-    if(!box) return;
-    box.textContent = '';
-    if(btn) btn.disabled = _atdBusy || !_atdParsed || !_atdParsed.listas.length || !!_atdParsed.server;
-    if(btn) btn.textContent = _atdBusy ? 'Confirmando…' : 'Confirmar ATD';
-    if(!_atdParsed){ if(sum) sum.textContent = ''; renderRoleoPanel(box); return; }
-    const p = _atdParsed;
-    const t = el('table','mail-atd-tbl');
-    const trh = el('tr');
-    for(const h of ['Orden','ATD','Estado']) trh.appendChild(el('th', null, h));
-    const th = el('thead'); th.appendChild(trh); t.appendChild(th);
-    const tb = el('tbody');
-    const rowT = (orden, atd, cls, txt) => {
-      const tr = el('tr');
-      tr.appendChild(el('td', null, orden || '—'));
-      tr.appendChild(el('td', null, atd || '—'));
-      tr.appendChild(el('td','mail-atd-st ' + cls, txt));
-      tb.appendChild(tr);
-    };
-    if(p.server && !p.server.error){
-      // Reporte AUTORITATIVO del server, fila a fila
-      for(const r of (p.server.results || [])){
-        const [cls, lbl] = ATD_SRV_LBL[r.status] || ['err', r.status];
-        const extra = r.status === 'pisada' ? ' ' + fmtD(r.old_atd) + ' → ' + fmtD(r.atd)
-                    : (r.detail && r.detail !== lbl) ? ' — ' + r.detail : ''; // detail == label → no duplicar
-        rowT(r.order_number, fmtD(r.atd || null), cls, lbl + extra);
-      }
-      if(sum){
-        const s = p.server.summary || {};
-        sum.textContent = Object.entries(s).map(([k, v]) => v + ' ' + k.replace(/_/g, ' ')).join(' · ');
-      }
-    } else {
-      // Pre-check LOCAL (el server valida de nuevo al confirmar)
-      for(const r of p.listas){
-        const known = _orders.find(o => o.order_number === r.orden);
-        const estado = !known ? ['warn', 'sin fila en Mailing — la orden no pasó por el Control BL (el server la va a omitir; no es un error del pegado)']
-          : known.atd && known.atd !== r.atd ? ['warn', 'ya tiene ATD ' + fmtD(known.atd) + ' → se pisaría con ' + fmtD(r.atd)]
-          : known.atd === r.atd ? ['mut', 'ya tiene exactamente este ATD — sin cambios']
-          : ['ok', 'lista para confirmar'];
-        rowT(r.orden, fmtD(r.atd), estado[0], estado[1]);
-      }
-      for(const c of p.conflictos) rowT(c.orden, c.fechas.map(fmtD).join(' vs '), 'err', 'CONFLICTO en el pegado — se excluye del lote');
-      for(const e of p.errores) rowT(e.orden, null, 'err', 'línea ' + e.linea + ': ' + e.motivo);
-      if(sum) sum.textContent = p.listas.length + ' lista(s) para confirmar · ' + p.conflictos.length + ' conflicto(s) · ' + p.errores.length + ' error(es)';
-      if(p.server && p.server.error) box.appendChild(el('div','mail-alert','No se pudo confirmar el lote: ' + p.server.error));
-    }
-    t.appendChild(tb);
-    box.appendChild(t);
-    renderRoleoPanel(box); // item 31: panel independiente del estado del parser, vive en el mismo card
-  }
-
-  function atdParse(){
-    if(_atdBusy) return; // FIX verify (ALTA): no reemplazar el lote con un confirm en vuelo
-    const ta = $('mail-atd-ta'); if(!ta) return;
-    _atdParsed = ta.value.trim() ? parseAtdGrid(ta.value) : null;
-    renderAtdReport();
-  }
-
-  async function atdConfirm(){
-    if(!_atdParsed || !_atdParsed.listas.length || _atdBusy || _atdParsed.server) return;
-    // FIX verify (ALTA): referencia LOCAL al lote — si _atdParsed cambiara durante
-    // el await (belt & suspenders del guard de atdParse), el reporte del server se
-    // cuelga de ESTE lote y jamás del nuevo; el textarea solo se limpia si el
-    // lote visible sigue siendo el confirmado.
-    const lote = _atdParsed;
-    const n = lote.listas.length;
-    const conNota = lote.conflictos.length || lote.errores.length
-      ? '\n(Conflictos y errores quedan AFUERA del lote — revisalos en la tabla.)' : '';
-    // Pre-lock ANTES del confirm (ssbConfirm no bloquea el hilo): sin esto una
-    // segunda invocación pasaba el guard y encolaba un segundo lote confirm_atd.
-    _atdBusy = true; renderAtdReport();
-    if(!(await ssbConfirm({title:'Confirmar zarpe (ATD)', body:'Para ' + n + ' orden(es): arranca el reloj de mailing (ATD+4 corridos).' + conNota, confirmText:'Confirmar zarpe'}))){ _atdBusy = false; renderAtdReport(); return; }
-    try {
-      const resp = await apiMailing({ action: 'confirm_atd', rows: lote.listas.map(r => ({ order_number: r.orden, atd: r.atd })) });
-      lote.server = resp;
-    } catch(e){ lote.server = { error: e.message }; }
-    _atdBusy = false;
-    // Refresh SIEMPRE: los writes ya ocurrieron — la cola/KPI/detalle los reflejan
-    _orders = await fetchOrders();
-    renderMaster();
-    if(_sel){ _row = _orders.find(r => r.order_number === _sel) || _row; renderDetail(); }
-    if(_atdParsed === lote){
-      const s = (lote.server && lote.server.summary) || {};
-      const sucios = (s.no_encontrada || 0) + (s.invalida || 0) + (s.conflicto || 0) + (s.error || 0);
-      if(lote.server && !lote.server.error && !sucios){ const ta = $('mail-atd-ta'); if(ta) ta.value = ''; }
-    }
-    // item 31: tras confirmar, ¿quedaron hermanas sin confirmar en el MISMO
-    // buque? Best-effort — nunca bloquea ni ensucia el reporte del lote de ATD.
-    const confirmedNow = ((lote.server && lote.server.results) || [])
-      .filter(r => r.status === 'actualizada' || r.status === 'pisada')
-      .map(r => r.order_number);
-    if(confirmedNow.length) await checkRoleoCandidatas(confirmedNow);
-    renderAtdReport();
-  }
-
-  // ── Roleo post-confirmación (item 31) ──
-  async function checkRoleoCandidatas(confirmedOrders){
-    const vessels = [...new Set(confirmedOrders
-      .map(on => { const r = _orders.find(o => o.order_number === on); return r && r.vessel; })
-      .filter(Boolean))].slice(0, 20); // cap del server (roleo_candidatas): máximo 20 buques
-    if(!vessels.length) return;
-    try {
-      const resp = await apiMailing({ action: 'roleo_candidatas', vessels });
-      const cand = (resp && Array.isArray(resp.candidatas)) ? resp.candidatas : [];
-      if(cand.length) _roleoPanel = { candidatas: cand, sel: new Set(cand.map(c => c.order_number)) };
-    } catch(e){ console.error('[mailing] roleo_candidatas:', e.message); } // best-effort: nunca bloquea el ATD-gate
-  }
-
-  async function informarRoleo(){
-    if(!_roleoPanel || !_roleoPanel.sel.size || _roleoBusy) return;
-    const orders = [..._roleoPanel.sel];
-    _roleoBusy = true; renderAtdReport();
-    let resp = null, errMsg = null;
-    try { resp = await apiMailing({ action: 'informar_roleo', orders }); }
-    catch(e){ errMsg = e.message; }
-    _roleoBusy = false;
-    if(errMsg){ ssbToast('No se pudo informar el roleo: ' + errMsg, 'error'); renderAtdReport(); return; }
-    for(const r of ((resp && resp.results) || [])){
-      const kind = r.status === 'roleada' ? 'success' : (r.status === 'sin_proximo_servicio' ? 'warning' : 'error');
-      ssbToast(r.order_number + ': ' + (r.detalle || r.status), kind);
-    }
-    _roleoPanel = null;
-    _orders = await fetchOrders();
-    renderMaster();
-    if(_sel){ _row = _orders.find(o => o.order_number === _sel) || _row; renderDetail(); }
-    renderAtdReport();
-  }
-
-  function renderRoleoPanel(box){
-    if(!_roleoPanel) return;
-    const wrap = el('div','mail-alert');
-    wrap.style.marginTop = '10px';
-    // agrupado por buque — un lote de confirm puede tocar más de uno
-    const byVessel = new Map();
-    for(const c of _roleoPanel.candidatas){
-      const v = c.vessel || '(sin buque)';
-      if(!byVessel.has(v)) byVessel.set(v, []);
-      byVessel.get(v).push(c);
-    }
-    const head = el('div', null, 'Quedaron sin confirmar en ' + [...byVessel.keys()].join(', ') + ' — ¿hubo roleo?');
-    head.style.fontWeight = '800'; head.style.marginBottom = '6px';
-    wrap.appendChild(head);
-    for(const [vessel, rows] of byVessel){
-      const grp = el('div'); grp.style.marginBottom = '6px';
-      for(const r of rows){
-        const line = el('label');
-        line.style.display = 'flex'; line.style.alignItems = 'center'; line.style.gap = '8px'; line.style.margin = '3px 0'; line.style.fontSize = '12.5px';
-        const cb = el('input'); cb.type = 'checkbox'; cb.checked = _roleoPanel.sel.has(r.order_number);
-        cb.onchange = () => { if(cb.checked) _roleoPanel.sel.add(r.order_number); else _roleoPanel.sel.delete(r.order_number); };
-        line.appendChild(cb);
-        const meta = [vessel, r.voyage].filter(Boolean).join(' ');
-        line.appendChild(document.createTextNode(r.order_number + ' — ' + (r.ship_to_name || '—') + ' · ' + meta + (r.pod ? ' · ' + r.pod : '')));
-        if(r.roleo_at){
-          const already = el('span', null, ' (ya roleada ' + fmtTs(r.roleo_at) + ')');
-          already.style.color = 'var(--mail-ink-faint)';
-          line.appendChild(already);
-        }
-        grp.appendChild(line);
-      }
-      wrap.appendChild(grp);
-    }
-    const row = el('div','mail-btnrow');
-    const btInf = el('button','mail-btn pri', _roleoBusy ? 'Informando…' : 'Informar roleo al siguiente servicio');
-    btInf.type = 'button'; btInf.disabled = _roleoBusy || !_roleoPanel.sel.size;
-    btInf.onclick = () => informarRoleo();
-    row.appendChild(btInf);
-    const btDesc = el('button','mail-btn','Ahora no');
-    btDesc.type = 'button'; btDesc.disabled = _roleoBusy;
-    btDesc.onclick = () => { _roleoPanel = null; renderAtdReport(); };
-    row.appendChild(btDesc);
-    wrap.appendChild(row);
-    box.appendChild(wrap);
-  }
+  /* ── SUTURA (2026-07-22, solapa Despachos) ─────────────────────────────────
+     Acá vivían (movidos VERBATIM a js/features/despachos.js, con adaptación de
+     ids mail-atd-* → desp-atd-* y del sistema de badges):
+       · parseAtdGrid (parser del paste-grid Confirmar zarpe, formato John
+         orden TAB fecha DD/MM/AAAA — en Despachos suma "aplicar fecha a todas")
+       · ATD_SRV_LBL + renderAtdReport + atdParse + atdConfirm
+         (→ /api/mailing::confirm_atd, mismo endpoint, cero cambio de contrato)
+       · checkRoleoCandidatas + informarRoleo + renderRoleoPanel (item 31,
+         → /api/mailing::roleo_candidatas / informar_roleo)
+     El botón "Confirmar zarpe" de esta solapa ahora REDIRIGE a Despachos con
+     la orden precargada (cardResumen → bus __segPendingOrder +
+     __despPendingTarget='atd' + switchTab). ──────────────────────────────── */
 
   // ── carga del tab ──
   let _loading = false;
@@ -1497,8 +1294,7 @@
       else if(act === 'preview') runPreview();
       else if(act === 'confirm-schedule') confirmSchedule();
       else if(act === 'send') doSend();
-      else if(act === 'atd-parse') atdParse();
-      else if(act === 'atd-confirm') atdConfirm();
+      // atd-parse / atd-confirm: retirados — el ATD-gate vive en Despachos (2026-07-22)
       else if(act === 'sent-toggle'){ _showSent = !_showSent; renderMaster(); }
       else if(act === 'doc-open'){ _docOpen = { fid: t.dataset.fid, label: t.dataset.dlabel || 'Documento' }; renderDetail(); }
       else if(act === 'doc-close'){ _docOpen = null; renderDetail(); }
