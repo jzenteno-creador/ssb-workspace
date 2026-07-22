@@ -9,10 +9,13 @@ patrón que refactura_trade) → este webhook → Gmail a jzenteno@ssbint.com co
 captura adjunta e inline. Sin DDL, sin tabla nueva: el mail ES el registro
 (la casilla archiva; si algún día se quiere tabla, se agrega sin migrar nada).
 
-NODOS (4): Webhook POST /bugreport-ui-9f3d21c7 (responseNode) → "Armar reporte"
+NODOS (6): Webhook POST /bugreport-ui-9f3d21c7 (responseNode) → "Armar reporte"
 (Code: valida payload, screenshot base64→binary 'shot', HTML del cuerpo) →
-"Gmail Bug Report" (cred 'mail notifications (Mailing)' Zhm0RRtsSb13HtcD,
-adjunta shot) → Respond 200 {ok:true}.
+"IF captura" → [sí] "Gmail Bug Report" (adjunta shot) / [no] "Gmail Bug Report
+(sin adjunto)" → Respond 200 {ok:true}. Cred 'mail notifications (Mailing)'
+Zhm0RRtsSb13HtcD en ambos Gmail. (La rama doble existe porque attachmentsBinary
+con property '' EXPLOTA cuando el item no trae binario — cazado en smoke 23-07,
+exec 34649.)
 
 NOTAS DE LA CASA:
 - CREATE via API preserva refs de credenciales y la ejecución cross-project
@@ -104,7 +107,7 @@ return [{ json: { subject, html, who, orden, tab }, binary }];
 RESPOND_OK = {"parameters": {"respondWith": "json",
                              "responseBody": '={{ JSON.stringify({ok: true}) }}'},
               "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1,
-              "position": [720, 0], "id": "bug-respond-0001", "name": "Respond OK"}
+              "position": [960, 0], "id": "bug-respond-0001", "name": "Respond OK"}
 
 
 def build_workflow():
@@ -119,6 +122,17 @@ def build_workflow():
             {"parameters": {"mode": "runOnceForAllItems", "jsCode": ARMAR_JS},
              "type": "n8n-nodes-base.code", "typeVersion": 2,
              "position": [240, 0], "id": "bug-armar-0001", "name": "Armar reporte"},
+            # attachmentsBinary con property '' EXPLOTA sin binario (exec 34649) → rama doble
+            {"parameters": {"conditions": {"options": {"caseSensitive": True, "leftValue": "",
+                                                       "typeValidation": "loose"},
+                                           "conditions": [{"id": "hascap-1",
+                                                           "leftValue": "={{ Object.keys($binary || {}).length }}",
+                                                           "rightValue": 0,
+                                                           "operator": {"type": "number", "operation": "gt"}}],
+                                           "combinator": "and"},
+                            "options": {}},
+             "type": "n8n-nodes-base.if", "typeVersion": 2.2,
+             "position": [480, 0], "id": "bug-if-cap-0001", "name": "IF captura"},
             {"parameters": {"sendTo": MAIL_TO,
                             "subject": "={{ $json.subject }}",
                             "message": "={{ $json.html }}",
@@ -126,14 +140,24 @@ def build_workflow():
                                         "attachmentsUi": {"attachmentsBinary": [
                                             {"property": "={{ Object.keys($binary || {}).join(',') }}"}]}}},
              "type": "n8n-nodes-base.gmail", "typeVersion": 2.1,
-             "position": [480, 0], "id": "bug-gmail-0001", "name": "Gmail Bug Report",
+             "position": [720, -96], "id": "bug-gmail-0001", "name": "Gmail Bug Report",
+             "credentials": dict(CRED_GMAIL)},
+            {"parameters": {"sendTo": MAIL_TO,
+                            "subject": "={{ $json.subject }}",
+                            "message": "={{ $json.html }}",
+                            "options": {"appendAttribution": False}},
+             "type": "n8n-nodes-base.gmail", "typeVersion": 2.1,
+             "position": [720, 96], "id": "bug-gmail-0002", "name": "Gmail Bug Report (sin adjunto)",
              "credentials": dict(CRED_GMAIL)},
             RESPOND_OK,
         ],
         "connections": {
             "Webhook Bug": {"main": [[{"node": "Armar reporte", "type": "main", "index": 0}]]},
-            "Armar reporte": {"main": [[{"node": "Gmail Bug Report", "type": "main", "index": 0}]]},
+            "Armar reporte": {"main": [[{"node": "IF captura", "type": "main", "index": 0}]]},
+            "IF captura": {"main": [[{"node": "Gmail Bug Report", "type": "main", "index": 0}],
+                                    [{"node": "Gmail Bug Report (sin adjunto)", "type": "main", "index": 0}]]},
             "Gmail Bug Report": {"main": [[{"node": "Respond OK", "type": "main", "index": 0}]]},
+            "Gmail Bug Report (sin adjunto)": {"main": [[{"node": "Respond OK", "type": "main", "index": 0}]]},
         },
         "settings": {"executionOrder": "v1"},
     }
