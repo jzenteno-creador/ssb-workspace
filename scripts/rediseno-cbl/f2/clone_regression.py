@@ -307,6 +307,8 @@ def main():
     ap.add_argument("--extracts", help="JSON con las filas vigentes por orden (ver --print-export-sql)")
     ap.add_argument("--baseline", default=BASELINE_DEFAULT,
                     help="combinado del golden (default: golden/baseline/_combined.json) — define las 10 órdenes")
+    ap.add_argument("--from-snapshot-ok", action="store_true",
+                    help="permite --apply con --source-snapshot (regresión antes del GO de aplicar F2)")
     ap.add_argument("--pin-mode", choices=["fixture", "pindata"], default="fixture",
                     help="fixture = Code de mismo nombre con filas embebidas (default; la API pública "
                          "no acepta pinData en el create) · pindata = intentar POST con pinData")
@@ -342,8 +344,13 @@ def main():
 
     # source
     if args.source_snapshot:
+        if args.apply and not args.from_snapshot_ok:
+            sys.exit("ABORT(2): --apply no acepta --source-snapshot (el clon SIEMPRE parte del vivo post-F2). "
+                     "Excepción deliberada: --from-snapshot-ok permite crear el clon desde el PREVIEW del "
+                     "dry-run de put_f2_cbl.py (flujo 'regresión ANTES del GO de aplicar', John 22-07) — "
+                     "el preview es la transformación determinística del pin vivo y el PUT real re-verifica drift.")
         if args.apply:
-            sys.exit("ABORT(2): --apply no acepta --source-snapshot (el clon SIEMPRE parte del vivo post-F2)")
+            print("⚠️  clon desde SNAPSHOT (preview F2) — flujo regresión-antes-del-apply autorizado por John 22-07")
         src = json.load(open(args.source_snapshot, encoding="utf-8"))
         print("[1] source snapshot %s: %d nodos" % (args.source_snapshot, len(src["nodes"])))
     else:
