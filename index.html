@@ -216,6 +216,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:va
    Solo aplica ≥1101px: entre 701-1100 el pin se ignora (rail siempre colapsado). */
 @media (min-width:1101px){
   html.rail-pinned .tab-bar{width:var(--rail-w-exp)}
+  /* Fix bug rail (John 22-07): árbol Documentación abierto + pantalla baja → el
+     contenido supera el viewport y el botón colapsar queda inalcanzable. Solo en
+     pinned (el flyout del colapsado necesita overflow:visible). */
+  html.rail-pinned .tab-bar{overflow-y:auto;overflow-x:hidden}
   html.rail-pinned body{padding-left:var(--rail-w-exp)}
   html.rail-pinned .tab-bar .tab-btn,html.rail-pinned .rail-pin{width:100%}
   html.rail-pinned .tab-bar .tab-lbl{width:auto;padding-left:10px;opacity:1;transition:opacity .15s .05s}
