@@ -242,6 +242,19 @@ FIELDS = ["id", "name", "type", "typeVersion", "position", "parameters",
 
 # ───────────────────────────── helpers API/IO (patrón c3) ─────────────────────────────
 
+def mailing_secret():
+    """Lee MAILING_WEBHOOK_SECRET de .env del repo (gitignored) — el secret JAMAS
+    viaja al git; se inyecta al jsCode del nodo en runtime del harness."""
+    if os.environ.get("MAILING_WEBHOOK_SECRET"):
+        return os.environ["MAILING_WEBHOOK_SECRET"].strip()
+    env = os.path.join(REPO, ".env")
+    if os.path.isfile(env):
+        for line in open(env, encoding="utf-8"):
+            if line.startswith("MAILING_WEBHOOK_SECRET="):
+                return line.split("=", 1)[1].strip()
+    sys.exit("ABORT(2): MAILING_WEBHOOK_SECRET no esta en .env ni en el entorno")
+
+
 def api_key():
     if os.environ.get("N8N_API_KEY"):
         return os.environ["N8N_API_KEY"].strip()
@@ -381,6 +394,30 @@ def apply_transforms(pre):
         sys.exit("ABORT(2): LIVE_GUARD — el GET documentos_orden ya trae shipment_number (¿re-run?)")
     gd["parameters"]["url"] = replace_once(url, GETDOC_URL_OLD, GETDOC_URL_NEW, "FIX6A select GET documentos_orden")
 
+    # ---- Validar request: X-Mailing-Secret (Bloque 2 ⑤, GO John 23-07) ----
+    # El secret NO vive en el repo: se lee de .env (gitignored) en runtime y se
+    # inyecta al jsCode del nodo. Prerrequisito ya cumplido 23-07: env
+    # MAILING_WEBHOOK_SECRET en Vercel (prod+preview) + redeploy → el api vivo
+    # YA manda el header; una llamada directa al webhook sin él muere acá.
+    vr = by_name["Validar request"]
+    vjs = vr["parameters"]["jsCode"]
+    if "x-mailing-secret" in vjs:
+        sys.exit("ABORT(2): LIVE_GUARD — Validar request ya valida el secret (¿re-run?)")
+    secret = mailing_secret()
+    vjs = replace_once(
+        vjs,
+        "const errors = [];",
+        "const errors = [];\n"
+        "// ── X-Mailing-Secret (Bloque 2 ⑤, 23-07): el api SIEMPRE manda el header\n"
+        "// (env MAILING_WEBHOOK_SECRET + redeploy 23-07). Llamada directa al webhook\n"
+        "// sin secret => request muere con error claro (mismo canal req_errors).\n"
+        "const MAILING_SECRET = '" + secret + "';\n"
+        "const gotSecret = String(((wh.headers || {})['x-mailing-secret']) || '');\n"
+        "if (gotSecret !== MAILING_SECRET) errors.push('request no autorizado (X-Mailing-Secret inválido o ausente)');",
+        "FIX-SECRET Validar request",
+    )
+    vr["parameters"]["jsCode"] = vjs
+
     # CERO rewire: connections quedan idénticas.
     return nodes, conns
 
@@ -399,6 +436,7 @@ def verify(pre, nodes, conns, label):
     def nid_of(name):
         return next(n["id"] for n in pre["nodes"] if n["name"] == name)
     resolver_id, mime_id, getdoc_id = nid_of(RESOLVER), nid_of(N_MIME), nid_of(N_GETDOC)
+    validar_id = nid_of("Validar request")
 
     # 1. byte-identidad de TODOS los nodos, con 3 excepciones acotadas:
     #    Resolver.jsCode · MIME.jsCode · GETDOC.url — el resto de parameters
@@ -410,7 +448,7 @@ def verify(pre, nodes, conns, label):
             continue
         for f in FIELDS:
             if a.get(f) != b.get(f):
-                if f == "parameters" and nid in (resolver_id, mime_id, getdoc_id):
+                if f == "parameters" and nid in (resolver_id, mime_id, getdoc_id, validar_id):
                     drop = "url" if nid == getdoc_id else "jsCode"
                     pa = {k: v for k, v in (a.get(f) or {}).items() if k != drop}
                     pb = {k: v for k, v in (b.get(f) or {}).items() if k != drop}
@@ -434,6 +472,18 @@ def verify(pre, nodes, conns, label):
     pre_url = next(n for n in pre["nodes"] if n["name"] == N_GETDOC)["parameters"].get("url") or ""
     exp_js, e1 = try_edits(pre_js, RESOLVER_EDITS)
     exp_mjs, e2 = try_edits(pre_mjs, MIME_EDITS)
+    # FIX-SECRET: Validar request post debe validar el header exactamente 1 vez,
+    # con el secret del .env, sin tocar nada mas del nodo (candado llave-1 intacto).
+    vr_post = post_by_name.get("Validar request")
+    vjs_post = (vr_post.get("parameters") or {}).get("jsCode", "") if vr_post else ""
+    _sec = mailing_secret()
+    if vjs_post.count("x-mailing-secret") != 1:
+        fails.append("Validar request: validacion del secret ausente o duplicada")
+    if _sec not in vjs_post:
+        fails.append("Validar request: el secret inyectado NO coincide con el .env")
+    vr_pre_js = next(n for n in pre["nodes"] if n["name"] == "Validar request")["parameters"]["jsCode"]
+    if vjs_post.count("lock_test_mode") != vr_pre_js.count("lock_test_mode"):
+        fails.append("Validar request: lock_test_mode alterado (candado llave-1)")
     exp_url, e3 = try_edits(pre_url, [("FIX6A url", GETDOC_URL_OLD, GETDOC_URL_NEW)])
     for e in e1 + e2 + e3:
         fails.append(f"recompute esperado: {e}")
