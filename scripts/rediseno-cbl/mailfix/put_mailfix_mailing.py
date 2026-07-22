@@ -188,11 +188,11 @@ ROWL_NEW = """${drow(L.lOrder, order_number)}${drow(L.lShip, shipment_no)}${drow
 # 'Pedido'; John pidió 'Ordem' (reversible). 'do pedido' -> 'da ordem' por
 # concordancia de género.
 PT1_OLD = "subj:'Documentação de embarque · Pedido'"
-PT1_NEW = "subj:'Documentação de embarque · Ordem'"
+PT1_NEW = "subj:'Documentação de embarque · Order'"  # palabra confirmada por John 23-07: 'Order'
 PT2_OLD = "lOrder:'Pedido'"
-PT2_NEW = "lOrder:'Ordem'"
+PT2_NEW = "lOrder:'Order'"
 PT3_OLD = "pre:'Documentação de embarque do pedido'"
-PT3_NEW = "pre:'Documentação de embarque da ordem'"
+PT3_NEW = "pre:'Documentação de embarque · Order'"
 
 # FIX-SHIPMENT (6A) — fallback de shipment_no a documentos_orden.
 SH_OLD = "const shipment_no = pick(m.shipment_no);"
@@ -217,9 +217,9 @@ RESOLVER_EDITS = [
     ("FIX4/PE co_num + pe_num", CP_OLD, CP_NEW),
     ("FIX4b fila CO Nº (col der)", ROWR_OLD, ROWR_NEW),
     ("PEc fila PE Nº (col izq)", ROWL_OLD, ROWL_NEW),
-    ("FIX5a pt subj Ordem", PT1_OLD, PT1_NEW),
-    ("FIX5b pt lOrder Ordem", PT2_OLD, PT2_NEW),
-    ("FIX5c pt pre da ordem", PT3_OLD, PT3_NEW),
+    ("FIX5a pt subj Order", PT1_OLD, PT1_NEW),
+    ("FIX5b pt lOrder Order", PT2_OLD, PT2_NEW),
+    ("FIX5c pt pre Order", PT3_OLD, PT3_NEW),
     ("FIX6A shipment_no fallback", SH_OLD, SH_NEW),
 ]
 
@@ -510,7 +510,7 @@ def verify(pre, nodes, conns, label):
         ("laterN ×3 packs + uso", js.count("laterN:'") == 3 and "L.laterN" in js),
         ("lCoNum ×3 packs + fila", js.count("lCoNum:'") == 3 and "drow(L.lCoNum, co_num, true)" in js),
         ("lPeNum ×3 packs + fila", js.count("lPeNum:'") == 3 and "drow(L.lPeNum, pe_num, true)" in js),
-        ("pt Ordem (subj/lOrder/pre)", "· Ordem'" in js and "lOrder:'Ordem'" in js and "da ordem'" in js),
+        ("pt Order (subj/lOrder/pre)", js.count("· Order'") == 3 and js.count("lOrder:'Order'") == 2 and "· Pedido'" not in js and "do pedido'" not in js),
         ("pt Pedido fuera", js.count(PT1_OLD) == 0 and js.count(PT2_OLD) == 0 and js.count(PT3_OLD) == 0),
         ("shipment fallback", "shipDocs" in js and "pick(m.shipment_no, shipDocs.length" in js),
         ("TEST_MODE intacto", js.count("TEST_MODE") == pre_js.count("TEST_MODE")),
