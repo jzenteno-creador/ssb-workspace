@@ -34,7 +34,16 @@
    selección propia por id de fila porque una orden puede tener N
    corridas). Todo lo nuevo se construye con createElement/textContent
    (mismo patrón XSS-safe del balde original) e inyecta sobre el DOM ya
-   existente de index.html — CERO líneas nuevas en index.html. */
+   existente de index.html — CERO líneas nuevas en index.html.
+
+   FIX 7 (2026-07-23) — historia de controles: el modo Histórico suma los
+   snapshots de bl_controls_hist (el registro ANTERIOR que el upsert
+   merge-duplicates del workflow pisa al reprocesar el MISMO archivo BL;
+   los captura el trigger de migrations/2026-07-23-blcontrols-historia).
+   Filas marcadas _superseded: badge/banner "Reemplazado", body_html
+   on-demand por id del snapshot. Si la tabla no existe todavía (DDL sin
+   aplicar) la query degrada EN SILENCIO (warn) — el front se puede
+   deployar antes que la migración. */
 
 /* ═══════════ Control BL — data layer (Commit 3/6) ═══════════ */
 /* Reusa window.__ssb.supa (NO crea cliente). Render XSS-safe: createElement + textContent. */
@@ -1775,7 +1784,29 @@
       : (_cblSel === orderNumber);
     let html = _cblBodyCache[cacheKey];
     if(html === undefined){
-      if(isHist){
+      if(isHist && row._superseded){
+        // FIX 7: snapshot de bl_controls_hist — body_html NO viaja en el listado
+        // (pesado): se trae on-demand por id del snapshot, espejo del camino
+        // master/búsqueda de abajo. Error/tabla sin migrar → mensaje de error solo
+        // si el pane sigue mirando este snapshot (mismo guard de carrera).
+        v.innerHTML = '';
+        v.appendChild(stateLoading('Cargando análisis…'));
+        const supa = window.__ssb && window.__ssb.supa;
+        if(!supa){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'Sin conexión', 'El cliente Supabase no está inicializado.')); return; }
+        const { data, error } = await supa
+          .from('bl_controls_hist')
+          .select('body_html')
+          .eq('id', row.id)
+          .limit(1)
+          .maybeSingle();
+        if(error){
+          console.warn('control-bl:hist-body', error.message);
+          if(_cblDoc[pane] === 'analisis' && stillSelected()){ v.innerHTML = ''; v.appendChild(stateMsg('#i-alert', 'No se pudo cargar el análisis', error.message || 'Error de consulta a la base.')); }
+          return;
+        }
+        html = (data && data.body_html) || '';
+        _cblBodyCache[cacheKey] = html;
+      } else if(isHist){
         html = row.body_html || '';
         _cblBodyCache[cacheKey] = html;
       } else {
@@ -2090,7 +2121,32 @@
       .in('order_number', toks)
       .order('created_at', { ascending: false });
     if(error){ console.error('control-bl:historico', error); ssbToast('No se pudo buscar el histórico: ' + (error.message || ''), 'error'); return; }
-    _cblHistData = (data || []).map(r => Object.assign({}, r, { _histRow: true }));
+    // FIX 7 (historia de controles, 2026-07-23): sumar los snapshots de
+    // bl_controls_hist — el registro ANTERIOR que el upsert merge-duplicates del
+    // workflow PISA al reprocesar el MISMO archivo (mismo order_number+bl_file_id);
+    // los deja el trigger de migrations/2026-07-23-blcontrols-historia. Query aparte
+    // con el mismo cliente, SIN body_html (pesado — on-demand al abrir Análisis,
+    // cblRenderViewer) y SIN email_sent (el snapshot viejo casi siempre daría falso
+    // "huérfano" en cblEsHuerfano). Migración sin aplicar / RLS / anon → degradación
+    // SILENCIOSA (warn + cero snapshots): el front puede deployarse ANTES del DDL.
+    let snaps = [];
+    try {
+      const h = await supa
+        .from('bl_controls_hist')
+        .select('id,id_original,order_number,booking_no,bl_number,carrier,vessel,voyage,pol,pod,overall_result,ok_count,revisar_count,bl_file_id,bl_drive_link,aduana_drive_link,booking_drive_link,fc_link,pe_link,created_at_original,superseded_at')
+        .in('order_number', toks)
+        .order('superseded_at', { ascending: false });
+      if(h.error) console.warn('control-bl:hist-reemplazados', h.error.message);
+      else snaps = h.data || [];
+    } catch(e){ console.warn('control-bl:hist-reemplazados', e); }
+    const snapRows = snaps.map(r => Object.assign({}, r, {
+      created_at: r.created_at_original, // card/detalle muestran el momento de LA CORRIDA (superseded_at = cuándo la pisaron)
+      _histRow: true,
+      _superseded: true,
+    }));
+    _cblHistData = (data || []).map(r => Object.assign({}, r, { _histRow: true }))
+      .concat(snapRows)
+      .sort((a, b) => (Date.parse(b.created_at || '') || 0) - (Date.parse(a.created_at || '') || 0));
     await cblFetchSellos(); // sellos frescos — cualquier corrida vieja puede tener sello activo
     _cblHistSel = _cblHistData.length ? _cblHistData[0].id : null;
     cblResetPaneDocs();
@@ -2114,6 +2170,18 @@
     card.appendChild(vline);
     const route = [row.pod, cblFmtCorrida(row.created_at)].filter(Boolean).join(' · ');
     card.appendChild(el('div', 'cbl-ctrl-route', route));
+    // FIX 7: snapshot de bl_controls_hist — badge "Reemplazado" con la fecha en que
+    // el re-control del MISMO archivo lo pisó. Chip global del design system
+    // (badge--neutral), mismo patrón que cblHuerfanoChip: la isla #cbl-styles es
+    // NO-TOUCH, el margen va inline a propósito.
+    if(row._superseded){
+      const chip = el('span', 'badge badge--neutral');
+      chip.textContent = '↺ Reemplazado · ' + cblFmtCorrida(row.superseded_at);
+      chip.title = 'Registro pisado por un reproceso del mismo archivo BL el ' +
+        cblFmtCorrida(row.superseded_at) + ' — este es el resultado ANTERIOR, conservado como snapshot.';
+      chip.style.marginTop = '6px'; // inline a propósito: la isla CSS es NO-TOUCH
+      card.appendChild(chip);
+    }
     card.onclick = () => { _cblHistSel = row.id; cblResetPaneDocs(); cblRenderHistList(); cblRenderHistDetail(); };
     return card;
   }
@@ -2145,6 +2213,17 @@
     const detail = $('cbl-detail');
     const wrap = $('cbl-split-wrap');
     if(detail && wrap && wrap.parentNode){
+      // FIX 7: banner del snapshot reemplazado — va PRIMERO (más específico que el
+      // aviso genérico de histórico). Misma clase cbl-issue-row, cero CSS nuevo.
+      if(row._superseded){
+        const sup = el('div', 'cbl-issue-row');
+        sup.style.margin = '0 18px 12px';
+        sup.appendChild(svgUse('#i-rotate'));
+        sup.appendChild(el('span', null,
+          'Registro reemplazado: un reproceso del MISMO archivo BL pisó este control el ' +
+          cblFmtCorrida(row.superseded_at) + ' — estás viendo el resultado anterior (snapshot), no la versión vigente de la orden.'));
+        wrap.parentNode.insertBefore(sup, wrap);
+      }
       const warn = el('div', 'cbl-issue-row');
       warn.style.margin = '0 18px 12px';
       warn.appendChild(svgUse('#i-alert'));

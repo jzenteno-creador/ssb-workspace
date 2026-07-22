@@ -1,0 +1,118 @@
+{
+  "workflow_id": "WVt6gvghL2nFVbt6",
+  "workflow_name": "control de bill of lading",
+  "versionId": "70d83ce4-8c45-457b-b5a9-ec6da9d07fe4",
+  "active": true,
+  "total_nodes": 112,
+  "extracted_at": "2026-07-22",
+  "nota": "Extracto VERBATIM (solo lectura, n8n-cli workflows get) de los 6 nodos que tocan bl_controls — evidencia del veredicto del claim para FIX 7. No hay ningún otro nodo con writes a bl_controls ni ningún DELETE sobre esa tabla en los 112 nodos.",
+  "nodes": {
+    "Armar fila Control BL": {
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Armar fila Control BL — arma el payload del UPSERT a bl_controls\n// (?on_conflict=order_number,bl_file_id + merge-duplicates — PLAN1 T1).\n// PLAN1-FIX6 (2026-07-14): el payload YA NO incluye email_sent ni email_sent_at.\n// Esos campos los escribe ÚNICAMENTE el nodo \"Claim envío (email_sent)\"\n// (test-and-set atómico justo antes del send) y los revierte \"Revertir claim\"\n// si Gmail falla — mismo patrón idempotente que Armar fila Mailing usa con\n// status/sent_*: un re-run del control actualiza el análisis SIN pisar el\n// estado de envío. Consecuencia: 1 (un) mail por versión de BL\n// (order_number + bl_file_id); doble disparo trigger+form ya no duplica.\n// Lee body_html/subject/email_to del item actual (salida per-item de\n// \"code  - plantilla HTML\") y los estructurados del COMPARADOR (doc + result).\n// Devuelve UN objeto cuyas keys == columnas de bl_controls.\nconst tpl = $json;\n\n// COMPARADOR: preferir paired item; si el template rompió el pairing, caer a first().\nlet c;\ntry { c = $('COMPARADOR - BL vs Aduana vs Booking').item.json; }\ncatch (e) { c = $('COMPARADOR - BL vs Aduana vs Booking').first().json; }\nc = c || {};\n\nconst bl  = c.login_extract   || {};   // BL: clave uniforme LOG-IN y MAERSK (carrier adentro)\nconst adu = c.aduana_extract  || {};\nconst ba  = c.booking_extract || {};\nconst fc  = c.factura_extract || {};\nconst pe  = (c.pe_extract === undefined ? null : c.pe_extract);   // PE puede ser null (ausente)\nconst cs  = c.compare_summary || {};\nconst kf  = cs.key_fields || {};\nconst cmp = c.compare || {};\nconst cnt = cmp.counters || {};\nconst hr  = c.header_resumen || {};\n\nconst pick = (...xs) => {\n  for (const x of xs) { if (x !== undefined && x !== null && String(x).trim() !== '') return x; }\n  return null;\n};\nconst driveId = (u) => { const m = String(u || '').match(/\\/d\\/([^/]+)/); return m ? m[1] : null; };\nconst intOr0  = (x) => Number.isFinite(Number(x)) ? Number(x) : 0;\n\nconst order_number = pick(c.order_number, (kf.order_number||{}).BL, (kf.order_number||{}).Aduana, (kf.order_number||{}).BA, c.joinKey, bl.order_number, ba.order_number);\nconst booking_no   = pick((kf.booking_no||{}).BL, (kf.booking_no||{}).BA, c.booking_no, bl.booking_no, ba.booking_no, hr.booking);\nconst bl_number    = pick(kf.bl_number, bl.bl_no);\nconst carrier      = pick(bl.carrier, c.carrier_name, c.carrier_code);\nconst vessel       = pick(bl.vessel, hr.vessel);\nconst voyage       = pick(bl.voyage);\nconst pol          = pick((kf.pol||{}).BL, bl.pol);\nconst pod          = pick((kf.pod||{}).BL, bl.pod);\n\n// overall_result: NOT NULL + CHECK in ('OK','REVISAR'). Fallback 'REVISAR' (marca para revisar) si vino raro.\nconst overall_result = (cmp.overall === 'OK' || cmp.overall === 'REVISAR') ? cmp.overall : 'REVISAR';\n\nconst email_to = Array.isArray(tpl.email_to)\n  ? tpl.email_to.join(', ')\n  : (tpl.email_to != null && String(tpl.email_to).trim() !== '' ? String(tpl.email_to) : null);\n\nconst row = {\n  // claves / identidad\n  order_number, booking_no, bl_number, carrier, vessel, voyage, pol, pod,\n  // A2-FIX (2026-07-17): created_at = momento de ESTE control. En el primer\n  // insert coincide con el default; en un re-control (upsert merge-duplicates)\n  // REFRESCA el timestamp → bl_controlado_at deja de quedarse viejo en la UI\n  // (era el \"no se actualizó la web\" del reproceso) y habilita el poll de\n  // A.2-front (fin real = created_at > startedAt del click).\n  created_at: new Date().toISOString(),\n  // resultado\n  overall_result,\n  ok_count:      intOr0(cnt.OK),\n  revisar_count: intOr0(cnt.REVISAR),\n  // jsonb crudos\n  bl_extract:      bl,\n  aduana_extract:  adu,\n  booking_extract: ba,\n  factura_extract: fc,\n  pe_extract:      pe,\n  comparison:           c.compare_bl_anchored || {},   // OBJETO {campos,totales} (la col defaultea '[]' pero acepta objeto)\n  equipment_comparison: c.compare_equipos     || [],\n  // links (best-effort; el body_html ya los trae embebidos)\n  bl_drive_link:      bl.source_link || null,\n  bl_file_id:         driveId(bl.source_link),\n  aduana_drive_link:  adu.source_link || c.aduana_link || null,\n  booking_drive_link: (ba.links && ba.links.webViewLink) || null,\n  // mail (el ESTADO de envío no viaja acá — es del claim; ver header)\n  email_to,\n  // render verbatim\n  body_html: tpl.body_html || null,\n  subject:   tpl.subject   || null,\n  // explícitos para NO heredar defaults mentirosos (tokens/costos = Fase 2 del proyecto)\n  model_used:  null,   // la col defaultea a 'claude-haiku-...' → DEBE ir null explícito\n  ai_summary:  null,\n  ai_analysis: null,   // la col defaultea a '{}' → null explícito\n  operacion_id: null,  // sin fuente confiable en este workflow (FK nullable)\n};\n\nreturn { json: row };\n"
+      }
+    },
+    "Persistir Control BL": {
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/bl_controls?on_conflict=order_number,bl_file_id",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      }
+    },
+    "Detectar persistencia fallida": {
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Detectar persistencia fallida — rama de alerta (best-effort, continue-on-fail).\n// La salida de \"Persistir Control BL\": en ÉXITO trae la fila insertada CON `id` (Supabase\n// devuelve representation). En FALLO (continue-on-fail tras 401/RLS/etc.) viene sin `id`.\n// Si persistió OK → return [] (no dispara la alerta). Si falló → emite 1 item con datos para el mail.\nconst persistOut = $input.all();\nlet armar = [];\ntry { armar = $('Armar fila Control BL').all(); } catch (e) { armar = []; }\n\nconst out = [];\nfor (let i = 0; i < persistOut.length; i++) {\n  const j = (persistOut[i] && persistOut[i].json) || {};\n  if (j.id) continue;   // persistió OK\n  const r = (armar[i] && armar[i].json) || (armar[0] && armar[0].json) || {};\n  out.push({ json: {\n    alert_order:   r.order_number || '(orden desconocida)',\n    alert_booking: r.booking_no   || '',\n    alert_bl:      r.bl_number     || '',\n    alert_vessel:  r.vessel        || '',\n    alert_when:    new Date().toISOString(),\n  }});\n}\nreturn out;\n"
+      }
+    },
+    "Claim envío (email_sent)": {
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/bl_controls?id=eq.{{ $json.id }}{{ $('Form Trigger — Test por orden').isExecuted ? '' : '&email_sent=eq.false' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email_sent: true, email_sent_at: new Date().toISOString() }) }}",
+        "options": {}
+      }
+    },
+    "IF claim ganado": {
+      "type": "n8n-nodes-base.if",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "plan1-cond-claim-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    "Revertir claim (mail falló)": {
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://xkppkzfxgtfsmfooozsm.supabase.co/rest/v1/bl_controls?id=eq.{{ $json.id || $('Claim envío (email_sent)').item.json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email_sent: false, email_sent_at: null }) }}",
+        "options": {}
+      }
+    }
+  }
+}
