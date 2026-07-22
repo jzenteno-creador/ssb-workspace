@@ -3564,31 +3564,18 @@ body.light #panel-admin-co{ --adm-surface:#FFFFFF; --adm-line:#E7E4DD; --adm-lin
 }
 </style>
 <style id="cbl-pack-styles">
-/* ═══ Pieza 4 (22-07) — pack Control BL: zoom del visor + espina "Revisado" en la
-   lista + modal "Reportar bug". Isla ADITIVA, namespace .cblp-* (regla: nunca
-   clases genéricas), pegada DESPUÉS de las islas existentes (#cbl-styles /
-   #cbl-split-styles / #cbl-sticky-styles NO-TOUCH byte-idénticas) — gana por
-   orden de cascada sin specificity-hacks. Lógica: js/features/control-bl.js. */
+/* ═══ Pieza 4 (22-07) — pack Control BL: espina "Revisado" en la lista + modal
+   "Reportar bug". (El zoom del visor se RETIRÓ de prod 23-07 por decisión de
+   John — pendiente de rediseño; revert quirúrgico, el resto del pack queda.)
+   Isla ADITIVA, namespace .cblp-* (regla: nunca clases genéricas), pegada
+   DESPUÉS de las islas existentes (#cbl-styles / #cbl-split-styles /
+   #cbl-sticky-styles NO-TOUCH byte-idénticas) — gana por orden de cascada sin
+   specificity-hacks. Lógica: js/features/control-bl.js. */
 
 /* ── Coherencia lista↔detalle (fix bug Naara): la espina izquierda de la card
    refleja el sello humano vigente — el detalle ya pintaba is-seal (teal), la
    card de la lista quedaba con la espina naranja del REVISAR crudo. ── */
 #panel-control-bl .cbl-ctrl.cblp-seal::before{background:var(--cbl-seal)}
-
-/* ── Zoom del visor (por pane): barra +/−/reset + wrapper scrolleable. El iframe
-   NO se toca (mismo nodo, mismas clases/alturas de la isla): la magnificación es
-   transform scale sobre .cblp-zoombox (origin top-left) y .cblp-zoomwrap conserva
-   overflow:auto para panear — el overflow visual de un transform SÍ cuenta para
-   el scroll area del ancestro. El layout no crece: la altura de layout del iframe
-   (72/78vh de la isla) no cambia con el transform. ── */
-#panel-control-bl .cblp-zoombar{display:flex;align-items:center;gap:6px;margin:0 4px 8px;justify-content:flex-end}
-#panel-control-bl .cblp-zbtn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cbl-ink-soft);background:var(--cbl-surface);border:1px solid var(--cbl-line-strong);border-radius:7px;cursor:pointer;padding:0;line-height:1}
-#panel-control-bl .cblp-zbtn:hover:not([disabled]){color:var(--cbl-ink);border-color:var(--cbl-ink-faint)}
-#panel-control-bl .cblp-zbtn[disabled]{opacity:.4;cursor:default}
-#panel-control-bl .cblp-zpct{min-width:54px;text-align:center;font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--cbl-ink-soft);background:none;border:1px solid transparent;border-radius:7px;padding:5px 6px;cursor:pointer}
-#panel-control-bl .cblp-zpct:hover{border-color:var(--cbl-line-strong);color:var(--cbl-ink)}
-#panel-control-bl .cblp-zoomwrap{overflow:auto;border-radius:10px}
-#panel-control-bl .cblp-zoombox{transform-origin:0 0;width:100%}
 
 /* ── Botón "Reportar bug" (detalle del expediente) — discreto, junto a las
    acciones del header; mismo idioma visual que .cbl-anular (ghost chico). ── */

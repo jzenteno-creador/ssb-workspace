@@ -52,14 +52,8 @@
   //    mantiene mientras dure la sesión (variable de módulo, se pierde solo con reload).
   let _cblDoc = { a: 'analisis', b: 'bl' };
   let _cblSplit = false; // toggle "Lado a lado" (cabecera, junto a "Reprocesar BL draft")
-  // Pieza 4 (tanda UI 22-07) — zoom del visor POR PANE (uso real: verificar precintos
-  // letra por letra). Se conserva al cambiar de doc-tab dentro de la misma orden (para
-  // comparar dos documentos al mismo aumento) y se resetea junto con los panes al
-  // cambiar de control (cblResetPaneDocs). Sin persistencia — decisión de la pieza.
-  let _cblpZoom = { a: 1, b: 1 };
-  const CBLP_ZOOM_MIN = 0.5, CBLP_ZOOM_MAX = 3, CBLP_ZOOM_STEP = 0.25;
   function cblDefaultDocB(docA){ return docA === 'analisis' ? 'bl' : 'analisis'; }
-  function cblResetPaneDocs(){ _cblDoc = { a: 'analisis', b: cblDefaultDocB('analisis') }; _cblpZoom = { a: 1, b: 1 }; }
+  function cblResetPaneDocs(){ _cblDoc = { a: 'analisis', b: cblDefaultDocB('analisis') }; }
   // ≤900px colapsa a un solo documento (decisión D5) — mismo breakpoint que el bloque
   // responsive Fase B de cbl-layout (index.html, NO-TOUCH), evaluado en JS porque acá
   // decide un booleano de comportamiento (deshabilita el botón), no solo CSS.
@@ -1732,47 +1726,6 @@
     });
   }
 
-  // ── Pieza 4 (tanda UI 22-07) — zoom del visor: monta [barra +/−/reset] +
-  // [wrap scrolleable > box escalable > iframe] dentro del .cbl-viewer del pane.
-  // Técnica: transform scale con origin top-left sobre un wrapper INTERNO
-  // (.cblp-zoombox); el contenedor (.cblp-zoomwrap) mantiene overflow:auto para
-  // panear — el overflow visual de un transform cuenta para el scroll area del
-  // ancestro, y la altura de LAYOUT del iframe (72/78vh de la isla) no cambia,
-  // así el resto de la página no se corre. El iframe NO se toca (mismo nodo,
-  // mismas clases, sandbox/srcdoc intactos) y NO se recarga al zoomear: solo
-  // muta el style.transform del wrapper. Rango 50–300%, paso 25%. ──
-  function cblpMountViewerZoom(v, frame, pane){
-    const bar = el('div', 'cblp-zoombar');
-    const minus = el('button', 'cblp-zbtn', '−');
-    minus.type = 'button'; minus.title = 'Alejar (−25%)'; minus.setAttribute('aria-label', 'Alejar');
-    const pct = el('button', 'cblp-zpct');
-    pct.type = 'button'; pct.title = 'Volver al 100%'; pct.setAttribute('aria-label', 'Restablecer zoom al 100%');
-    const plus = el('button', 'cblp-zbtn', '+');
-    plus.type = 'button'; plus.title = 'Acercar (+25%)'; plus.setAttribute('aria-label', 'Acercar');
-    bar.appendChild(minus); bar.appendChild(pct); bar.appendChild(plus);
-    const wrap = el('div', 'cblp-zoomwrap');
-    const box = el('div', 'cblp-zoombox');
-    box.appendChild(frame);
-    wrap.appendChild(box);
-    const apply = () => {
-      const z = _cblpZoom[pane] || 1;
-      box.style.transform = z === 1 ? '' : 'scale(' + z + ')';
-      pct.textContent = Math.round(z * 100) + '%';
-      minus.disabled = z <= CBLP_ZOOM_MIN;
-      plus.disabled = z >= CBLP_ZOOM_MAX;
-    };
-    const set = z => {
-      _cblpZoom[pane] = Math.min(CBLP_ZOOM_MAX, Math.max(CBLP_ZOOM_MIN, Math.round(z * 100) / 100));
-      apply();
-    };
-    minus.onclick = () => set((_cblpZoom[pane] || 1) - CBLP_ZOOM_STEP);
-    plus.onclick = () => set((_cblpZoom[pane] || 1) + CBLP_ZOOM_STEP);
-    pct.onclick = () => set(1);
-    apply(); // el zoom por pane persiste entre doc-tabs de la misma orden
-    v.appendChild(bar);
-    v.appendChild(wrap);
-  }
-
   // ── Visor: Análisis (body_html on-demand) · resto → visor Drive. D5: recibe el
   // pane ('a'/'b') — el guard de carrera del fetch de Análisis (dos fetches pueden
   // estar en vuelo a la vez, uno por pane) queda pane-aware. ──
@@ -1803,7 +1756,7 @@
       frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
       frame.setAttribute('allow', 'autoplay');
       frame.title = label + ' · ' + (row.order_number || '');
-      cblpMountViewerZoom(v, frame, pane); // pieza 4: zoom — el iframe viaja intacto adentro del wrap
+      v.appendChild(frame);
       return;
     }
 
@@ -1865,7 +1818,7 @@
     frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.title = 'Análisis del control ' + orderNumber;
-    cblpMountViewerZoom(v, frame, pane); // pieza 4: zoom — sandbox/srcdoc intactos, solo se envuelve
+    v.appendChild(frame);
     frame.srcdoc = '<base target="_blank">' + html; // PROPIEDAD DOM (html es un documento completo — no se escapa)
   }
 
