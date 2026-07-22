@@ -65,7 +65,7 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `tarifas` | Tarifas marítimas — **Supabase** `v_tarifas_maritimas` vía `loadTarifasFromSupabase()` (Apps Script legacy en `loadTarifas()`) | saneo selC/selE duplicado en ambas (deuda: unificar en helper; mientras tanto, tocar las dos) |
 | `admin-bid` | BID (carga/edición) | `docs/modules/admin-bid.md` |
 | `efa` | EFA Gantt | `docs/modules/efa-gantt.md` |
-| `schedule-rt` | Supabase `schedules_master` Realtime (único Schedule — el legacy BID/Apps Script se cortó en fase1) | `docs/modules/schedule-realtime.md` |
+| `schedule-rt` | Supabase `schedules_master` Realtime (único Schedule — el legacy BID/Apps Script se cortó en fase1). Baja de servicio = `disponible=false` (fila roja), **doble escritor last-write-wins** (columna Excel `ACTIVO="no"` via ingesta n8n + botón ⊘/multiselección UI). Multiselección en lote (checkbox + RPC `set_schedule_flags_bulk`: baja/reactivar/quitar). **`ACTIVO` (Excel) → `disponible` (DB), NO `activo`.** | `docs/modules/schedule-realtime.md` + `docs/integrations/n8n-schedule-excel.md` |
 | `detention` | Detention (Supabase) | filtros multi-select estilo `.ac-wrap` |
 | `tt-dow` | Tarifas Terrestres Dow (Supabase) | `docs/modules/tarifas-terrestres-dow.md` |
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | `docs/modules/vacaciones.md` + `docs/modules/auth-global.md` |
