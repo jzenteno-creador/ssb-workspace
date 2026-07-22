@@ -21,7 +21,8 @@
 //
 // POWERS (decididos en el gate): employee = alta_despacho, editar_despacho,
 // set_requiere_co, archivar, desarchivar, sellar_control, reprocesar_bl (PLAN1
-// FIX 3 — lo usa la operatoria diaria). ADMIN-ONLY = anular_alta, co_config_*,
+// FIX 3 — lo usa la operatoria diaria), refactura_trade (rediseño CBL F3 —
+// operatoria diaria de refacturas trade). ADMIN-ONLY = anular_alta, co_config_*,
 // anular_sello.
 //
 // NOTA upsert de config: el unique de seguimiento_co_config es un índice PARCIAL de
@@ -38,10 +39,14 @@
 // legacy SUPABASE_DB_PASSWORD, que es el que ya existe — se aceptan ambos).
 // PLAN1 FIX 3: + N8N_CBL_FORM_URL (URL del Form Trigger "Test por orden" del
 // workflow Control BL — hoy https://jzenteno.app.n8n.cloud/form/b8b6e00a-0620-4ecf-8844-e97f7162a753).
+// F3 (rediseño CBL): + N8N_F3_DRIVE_URL (webhook del mini-workflow "F3 — Drive
+// refactura trade" — https://jzenteno.app.n8n.cloud/webhook/f3-drive-refactura;
+// spec scripts/rediseno-cbl/f3/wf_drive_refactura.md).
 
 const MAX_BATCH = 200;
 const MIN_FECHA = '2020-01-01';
 const ORDEN_NORM_RE = /^[1-9]\d{6,11}$/; // ESPEJO exacto del CHECK seguimiento_orden_formato
+const PO_TRADE_RE = /^1\d{8,9}$/; // PO trade SAP: empieza con 1, 9-10 dígitos (rediseño CBL F3)
 const MOTS = new Set(['maritimo', 'terrestre']);
 const REQUIERE_CO_VALS = new Set(['auto', 'requerido', 'no_requerido']);
 // T8/E.1 (2026-07-17): set_requiere_co pasa a ADMIN — la definición de CO vive en
@@ -826,6 +831,268 @@ async function handleReprocesarBl(res, body, userEmail) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// refactura_trade — single — EMPLOYEE (rediseño Control BL, F3 redefinida 22-07)
+// { order_number: '<orden ORIGINAL>', nueva_po: '<PO SAP nueva (1…)>', nota? }
+//
+// La refactura trade YA llegó por mail y la ingesta la guardó en FACTURAS
+// EXPORTACION nombrada con la PO NUEVA de SAP. Esta action orquesta:
+//   (1) mini-WF n8n de Drive (env N8N_F3_DRIVE_URL): ubica la factura más
+//       reciente que matchee la PO nueva con sufijo _FC, mueve la vigente
+//       anterior de la orden a la subcarpeta HISTORICO (la crea si falta) y
+//       RENOMBRA la nueva reemplazando SOLO la PO por la orden original
+//       (conserva el prefijo AFIP de 5 dígitos — el robot la reconoce igual).
+//   (2) INSERT orden_po_alias (idempotente por alias_po + verificación de
+//       consistencia post-insert).
+//   (3) RPC registrar_documento_version (service_role; p_source='app-upload',
+//       actor del JWT — por la guarda g2 el ancla drive_file_id re-atribuye la
+//       fila que F1 pudo haber registrado bajo la orden fantasma y la promueve
+//       con vigente_motivo 'manual:<actor>').
+//   (4) Si existía orden FANTASMA (order_number=nueva_po, alta_source 'auto:%'):
+//       archivarla con motivo 'fusionada por alias refactura'. Una orden REAL
+//       con esa PO no se archiva jamás — se avisa.
+//
+// GOTCHA n8n (CLAUDE.md raíz): ejecución fallida del webhook responseNode =
+// HTTP 200 con CUERPO VACÍO → cuerpo vacío/no-JSON JAMÁS es éxito acá.
+// {ok:false, motivo:'factura_no_encontrada'} del WF NO es error: mapea a
+// result.status 'esperando_factura' (el modal muestra "esperando factura de
+// PO X" y se reintenta cuando llegue el mail).
+//
+// Errores TIPADOS por paso (result.pasos.{wf_drive,alias,registrar,fantasma}):
+// alias/registrar fallidos = 502 CON los pasos ya completados en el cuerpo
+// (el rename en Drive ya ocurrió — el operador tiene que saberlo). El paso
+// fantasma NO es fatal: error ahí = ok:true + aviso (el núcleo ya está hecho).
+//
+// Re-entrada segura: si el WF falla a mitad (move hecho, rename no) el retry
+// retoma completo (el WF mueve ANTES de renombrar a propósito). Si TODO el WF
+// ya corrió antes pero alias/RPC fallaron, el retry devuelve esperando_factura
+// (la PO nueva ya no matchea archivos) — el aviso 'alias_ya_existia_sin_doc'
+// marca ese caso para resolución manual (documentado en api_contract.md §4).
+//
+// Statuses: refacturada | esperando_factura | no_encontrada | archivada |
+//           alias_conflicto  (+ 400/500/502 tipados)
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleRefacturaTrade(res, body, userEmail, base, svcHeaders) {
+  const wfUrl = process.env.N8N_F3_DRIVE_URL;
+  if (!wfUrl) return res.status(500).json({ error: 'N8N_F3_DRIVE_URL no configurada.' });
+
+  const order = normalizeOrden(body.order_number);
+  if (!ORDEN_NORM_RE.test(order))
+    return res.status(400).json({ error: 'order_number inválido (normalizado: 7-12 dígitos sin 0 inicial)' });
+  const nuevaPo = String(body.nueva_po || '').trim();
+  if (!PO_TRADE_RE.test(nuevaPo))
+    return res.status(400).json({ error: 'nueva_po inválida (PO trade SAP: empieza con 1, 9-10 dígitos)' });
+  if (nuevaPo === order)
+    return res.status(400).json({ error: 'nueva_po no puede ser igual a order_number (la refactura trade genera una PO NUEVA)' });
+  const nota = (strOrNull(body.nota) || '').slice(0, 500) || null;
+
+  // ── 0.a) La orden ORIGINAL existe y no está archivada ──
+  try {
+    const gRes = await fetch(
+      `${base}/seguimiento_ordenes?select=order_number,archivada_at&order_number=eq.${order}`,
+      { headers: svcHeaders }
+    );
+    if (!gRes.ok) throw new Error(`GET ${gRes.status}`);
+    const rows = await gRes.json();
+    if (!rows.length)
+      return res.status(200).json({
+        ok: true, action: 'refactura_trade',
+        result: { order_number: order, nueva_po: nuevaPo, status: 'no_encontrada', detail: 'la orden original no tiene alta en seguimiento — usá alta_despacho primero' },
+      });
+    if (rows[0].archivada_at !== null)
+      return res.status(200).json({
+        ok: true, action: 'refactura_trade',
+        result: { order_number: order, nueva_po: nuevaPo, status: 'archivada', detail: 'la orden original está archivada — desarchivala antes de registrar la refactura' },
+      });
+  } catch (e) {
+    console.error('seguimiento refactura_trade orden-check error:', e.message);
+    return res.status(502).json({ error: 'No se pudo leer seguimiento_ordenes', step: 'orden_check' });
+  }
+
+  // ── 0.b) Alias pre-check: registrado para OTRA orden = conflicto; para ESTA = idempotente ──
+  let aliasYaApuntaba = false;
+  try {
+    const aRes = await fetch(
+      `${base}/orden_po_alias?select=alias_po,order_number&alias_po=eq.${encodeURIComponent(nuevaPo)}`,
+      { headers: svcHeaders }
+    );
+    if (!aRes.ok) throw new Error(`GET ${aRes.status}`);
+    const rows = await aRes.json();
+    if (rows.length && rows[0].order_number !== order)
+      return res.status(200).json({
+        ok: true, action: 'refactura_trade',
+        result: { order_number: order, nueva_po: nuevaPo, status: 'alias_conflicto', alias_de: rows[0].order_number, detail: `la PO ${nuevaPo} ya está registrada como alias de la orden ${rows[0].order_number}` },
+      });
+    aliasYaApuntaba = rows.length > 0;
+  } catch (e) {
+    console.error('seguimiento refactura_trade alias-check error:', e.message);
+    return res.status(502).json({ error: 'No se pudo leer orden_po_alias', step: 'alias_check' });
+  }
+
+  const pasos = {};
+  const avisos = [];
+
+  // ── 1) Mini-WF n8n de Drive: buscar + mover anterior a HISTORICO + renombrar ──
+  let wfOut;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20000); // 2-4 ops Drive ≈ 3-10 s
+  try {
+    const wRes = await fetch(wfUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ po_nueva: nuevaPo, orden_original: order }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    const raw = await wRes.text();
+    if (!wRes.ok)
+      return res.status(502).json({ error: `El workflow Drive respondió ${wRes.status}`, step: 'wf_drive', detail: raw.slice(0, 200) });
+    // GOTCHA de la casa: ejecución n8n FALLIDA = 200 con cuerpo vacío → error duro.
+    if (!raw || !raw.trim())
+      return res.status(502).json({ error: 'El workflow Drive respondió 200 con cuerpo VACÍO (ejecución n8n fallida) — nada se registró en la DB; puede haber quedado un paso de Drive a medias, reintentá', step: 'wf_drive' });
+    try {
+      wfOut = JSON.parse(raw);
+    } catch {
+      return res.status(502).json({ error: 'El workflow Drive respondió no-JSON (ejecución n8n fallida)', step: 'wf_drive', detail: raw.slice(0, 200) });
+    }
+  } catch (e) {
+    clearTimeout(t);
+    if (e.name === 'AbortError')
+      return res.status(502).json({ error: 'El workflow Drive no respondió en 20 s — pudo haber quedado a medias (el retry retoma completo)', step: 'wf_drive' });
+    console.error('seguimiento refactura_trade wf_drive error:', e.message);
+    return res.status(502).json({ error: 'No se pudo llamar al workflow Drive', step: 'wf_drive', detail: String(e.message || '').slice(0, 200) });
+  }
+
+  if (wfOut.ok !== true) {
+    if (wfOut.motivo === 'factura_no_encontrada') {
+      const result = {
+        order_number: order, nueva_po: nuevaPo, status: 'esperando_factura',
+        detail: `La factura de la PO ${nuevaPo} todavía no está en FACTURAS EXPORTACION — reintentá cuando llegue el mail de la refactura.`,
+      };
+      // Alias ya registrado + factura no encontrada = probable corrida previa que
+      // renombró y luego falló antes de registrar el documento → resolución manual.
+      if (aliasYaApuntaba)
+        result.avisos = [{ aviso: 'alias_ya_existia_sin_doc', detail: 'el alias ya estaba registrado para esta orden: si una corrida anterior ya renombró la factura, verificá el documento vigente a mano (api_contract.md §4)' }];
+      return res.status(200).json({ ok: true, action: 'refactura_trade', result });
+    }
+    return res.status(502).json({ error: `El workflow Drive devolvió ok:false (motivo: ${wfOut.motivo || 'desconocido'})`, step: 'wf_drive', detail: JSON.stringify(wfOut).slice(0, 300) });
+  }
+  const enc = wfOut.encontrada || {};
+  if (!enc.file_id || !enc.file_name_despues)
+    return res.status(502).json({ error: 'Respuesta malformada del workflow Drive (falta encontrada.file_id/file_name_despues)', step: 'wf_drive', detail: JSON.stringify(wfOut).slice(0, 300) });
+  pasos.wf_drive = { status: 'ok', encontrada: enc, movida: wfOut.movida || null, historico: wfOut.historico || null };
+
+  // ── 2) INSERT orden_po_alias (on_conflict do nothing) + verificación de consistencia ──
+  try {
+    const iRes = await fetch(`${base}/orden_po_alias?on_conflict=alias_po`, {
+      method: 'POST',
+      headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify({
+        alias_po: nuevaPo,
+        order_number: order,
+        motivo: nota ? `refactura: ${nota}` : 'refactura',
+        created_by: userEmail,
+      }),
+    });
+    if (!iRes.ok) throw new Error(`POST ${iRes.status}: ${(await iRes.text()).slice(0, 200)}`);
+    const inserted = await iRes.json();
+    // Consistencia SIEMPRE (cubre la carrera entre el pre-check y el insert):
+    const vRes = await fetch(
+      `${base}/orden_po_alias?select=alias_po,order_number&alias_po=eq.${encodeURIComponent(nuevaPo)}`,
+      { headers: svcHeaders }
+    );
+    if (!vRes.ok) throw new Error(`GET verify ${vRes.status}`);
+    const vRows = await vRes.json();
+    if (!vRows.length || vRows[0].order_number !== order)
+      return res.status(502).json({
+        error: `Inconsistencia de alias: ${nuevaPo} quedó apuntando a ${vRows.length ? vRows[0].order_number : '(nada)'} — ATENCIÓN: la factura YA fue renombrada en Drive`,
+        step: 'alias', pasos,
+      });
+    pasos.alias = { status: (Array.isArray(inserted) && inserted.length) ? 'creado' : 'ya_existia' };
+  } catch (e) {
+    console.error('seguimiento refactura_trade alias error:', e.message);
+    return res.status(502).json({ error: 'No se pudo registrar el alias — ATENCIÓN: la factura YA fue renombrada en Drive; reintentá (el resto es idempotente)', step: 'alias', detail: String(e.message || '').slice(0, 200), pasos });
+  }
+
+  // ── 3) RPC registrar_documento_version (guarda g2: el ancla drive_file_id
+  //       re-atribuye/promueve; vigente_motivo queda 'manual:<actor>') ──
+  let doc;
+  try {
+    const rRes = await fetch(`${base}/rpc/registrar_documento_version`, {
+      method: 'POST',
+      headers: { ...svcHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_order_number: order,
+        p_tipo: 'factura',
+        p_file_name: enc.file_name_despues,
+        p_drive_file_id: enc.file_id,
+        p_drive_md5: enc.md5 || null,
+        p_drive_modified_at: enc.modified_time || null,
+        p_document_ts: enc.modified_time || null,
+        p_source: 'app-upload',
+        p_actor: userEmail,
+      }),
+    });
+    const rawDoc = await rRes.text();
+    if (!rRes.ok) throw new Error(`RPC ${rRes.status}: ${rawDoc.slice(0, 200)}`);
+    doc = JSON.parse(rawDoc);
+    if (!doc || !doc.id) throw new Error(`RPC sin id en la respuesta: ${rawDoc.slice(0, 200)}`);
+  } catch (e) {
+    console.error('seguimiento refactura_trade registrar error:', e.message);
+    return res.status(502).json({ error: 'El RPC registrar_documento_version falló — el alias quedó registrado y la factura renombrada; reintentá (el RPC es idempotente por drive_file_id)', step: 'registrar', detail: String(e.message || '').slice(0, 200), pasos });
+  }
+  pasos.registrar = { status: 'ok', documento_id: doc.id, vigente: doc.vigente === true, vigente_motivo: doc.vigente_motivo || null };
+  if (Array.isArray(doc.avisos)) avisos.push(...doc.avisos);
+
+  // ── 4) Orden fantasma (auto-creada por la ingesta bajo la PO nueva): archivar.
+  //       NO fatal: el núcleo (Drive + alias + documento) ya está hecho. ──
+  try {
+    const fRes = await fetch(
+      `${base}/seguimiento_ordenes?select=*&order_number=eq.${nuevaPo}`,
+      { headers: svcHeaders }
+    );
+    if (!fRes.ok) throw new Error(`GET ${fRes.status}`);
+    const fRows = await fRes.json();
+    if (!fRows.length) {
+      pasos.fantasma = { status: 'no_habia' };
+    } else if (fRows[0].archivada_at !== null) {
+      pasos.fantasma = { status: 'ya_archivada' };
+    } else if (typeof fRows[0].alta_source === 'string' && fRows[0].alta_source.startsWith('auto:')) {
+      const pRes = await fetch(`${base}/seguimiento_ordenes?order_number=eq.${nuevaPo}`, {
+        method: 'PATCH',
+        headers: { ...svcHeaders, 'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify({ archivada_at: new Date().toISOString(), archivada_by: userEmail, archivada_motivo: 'fusionada por alias refactura' }),
+      });
+      const pRows = pRes.ok ? await pRes.json() : [];
+      if (!pRes.ok || !Array.isArray(pRows) || pRows.length !== 1) throw new Error(`PATCH ${pRes.status}`);
+      pasos.fantasma = { status: 'fusionada', order_number: nuevaPo };
+    } else {
+      // Orden REAL (alta manual) con la PO nueva: jamás archivar en silencio.
+      pasos.fantasma = { status: 'no_auto' };
+      avisos.push({ aviso: 'orden_real_con_po_nueva', detail: `existe una orden con alta NO automática bajo ${nuevaPo} — revisar a mano si corresponde archivarla` });
+    }
+  } catch (e) {
+    console.error('seguimiento refactura_trade fantasma error:', e.message);
+    pasos.fantasma = { status: 'error', detail: String(e.message || '').slice(0, 200) };
+    avisos.push({ aviso: 'fantasma_error', detail: 'no se pudo verificar/archivar la orden fantasma de la PO nueva — revisar a mano' });
+  }
+
+  return res.status(200).json({
+    ok: true, action: 'refactura_trade',
+    result: {
+      order_number: order,
+      nueva_po: nuevaPo,
+      status: 'refacturada',
+      documento_id: doc.id,
+      encontrada: enc,
+      movida: wfOut.movida || null,
+      pasos,
+      avisos,
+      nota,
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
@@ -886,6 +1153,7 @@ export default async function handler(req, res) {
     case 'anular_alta':      return handleAnularAlta(res, b, base, svcHeaders);
     case 'sellar_control':   return handleSellarControl(res, b, user.email, base, svcHeaders);
     case 'reprocesar_bl':    return handleReprocesarBl(res, b, user.email);
+    case 'refactura_trade':  return handleRefacturaTrade(res, b, user.email, base, svcHeaders);
     case 'anular_sello':     return handleAnularSello(res, b, user.email, base, svcHeaders);
     case 'co_config_list':   return handleCoConfigList(res, base, svcHeaders);
     case 'co_config_upsert': return handleCoConfigUpsert(res, b, user.email, base, svcHeaders);
