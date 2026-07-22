@@ -1,7 +1,9 @@
 # CORTE 2 — Paquete F3 + F2 (rediseño Control BL) — 2026-07-22
 
-> **Estado: LISTO — espera GO de John.** Nada aplicado a prod: el CBL vivo sigue en pin
-> `ea9ce957`, master local va 8 commits adelante de origin SIN push a propósito.
+> **Estado: LISTO Y CERRADO — EN HOLD por decisión de John (22-07): no se aplica durante su
+> ventana de envíos reales (22/23-07); el GO llega al cerrarla.** Nada aplicado a prod: el CBL
+> vivo sigue en pin `ea9ce957`, master local adelante de origin SIN push a propósito.
+> Baseline: opción (a) aceptada + prueba matemática (b) EJECUTADA — ver §1.a.
 > Plan canónico: `docs/plans/PLAN_REDISENO_CONTROL_BL_2026-07-22.md` (§6 cortes, §8 transición).
 
 ---
@@ -49,13 +51,17 @@ desactualizado · 0 regresiones de F2.**
 4. En los 5 casos el CANDIDATO refleja el comportamiento vigente de prod; el baseline es el
    desactualizado.
 
-**Decisión para John (elegir 1):**
-- **(a) RECOMENDADA — aceptar el análisis** y cerrar la regresión con 5 PASS + 5 explicadas.
-- **(b) Prueba matemática:** re-controlar HOY en prod (pre-F2) las 2 órdenes fallback-puras —
-  si prod-hoy diverge del baseline en los mismos campos, queda demostrado sin F2 en la
-  ecuación. Costo: 2 controles reales (2 mails de control + llamadas IA).
-- **(c) 10/10 limpio:** re-congelar las 5 órdenes (re-control prod + re-export baseline) y
-  re-correr todo el diff en el clon. Costo: 5 controles reales + ~40 min.
+**Decisión de John (22-07): (a) aceptada + (b) ejecutada. RESULTADO — QED:**
+re-control PROD de 118833340 (22-07, exec 34597, pin `ea9ce957` — SIN F2 en ninguna parte)
+diverge del baseline congelado en **exactamente los mismos 6 campos** que el clon
+(CAIU7215888/MRSU4257267/TCNU4471869 × meas+_row, patrón `45.522`→`45522` OK→REVISAR;
+igualdad de sets verificada programáticamente). La divergencia existe sin F2 ⇒ es el
+comparador de prod post-fixes 17/18-07 ⇒ **baseline stale confirmado matemáticamente.
+Regresión CERRADA: 0 regresiones atribuibles a F2.**
+*Nota:* la 2ª fallback-pura (4010746682) NO se corrió a propósito: está PENDIENTE de envío
+con ATD 21-07 (ventana de envíos de John) y un re-control con QW podría cambiar su
+`bl_file_id` e invalidar el sello (regla X). Se corre como confirmación redundante al cierre
+de la ventana, si se quiere — la prueba con una orden ya es concluyente.
 
 ## 2. El FAIL real y su fix (ya construido, dentro del PUT F2)
 
