@@ -810,7 +810,24 @@
       lbl.style.marginTop = (cr && cr.vigente === false) ? '8px' : '0';
       box.appendChild(lbl);
       const ul = el('ul'); ul.style.margin = '4px 0 0 18px'; ul.style.padding = '0';
-      for(const r of reasons){ const li = el('li', null, r); li.style.fontSize = '12px'; ul.appendChild(li); }
+      for(const r of reasons){
+        const li = el('li', null, r); li.style.fontSize = '12px';
+        // F3 (rediseño CBL 22-07): motivo que refiere al control/documentos → link directo
+        // al expediente en Control BL (mismo bus __segPendingOrder + switchTab pelado que
+        // el botón de regla 16 de arriba). La heurística de texto SOLO decora con el link
+        // — NUNCA decide un bloqueo (eso sigue siendo del workflow, regla del módulo).
+        // El retorno se habilita solo: al volver al tab, loadMailing re-dispara el preview.
+        if(row && row.order_number && /control|documento|sello|revisad|recontrol/i.test(String(r))){
+          const lk = el('button', null, 'Ver en Control BL →');
+          lk.type = 'button';
+          // inline a propósito: la isla mailing-styles es NO-TOUCH
+          lk.style.cssText = 'background:none;border:none;padding:0;margin-left:6px;font:inherit;font-size:12px;font-weight:700;color:var(--blue);text-decoration:underline;text-underline-offset:2px;cursor:pointer';
+          lk.onclick = () => { window.__segPendingOrder = row.order_number; switchTab('control-bl'); };
+          li.appendChild(document.createTextNode(' '));
+          li.appendChild(lk);
+        }
+        ul.appendChild(li);
+      }
       box.appendChild(ul);
     }
     return box;
@@ -1417,7 +1434,17 @@
       _loaded = true;
       renderMaster();
       _ctrlByOrder = await fetchControlEstado(_orders); // WP-C: sello — no bloquea el render del master
-      if(_sel){ _row = _orders.find(r => r.order_number === _sel) || null; renderDetail(); }
+      if(_sel){
+        _row = _orders.find(r => r.order_number === _sel) || null;
+        renderDetail();
+        // FIX F5 (reactividad, rediseño CBL 22-07): re-entrar al tab con una orden ya
+        // seleccionada renderizaba el detalle con el _preview VIEJO — el estado del gate
+        // (block_reasons / sello del Control BL) podía haber cambiado en otro tab y acá
+        // no se veía sin F5. schedulePreview() re-dispara el preview respetando el
+        // debounce (400ms) y el lock _busy (runPreview no-opea si ya hay uno en vuelo,
+        // y las respuestas stale las descarta el token _gen) — sin previews duplicados.
+        if(_row) schedulePreview();
+      }
       // deep-link desde Seguimiento (item 34 FIX): antes solo preseleccionaba si la
       // orden estaba entre las 500 más recientes (fetchOrders trae limit 500) — una
       // orden vieja/poco tocada quedaba con el bus consumido y SIN feedback, en

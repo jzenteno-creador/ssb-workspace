@@ -609,6 +609,19 @@
     reproc.onclick = () => cblReprocesar(row.order_number, reproc);
     reprocDecorate(reproc, row.order_number); // A.2-front: pendiente → deshabilitado "Reprocesando…"
     right.appendChild(reproc);
+    // F3 — "Refacturar": SOLO órdenes trade (empiezan con '1') y SOLO en modo
+    // master/búsqueda (en histórico la corrida vieja no es el eje de la acción y el
+    // refresh post-ok pisaría el pipeline de render del histórico). Reusa la clase
+    // existente cbl-reprocess.solid (primario azul de la isla) — cero CSS nuevo.
+    if(cblEsTrade(row) && !row._histRow){
+      const refBtn = el('button', 'cbl-reprocess solid');
+      refBtn.type = 'button';
+      refBtn.appendChild(svgUse('#i-refresh'));
+      refBtn.appendChild(document.createTextNode('Refacturar'));
+      refBtn.title = 'Refactura trade: SAP generó una PO nueva — vincular la factura nueva a esta orden';
+      refBtn.onclick = () => cblOpenRefactura(row);
+      right.appendChild(refBtn);
+    }
     // D5 (2026-07-18) — toggle "Lado a lado": mismo estilo/posición que sus vecinos
     // (cabecera, junto a Reprocesar). Deshabilitado ≤900px con title explicativo —
     // no se oculta (visibilidad constante del control, solo se apaga la acción).
@@ -659,6 +672,36 @@
       roleBanner.appendChild(el('span', null,
         'Orden roleada → ' + toVessel + ': pendiente de BL nuevo — descargá el BL del nuevo buque a BL DRAFT y reprocesá.'));
       detail.appendChild(roleBanner);
+    }
+
+    // F3 — banner "recontrolá" post-refactura (persistente por orden vía localStorage,
+    // mismo patrón que el reproceso). Se apaga SOLO cuando llega un control MÁS NUEVO
+    // que la refactura — comparación por created_at, sin flag manual que bajar. En
+    // histórico no aplica (una corrida vieja no dice nada del estado vigente).
+    if(!row._histRow){
+      const refT = refactPending(row.order_number);
+      if(refT){
+        const ctrlT = Date.parse(row.created_at || '');
+        if(Number.isFinite(ctrlT) && ctrlT > Date.parse(refT)){
+          refactClear(row.order_number); // ya se recontroló después de la refactura
+        } else {
+          const refBanner = el('div', 'cbl-issue-row'); // misma clase que huérfano/roleo — cero CSS nuevo
+          refBanner.appendChild(svgUse('#i-refresh'));
+          refBanner.appendChild(el('span', null,
+            'Refactura registrada ' + cblFmtCorrida(refT) + ' — este control es ANTERIOR a la factura nueva: recontrolá (Reprocesar BL draft) antes de enviar.'));
+          detail.appendChild(refBanner);
+        }
+      }
+    }
+
+    // F3 — zona de avisos derivados de documentos_orden: mismo lugar/patrón que los
+    // banners de huérfano/roleo. El slot se llena async (UNA query por orden, cache);
+    // orden vieja sin registro o tabla sin migrar → slot vacío, cero errores.
+    if(!row._histRow){
+      const avisosSlot = el('div');
+      avisosSlot.id = 'cbl-avisos-slot';
+      detail.appendChild(avisosSlot);
+      cblRenderAvisosDocs(row, avisosSlot);
     }
 
     // Slot del aviso "control_cambio" (Regla X): vacío salvo que un intento de sellar
@@ -896,6 +939,7 @@
   // hay que traer. Intenta reconservar la orden que se estaba mirando.
   async function cblRefreshData(orderToKeep){
     const want = orderToKeep || _cblSel;
+    _cblDocsAvisos = { order: null, rows: null }; // F3: re-derivar avisos de documentos_orden con data fresca
     if(_cblSearched) await cblSearch();
     else await window.loadBlControls({ quiet: true });
     if(want && cblUniverse().some(r => r.order_number === want)) cblSelect(want);
@@ -992,6 +1036,407 @@
       default:
         ssbToast('Respuesta inesperada del servidor.', 'error');
     }
+  }
+
+  // ════════════ F3 (rediseño CBL 2026-07-22) — Refactura trade + avisos documentos_orden ════════════
+  // Mockup lockeado: docs/mockups/mockup_reemplazar_documento_2026-07-22.html (v3, aprobado
+  // por John 22-07). TODO el estilo nuevo va INLINE A PROPÓSITO: la isla #cbl-styles es
+  // NO-TOUCH y no se agrega ni una línea de CSS a index.html. El overlay del modal se
+  // monta DENTRO de #panel-control-bl para heredar las vars --cbl-* (scoped al panel);
+  // position:fixed no queda clipeado por el overflow:hidden de .tab-panel (sin transform).
+
+  // ¿Orden trade? — empieza con '1' (regla de negocio F3; una STO empieza con 4 y no
+  // cambia de referencia al refacturar → sin botón). Gate COSMÉTICO: el permiso real lo
+  // valida /api/seguimiento server-side (Bearer + gate vac_employees), como toda escritura.
+  function cblEsTrade(row){
+    return !!(row && !row._missing && /^1\d+$/.test(String(row.order_number || '')));
+  }
+
+  // Molde de cblApiSeguimiento PERO devuelve el JSON CRUDO: {ok:false,status:'esperando_factura'}
+  // es un estado ESPERADO del flujo (la factura de la PO nueva todavía no llegó al Drive),
+  // no una excepción — cblApiSeguimiento haría throw y perdería el campo status.
+  async function cblApiRefactura(body){
+    const token = window.__ssbAuth && window.__ssbAuth.session && window.__ssbAuth.session.access_token;
+    if(!token) throw new Error('Sesión no disponible — recargá e ingresá de nuevo.');
+    const res = await fetch('/api/seguimiento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => null);
+    if(data && typeof data === 'object') return data; // el caller inspecciona ok / status / error
+    throw new Error('HTTP ' + res.status);
+  }
+
+  // Estado "refactura hecha, falta recontrolar" — persistente por orden (localStorage,
+  // mismo patrón que REPROC_LS). Se apaga SOLO cuando llega un control MÁS NUEVO que la
+  // refactura: cblRenderDetail compara created_at del control vs el timestamp guardado.
+  const REFACT_LS = 'cbl_refact';                 // { [orden]: refacturadaAtISO }
+  function refactAll(){ try { return JSON.parse(localStorage.getItem(REFACT_LS) || '{}'); } catch(_){ return {}; } }
+  function refactSet(m){ try { localStorage.setItem(REFACT_LS, JSON.stringify(m)); } catch(_){} }
+  function refactPending(order){ return refactAll()[order] || null; }
+  function refactMark(order){ const m = refactAll(); m[order] = new Date().toISOString(); refactSet(m); }
+  function refactClear(order){ const m = refactAll(); delete m[order]; refactSet(m); }
+
+  // ── Avisos derivados de documentos_orden — 100% client-side, cero DDL ──
+  // UNA query adicional por expediente abierto (cache por orden; se invalida en
+  // cblRefreshData y tras una refactura). Tabla sin migrar / RLS / orden vieja sin
+  // registro → cero banners y cero errores (warn en consola como los satélites).
+  let _cblDocsAvisos = { order: null, rows: null };
+  const CBL_DOC_TIPO_LBL = { factura:'factura', pe:'permiso (PE)', booking:'booking', bl:'BL', aduana:'planilla de aduana', packing:'packing list' };
+
+  function cblAvisosDeDocs(rows, ctrlCreatedAt){
+    const avisos = [];
+    // (1) documento VIGENTE más nuevo que el control mostrado → recontrolar antes de enviar
+    const ctrlT = Date.parse(ctrlCreatedAt || '');
+    if(Number.isFinite(ctrlT)){
+      const nuevos = rows.filter(r => r.vigente === true &&
+        Number.isFinite(Date.parse(r.detected_at || '')) && Date.parse(r.detected_at) > ctrlT);
+      const tipos = [...new Set(nuevos.map(r => CBL_DOC_TIPO_LBL[r.tipo] || String(r.tipo || 'documento')))];
+      if(tipos.length) avisos.push({ icon:'#i-alert',
+        text: 'Hay ' + tipos.join(' y ') + ' más nuevo que el último control — recontrolá antes de enviar.' });
+    }
+    // (2) ≥2 PE con doc_ref distinto detectados en los últimos 60 días → redocumentación en curso
+    const cut60 = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    const peRefs = [...new Set(rows
+      .filter(r => r.tipo === 'pe' && r.doc_ref &&
+        Number.isFinite(Date.parse(r.detected_at || '')) && Date.parse(r.detected_at) >= cut60)
+      .map(r => String(r.doc_ref)))];
+    if(peRefs.length >= 2){
+      avisos.push({ icon:'#i-alert',
+        text: peRefs.length + ' permisos activos (' + peRefs.join(' · ') + ') — el correcto lo dice la planilla de aduana: verificá PE(planilla) = PE(factura) = PE(BL).' });
+    }
+    // (3) documento reemplazado volvió a llegar (updated_at > reemplazado_at + 1h) — informativo:
+    // la guarda "nunca revivir" del RPC ya lo ignoró, esto solo deja visible que pasó.
+    const revividos = rows.filter(r => r.reemplazado_at && r.updated_at &&
+      Number.isFinite(Date.parse(r.reemplazado_at)) && Number.isFinite(Date.parse(r.updated_at)) &&
+      Date.parse(r.updated_at) > Date.parse(r.reemplazado_at) + 60 * 60 * 1000);
+    if(revividos.length){
+      const tipos = [...new Set(revividos.map(r => CBL_DOC_TIPO_LBL[r.tipo] || String(r.tipo || 'documento')))];
+      avisos.push({ icon:'#i-clock',
+        text: 'Documento reemplazado volvió a llegar por mail (' + tipos.join(', ') + ') — se ignoró: la versión vigente no cambió.' });
+    }
+    return avisos;
+  }
+
+  async function cblRenderAvisosDocs(row, slot){
+    const orderNumber = row.order_number;
+    if(!orderNumber) return;
+    let rows = (_cblDocsAvisos.order === orderNumber) ? _cblDocsAvisos.rows : null;
+    if(!rows){
+      const supa = window.__ssb && window.__ssb.supa;
+      if(!supa) return;
+      try {
+        const { data, error } = await supa
+          .from('documentos_orden')
+          .select('tipo,doc_ref,vigente,detected_at,reemplazado_at,updated_at')
+          .eq('order_number', orderNumber);
+        if(error){ console.warn('control-bl:docs-avisos', error.message); return; } // degrada: cero banners
+        rows = data || [];
+        _cblDocsAvisos = { order: orderNumber, rows };
+      } catch(e){ console.warn('control-bl:docs-avisos', e); return; }
+    }
+    // guards de vigencia: el usuario pudo cambiar de orden o el detalle re-renderizarse
+    // (el slot capturado quedaría huérfano) mientras el fetch estaba en vuelo.
+    if(_cblSel !== orderNumber) return;
+    if(!document.body.contains(slot)) return;
+    if(!rows.length) return; // orden vieja sin registro en documentos_orden → nada
+    slot.textContent = '';
+    cblAvisosDeDocs(rows, row.created_at).forEach(a => {
+      const b = el('div', 'cbl-issue-row'); // misma clase que huérfano/roleo — cero CSS nuevo
+      b.appendChild(svgUse(a.icon));
+      b.appendChild(el('span', null, a.text));
+      slot.appendChild(b);
+    });
+  }
+
+  // ── Modal "Refacturar orden trade" — variante A (overlay) del mockup, por createElement ──
+  function cblOpenRefactura(row){
+    if(document.getElementById('cbl-ref-overlay')) return; // singleton
+    const panel = document.getElementById('panel-control-bl');
+    if(!panel) return;
+    const orderNumber = String(row.order_number);
+    const prevFocus = document.activeElement;
+    let busy = false;
+
+    const overlay = el('div');
+    overlay.id = 'cbl-ref-overlay';
+    // inline a propósito (isla CSS NO-TOUCH) — z-index bajo el 10040 de ssb-confirm-overlay
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10030;padding:20px';
+
+    const box = el('div');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-labelledby', 'cbl-ref-title');
+    box.style.cssText = 'width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);color:var(--cbl-ink);font-family:var(--font)';
+
+    // ── head ──
+    const head = el('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px 20px 14px;border-bottom:1px solid var(--cbl-line)';
+    const headTxt = el('div');
+    const title = el('p', null, 'Refacturar orden trade');
+    title.id = 'cbl-ref-title';
+    title.style.cssText = 'font-size:16px;font-weight:800;margin:0;letter-spacing:-.01em';
+    headTxt.appendChild(title);
+    const sub = el('p', null, 'Orden ' + orderNumber + ' · queda registrado con tu usuario');
+    sub.style.cssText = 'font-size:12px;color:var(--cbl-ink-soft);margin:4px 0 0';
+    headTxt.appendChild(sub);
+    head.appendChild(headTxt);
+    const xBtn = el('button');
+    xBtn.type = 'button';
+    xBtn.setAttribute('aria-label', 'Cerrar');
+    xBtn.style.cssText = 'background:none;border:none;color:var(--cbl-ink-soft);cursor:pointer;padding:4px;border-radius:6px;flex-shrink:0';
+    xBtn.appendChild(svgUse('#i-x'));
+    head.appendChild(xBtn);
+    box.appendChild(head);
+
+    // ── body ──
+    const body = el('div');
+    body.style.cssText = 'padding:18px 20px;display:flex;flex-direction:column;gap:16px';
+    const LBL = 'font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cbl-ink-soft)';
+
+    // 1 · orden original — precargada del expediente abierto, NO editable
+    const fOrden = el('div'); fOrden.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    const lOrden = el('span', null, 'Orden original'); lOrden.style.cssText = LBL;
+    fOrden.appendChild(lOrden);
+    const ordBox = el('div');
+    ordBox.style.cssText = 'display:flex;align-items:center;gap:10px;background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:10px;padding:10px 13px';
+    const lockIc = svgUse('#i-lock'); lockIc.style.color = 'var(--cbl-ink-faint)';
+    ordBox.appendChild(lockIc);
+    const ordNum = el('span', null, orderNumber);
+    ordNum.style.cssText = 'font-family:var(--mono);font-size:15px;font-weight:700';
+    ordBox.appendChild(ordNum);
+    const ordMeta = el('span', null, [row.carrier, row.vessel].filter(Boolean).join(' · ') || 'tomada del expediente abierto');
+    ordMeta.style.cssText = 'font-size:11.5px;color:var(--cbl-ink-soft);margin-left:auto;text-align:right';
+    ordBox.appendChild(ordMeta);
+    fOrden.appendChild(ordBox);
+    body.appendChild(fOrden);
+
+    // 2 · PO nueva — el ÚNICO dato manual del flujo
+    const fPo = el('div');
+    fPo.style.cssText = 'border:1px dashed var(--purple-bd);background:var(--purple-bg);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:8px';
+    const poTag = el('span', null, 'único dato manual');
+    poTag.style.cssText = 'align-self:flex-start;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--purple);border:1px solid var(--purple-bd);border-radius:5px;padding:2px 6px';
+    fPo.appendChild(poTag);
+    const lPo = el('label', null, 'Nueva referencia de PO (refactura SAP)');
+    lPo.style.cssText = LBL + ';color:var(--purple)';
+    lPo.htmlFor = 'cbl-ref-po';
+    fPo.appendChild(lPo);
+    const poInput = el('input');
+    poInput.id = 'cbl-ref-po'; poInput.type = 'text';
+    poInput.setAttribute('inputmode', 'numeric');
+    poInput.autocomplete = 'off';
+    poInput.placeholder = 'ej. 1000234567';
+    poInput.style.cssText = 'font-family:var(--mono);font-size:13px;border:1px solid var(--cbl-line-strong);border-radius:8px;padding:8px 10px;background:var(--cbl-surface);color:var(--cbl-ink)';
+    fPo.appendChild(poInput);
+    const poErr = el('div');
+    poErr.style.cssText = 'font-size:11.5px;color:var(--red);font-weight:600;display:none';
+    fPo.appendChild(poErr);
+    const poHelp = el('div', null, 'Al refacturar una orden trade, SAP genera una PO nueva. Con este dato el sistema encuentra la factura que ya llegó por mail y la vincula a la orden original (la PO queda como alias).');
+    poHelp.style.cssText = 'font-size:11.5px;color:var(--cbl-ink-soft);line-height:1.55';
+    fPo.appendChild(poHelp);
+    body.appendChild(fPo);
+
+    // 3 · nota opcional (no bloqueante)
+    const fNota = el('div'); fNota.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    const lNota = el('label', null, 'Nota (opcional)'); lNota.style.cssText = LBL; lNota.htmlFor = 'cbl-ref-nota';
+    fNota.appendChild(lNota);
+    const nota = el('textarea');
+    nota.id = 'cbl-ref-nota'; nota.rows = 2;
+    nota.placeholder = 'ej. refactura por corrección de FOB — avisado por Comex';
+    nota.style.cssText = 'font-family:var(--font);font-size:12.5px;border:1px solid var(--cbl-line-strong);border-radius:9px;padding:8px 10px;background:var(--cbl-surface-2);color:var(--cbl-ink);resize:vertical;min-height:44px';
+    fNota.appendChild(nota);
+    body.appendChild(fNota);
+
+    // 4 · stepper del flujo automático — se pinta con la respuesta del server
+    const fStep = el('div'); fStep.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    const lStep = el('span', null, 'Lo que el sistema hace solo al confirmar'); lStep.style.cssText = LBL;
+    fStep.appendChild(lStep);
+    const stepBox = el('div');
+    stepBox.style.cssText = 'background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:12px;padding:6px 15px';
+    const STEP_TXT = [
+      'Busca en la carpeta fija de FACTURAS la factura nueva que llegó por mail, nombrada con la PO nueva.',
+      'La renombra dejando el nº de orden original — conserva el correlativo AFIP, el robot la reconoce igual que hoy.',
+      'La vincula a la orden ' + orderNumber + ' y la marca VIGENTE — la PO nueva queda como alias.',
+      'Mueve la factura reemplazada a la carpeta HISTÓRICO — nunca se borra del registro.',
+    ];
+    const steps = STEP_TXT.map((txt, i) => {
+      const srow = el('div');
+      srow.style.cssText = 'display:flex;gap:10px;align-items:flex-start;padding:9px 0' + (i < STEP_TXT.length - 1 ? ';border-bottom:1px dashed var(--cbl-line)' : '');
+      const num = el('span', null, String(i + 1));
+      num.style.cssText = 'flex:0 0 auto;width:19px;height:19px;border-radius:50%;border:1px solid var(--cbl-line-strong);color:var(--cbl-ink-faint);background:transparent;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;margin-top:1px';
+      srow.appendChild(num);
+      const m = el('div');
+      m.style.cssText = 'font-size:12px;line-height:1.55';
+      m.appendChild(el('span', null, txt));
+      const det = el('div');
+      det.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--cbl-ok);margin-top:2px;display:none';
+      m.appendChild(det);
+      srow.appendChild(m);
+      stepBox.appendChild(srow);
+      return { num, det };
+    });
+    fStep.appendChild(stepBox);
+    body.appendChild(fStep);
+
+    // resultado (éxito / espera / error tipado) — se llena con la respuesta
+    const resultBox = el('div');
+    resultBox.style.cssText = 'display:none;flex-direction:column;gap:8px';
+    body.appendChild(resultBox);
+    box.appendChild(body);
+
+    // ── foot ──
+    const foot = el('div');
+    foot.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--cbl-line);background:var(--cbl-surface-2)';
+    const footNote = el('span', null, 'Confirmación de 1 click — reversible: la reemplazada queda en Histórico, nunca se borra.');
+    footNote.style.cssText = 'font-size:11px;color:var(--cbl-ink-faint);line-height:1.5;max-width:280px';
+    foot.appendChild(footNote);
+    const btns = el('div');
+    btns.style.cssText = 'display:flex;gap:8px;flex-shrink:0';
+    const cancelBtn = el('button', null, 'Cancelar');
+    cancelBtn.type = 'button';
+    cancelBtn.style.cssText = 'font-family:var(--font);font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--cbl-line-strong);background:none;color:var(--cbl-ink-soft)';
+    const okBtn = el('button', null, 'Refacturar');
+    okBtn.type = 'button';
+    okBtn.style.cssText = 'font-family:var(--font);font-size:12.5px;font-weight:700;border-radius:9px;padding:9px 16px;cursor:pointer;border:1px solid var(--cbl-accent);background:var(--cbl-accent);color:var(--text-inverse)';
+    btns.appendChild(cancelBtn); btns.appendChild(okBtn);
+    foot.appendChild(btns);
+    box.appendChild(foot);
+
+    overlay.appendChild(box);
+    panel.appendChild(overlay); // dentro del panel: hereda las vars --cbl-* (scoped)
+
+    // ── comportamiento ──
+    const STEP_STYLES = {
+      pending: { bg:'transparent',            bd:'var(--cbl-line-strong)', fg:'var(--cbl-ink-faint)', glyph:null },
+      busy:    { bg:'var(--cbl-accent-soft)', bd:'var(--cbl-accent)',      fg:'var(--cbl-accent)',    glyph:'…' },
+      ok:      { bg:'var(--cbl-ok-bg)',       bd:'var(--cbl-ok)',          fg:'var(--cbl-ok)',        glyph:'✓' },
+      wait:    { bg:'var(--cbl-rev-bg)',      bd:'var(--cbl-rev)',         fg:'var(--cbl-rev)',       glyph:'…' },
+      err:     { bg:'var(--red-bg)',          bd:'var(--red)',             fg:'var(--red)',           glyph:'✕' },
+    };
+    function setStep(i, state, detail){
+      const c = STEP_STYLES[state] || STEP_STYLES.pending;
+      const s = steps[i];
+      s.num.style.background = c.bg; s.num.style.borderColor = c.bd; s.num.style.color = c.fg;
+      s.num.textContent = c.glyph == null ? String(i + 1) : c.glyph;
+      if(detail != null && detail !== ''){ s.det.textContent = detail; s.det.style.color = c.fg; s.det.style.display = 'block'; }
+      else { s.det.textContent = ''; s.det.style.display = 'none'; }
+    }
+    function resultBanner(kind, text){
+      const colors = {
+        ok:   { bg:'var(--cbl-ok-bg)',    bd:'var(--cbl-ok-bd)',  fg:'var(--cbl-ok)',       icon:'#i-check' },
+        warn: { bg:'var(--cbl-rev-bg)',   bd:'var(--cbl-rev-bd)', fg:'var(--cbl-rev)',      icon:'#i-alert' },
+        err:  { bg:'var(--red-bg)',       bd:'var(--red-bd)',     fg:'var(--red)',          icon:'#i-alert' },
+        info: { bg:'var(--cbl-surface-2)',bd:'var(--cbl-line)',   fg:'var(--cbl-ink-soft)', icon:'#i-clock' },
+      }[kind];
+      const b = el('div');
+      b.style.cssText = 'display:flex;gap:9px;align-items:flex-start;border-radius:10px;padding:10px 13px;font-size:12.5px;line-height:1.55;border:1px solid ' + colors.bd + ';background:' + colors.bg + ';color:' + colors.fg;
+      const ic = svgUse(colors.icon);
+      ic.style.flexShrink = '0'; ic.style.marginTop = '1px';
+      b.appendChild(ic);
+      const sp = el('span', null, text);
+      sp.style.color = 'var(--cbl-ink)';
+      b.appendChild(sp);
+      return b;
+    }
+    function showResult(nodes){
+      resultBox.textContent = '';
+      if(!nodes.length){ resultBox.style.display = 'none'; return; }
+      resultBox.style.display = 'flex';
+      nodes.forEach(n => resultBox.appendChild(n));
+    }
+    function close(){
+      if(busy) return; // no cerrar con el POST en vuelo
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      try { if(prevFocus && prevFocus.focus) prevFocus.focus(); } catch(_){}
+    }
+    // Escape cierra + focus-trap (mismo espíritu que el drawer de nav.js y ssbConfirm)
+    function onKey(e){
+      if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); return; }
+      if(e.key !== 'Tab') return;
+      const items = [...box.querySelectorAll('button, input, textarea')].filter(n => !n.disabled && !n.hidden && n.offsetParent !== null);
+      if(!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      const cur = document.activeElement;
+      if(!box.contains(cur)){ e.preventDefault(); first.focus(); return; }
+      if(e.shiftKey && cur === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && cur === last){ e.preventDefault(); first.focus(); }
+    }
+    function setBusyUi(on){
+      okBtn.disabled = on; cancelBtn.disabled = on; xBtn.disabled = on;
+      poInput.disabled = on; nota.disabled = on;
+    }
+    async function submit(){
+      if(busy) return;
+      const po = poInput.value.trim();
+      if(!/^1\d{8,9}$/.test(po)){
+        poErr.textContent = 'La PO nueva de SAP empieza con 1 y tiene 9-10 dígitos.';
+        poErr.style.display = 'block'; poInput.focus(); return;
+      }
+      if(po === orderNumber){
+        poErr.textContent = 'Esa es la orden original — ingresá la PO NUEVA que generó SAP.';
+        poErr.style.display = 'block'; poInput.focus(); return;
+      }
+      busy = true;
+      setBusyUi(true);
+      okBtn.textContent = 'Refacturando…';
+      showResult([]);
+      steps.forEach((_, i) => setStep(i, 'pending'));
+      setStep(0, 'busy');
+      let data = null, netErr = null;
+      try {
+        const payload = { action: 'refactura_trade', order_number: orderNumber, nueva_po: po };
+        const notaTxt = nota.value.trim();
+        if(notaTxt) payload.nota = notaTxt;
+        data = await cblApiRefactura(payload);
+      } catch(e){ netErr = e.message || 'error de red'; }
+      busy = false;
+      setBusyUi(false);
+      if(netErr){
+        okBtn.textContent = 'Refacturar';
+        setStep(0, 'err');
+        showResult([resultBanner('err', 'No se pudo refacturar: ' + netErr)]);
+        return;
+      }
+      if(data.ok){
+        const pasos = data.pasos || {};
+        const enc = pasos.encontrada || {};
+        setStep(0, 'ok', enc.file_name_antes || null);
+        setStep(1, 'ok', enc.file_name_despues || null);
+        setStep(2, 'ok', (pasos.vinculada && pasos.vinculada.documento_id) ? ('vigente · doc ' + pasos.vinculada.documento_id) : 'vigente en la orden');
+        if(pasos.movida) setStep(3, 'ok', pasos.movida.file_name || null);
+        else setStep(3, 'ok', 'no había factura anterior en la carpeta — nada que mover');
+        const nodes = [resultBanner('ok', 'Refactura registrada — la factura de la PO ' + po + ' quedó VIGENTE en la orden ' + orderNumber + '. Recontrolá antes de enviar.')];
+        for(const a of (data.avisos || [])) nodes.push(resultBanner('warn', String(a)));
+        showResult(nodes);
+        okBtn.hidden = true;                 // acción cumplida: solo queda cerrar
+        cancelBtn.textContent = 'Cerrar';
+        refactMark(orderNumber);             // banner "recontrolá" hasta el próximo control
+        _cblDocsAvisos = { order: null, rows: null }; // los avisos de documentos cambiaron
+        ssbToast('Refactura de ' + orderNumber + ' registrada ✓ — recontrolá la orden antes de enviar.', 'success');
+        await cblRefreshData(orderNumber);   // refresca el expediente detrás del modal
+        return;
+      }
+      if(data.status === 'esperando_factura'){
+        // NO es error: la factura de la PO nueva todavía no llegó al Drive → espera + retry
+        okBtn.textContent = 'Reintentar';
+        setStep(0, 'wait', 'esperando la factura de la PO ' + po + ' en la carpeta…');
+        showResult([resultBanner('warn', 'La factura de la PO ' + po + ' todavía no llegó al Drive (el mail puede demorar unos minutos). No se cambió nada — reintentá en un rato.')]);
+        return;
+      }
+      okBtn.textContent = 'Refacturar';
+      setStep(0, 'err');
+      showResult([resultBanner('err', 'No se pudo refacturar: ' + (data.error || 'respuesta inesperada del servidor'))]);
+    }
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('mousedown', e => { if(e.target === overlay) close(); });
+    xBtn.onclick = close;
+    cancelBtn.onclick = close;
+    okBtn.onclick = submit;
+    poInput.addEventListener('input', () => { poErr.style.display = 'none'; });
+    poInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); submit(); } });
+    poInput.focus();
   }
 
   // file-id desde un link de Drive (.../d/{id}/...) o null
