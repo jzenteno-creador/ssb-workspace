@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mockup — Reemplazar documento + avisos de vigencia (Control BL, F3)</title>
+<title>Mockup — Refactura trade + avisos de vigencia (Control BL, F3) · v3 corregida</title>
 <style>
   /* ════════════════════════════════════════════════════════════════════
      Tokens copiados 1:1 de index.html (:root cockpit palette + body.light)
@@ -113,6 +113,7 @@
   .btn.pri{background:var(--cbl-accent);border-color:var(--cbl-accent);color:var(--text-inverse)}
   .btn.ghost{background:var(--cbl-seal-bg);border-color:var(--cbl-seal-bd);color:var(--cbl-seal)}
   .btn.mini{padding:5px 11px;font-size:11.5px;border-radius:7px}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
 
   /* ════════════ ANOTACIONES numeradas (panel lateral de decisiones) ════════════ */
   .anno-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
@@ -123,7 +124,7 @@
   .anno-num{flex:0 0 auto;width:19px;height:19px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;margin-top:1px}
   .anno-tag{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);font-size:10.5px;font-weight:800;vertical-align:1px;margin-right:2px}
 
-  /* ════════════ El modal (rd- = reemplazar documento) — calco de vac-modal + tokens cbl ════════════ */
+  /* ════════════ El modal (rd- = refactura) — calco de vac-modal + tokens cbl ════════════ */
   .rd-stage{background:var(--faint);border:1px dashed var(--border);border-radius:16px;padding:34px 24px;display:flex;justify-content:center}
   .rd-modal{width:100%;max-width:560px;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
   .rd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:18px 20px 14px;border-bottom:1px solid var(--cbl-line)}
@@ -131,46 +132,40 @@
   .rd-sub{font-size:12px;color:var(--cbl-ink-soft);margin-top:4px}
   .rd-x{background:none;border:none;color:var(--cbl-ink-soft);cursor:pointer;padding:4px;border-radius:6px;flex-shrink:0}
   .rd-x:hover{background:var(--cbl-surface-2);color:var(--cbl-ink)}
-  .rd-body{padding:18px 20px;display:flex;flex-direction:column;gap:16px;max-height:70vh;overflow-y:auto}
+  .rd-body{padding:18px 20px;display:flex;flex-direction:column;gap:16px;max-height:none;overflow:visible}
   .rd-field{display:flex;flex-direction:column;gap:6px}
   .rd-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cbl-ink-soft);display:flex;align-items:center;gap:6px}
   .rd-lbl .anno-tag{margin-right:0}
-
-  .rd-pillrow{display:flex;gap:7px;flex-wrap:wrap}
-  .rd-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--font);font-size:12.5px;font-weight:600;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid var(--cbl-line-strong);background:var(--cbl-surface-2);color:var(--cbl-ink-soft)}
-  .rd-pill.on{background:var(--cbl-accent-soft);border-color:var(--cbl-accent);color:var(--cbl-accent)}
-  body.light .rd-pill.on{color:var(--cbl-accent)}
 
   .rd-order{display:flex;align-items:center;gap:10px;background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:10px;padding:10px 13px}
   .rd-order .ic{color:var(--cbl-ink-faint)}
   .rd-order-num{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cbl-ink)}
   .rd-order-meta{font-size:11.5px;color:var(--cbl-ink-soft);margin-left:auto;text-align:right}
 
-  .rd-drop{border:1.5px dashed var(--cbl-line-strong);border-radius:12px;padding:22px 16px;text-align:center;background:var(--cbl-surface-2);cursor:pointer}
-  .rd-drop .ic{color:var(--cbl-accent);width:26px;height:26px}
-  .rd-drop-txt{font-size:12.5px;color:var(--cbl-ink);font-weight:600;margin-top:8px}
-  .rd-drop-sub{font-size:11px;color:var(--cbl-ink-faint);margin-top:3px}
-  .rd-file{display:flex;align-items:center;gap:9px;background:var(--cbl-surface-2);border:1px solid var(--cbl-line-strong);border-radius:10px;padding:9px 12px;margin-top:8px}
-  .rd-file .ic{color:var(--cbl-accent)}
-  .rd-file-name{font-family:var(--mono);font-size:12px;color:var(--cbl-ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rd-file-size{font-size:11px;color:var(--cbl-ink-faint)}
-  .rd-file-x{background:none;border:none;color:var(--cbl-ink-faint);cursor:pointer;flex-shrink:0}
-
+  /* Campo PO nueva — el ÚNICO dato manual del flujo */
   .rd-alias{border:1px dashed var(--purple-bd);background:var(--purple-bg);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:8px}
   .rd-alias-tag{align-self:flex-start;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--purple);background:transparent;border:1px solid var(--purple-bd);border-radius:5px;padding:2px 6px}
   .rd-alias input{font-family:var(--mono);font-size:13px;border:1px solid var(--cbl-line-strong);border-radius:8px;padding:8px 10px;background:var(--cbl-surface);color:var(--cbl-ink)}
   .rd-alias-help{font-size:11.5px;color:var(--cbl-ink-soft);line-height:1.55;display:flex;gap:7px}
   .rd-alias-help .ic{flex-shrink:0;margin-top:1px;color:var(--purple)}
 
-  .rd-preview{background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:12px;padding:13px 14px}
-  .rd-preview-row{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;flex-wrap:wrap}
-  .rd-preview-old{color:var(--cbl-ink-faint);text-decoration:line-through}
-  .rd-preview-arrow{color:var(--cbl-ink-faint);font-family:var(--font)}
-  .rd-preview-new{color:var(--cbl-ok);font-weight:700}
-  .rd-preview-note{font-size:11.5px;color:var(--cbl-ink-soft);margin-top:7px;line-height:1.5}
-
   .rd-note-opt{display:flex;flex-direction:column;gap:6px}
   .rd-note-opt textarea{font-family:var(--font);font-size:12.5px;border:1px solid var(--cbl-line-strong);border-radius:9px;padding:8px 10px;background:var(--cbl-surface-2);color:var(--cbl-ink);resize:vertical;min-height:44px}
+
+  /* Stepper del flujo AUTOMÁTICO — lo que el sistema hace solo al confirmar */
+  .rd-auto{background:var(--cbl-surface-2);border:1px solid var(--cbl-line);border-radius:12px;padding:13px 15px}
+  .rd-auto-head{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--cbl-ink-soft);margin-bottom:4px}
+  .rd-auto-head .ic{color:var(--cbl-accent)}
+  .rd-auto-step{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--cbl-line)}
+  .rd-auto-step:last-of-type{border-bottom:none}
+  .rd-auto-num{flex:0 0 auto;width:19px;height:19px;border-radius:50%;background:var(--cbl-accent-soft);color:var(--cbl-accent);border:1px solid var(--cbl-accent);display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;margin-top:1px}
+  .rd-auto-step .m{font-size:12px;color:var(--cbl-ink);line-height:1.55}
+  .rd-auto-step .m code{font-family:var(--mono);font-size:11px;background:rgba(148,163,184,.15);border-radius:4px;padding:1px 5px}
+  .rd-auto-step .m .fn{font-family:var(--mono);font-size:11.5px;font-weight:700}
+  .rd-auto-step .m .fn.new{color:var(--cbl-ok)}
+  .rd-auto-step .m .fn.old{color:var(--cbl-ink-faint);text-decoration:line-through}
+  .rd-auto-tech{margin-top:9px;padding-top:9px;border-top:1px solid var(--cbl-line);font-size:11px;color:var(--cbl-ink-faint);display:flex;gap:7px;line-height:1.5}
+  .rd-auto-tech .ic{flex-shrink:0;margin-top:1px;color:var(--cbl-seal)}
 
   .rd-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid var(--cbl-line);background:var(--cbl-surface-2)}
   .rd-foot-note{font-size:11px;color:var(--cbl-ink-faint);line-height:1.5;max-width:280px}
@@ -188,6 +183,10 @@
   .vhead .vname{font-size:12px;font-weight:800;letter-spacing:.03em;color:var(--text)}
   .vbody{padding:16px;background:var(--surface)}
   .vbody p{margin:0}
+
+  /* ════════════ Bloqueo de Mailing — link clickeable ════════════ */
+  .mblock-link{color:var(--blue);font-weight:700;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+  .mblock-link:hover{color:var(--teal)}
 
   /* ════════════ Cadena documento → control → sello ════════════ */
   .chain{display:flex;align-items:flex-start;gap:0;background:var(--cbl-surface);border:1px solid var(--cbl-line);border-radius:14px;padding:20px 22px}
@@ -218,243 +217,214 @@
 <button class="toggle" onclick="document.body.classList.toggle('light')">☀ / 🌙 tema</button>
 
 <div class="page">
-  <h1>Reemplazar documento + avisos de vigencia — Control BL (F3)</h1>
+  <h1>Refactura trade + avisos de vigencia — Control BL (F3) · v3</h1>
   <p class="note">
     Mockup de la pieza <b>F3</b> del rediseño de Control BL (<code>docs/plans/PLAN_REDISENO_CONTROL_BL_2026-07-22.md</code>
-    §3 · <code>docs/explore/ARQUITECTURA_CONTROL_BL_2026-07-22.md</code> §"reemplazar documento de una orden").
-    Hoy, cuando llega un documento nuevo con nombre distinto (refactura, PE redocumentado), <b>alguien tiene que entrar a Drive
-    y pisar el archivo a mano</b> — si no lo hace o lo hace tarde, el control valida contra el documento equivocado
-    <b>en silencio</b>. F3 reemplaza ese paso manual por un formulario en la app que registra la versión nueva en
-    <code>documentos_orden</code> (columna <code>vigente</code>) vía el RPC <code>registrar_documento_version</code> —
-    la anterior <b>nunca se borra</b>, queda marcada <code>reemplazado_at</code> como histórico inmutable.
+    §3 · <code>docs/explore/ARQUITECTURA_CONTROL_BL_2026-07-22.md</code>).
+    <b>Corrección grande de John (22-07):</b> acá <b>no se sube ningún archivo a mano</b> — todos los documentos
+    entran solos por la ingesta de mail/carpeta (una sola vía, la automática — decisión de equipo para no confundir
+    al operario). El <b>único caso con acción manual es la refactura de una orden TRADE</b>: al refacturar, SAP genera
+    una <b>PO nueva</b>, la factura nueva llega por mail nombrada con esa PO, y el robot no la puede atar a la orden
+    original. El modal pide <b>UN dato</b> (la PO nueva) y el sistema hace el resto solo: <b>busca → renombra →
+    vincula → archiva</b>. La versión anterior <b>nunca se borra</b> — se mueve a la carpeta HISTÓRICO y queda como
+    histórico inmutable en <code>documentos_orden</code>.
     <b>Todo lo nuevo reusa tokens/clases de la isla <code>#cbl-styles</code> (<code>--cbl-*</code>) — cero CSS nuevo
     en <code>index.html</code></b>, este mockup aproxima los estilos reales con su propia hoja.
   </p>
 
   <div class="subnav">
     <a href="#s1">① Punto de entrada</a>
-    <a href="#s2">② El modal</a>
-    <a href="#s3">③ VARIANTE — dónde vive</a>
-    <a href="#s4">④ Avisos en el detalle</a>
-    <a href="#s5">⑤ Cadena doc→control→sello</a>
-    <a href="#notas">Notas para John</a>
+    <a href="#s2">② Modal refactura trade</a>
+    <a href="#s3">③ Demás documentos — sin acción</a>
+    <a href="#s4">④ Avisos sobre el expediente</a>
+    <a href="#s5">⑤ Bloqueo en Mailing</a>
+    <a href="#s6">⑥ Cadena doc→control→sello</a>
+    <a href="#notas">Decisiones cerradas 22-07</a>
   </div>
 
   <!-- ============ SECCIÓN 1 ============ -->
   <h2 id="s1"><span class="num">1</span>Punto de entrada — botón en el header del expediente</h2>
-  <p class="intent">El botón vive junto a "Marcar como revisado", en el header del expediente abierto (<code>.cbl-exp-head</code>). Mismo gate cosmético que el sello (RBAC UI) — el permiso real lo valida <code>/api/seguimiento</code> (Bearer JWT + gate <code>vac_employees</code>), igual que las demás acciones de escritura del módulo.</p>
+  <p class="intent">El botón vive junto a "Marcar como revisado", en el header del expediente abierto (<code>.cbl-exp-head</code>). <b>Solo aparece en órdenes TRADE</b> (empiezan con "1") — gate cosmético RBAC UI; el permiso real lo valida <code>/api/seguimiento</code> (Bearer JWT + gate <code>vac_employees</code>), igual que las demás acciones de escritura del módulo.</p>
 
   <div class="card" style="max-width:640px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
       <div>
-        <div style="font-family:var(--mono);font-size:20px;font-weight:700">118847302</div>
-        <div class="muted" style="margin-top:5px">LOG-IN · LOG-IN JATOBA 285N · Booking LA0538291</div>
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700">118962688</div>
+        <div class="muted" style="margin-top:5px">LOG-IN · LOG-IN JATOBA 285N · Booking LA0538291 · orden TRADE</div>
       </div>
       <span class="badge badge--danger">● REVISAR · 1</span>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
       <button class="btn ghost mini"><svg class="ic ic-sm"><use href="#i-stamp"/></svg>Marcar como revisado</button>
-      <button class="btn pri mini"><svg class="ic ic-sm"><use href="#i-upload"/></svg>Reemplazar documento</button>
+      <button class="btn pri mini"><svg class="ic ic-sm"><use href="#i-refresh"/></svg>Refacturar</button>
     </div>
   </div>
-  <p class="note" style="margin-top:12px">Habilitado siempre que el expediente tenga <code>order_number</code> resuelto (no aplica a "fantasmas" sin orden — para esas, la acción correcta es esperar el <code>reasignar_documento</code> automático del alias o, en R2 (dominio de Seguimiento), corregir la atribución a mano).</p>
+  <p class="note" style="margin-top:12px">En un expediente <b>STO</b> (ej. <code>4010736311</code>) el botón <b>no existe</b>: la orden STO no cambia de referencia al refacturar — la factura nueva llega por mail ya con el número correcto y se registra sola (ver ③). Tampoco aplica a "fantasmas" sin <code>order_number</code> resuelto.</p>
 
   <!-- ============ SECCIÓN 2 ============ -->
-  <h2 id="s2"><span class="num">2</span>El modal — los 6 elementos pedidos</h2>
-  <p class="intent">Un solo formulario para los 4 tipos de documento que hoy se controlan (Factura / PE / Booking / Planilla de aduana). La orden viene precargada y NO es editable — es el expediente que tenías abierto. El campo de alias (④) solo aparece con la combinación exacta <b>Factura + orden que empieza con "1"</b>.</p>
+  <h2 id="s2"><span class="num">2</span>El modal — refactura trade (el único caso manual)</h2>
+  <p class="intent">Decisión 22-07: <b>el modal se titula directo para el caso trade</b> — se eliminó el selector de tipo de documento porque ningún otro tipo tiene acción manual; un selector con 3 opciones muertas confunde al operario. La orden ORIGINAL viene precargada y NO es editable. El único dato manual es la <b>PO nueva</b> que generó SAP. Nada que subir: la factura nueva <b>ya llegó por mail</b> a la carpeta fija.</p>
 
   <div class="anno-wrap">
     <div class="rd-stage">
       <div class="rd-modal">
         <div class="rd-head">
           <div>
-            <p class="rd-title">Reemplazar documento</p>
-            <p class="rd-sub">Orden 4010736311 · queda registrado con tu usuario</p>
+            <p class="rd-title">Refacturar orden trade</p>
+            <p class="rd-sub">Orden 118962688 · queda registrado con tu usuario</p>
           </div>
           <button class="rd-x"><svg class="ic"><use href="#i-x"/></svg></button>
         </div>
         <div class="rd-body">
 
           <div class="rd-field">
-            <span class="rd-lbl"><span class="anno-tag">1</span>Tipo de documento</span>
-            <div class="rd-pillrow">
-              <span class="rd-pill on"><svg class="ic ic-sm"><use href="#i-file-text"/></svg>Factura</span>
-              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-lock"/></svg>PE</span>
-              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-package"/></svg>Booking</span>
-              <span class="rd-pill"><svg class="ic ic-sm"><use href="#i-file-spread"/></svg>Planilla</span>
-            </div>
-          </div>
-
-          <div class="rd-field">
-            <span class="rd-lbl"><span class="anno-tag">2</span>Orden</span>
+            <span class="rd-lbl"><span class="anno-tag">1</span>Orden original</span>
             <div class="rd-order">
               <svg class="ic"><use href="#i-lock"/></svg>
-              <span class="rd-order-num">4010736311</span>
-              <span class="rd-order-meta">MAERSK · HAPAG PRAGA 412W<br>tomada del expediente abierto</span>
+              <span class="rd-order-num">118962688</span>
+              <span class="rd-order-meta">LOG-IN · LOG-IN JATOBA 285N<br>tomada del expediente abierto · no editable</span>
+            </div>
+          </div>
+
+          <div class="rd-alias">
+            <span class="rd-alias-tag"><span class="anno-tag" style="width:15px;height:15px;font-size:9px;margin-right:4px">2</span>único dato manual</span>
+            <span class="rd-lbl" style="color:var(--purple)">Nueva referencia de PO (refactura SAP)</span>
+            <input type="text" id="rd-po-nueva" name="rd-po-nueva" value="1000234567" readonly>
+            <div class="rd-alias-help">
+              <svg class="ic ic-sm"><use href="#i-alert"/></svg>
+              <span>Al refacturar una orden <b>trade</b>, SAP genera una <b>PO nueva</b> — no es la orden original. Con este dato el sistema encuentra la factura nueva que <b>ya llegó por mail</b> y la vincula a la orden original. La PO nueva queda como <b>alias</b> en <code>orden_po_alias</code>.</span>
             </div>
           </div>
 
           <div class="rd-field">
-            <span class="rd-lbl"><span class="anno-tag">3</span>Archivo</span>
-            <div class="rd-drop">
-              <svg class="ic ic-lg" style="margin:0 auto"><use href="#i-upload"/></svg>
-              <div class="rd-drop-txt">Arrastrá el PDF acá o hacé clic para elegir</div>
-              <div class="rd-drop-sub">Solo PDF · se sube a la carpeta Drive de la orden con nombre canónico</div>
-            </div>
-            <div class="rd-file">
-              <svg class="ic"><use href="#i-file-text"/></svg>
-              <span class="rd-file-name">F002_4010736311_FC.pdf</span>
-              <span class="rd-file-size">386 KB</span>
-              <button class="rd-file-x"><svg class="ic ic-sm"><use href="#i-x"/></svg></button>
-            </div>
-          </div>
-
-          <div class="rd-field">
-            <span class="rd-lbl">Nota <span class="badge badge--neutral" style="font-size:9.5px;padding:1px 5px">opcional</span></span>
+            <span class="rd-lbl"><span class="anno-tag">3</span>Nota <span class="badge badge--neutral" style="font-size:9.5px;padding:1px 5px">opcional</span></span>
             <div class="rd-note-opt">
-              <textarea placeholder="ej. refactura por corrección de FOB — avisado por Comex" readonly>Factura nueva por corrección de FOB (aviso de Comex 21/07)</textarea>
+              <textarea id="rd-nota" name="rd-nota" placeholder="ej. refactura por corrección de FOB — avisado por Comex" readonly>Refactura por corrección de FOB (aviso de Comex 21/07)</textarea>
             </div>
           </div>
 
           <div class="rd-field">
-            <span class="rd-lbl"><span class="anno-tag">5</span>Preview del resultado</span>
-            <div class="rd-preview">
-              <div class="rd-preview-row">
-                <span class="rd-preview-new">F002_4010736311_FC</span>
-                <span class="rd-preview-arrow">reemplaza a</span>
-                <span class="rd-preview-old">F001_4010736311_FC</span>
+            <span class="rd-lbl"><span class="anno-tag">4</span>Lo que el sistema hace solo al confirmar</span>
+            <div class="rd-auto">
+              <div class="rd-auto-step">
+                <span class="rd-auto-num">1</span>
+                <span class="m"><b>Busca</b> en la carpeta fija de FACTURAS la factura nueva que ya llegó por mail — nombrada <code>{5 díg AFIP}_{PO nueva}_FC</code> → <span class="fn new">59102_1000234567_FC</span>. La ingesta ya extrajo bien el correlativo AFIP (<code>0110-00059102</code>) — lo único mal es el nº de orden.</span>
               </div>
-              <div class="rd-preview-note">La versión anterior queda como histórico (<code>reemplazado_at</code>) — nunca se borra, sigue disponible en el modo Histórico del buscador. El control BL vuelve a leer <b>este</b> archivo la próxima vez que corra.</div>
+              <div class="rd-auto-step">
+                <span class="rd-auto-num">2</span>
+                <span class="m"><b>La renombra</b> dejando el nº de orden ORIGINAL → <span class="fn new">59102_118962688_FC</span> — conserva los 5 dígitos AFIP, el robot la reconoce igual que hoy.</span>
+              </div>
+              <div class="rd-auto-step">
+                <span class="rd-auto-num">3</span>
+                <span class="m"><b>La vincula</b> a la orden <code>118962688</code> y la marca <b>VIGENTE</b> — la PO <code>1000234567</code> queda como alias.</span>
+              </div>
+              <div class="rd-auto-step">
+                <span class="rd-auto-num">4</span>
+                <span class="m"><b>Mueve la factura reemplazada</b> (<span class="fn old">58917_118962688_FC</span>) de la carpeta fija a la carpeta <b>HISTÓRICO</b> — nunca se borra del registro; deja de ser la vigente.</span>
+              </div>
+              <div class="rd-auto-tech">
+                <svg class="ic ic-sm"><use href="#i-check"/></svg>
+                <span>Nota técnica: el puntero interno (<code>drive_file_id</code>) no cambia con el rename — el registro no se rompe.</span>
+              </div>
             </div>
           </div>
 
         </div>
         <div class="rd-foot">
-          <span class="rd-foot-note">Se registra con tu usuario (<code>naara@ssbint.com</code>) y dispara el aviso "se generó una nueva factura" en el expediente.</span>
+          <span class="rd-foot-note">Confirmación de 1 click — reversible: la reemplazada queda en Histórico, nunca se borra. Se registra con tu usuario (<code>naara@ssbint.com</code>).</span>
           <div class="rd-foot-btns">
             <button class="rd-btn cancel">Cancelar</button>
-            <button class="rd-btn pri"><span class="anno-tag" style="background:transparent;border-color:rgba(255,255,255,.5);color:#fff">6</span>Confirmar reemplazo</button>
+            <button class="rd-btn pri"><span class="anno-tag" style="background:transparent;border-color:rgba(255,255,255,.5);color:#fff">5</span>Refacturar</button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="anno-list">
-      <div class="anno-item"><span class="anno-num">1</span><span><b>Selector de tipo</b> — 4 pills, mismo look que <code>.rd-pill</code>/<code>.cbl-fchip</code>. Cambiar de tipo resetea archivo + preview (son formularios distintos por dentro).</span></div>
-      <div class="anno-item"><span class="anno-num">2</span><span><b>Orden precargada, no editable</b> — viene del expediente que tenías abierto (<code>__segPendingOrder</code>-style). Evita el error de tipear mal el número de orden a mano en una acción que escribe DB.</span></div>
-      <div class="anno-item"><span class="anno-num">3</span><span><b>Drag&amp;drop + selector</b> — mismo patrón visual que <code>i-upload</code> en Cert. de Origen. Un solo PDF; valida mimetype client-side (no es la seguridad real, esa vive en <code>/api/seguimiento</code>).</span></div>
-      <div class="anno-item"><span class="anno-num">4</span><span><b>Alias de PO (condicional)</b> — NO aparece acá porque 4010736311 es una orden STO. Ver <a href="#s2b" style="color:var(--blue)">caso B</a> más abajo con una orden trade.</span></div>
-      <div class="anno-item"><span class="anno-num">5</span><span><b>Preview</b> — texto literal pedido: <code>F002_..._FC reemplaza a F001_..._FC</code>. Se arma en el cliente antes de confirmar (llamando a un endpoint de "siguiente nombre" o derivándolo del <code>doc_ref</code> tipeado — a definir con el harness de F1/F2).</span></div>
-      <div class="anno-item"><span class="anno-num">6</span><span><b>Confirmación</b> — un solo click, sin doble-confirm tipo <code>ssbConfirm</code> (la acción es reversible: la versión anterior no se borra, se puede re-promover a mano). Nota opcional, no bloqueante.</span></div>
+      <div class="anno-item"><span class="anno-num">1</span><span><b>Orden original precargada, NO editable</b> — viene del expediente que tenías abierto (<code>__segPendingOrder</code>-style). Evita el error de tipear mal el número de orden en una acción que escribe DB.</span></div>
+      <div class="anno-item"><span class="anno-num">2</span><span><b>Único campo manual: la PO nueva de SAP.</b> No hay archivo que subir — la factura nueva <b>ya está en la carpeta</b>, llegó por mail. La v1 de este mockup tenía una zona de carga manual: <b>eliminada por decisión de equipo 22-07</b> (una sola vía de entrada, la automática).</span></div>
+      <div class="anno-item"><span class="anno-num">3</span><span><b>Nota opcional</b>, no bloqueante — cerrado 22-07.</span></div>
+      <div class="anno-item"><span class="anno-num">4</span><span><b>Stepper del flujo automático</b> — deja a la vista QUÉ va a pasar antes de confirmar: buscar → renombrar → vincular → archivar. El operario no toca Drive en ningún paso.</span></div>
+      <div class="anno-item"><span class="anno-num">5</span><span><b>"Refacturar" en 1 click</b> — sin doble confirm tipo <code>ssbConfirm</code> (cerrado 22-07): la acción es reversible porque la versión anterior no se borra, se puede re-promover a mano.</span></div>
     </div>
   </div>
 
-  <h3 id="s2b" style="margin-top:28px">Caso B — Factura de orden TRADE (empieza con "1"): aparece el campo alias</h3>
-  <p class="intent">Misma orden 118847302 del punto ①. SAP le generó una <b>nueva referencia de PO</b> al refacturar — el campo pedido en el ítem (4) de la tarea.</p>
-  <div class="rd-stage" style="padding:24px 20px">
-    <div class="rd-modal" style="max-width:520px">
-      <div class="rd-head">
-        <div>
-          <p class="rd-title">Reemplazar documento</p>
-          <p class="rd-sub">Orden 118847302 · Factura · orden TRADE</p>
-        </div>
-        <button class="rd-x"><svg class="ic"><use href="#i-x"/></svg></button>
+  <h3 style="margin-top:28px">Dónde vive el formulario — CERRADO 22-07: VARIANTE A (modal)</h3>
+  <div class="vgrid">
+    <div class="vcol rec">
+      <div class="vhead"><span class="vname">VARIANTE A — Modal overlay</span><span class="badge badge--success">✓ elegida por John 22-07</span></div>
+      <div class="vbody">
+        <p class="muted" style="margin-bottom:10px">Es lo que se ve arriba. Fondo oscurecido, foco total en la acción — mismo patrón que <code>.vac-modal-overlay</code> (Vacaciones) y <code>.tt-modal-overlay</code> (Tarifas Terrestres), ya validado en la app.</p>
+        <div class="faint">+ Consistente con el resto de la app<br>+ La acción escribe DB y cambia el vigente — merece foco exclusivo<br>− Tapa momentáneamente el expediente (mitigado: orden + vessel en el header del modal)</div>
       </div>
-      <div class="rd-body">
-        <div class="rd-field">
-          <span class="rd-lbl">Tipo de documento</span>
-          <div class="rd-pillrow"><span class="rd-pill on"><svg class="ic ic-sm"><use href="#i-file-text"/></svg>Factura</span></div>
-        </div>
-        <div class="rd-field">
-          <span class="rd-lbl">Orden</span>
-          <div class="rd-order">
-            <svg class="ic"><use href="#i-lock"/></svg>
-            <span class="rd-order-num">118847302</span>
-            <span class="rd-order-meta">LOG-IN · LOG-IN JATOBA 285N</span>
-          </div>
-        </div>
-        <div class="rd-field">
-          <span class="rd-lbl">Archivo</span>
-          <div class="rd-file">
-            <svg class="ic"><use href="#i-file-text"/></svg>
-            <span class="rd-file-name">F14829_118847302_FC.pdf</span>
-            <span class="rd-file-size">401 KB</span>
-            <button class="rd-file-x"><svg class="ic ic-sm"><use href="#i-x"/></svg></button>
-          </div>
-        </div>
-        <div class="rd-alias">
-          <span class="rd-alias-tag"><span class="anno-tag" style="width:15px;height:15px;font-size:9px;margin-right:4px">4</span>SOLO factura + orden trade</span>
-          <span class="rd-lbl" style="color:var(--purple)">Nueva referencia de PO (refactura SAP)</span>
-          <input type="text" value="118851930" readonly>
-          <div class="rd-alias-help">
-            <svg class="ic ic-sm"><use href="#i-alert"/></svg>
-            <span>Al refacturar una orden <b>trade</b> (empieza con "1"), SAP genera una <b>PO nueva</b> — no es la orden original. Si cargás la factura sin este alias, el documento queda "colgado" de la PO nueva y el sistema puede crear una <b>orden fantasma</b> aparte. Completando este campo, la PO nueva se vincula a la orden original en <code>orden_po_alias</code> y <b>cualquier documento que ya haya llegado</b> bajo esa PO se re-atribuye automáticamente.</span>
-          </div>
-        </div>
-        <div class="rd-field">
-          <span class="rd-lbl">Preview del resultado</span>
-          <div class="rd-preview">
-            <div class="rd-preview-row">
-              <span class="rd-preview-new">F14829_118847302_FC</span>
-              <span class="rd-preview-arrow">reemplaza a</span>
-              <span class="rd-preview-old">F09215_118847302_FC</span>
-            </div>
-            <div class="rd-preview-note">+ PO <b>118851930</b> vinculada a la orden original <b>118847302</b> — si ya había una factura o un booking cargados bajo 118851930, se re-atribuyen a 118847302 sin perder el extract pagado.</div>
-          </div>
-        </div>
-      </div>
-      <div class="rd-foot">
-        <span class="rd-foot-note">Refactura trade — motivo por defecto <code>'refactura'</code> en <code>orden_po_alias</code>.</span>
-        <div class="rd-foot-btns"><button class="rd-btn cancel">Cancelar</button><button class="rd-btn pri">Confirmar reemplazo</button></div>
+    </div>
+    <div class="vcol">
+      <div class="vhead"><span class="vname">VARIANTE B — Panel inline expandible</span><span class="badge badge--neutral">descartada</span></div>
+      <div class="vbody">
+        <p class="muted" style="margin-bottom:10px">Empujaba el contenido del <code>.cbl-detail</code> hacia abajo tipo accordion. Descartada: layout nuevo en un componente ya complejo (doc-tabs + viewer + sello) y formulario comprimido en pantallas angostas.</p>
       </div>
     </div>
   </div>
 
   <!-- ============ SECCIÓN 3 ============ -->
-  <h2 id="s3"><span class="num">3</span>VARIANTE — dónde vive el formulario</h2>
-  <p class="intent">Decisión de UX todavía abierta: ¿el reemplazo interrumpe la pantalla (modal overlay) o convive con el expediente (panel inline)? Las dos usan los mismos componentes internos (①-⑥) — cambia solo el contenedor.</p>
+  <h2 id="s3"><span class="num">3</span>Los demás documentos — sin acción manual</h2>
+  <p class="intent">Ninguno de estos pasa por la app — decisión de equipo 22-07: una sola vía de entrada (la automática) para no confundir al operario. Esta tarjeta informativa puede vivir al lado del botón Refacturar o como tooltip del header del expediente.</p>
 
-  <div class="vgrid">
-    <div class="vcol rec">
-      <div class="vhead"><span class="vname">VARIANTE A — Modal overlay</span><span class="badge badge--success">✓ recomendada</span></div>
-      <div class="vbody">
-        <p class="muted" style="margin-bottom:10px">Es lo que se ve arriba en ②. Fondo oscurecido, foco total en la acción — mismo patrón que <code>.vac-modal-overlay</code> (Vacaciones) y <code>.tt-modal-overlay</code> (Tarifas Terrestres), ya validado en la app.</p>
-        <div class="faint">+ Consistente con el resto de la app<br>+ La acción escribe DB y reemplaza el vigente — merece foco exclusivo, sin distracción del expediente detrás<br>− Tapa momentáneamente el expediente que se está reemplazando (mitigable: mostrar order+vessel en el header del modal, como está)</div>
-      </div>
+  <div class="wrap">
+    <div class="card" style="max-width:330px">
+      <h3>PE / Booking redocumentados</h3>
+      <p class="muted">Llegan por mail y el sistema los registra solo (<b>último gana</b>) — sin acción manual. La versión anterior queda en histórico.</p>
     </div>
-    <div class="vcol">
-      <div class="vhead"><span class="vname">VARIANTE B — Panel inline expandible</span></div>
-      <div class="vbody">
-        <p class="muted" style="margin-bottom:10px">El botón "Reemplazar documento" abre una sección que empuja el contenido del <code>.cbl-detail</code> hacia abajo (como un accordion), sin tapar el header del expediente ni los doc-tabs.</p>
-        <div class="faint">+ Mantenés visible el resultado del último control mientras cargás el reemplazo (útil para comparar a ojo)<br>− Layout nuevo en un componente ya complejo (<code>.cbl-detail</code> tiene doc-tabs + viewer + sello) → más superficie de CSS para romper<br>− En pantallas angostas el formulario queda muy comprimido</div>
-      </div>
+    <div class="card" style="max-width:330px">
+      <h3>Planilla de aduana</h3>
+      <p class="muted">Se re-sube a la carpeta como siempre (no cambia el hábito del equipo); el sistema detecta el cambio por <b>huella (md5)</b> y re-lee.</p>
+    </div>
+    <div class="card" style="max-width:330px">
+      <h3>Factura de orden STO (contraste)</h3>
+      <p class="muted">Ej. orden <code>4010736311</code>: al refacturar, la referencia <b>no cambia</b> — la factura nueva llega por mail ya con el nº correcto y se registra sola (último gana). Por eso el botón Refacturar no existe en expedientes STO.</p>
     </div>
   </div>
-  <p class="note" style="margin-top:12px">Recomendación: <b>VARIANTE A</b>. Es una escritura sensible (reemplaza el documento que vigencia todo el control) y ya existe el patrón de modal en 2 módulos — cero componente nuevo. B se reconsidera solo si en la práctica el ida-y-vuelta "cerrar modal → mirar expediente → volver a abrir" resulta incómodo.</p>
 
   <!-- ============ SECCIÓN 4 ============ -->
-  <h2 id="s4"><span class="num">4</span>Avisos en el detalle de una orden</h2>
-  <p class="intent">De los 7 avisos que derivan del modelo nuevo (PLAN v2 §2), estos 3 son los que pediste ver en contexto de UI. Viven como banners apilados arriba del header del expediente (<code>.cbl-exp-head</code>), mismo lugar que hoy usa el banner de "roleada".</p>
+  <h2 id="s4"><span class="num">4</span>Avisos — ARRIBA del header del expediente abierto</h2>
+  <p class="intent">Cerrado 22-07: los banners viven <b>arriba del header del expediente abierto</b> (<code>.cbl-exp-head</code>), mismo lugar que hoy usa el banner de "roleada" — <b>NO en las tarjetas del listado</b> (las cards del listado quedan limpias, solo con su badge de estado). Abajo, la posición simulada: banners primero, header del expediente debajo.</p>
 
-  <div class="card" style="max-width:680px;display:flex;flex-direction:column;gap:10px">
-    <div class="banner amber">
-      <svg class="ic"><use href="#i-alert"/></svg>
-      <span class="txt"><b>Se generó una nueva factura</b> — recontrolá antes de enviar</span>
+  <div class="card" style="max-width:680px;padding:0;overflow:hidden">
+    <div style="display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-bottom:1px dashed var(--border);background:var(--faint)">
+      <div class="faint" style="font-weight:800;letter-spacing:.05em;text-transform:uppercase">▼ zona de avisos — siempre arriba del header</div>
+      <div class="banner amber">
+        <svg class="ic"><use href="#i-alert"/></svg>
+        <span class="txt"><b>Se generó una nueva factura</b> — recontrolá antes de enviar</span>
+      </div>
+      <div class="banner amber">
+        <svg class="ic"><use href="#i-alert"/></svg>
+        <span class="txt"><b>2 permisos activos</b> — la planilla de aduana referencia <code>26003EC01004851X</code></span>
+      </div>
+      <div class="banner neutral">
+        <svg class="ic"><use href="#i-clock"/></svg>
+        <span class="txt">Documento reemplazado re-llegó por mail <span class="faint">(ignorado)</span></span>
+      </div>
     </div>
-    <div class="banner amber">
-      <svg class="ic"><use href="#i-alert"/></svg>
-      <span class="txt"><b>2 permisos activos</b> — la planilla de aduana referencia <code>26003EC01004851X</code></span>
-    </div>
-    <div class="banner neutral">
-      <svg class="ic"><use href="#i-clock"/></svg>
-      <span class="txt">Documento reemplazado re-llegó por mail <span class="faint">(ignorado)</span></span>
+    <div style="padding:16px 18px">
+      <div class="faint" style="font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">header del expediente (.cbl-exp-head) — debajo de los banners</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700">118962688</div>
+          <div class="muted" style="margin-top:5px">LOG-IN · LOG-IN JATOBA 285N · Booking LA0538291</div>
+        </div>
+        <span class="badge badge--danger">● REVISAR · 1</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn ghost mini"><svg class="ic ic-sm"><use href="#i-stamp"/></svg>Marcar como revisado</button>
+        <button class="btn pri mini"><svg class="ic ic-sm"><use href="#i-refresh"/></svg>Refacturar</button>
+      </div>
     </div>
   </div>
 
   <div class="wrap" style="margin-top:16px">
     <div class="card" style="max-width:330px">
       <h3>① "Se generó una nueva factura"</h3>
-      <p class="muted">Dispara cuando entra un documento con <code>document_ts</code> más nuevo que el último control (por mail automático en STO, o por este modal). Es la cara visible de la <b>cadena rota</b> — ver sección ⑤. <b>Se apaga solo</b> al recontrolar (botón "Recontrolar" ya existente).</p>
+      <p class="muted">Dispara cuando entra un documento con <code>document_ts</code> más nuevo que el último control — por mail automático (STO / PE / Booking) o por la refactura trade del modal ②. Es la cara visible de la <b>cadena rota</b> — ver sección ⑥. <b>Se apaga solo</b> al recontrolar (botón "Recontrolar" ya existente).</p>
     </div>
     <div class="card" style="max-width:330px">
       <h3>② "2 permisos activos"</h3>
@@ -467,29 +437,49 @@
   </div>
 
   <!-- ============ SECCIÓN 5 ============ -->
-  <h2 id="s5"><span class="num">5</span>Cadena documento → control → sello — regla de habilitación del mailing</h2>
-  <p class="intent">Regla P2 (fijada por John, variante ESTRICTA): el envío se habilita SOLO si <code>document_ts</code> del vigente ≤ <code>created_at</code> del último control ≤ <code>sellado_at</code> del sello. Si llega un documento más nuevo, la cadena se rompe <b>aunque ya hubiera sello</b> — hay que recontrolar y volver a sellar. Este indicador resume ese estado de un vistazo.</p>
+  <h2 id="s5"><span class="num">5</span>Bloqueo en el tab Mailing — link clickeable al documento</h2>
+  <p class="intent">La contracara del aviso ①: mientras la cadena esté rota, el tab Mailing bloquea el envío de esa orden y <b>te lleva de un click al documento</b> en Control BL. Pieza nueva pedida por John 22-07.</p>
+
+  <div class="card" style="max-width:680px;display:flex;flex-direction:column;gap:12px">
+    <div class="faint" style="font-weight:800;letter-spacing:.05em;text-transform:uppercase">tab Mailing — orden 118962688</div>
+    <div class="banner red">
+      <svg class="ic"><use href="#i-alert"/></svg>
+      <span class="txt">⛔ <b>Hay una factura más nueva que el último control</b> — <a class="mblock-link" href="#s4">Ver documento en Control BL →</a></span>
+    </div>
+    <div>
+      <button class="btn pri" disabled><svg class="ic ic-sm"><use href="#i-send"/></svg>Enviar documentación</button>
+    </div>
+    <div class="banner green">
+      <svg class="ic"><use href="#i-check"/></svg>
+      <span class="txt"><b>Flujo de retorno:</b> al resolver (control OK o refactura) y volver a Mailing, el envío se habilita <b>EN EL MOMENTO, sin F5</b> — reusa el fix de reactividad ya diagnosticado: el tab re-evalúa el estado al volver, no requiere recarga.</span>
+    </div>
+  </div>
+  <p class="note" style="margin-top:12px">El link es real en este mockup (salta a la sección ④); en la app llama <code>switchTab('control-bl')</code> + abre el expediente de la orden — mismo puente <code>__segPendingOrder</code> que ya usan Seguimiento → Control BL.</p>
+
+  <!-- ============ SECCIÓN 6 ============ -->
+  <h2 id="s6"><span class="num">6</span>Cadena documento → control → sello — regla de habilitación del mailing</h2>
+  <p class="intent">Regla P2 (fijada por John, variante ESTRICTA): el envío se habilita SOLO si <code>document_ts</code> del vigente ≤ <code>created_at</code> del último control ≤ <code>sellado_at</code> del sello. Si llega un documento más nuevo, la cadena se rompe <b>aunque ya hubiera sello</b> — hay que recontrolar y volver a sellar. Este indicador resume ese estado de un vistazo. Componente aprobado — se mantiene tal cual.</p>
 
   <h3 style="margin-top:22px">Estado OK — habilita mailing</h3>
   <div class="chain">
     <div class="chain-step">
       <div class="chain-dot ok"><svg class="ic"><use href="#i-file-text"/></svg></div>
       <div class="chain-lbl">Documento</div>
-      <div class="chain-ts">21/07 09:14</div>
-      <div class="chain-sub">F002_4010736311_FC</div>
+      <div class="chain-ts">22/07 08:05</div>
+      <div class="chain-sub">59102_118962688_FC</div>
     </div>
     <div class="chain-line ok"></div>
     <div class="chain-step">
       <div class="chain-dot ok"><svg class="ic"><use href="#i-check"/></svg></div>
       <div class="chain-lbl">Control</div>
-      <div class="chain-ts">21/07 09:40</div>
+      <div class="chain-ts">22/07 08:31</div>
       <div class="chain-sub">OK · +26 min sobre el doc</div>
     </div>
     <div class="chain-line ok"></div>
     <div class="chain-step">
       <div class="chain-dot ok"><svg class="ic"><use href="#i-stamp"/></svg></div>
       <div class="chain-lbl">Sello</div>
-      <div class="chain-ts">21/07 10:02</div>
+      <div class="chain-ts">22/07 08:53</div>
       <div class="chain-sub">naara · +22 min sobre el control</div>
     </div>
   </div>
@@ -501,7 +491,7 @@
       <div class="chain-dot bad"><svg class="ic"><use href="#i-file-text"/></svg></div>
       <div class="chain-lbl">Documento</div>
       <div class="chain-ts">22/07 08:05</div>
-      <div class="chain-sub">F003_4010736311_FC · nuevo</div>
+      <div class="chain-sub">59102_118962688_FC · nuevo (refactura)</div>
     </div>
     <div class="chain-line bad"></div>
     <div class="chain-step">
@@ -518,7 +508,7 @@
       <div class="chain-sub">sellado sobre el control viejo — ya no cuenta</div>
     </div>
   </div>
-  <div class="banner red" style="max-width:680px;margin-top:10px"><svg class="ic"><use href="#i-alert"/></svg><span class="txt">Cadena rota — <b>bloqueado</b> ("hay documento más nuevo que el control — recontrolá"). <code>block_reason</code> tiene precedencia sobre el sello, aunque el sello exista.</span></div>
+  <div class="banner red" style="max-width:680px;margin-top:10px"><svg class="ic"><use href="#i-alert"/></svg><span class="txt">Cadena rota — <b>bloqueado</b> ("hay documento más nuevo que el control — recontrolá"). <code>block_reason</code> tiene precedencia sobre el sello, aunque el sello exista. Es exactamente el estado que muestra el bloqueo de Mailing de la sección ⑤.</span></div>
 
   <h3 style="margin-top:26px">VARIANTE de presentación del indicador</h3>
   <div class="vgrid">
@@ -532,9 +522,9 @@
       <div class="vhead"><span class="vname">VARIANTE B — Timeline vertical</span></div>
       <div class="vbody">
         <div class="chain-v" style="margin-bottom:10px">
-          <div class="chain-vrow ok"><span class="t">21/07 09:14</span><span class="m">Documento vigente <b>F002_4010736311_FC</b></span></div>
-          <div class="chain-vrow ok"><span class="t">21/07 09:40</span><span class="m">Control <b>OK</b></span></div>
-          <div class="chain-vrow ok"><span class="t">21/07 10:02</span><span class="m"><span class="who">naara</span> sella el control</span></div>
+          <div class="chain-vrow ok"><span class="t">22/07 08:05</span><span class="m">Documento vigente <b>59102_118962688_FC</b></span></div>
+          <div class="chain-vrow ok"><span class="t">22/07 08:31</span><span class="m">Control <b>OK</b></span></div>
+          <div class="chain-vrow ok"><span class="t">22/07 08:53</span><span class="m"><span class="who">naara</span> sella el control</span></div>
         </div>
         <p class="muted">Más espacio para detalle (quién selló, motivo) pero ocupa mucho más alto — solo cabría dentro del detalle expandido, no en el header compacto.</p>
       </div>
@@ -543,21 +533,27 @@
   <p class="note" style="margin-top:12px">Recomendación: <b>VARIANTE A</b> en el header del expediente (siempre visible) + <b>VARIANTE B</b> reusada dentro del modo Histórico ya existente (sección ③ del mockup <code>mockup_controlbl_plancompleto.html</code>), que ya es una timeline vertical — no hay que inventar un componente nuevo, se le agrega la fila de sello a la que ya existe.</p>
 
   <!-- ============ NOTAS ============ -->
-  <h2 id="notas"><span class="num">✎</span>Notas para John — decisiones tomadas / dudas abiertas</h2>
+  <h2 id="notas"><span class="num">✎</span>Decisiones — cerradas por John 22-07</h2>
   <p class="note">
-    · <b>Confirmación de un solo click</b> (sin <code>ssbConfirm</code> con motivo obligatorio, a diferencia del sello) — asumí que como la versión anterior nunca se borra, el reemplazo es de menor fricción que sellar. Si preferís exigir motivo obligatorio igual que el sello (auditoría más fuerte), es un cambio chico: el campo "Nota" ya está en el layout, solo pasa de opcional a requerido.<br>
-    · <b>Convención de nombre de archivo</b> <code>{Nº doc}_{orden}_FC</code> la tomo textual de <code>ARQUITECTURA_CONTROL_BL_2026-07-22.md</code> — para PE/Booking/Planilla <b>asumí</b> sufijos análogos (no confirmados en los docs que leí). Confirmame los sufijos reales o si estos 3 tipos usan otro esquema.<br>
-    · <b>Preview del nombre nuevo</b>: en el mockup el nombre "F002_..." ya viene armado — en la implementación real hace falta definir SI el número de factura lo tipea el usuario, lo lee del PDF (extracción), o lo arma el sistema incrementando; afecta si el campo "Archivo" necesita un input de texto adicional para el nº de documento.<br>
-    · <b>Alias de PO</b>: el mockup asume que John/Comex ya tiene la PO nueva a mano al momento de cargar (dato que llega de SAP). Si a veces se sube la factura ANTES de tener la PO nueva, hace falta un flujo de "completar alias después" — no cubierto acá.<br>
-    · Los otros 4 avisos del listado de 7 (doc-post-control, doc nuevo sobre vigente manual, control OK/sellado hace &gt;N horas sin fila en <code>mailing_orders</code>) no están en este mockup por pedido explícito — si los querés ver en UI, aviso y hago una vuelta corta.<br>
-    · Sección ⑤ (cadena) es la representación visual de una regla que hoy <b>no existe en el modelo</b> — depende de que F1 (DDL) y la columna <code>sellado_at</code>/lógica de <code>block_reason</code> estén implementadas. Este mockup es aspiracional sobre datos que hoy no se calculan así.
+    · <b>Sin carga manual de archivos, en ningún tipo de documento.</b> La zona de carga de la v1 de este mockup quedó eliminada por completo — una sola vía de entrada (la automática), sin alternativa secundaria, para no confundir al operario.<br>
+    · <b>Único caso manual = refactura trade.</b> Modal: orden original fija + campo "Nueva referencia de PO (refactura SAP)" + botón "Refacturar" (1 click, Nota opcional). El sistema hace el resto solo: busca en la carpeta fija de FACTURAS (<code>59102_1000234567_FC</code>), renombra conservando el correlativo AFIP (<code>59102_118962688_FC</code>), vincula + marca vigente (PO nueva = alias), y mueve la reemplazada a HISTÓRICO. <code>drive_file_id</code> no cambia con el rename.<br>
+    · <b>Modal titulado para el caso trade, sin selector de tipo</b> — elegido por claridad: ningún otro documento tiene acción manual, un selector con opciones muertas confunde (anotado en ②).<br>
+    · <b>PE / Booking redocumentados:</b> mail automático, último gana. <b>Planilla de aduana:</b> re-subir a la carpeta como siempre, detección por md5 (sección ③).<br>
+    · <b>Avisos arriba del header del expediente abierto</b> — como el banner de "roleada" hoy; nunca en las tarjetas del listado (sección ④).<br>
+    · <b>Bloqueo de Mailing con link clickeable</b> al documento en Control BL + habilitación reactiva al volver, sin F5 (sección ⑤ — conecta con el fix de reactividad ya diagnosticado).<br>
+    · <b>VARIANTE A (modal overlay) elegida; B descartada.</b> Cadena doc→control→sello (sección ⑥) aprobada sin cambios.<br>
+    · <b>Fechas siempre DD/MM/AAAA</b>, campos de texto — prohibido el selector de fecha nativo del navegador (regla dura verificada en este mockup).<br>
+    <br>
+    <b>Dudas abiertas (implementación, no UX):</b><br>
+    · Si al confirmar la factura nueva TODAVÍA no llegó a la carpeta fija (mail demorado): ¿el paso ① del stepper queda "esperando factura de PO 1000234567" con retry, o falla con aviso? Propongo estado de espera visible en el expediente — a definir con el harness.<br>
+    · Nombre/ubicación exacta de la carpeta HISTÓRICO en Drive (¿subcarpeta de FACTURAS o carpeta hermana?) — no afecta la UI, sí al workflow n8n.
   </p>
 </div>
 
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
-  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
   <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
-  <symbol id="i-file-spread" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M10 9H8"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
   <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M5 22h14"/><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"/><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/></symbol>
   <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
