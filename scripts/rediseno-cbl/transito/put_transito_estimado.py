@@ -77,7 +77,7 @@ REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 ENV_PATHS = [os.path.join(REPO, "validador-aduana", ".env"), os.path.join(REPO, ".env")]
 BACKUP_DIR = os.path.join(HERE, "backups")
 
-EXPECT_VER_PRE = "abf75dd6-8855-420d-80c6-012daf8418bf"
+EXPECT_VER_PRE = "50366e53-bfa9-481e-9059-adf407cc4bc7"  # actualizado tras el envío robusto (23-07); el envío robusto no tocó el Resolver, anclas del tránsito intactas (dry-run PASS)
 EXPECT_NODES_PRE = 44
 EXPECT_NODES_POST = 44
 
