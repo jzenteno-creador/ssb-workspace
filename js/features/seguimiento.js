@@ -1454,7 +1454,13 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
         tre.appendChild(el('td', null, numAR(net)));
         tre.appendChild(el('td', null, numAR(gross)));
         const tdE = el('td');
-        tdE.appendChild(mkBadge(eq.estado === 'OK' ? 'ok' : 'warn', eq.estado || '—'));
+        if(r.control_estado === 'SELLADO'){
+          const bSeal = mkBadge('seal', 'Revisado');
+          bSeal.title = 'El sello "Revisado" es por CONTROL COMPLETO (toda la orden) y gana al estado crudo por contenedor — crudo: ' + (eq.estado || '—');
+          tdE.appendChild(bSeal);
+        } else {
+          tdE.appendChild(mkBadge(eq.estado === 'OK' ? 'ok' : 'warn', eq.estado || '—'));
+        }
         tre.appendChild(tdE);
         tb.appendChild(tre);
       }
@@ -1816,14 +1822,18 @@ import { skelCardsHtml } from './tarifas.js'; // B3.4 (decisión firmada): rates
     const paisTxt = r.pais_destino_final || r.pais_destino;
     const flag = segFlag(r.pais_destino_final) || segFlag(r.pais_destino);
     if(flag) tdDest.appendChild(flag);
+    const destSpan = el('span','seg-cliente');
     if(r.pod){
-      tdDest.appendChild(document.createTextNode(r.pod + ' '));
-      tdDest.appendChild(el('span','seg-faint','· ' + (paisTxt || '—')));
+      destSpan.appendChild(document.createTextNode(r.pod + ' '));
+      destSpan.appendChild(el('span','seg-faint','· ' + (paisTxt || '—')));
+      destSpan.title = r.pod + (paisTxt ? ' · ' + paisTxt : '');
     } else if(paisTxt){
-      tdDest.appendChild(document.createTextNode(paisTxt));
+      destSpan.appendChild(document.createTextNode(paisTxt));
+      destSpan.title = paisTxt;
     } else {
-      tdDest.appendChild(el('span','seg-faint','—'));
+      destSpan.appendChild(el('span','seg-faint','—'));
     }
+    tdDest.appendChild(destSpan);
     tr.appendChild(tdDest);
 
     // GI (item 45): "GI pendiente de confirmación" reemplaza el término técnico
