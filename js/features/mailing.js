@@ -26,9 +26,10 @@
    atdConfirm/renderAtdReport) y el panel de roleo (item 31) SE MUDARON a
    js/features/despachos.js — mismos endpoints /api/mailing (confirm_atd,
    roleo_candidatas, informar_roleo), cero cambio de contrato. En esta solapa
-   quedan el acceso "Ir a Despachos" (markup #mail-atd-moved) y el botón por
-   orden "Confirmar zarpe → Despachos" (cardResumen, bus __segPendingOrder +
-   __despPendingTarget='atd').
+   queda solo el acceso "Ir a Despachos" (markup #mail-atd-moved, lo maneja
+   otro agente en index.html). El botón por-orden "Confirmar zarpe →
+   Despachos" de cardResumen SE SACÓ el 23-07 (decisión John): quedaba
+   duplicado con el rail — la única vía a Despachos es el rail lateral.
 
    PLAN COMPLETO tanda B (2026-07-15): dos actions nuevas y locales en
    /api/mailing (roleo_candidatas, informar_roleo — mismo criterio que
@@ -102,6 +103,12 @@
   // respuestas stale las descarta el token _gen + el guard order !== _sel. ──
   let _previewError = null; // último fallo de preview (render en card + Reintentar)
   let _pvTimer = null;
+  // FIX 3 (23-07, decisión John): cache de preview POR EVENTO, SIN TTL — order_number
+  // → resp OK de action=preview. Reabrir la MISMA orden ya vista pinta de cache sin
+  // re-pegarle al webhook n8n (caro: GETs + búsquedas Drive). Se invalida SOLO por
+  // evento que cambie lo que el preview refleja (save_contacts / confirm_schedule /
+  // send) — nunca por tiempo. En memoria: F5 la vacía (correcto, no tocar).
+  let _pvCache = new Map();
   function schedulePreview(){ clearTimeout(_pvTimer); _pvTimer = setTimeout(runPreview, 400); }
   // ── Chip-bar de docs (A-c5): PDF abierto en el viewer embebido de Drive ──
   let _docOpen = null; // { fid, label } | null
@@ -535,17 +542,9 @@
     if(_row.atd){
       const sb = slaBadge(_row);
       if(sb){ const w = el('p','mail-note'); w.appendChild(sb); w.appendChild(document.createTextNode('  confirmado ' + (fmtTs(_row.atd_confirmed_at)) + (_row.atd_confirmed_by ? ' por ' + _row.atd_confirmed_by : ''))); w.style.display='flex'; w.style.alignItems='center'; w.style.gap='8px'; c.appendChild(w); }
-    } else {
-      // Botón de origen (2026-07-22): el ATD-gate vive en la solapa Despachos —
-      // se navega con la orden precargada (mismo bus __segPendingOrder que
-      // control-bl/cert-origen + __despPendingTarget='atd').
-      const zr = el('p','mail-note');
-      const zb = el('button','mail-btn','Confirmar zarpe → Despachos');
-      zb.type = 'button';
-      zb.onclick = () => { window.__segPendingOrder = _row.order_number; window.__despPendingTarget = 'atd'; switchTab('despachos'); };
-      zr.appendChild(zb);
-      c.appendChild(zr);
     }
+    // Sin ATD: el acceso por-orden a Despachos se sacó el 23-07 (decisión John,
+    // quedaba duplicado con el rail) — sin fallback acá, el rail es la única vía.
     // D.3 alerta (decisión John 17-07): el control factura↔permiso AVISA, NO
     // bloquea — warning visible si el resultado persistido es REVISAR.
     if(_preview && _preview.control_fcpe && _preview.control_fcpe.overall_result === 'REVISAR'){
@@ -866,11 +865,41 @@
       c.appendChild(el('p','mail-status-line', 'Estados: ' + (p.recipients.nuevos || []).length + ' nuevo(s) sin decidir · ' + (p.recipients.bloqueados_excluidos || []).length + ' bloqueado(s) excluido(s) — detalle en el card Envío.'));
     }
 
+    // FIX 5 (decisión John: logo ASSET ESTÁTICO): el body_html real usa cid: para
+    // que el cliente de mail resuelva los adjuntos MIME — eso NO existe en un
+    // <iframe srcdoc> sin adjuntos. Se arma una COPIA solo para el DISPLAY de este
+    // preview (p.body_html NUNCA se muta — el mail real lo arma el workflow con
+    // los cid: intactos, esto no lo toca). Reemplazo por sustitución literal
+    // (split/join, no regex) — inmune a caracteres especiales del token.
+    let previewHtml = p.body_html || '';
+    if(previewHtml){
+      previewHtml = previewHtml.split('cid:logo-ssb@ssb').join('/assets/SSB_logo.png');
+      previewHtml = previewHtml.split('cid:logo-dow@ssb').join('/assets/logo-dow.png');
+      // Origen SIEMPRE 'ar' — mismo invariante que el resolver del workflow.
+      previewHtml = previewHtml.split('cid:flag-pol@ssb').join('https://flagcdn.com/48x36/ar.png');
+      // Destino: mismo mapa/patrón que mailFlag (_paisMapM). Si el mapa todavía no
+      // cargó cuando este preview llegó, se dispara (idempotente) y — si la orden
+      // sigue siendo la vigente al resolver — se re-renderiza para pintar la
+      // bandera; hasta entonces degrada como "sin iso" (strip del tag).
+      if(!_paisMapM){
+        const genPod = _sel, prevPod = p;
+        ensurePaisMapM().then(() => { if(_sel === genPod && _preview === prevPod) renderDetail(); });
+      }
+      const isoPod = (_paisMapM && p.pais_destino) ? _paisMapM.get(String(p.pais_destino).toUpperCase().trim()) : null;
+      if(isoPod){
+        previewHtml = previewHtml.split('cid:flag-pod@ssb').join('https://flagcdn.com/48x36/' + String(isoPod).toLowerCase() + '.png');
+      } else {
+        // Sin iso (país no reconocido o mapa aún sin cargar): mismo degradado que
+        // el mail real — el nombre ya va impreso en texto, se strippea SOLO el
+        // tag <img> del token (acotado, sin comerse el resto del cuerpo).
+        previewHtml = previewHtml.replace(/<img\b[^>]*cid:flag-pod@ssb[^>]*>/gi, '');
+      }
+    }
     const frame = document.createElement('iframe');
     frame.className = 'mail-frame';
     frame.setAttribute('sandbox', '');           // sin scripts, sin same-origin: render inerte
     frame.setAttribute('title', 'Preview del mail');
-    frame.setAttribute('srcdoc', p.body_html || '');
+    frame.setAttribute('srcdoc', previewHtml);
     c.appendChild(frame);
     return c;
   }
@@ -1049,10 +1078,20 @@
     c.appendChild(row);
 
     if(_lastResult){
-      const box = el('div', _lastResult.ok ? 'mail-okbox' : 'mail-alert');
-      box.textContent = _lastResult.ok
-        ? 'Enviado ' + (_lastResult.test_mode ? '(TEST) ' : '(REAL) ') + 'a ' + _lastResult.enviado_a + ' — Gmail id ' + (_lastResult.gmail_message_id || '—') + ' · adjuntos: ' + ((_lastResult.adjuntos || []).length)
-        : 'Falló el envío: ' + (_lastResult.error || 'error desconocido');
+      // Capa A (incidente 504): 3 estados, no 2 — un timeout/gateway NO es lo
+      // mismo que un fallo definitivo. Decir "Falló" ante un 504 implica que NO
+      // salió, y es AMBIGUO (pudo haber salido igual del otro lado).
+      let box;
+      if(_lastResult.ok){
+        box = el('div','mail-okbox');
+        box.textContent = 'Enviado ' + (_lastResult.test_mode ? '(TEST) ' : '(REAL) ') + 'a ' + _lastResult.enviado_a + ' — Gmail id ' + (_lastResult.gmail_message_id || '—') + ' · adjuntos: ' + ((_lastResult.adjuntos || []).length);
+      } else if(_lastResult.uncertain){
+        box = el('div','mail-alert');
+        box.textContent = '⚠ No se pudo confirmar el envío: el servidor tardó demasiado en responder. El mail PODRÍA no haber salido. NO reintentes sin verificar — abajo, en Seguimiento, mirá si la orden figura ENVIADA (con Gmail id) o con error. Si no hay registro nuevo, el mail no salió y podés reintentar.';
+      } else {
+        box = el('div','mail-alert');
+        box.textContent = 'Falló el envío: ' + (_lastResult.error || 'error desconocido') + ' — el mail NO salió.';
+      }
       c.appendChild(box);
     }
     return c;
@@ -1085,12 +1124,24 @@
   }
 
   // ── acciones ──
-  async function selectOrder(order){
+  async function selectOrder(order, opts){
+    // revalidate: el caller viene de OTRO módulo (deep-link/reentry) donde el
+    // estado de la orden pudo cambiar (ATD/roleo en Despachos, sello en Control
+    // BL) — el cache sirve solo como pintura optimista y SIEMPRE se revalida
+    // (mantiene la reactividad de FIX F5). Click en la lista del mismo tab
+    // (revalidate ausente) con cache hit NO regenera: esa es la queja de John.
+    const revalidate = !!(opts && opts.revalidate);
     const gen = ++_gen; // invalida cualquier carga/preview en vuelo de la orden anterior
     clearTimeout(_pvTimer); // y desarma un auto-preview agendado para la orden vieja
     _sel = order;
     _row = _orders.find(r => r.order_number === order) || null;
-    _preview = null; _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
+    // FIX 3 (23-07): NO resetear _preview a null a ciegas — reabrir la MISMA
+    // orden ya vista pinta desde _pvCache al toque (sin spinner de preview). Con
+    // revalidate=false (click en la lista) y cache hit, nada le pega de nuevo al
+    // webhook caro. Sin cache → el flujo de siempre (null + auto-preview abajo).
+    const _pvCached = _pvCache.get(order);
+    _preview = _pvCached || null;
+    _previewError = null; _lastResult = null; _candidates = []; _docOpen = null;
     _siblings = []; // trío hermano: nunca arrastrar hermanos de la orden anterior
     _extraAtt = []; // items 38/39: adjuntos extra no sobreviven el cambio de orden
     window.__mailTestOff = null;
@@ -1117,7 +1168,12 @@
     _blocked = (_contact && (_contact.blocked_emails || _contact.rejected_emails) || []).slice();
     _dirty = false;
     renderDetail();
-    schedulePreview(); // A-c4: la orden ya tiene todo — el preview arranca solo
+    // FIX 3: regenera si NO hay cache (miss) o si el caller pidió revalidar
+    // (deep-link/reentry desde otro módulo — el cache podía estar stale y el
+    // clearTimeout de arriba canceló el schedulePreview de FIX F5; sin este OR
+    // el preview quedaba viejo indefinidamente). Cache hit + click en la lista
+    // (revalidate=false) NO regenera — la queja de John.
+    if(!_pvCached || revalidate) schedulePreview(); // A-c4: la orden ya tiene todo — el preview arranca solo
   }
 
   function addEmail(kind){
@@ -1202,6 +1258,11 @@
         contacts: { to_emails: _to, cc_emails: _cc, blocked_emails: _blocked, confirmed: true, source },
       });
       if(resp && resp.ok === false) throw new Error((resp.errors && resp.errors.join(' · ')) || resp.error || 'save_contacts rechazado');
+      // FIX 3: invalidación por-evento — el directorio de ESTA orden cambió en el
+      // server, la cache vieja ya no representa el envío. Se borra pase lo que
+      // pase con gen/_sel (el operador puede haber navegado a otra orden mientras
+      // el save estaba en vuelo; igual la cache de `order` quedó stale).
+      _pvCache.delete(order);
       if(gen === _gen && order === _sel){
         _contact = (resp && resp.contact) || _contact;
         _dirty = false;
@@ -1243,6 +1304,7 @@
     } else {
       _preview = resp; _previewError = null;
       _docOpen = null; // preview nuevo → el viewer viejo puede apuntar a un fid stale
+      _pvCache.set(order, resp); // FIX 3: cachea la parte cara (webhook) por order_number, sin TTL
     }
     renderDetail();
   }
@@ -1260,6 +1322,7 @@
       const resp = await apiMailing({ order_number: order, action: 'confirm_schedule',
         overrides: { schedule: { naviera: cand.naviera, buque: cand.buque, puerto_origen: cand.puerto_origen, puerto_destino: cand.puerto_destino, mes_etd: cand.mes_etd } } });
       if(resp && resp.ok === false) throw new Error((resp.errors || [resp.error || 'rechazado']).join(' · '));
+      _pvCache.delete(order); // FIX 3: la vela cambió — invalida la cache de ESTA orden pase lo que pase
     } catch(e){ errMsg = e.message; }
     _busy = null; // SIEMPRE — antes un throw tardío con orden cambiada dejaba alert huérfano
     if(gen !== _gen || order !== _sel) return; // stale: ni alert de otra orden ni preview no pedido
@@ -1348,12 +1411,25 @@
         : {};
       const resp = await apiMailing({ order_number: order, action: 'send', test_mode: testMode, overrides, ...extraPayload });
       result = (resp && resp.send_blocked) ? { ok:false, error: (resp.block_reasons || []).join(' · ') } : resp;
-    } catch(e){ result = { ok:false, error: e.message }; }
+    } catch(e){
+      // Capa A (incidente 504): un timeout/gateway caído es AMBIGUO — el mail
+      // pudo haber salido igual (el workflow siguió corriendo del otro lado).
+      // NO es lo mismo que un fallo definitivo (p.ej. Gmail rechazó, que llega
+      // como respuesta OK del api con body de error, nunca como 504/502/503).
+      const msg = (e && e.message) || String(e);
+      const uncertain = /\b(504|502|503|408)\b/.test(msg) || /timeout/i.test(msg) || /Failed to fetch/i.test(msg) || /NetworkError/i.test(msg) || /aborted/i.test(msg);
+      result = uncertain ? { ok:false, uncertain:true, error: msg } : { ok:false, error: msg };
+    }
     // FIX verify (ALTA): lock SIEMPRE liberado; el refresh global de la cola vale
     // aunque el usuario haya cambiado de orden (los writes ya ocurrieron) — solo
     // el estado/render del DETALLE queda gateado por staleness.
     _busy = null;
     window.__mailTestOff = null;
+    // FIX 3: el envío exitoso cambia el estado que el preview refleja (status
+    // ENVIADO, sent_test_mode, historial) — invalida la cache de ESTA orden.
+    // Un envío fallido no mutó nada server-side: la cache sigue representando
+    // el estado real, no hace falta tirarla.
+    if(result && result.ok) _pvCache.delete(order);
     if(result && result.ok) _extraAtt = []; // items 38/39: uso único — no reintentar con los mismos adjuntos por error
     _orders = await fetchOrders();
     renderMaster();
@@ -1374,9 +1450,10 @@
          (→ /api/mailing::confirm_atd, mismo endpoint, cero cambio de contrato)
        · checkRoleoCandidatas + informarRoleo + renderRoleoPanel (item 31,
          → /api/mailing::roleo_candidatas / informar_roleo)
-     El botón "Confirmar zarpe" de esta solapa ahora REDIRIGE a Despachos con
-     la orden precargada (cardResumen → bus __segPendingOrder +
-     __despPendingTarget='atd' + switchTab). ──────────────────────────────── */
+     El botón "Confirmar zarpe → Despachos" de cardResumen (que redirigía con
+     bus __segPendingOrder + __despPendingTarget='atd' + switchTab) SE SACÓ
+     el 23-07 (decisión John): quedaba duplicado con el rail — la única vía
+     a Despachos es el rail lateral. ──────────────────────────────────────── */
 
   // ── carga del tab ──
   let _loading = false;
@@ -1427,7 +1504,7 @@
         // pre-fetch); acá solo se selecciona o se resuelve el caso sin fila
         const qi = $('mail-q');
         if(_orders.some(r => r.order_number === _po)){
-          selectOrder(_po); // selectOrder re-renderiza el master ya filtrado
+          selectOrder(_po, { revalidate: true }); // deep-link: revalida (venís de otro módulo — estado pudo cambiar)
         } else {
           const s = supa();
           let found = null;
@@ -1437,7 +1514,7 @@
               if(!error && data) found = data;
             } catch(e){ console.error('[mailing] deep-link fetch:', e.message); }
           }
-          if(found){ _orders = [found, ..._orders]; selectOrder(_po); }
+          if(found){ _orders = [found, ..._orders]; selectOrder(_po, { revalidate: true }); } // deep-link: revalida
           else {
             // sin fila en Mailing: no dejar al usuario varado en una lista vacía filtrada
             if(qi) qi.value = '';
