@@ -2987,6 +2987,7 @@ body.light #panel-seguimiento{
   --seg-line:#E7E4DD; --seg-line-strong:#D9D5CC;
   --seg-accent:#1F5FAE; --seg-shadow:0 1px 2px rgba(28,27,25,.04),0 4px 16px rgba(28,27,25,.05);
 }
+#panel-seguimiento{margin-left:-1rem;margin-right:-1rem;padding-left:1rem;padding-right:1rem} /* FIX #1 23-07: recupera el padding lateral de .main (32px×2) para que la tabla entre sin zoom; padding interno evita cortar box-shadow/radius de .seg-tablewrap */
 #panel-seguimiento .seg-root{max-width:none} /* R2·F: full-width — ZARPE→LÍMITE siempre visible */
 #panel-seguimiento .seg-root *{box-sizing:border-box}
 
@@ -3041,14 +3042,14 @@ body.light #panel-seguimiento{
 
 /* ── Tabla semáforo ── */
 #panel-seguimiento .seg-tablewrap{overflow-x:auto;border:1px solid var(--seg-line);border-radius:14px;background:var(--seg-surface);box-shadow:var(--seg-shadow)}
-#panel-seguimiento table.seg-table{border-collapse:collapse;width:100%;min-width:1220px;font-size:var(--fs-md)} /* T3: +Sold-to → 13 columnas */
-#panel-seguimiento .seg-table th{font-size:var(--fs-2xs);letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint);text-align:left;padding:10px 8px;border-bottom:1px solid var(--seg-line-strong);background:var(--seg-surface-2);white-space:nowrap}
+#panel-seguimiento table.seg-table{border-collapse:collapse;width:100%;min-width:1120px;font-size:var(--fs-md)} /* T3: +Sold-to → 13 columnas; recorte 23-07 (FIX #1: 100% sin zoom) */
+#panel-seguimiento .seg-table th{font-size:var(--fs-2xs);letter-spacing:.07em;text-transform:uppercase;color:var(--seg-ink-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--seg-line-strong);background:var(--seg-surface-2);white-space:nowrap}
 #panel-seguimiento .seg-table th.sort{cursor:pointer;user-select:none}
 #panel-seguimiento .seg-table th.sort:hover{color:var(--seg-ink-soft)}
 #panel-seguimiento .seg-table th.sort .arr{opacity:.45;font-size:9px;padding-left:3px}
 #panel-seguimiento .seg-table th.sort.active{color:var(--blue)}
 #panel-seguimiento .seg-table th.sort.active .arr{opacity:1}
-#panel-seguimiento .seg-table td{padding:10px 8px;border-bottom:1px solid var(--seg-line);vertical-align:top;white-space:nowrap}
+#panel-seguimiento .seg-table td{padding:8px 6px;border-bottom:1px solid var(--seg-line);vertical-align:top;white-space:nowrap}
 #panel-seguimiento .seg-table tr:last-child td{border-bottom:none}
 #panel-seguimiento .seg-table tbody tr:hover td{background:rgba(91,155,245,.04)}
 #panel-seguimiento .seg-orden{font-family:var(--mono);font-weight:700;font-size:var(--fs-md);color:var(--seg-ink)}
@@ -4981,19 +4982,6 @@ try{if(localStorage.getItem('lightMode')==='1')document.body.classList.add('ligh
     </header>
 
     <div class="mail-kpibar" id="mail-kpibar" aria-label="SLA de mailing"></div>
-
-    <!-- SUTURA (2026-07-22, solapa Despachos): el panel "Confirmar zarpe (ATD)"
-         (details#mail-atd-panel: mail-atd-ta / mail-atd-confirm / mail-atd-sum /
-         mail-atd-report) SE MUDÓ a #panel-despachos — parser y acciones viven en
-         js/features/despachos.js (parseAtdGrid → /api/mailing::confirm_atd, roleo
-         item 31 incluido). Acá queda solo el acceso. Las clases .mail-atd* de la
-         isla mailing-styles quedan huérfanas a propósito (isla NO-TOUCH). -->
-    <div class="mail-atd" id="mail-atd-moved" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px">
-      <svg class="ic" aria-hidden="true" style="width:16px;height:16px;color:var(--mail-accent)"><use href="#i-anchor"/></svg>
-      <span style="font-size:13px;font-weight:800;letter-spacing:.03em;color:var(--mail-ink)">Confirmar zarpe (ATD)</span>
-      <span style="font-size:12px;color:var(--mail-ink-faint)">se mudó a la solapa <b>Despachos</b> (grupo Documentación)</span>
-      <button class="mail-btn pri" type="button" onclick="switchTab('despachos')" style="margin-left:auto">Ir a Despachos →</button>
-    </div>
 
     <div class="mail-filterbar" id="mail-filterbar">
       <span class="mail-flabel">Estado:</span>
