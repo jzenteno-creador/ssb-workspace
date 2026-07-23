@@ -1,7 +1,8 @@
 /* ═══════════════════ ADMINISTRACIÓN — E.1/T8 (mockup aprobado 17-07) ═══════════════════
    Solapa de configuración, alcance CERRADO (decisión John 16-07): SOLO flag de
-   Certificado de Origen por orden. Override de mot / contactos navieras / toggle
-   TEST_MODE = candidatos futuros (cards con candado, cero lógica).
+   Certificado de Origen por orden. Override de mot / contactos navieras =
+   candidatos futuros (cards con candado, cero lógica). El toggle TEST_MODE
+   salió del roadmap 23-07: quedó abierto por envío en la solapa Mailing.
 
    Gate: .ssb-admin-only oculta botón y panel (cosmético) + loadAdminCo guarda por
    __ssbAuth.isAdmin (deep-link) + el server exige admin (set_requiere_co está en
@@ -391,7 +392,8 @@ function ensureSkeleton(){
   for(const [titulo, why] of [
     ['Override de transporte (mot) por orden', 'se suma cuando la base vertebral esté estable — hoy el mot se define en el alta'],
     ['Contactos de navieras destino', 'espera los datos de Naara (mailing_naviera_destino vacía)'],
-    ['Toggle TEST_MODE del Mailing', 'el flip a envíos reales es una decisión operativa de John, no un switch casual'],
+    // 'Toggle TEST_MODE del Mailing': retirado 23-07 — el flip por envío quedó
+    // abierto a todo usuario logueado en la solapa Mailing (decisión de John).
   ]){
     const card = el('div', 'adm-card-locked');
     const h = el('div', 'adm-card-title');

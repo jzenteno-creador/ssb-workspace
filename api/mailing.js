@@ -18,15 +18,12 @@
 export const config = { maxDuration: 60 }; // el send con adjuntos tarda ~10-15s
 
 const PROXY_ACTIONS = new Set(['preview', 'send', 'save_contacts', 'confirm_schedule']);
-// FIX 1 (2026-07-23, autorización explícita de John): únicos usuarios habilitados a
-// pedir envío REAL por-request (action 'send' con test_mode estrictamente false).
-// jzenteno + jsrojas (John lo sumó 23-07). Espejo server del testLockState del
-// front (js/features/mailing.js) — la UI deshabilita el toggle, esto cierra el
-// bypass por fetch/consola. El candado maestro (Config TEST_MODE del workflow n8n)
-// queda INTACTO y por encima de este flag por-request. Respuesta 403 honesta — NO
-// degradar a TEST en silencio (recomendación nuestra, a confirmar por John: un 200
-// "enviado" que en realidad salió TEST le esconde el problema al operador).
-const TEST_OFF_ALLOWED = ['jzenteno@ssbint.com', 'jsrojas@ssbint.com'];
+// FIX 1 RETIRADO (2026-07-23, decisión de negocio de John): el gate de identidad
+// del modo real (TEST_OFF_ALLOWED + 403 para test_mode:false) ya no existe —
+// cualquier usuario autenticado y ACTIVO en vac_employees puede pedir envío REAL
+// por-request. La consecuencia está asumida; no re-agregar el gate sin decisión
+// nueva. El default del contrato sigue TEST (test_mode = b.test_mode !== false) y
+// la tercera red del workflow (directorio sin confirmar → TEST) queda intacta.
 const MAX_ATD_ROWS = 200;
 const MIN_ATD = '2020-01-01';
 const MAX_ROLEO_VESSELS = 20;
@@ -377,11 +374,8 @@ export default async function handler(req, res) {
   const b = (req.body && typeof req.body === 'object') ? req.body : {};
   const action = String(b.action || 'preview');
 
-  // ── FIX 1: gate de identidad del modo real. Solo aplica a 'send' con test_mode
-  // estrictamente false (el default del contrato es TEST: payload.test_mode =
-  // b.test_mode !== false). user.email es confiable: viene de /auth/v1/user. ──
-  if (action === 'send' && b.test_mode === false && !TEST_OFF_ALLOWED.includes(String(user.email).toLowerCase()))
-    return res.status(403).json({ error: 'Modo real: solo autorizado para jzenteno@ y jsrojas@. El envío NO se realizó.' });
+  // (El gate de identidad del modo real — FIX 1 — vivía acá; retirado 23-07 por
+  // decisión de negocio: ver comentario junto a PROXY_ACTIONS.)
 
   // ── confirm_atd: se resuelve ACÁ (PostgREST, service key) — no pasa por el webhook ──
   if (action === 'confirm_atd') return handleConfirmAtd(res, b, user.email, supaUrl, supaKey);

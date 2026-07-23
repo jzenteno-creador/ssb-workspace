@@ -41,12 +41,17 @@
    viejo (deploy desfasado, columnas roleo_ / notify_ sin migrar) degrada
    a no-mostrar esa línea, nunca rompe el render.
 
-   *** CANDADO TEST_MODE — HARD LOCK, NO TOCAR JAMÁS ***
+   *** TEST_MODE — ABIERTO A TODO USUARIO (decisión de negocio, John 23-07) ***
    `window.__mailTestOff` (flag propio, 5 sitios) + el checkbox
-   `#mail-test-toggle` son el seguro que evita mandar mails REALES a
-   clientes desde testeo. Viajó BYTE A BYTE, sin flip, sin "limpieza",
-   sin comentarios nuevos. Cualquier cambio de comportamiento acá es una
-   decisión aparte con John — el worker de esta extracción NO la tomó.
+   `#mail-test-toggle` gobiernan el modo POR ENVÍO: default SIEMPRE TEST;
+   destildar = envío REAL al cliente. Desde 2026-07-23 el flip está abierto
+   a cualquier usuario logueado — se retiraron TEST_OFF_EMAILS (front), el
+   403 de TEST_OFF_ALLOWED (api) y el ssb-admin-only del toggle. La
+   consecuencia (cualquiera habilita envíos reales) está asumida por John;
+   NO re-agregar gates por usuario sin decisión nueva. Siguen vigentes:
+   preview obligatorio, el candado llave-1 del workflow si se re-enciende
+   (test_reasons 'candado') y la tercera red (directorio sin confirmar →
+   TEST forzado).
 
    Tríada SLA (`SLA_DAYS`/`SLA_WARN`/`hoyBA`/`diasDesde`/`ssbSlaBucket`)
    consumida PELADA desde SSB CORE HELPERS (script clásico) — nunca vía
@@ -114,14 +119,9 @@
   // en el borde — autocrítica del verify de tanda B).
   const MAX_EXTRA_BYTES = 3 * 1024 * 1024;
   const EXTRA_EXT_RE = /\.(pdf|zip|jpe?g|png|xlsx|docx)$/i;
-  // ── FIX 1 (2026-07-23, autorización explícita de John): usuarios habilitados
-  // a destildar el Modo TEST (envío REAL por-request): jzenteno + jsrojas (John
-  // sumó a Jorge el 23-07). Espejo front de TEST_OFF_ALLOWED en api/mailing.js (el server
-  // responde 403 si otro usuario fuerza test_mode:false por consola/fetch). El
-  // candado llave-1 (__mailTestOff + test_reasons del workflow — HARD LOCK de
-  // arriba) sigue INTACTO: esto es una condición ADICIONAL en testLockState, no un
-  // reemplazo. ──
-  const TEST_OFF_EMAILS = ['jzenteno@ssbint.com', 'jsrojas@ssbint.com'];
+  // ── FIX 1 RETIRADO (2026-07-23, decisión de negocio de John): el flip del
+  // Modo TEST por-request está abierto a CUALQUIER usuario logueado — sin lista
+  // de emails acá ni 403 en el api. El default de cada envío sigue siendo TEST. ──
 
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
@@ -876,11 +876,8 @@
   }
 
   function testLockState(){
-    // FIX 1 (23-07): llave de IDENTIDAD primero — es invariante de la sesión; si no
-    // sos jzenteno@, las otras razones ("generá un preview…") mentirían: nunca vas
-    // a poder destildar TEST aunque las cumplas todas. El server replica con 403.
-    const authEmail = String((window.__ssbAuth && window.__ssbAuth.email) || '').toLowerCase();
-    if(!TEST_OFF_EMAILS.includes(authEmail)) return { offOk:false, why:'El modo real solo lo habilitan jzenteno@ y jsrojas@ — tus envíos salen siempre en TEST.' };
+    // Sin llave de identidad (FIX 1 retirado 23-07): cualquier usuario logueado
+    // puede destildar TEST. Quedan solo condiciones de ESTADO, no de persona.
     if(!_preview) return { offOk:false, why:'Generá un Preview primero para habilitar el modo real.' };
     const reasons = _preview.test_reasons || [];
     if(reasons.some(t => String(t).includes('candado'))) return { offOk:false, why:'El candado TEST_MODE del workflow está ON: apagarlo requiere un PUT deliberado. Todo envío sale a expoarpbb.' };
@@ -942,9 +939,9 @@
     c.appendChild(el('h3', null, 'Envío'));
 
     const lock = testLockState();
-    // ssb-admin-only: no-admin no ve el toggle → queda clavado en TEST
-    // (tg.checked default true); solo un admin puede armar el envío REAL.
-    const tgWrap = el('label','mail-toggle ssb-admin-only');
+    // Toggle visible para TODO usuario logueado (decisión John 23-07 — se
+    // retiró el ssb-admin-only). Default SIEMPRE TEST; destildar = envío REAL.
+    const tgWrap = el('label','mail-toggle');
     const tg = el('input'); tg.type = 'checkbox'; tg.id = 'mail-test-toggle';
     tg.checked = true;
     if(window.__mailTestOff === _sel && lock.offOk) tg.checked = false;
