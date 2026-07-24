@@ -1,78 +1,60 @@
-# SESSION_HANDOFF — 2026-07-23 (noche) · ssb-workspace · master
+# SESSION_HANDOFF — 2026-07-24 · ssb-workspace · master
 
-## Resumen de la sesión (22/23-07, tanda de mejoras)
+## Resumen de la sesión (23-24/07)
 
-**TODO EL PLAN GRANDE APLICADO A PROD**: Corte 2 (F2+F3) + Tanda UI (6 piezas) + Bloque 2
-(7 fixes del mail, GO C→A→B→D). Regresión golden cerrada con QED (baseline stale demostrado
-contra prod, exec 34597). Un solo revert: el zoom del visor CBL (pendiente de rediseño).
+Sesión larga, TODO en prod. Cinco frentes: (1) destrabe TEST_MODE, (2) tanda de 6 fixes
+Seguimiento/Mailing, (3) incidente del motor de mails (504/ZIP), (4) cruce de CO limpiado,
+(5) limpieza y reorganización de `docs/`. master = origin = `a917d51`.
 
-## PINS VIVOS (23-07 noche)
+## PINS VIVOS (24-07)
 
 | Workflow | Pin |
 |---|---|
-| Control BL `WVt6gvghL2nFVbt6` | **`70d83ce4`** (112 nodos — F2 lee vigentes de DB + fallback integral) |
-| Mailing `kh6TORgRg9R1Shj1` | **`5c609ad3`** (46 nodos — flags CID + logos + mailfix + X-Mailing-Secret) |
-| Gmail→Drive `pBN4Wd1lcTSHNkFg` | `f5b73506` (F1 ingesta) |
-| WF Drive F3 (refactura) | `Xbm7c1h7zXkWZcjB` activo |
-| WF UI Bug Report | `j3Zf7msI7xQkLgUw` activo |
+| Mailing `kh6TORgRg9R1Shj1` | **`4ba78653-2b73-40f0-9d7a-5c2b090e8c79`** (44 nodos — tránsito estimado + timeout Gmail 30s + retry descarga 3× + TEST_MODE llave-1 OFF) |
+| Control BL `WVt6gvghL2nFVbt6` | `70d83ce4` |
+| Gmail→Drive `pBN4Wd1lcTSHNkFg` | `f5b73506` |
 
-master = origin = `40767de`. DDL nuevos en prod: documentos_orden F1 (Corte 1),
-bl_controls_hist + trigger (23-07, branch-test 3/3 antes de aplicar), orden_po_alias.
+Cadena de pins del Mailing esta sesión: `5c609ad3` → `abf75dd6` (TEST_MODE off) → `50366e53`
+(envío robusto) → `4ba78653` (tránsito). El próximo PUT re-derivar contra `4ba78653`.
 
-## AL CIERRE, JOHN DIJO (retoma en sesión nueva)
+## Aplicado en prod hoy
 
-1. **"Veo algunos errores y cosas para corregir y mejorar"** — SIN DETALLAR. La próxima
-   sesión arranca por su lista de errores/mejoras de la revisión de todo lo aplicado.
-2. **"El modo test todavía no lo puedo sacar"** — DIAGNÓSTICO PROBABLE (ya explicado a John):
-   NO es bug: el candado maestro llave-1 (Config (TEST_MODE) del workflow Mailing) sigue
-   **ON a propósito** y SIEMPRE gana; lo aplicado hoy habilita a jzenteno+jsrojas la llave 2
-   (flag por envío). El flip de la llave 1 = PUT deliberado, acción de John. Si lo pide:
-   PUT chico al nodo Set Config (TEST_MODE) → TEST_MODE:false (Iron Law, pin 5c609ad3).
-   Si tras el flip el toggle SIGUE bloqueado → recién ahí investigar (testLockState exige
-   además directorio confirmado + preview fresco).
+- **TEST_MODE abierto** a todo usuario logueado — gate por usuario retirado (front+api+admin-co,
+  commit `ddbcaeb`) + flip llave-1 (harness `testmode/put_testmode_llave1_off.py`). Decisión de
+  negocio de John, NO re-agregar gates.
+- **6 fixes** (commits `346acf3`/`44b375e`/`df2c37a`/`28b23aa`): #1 Seguimiento entra al 100% ·
+  #2 contenedores reflejan "Revisado" · #3 preview cache por-evento (+ fix de un bug de staleness
+  que la verificación adversarial cazó — deep-link revalida) · #4 sacar despacho duplicado ·
+  #5 logos/banderas en el preview (asset estático) · #6 tránsito estimado ETD→ETA "(est.)".
+- **Incidente motor de mails (504/ZIP):** el nodo Gmail se colgaba 240s (uploadType=media) → 504
+  ciego; y el CO ZIP no viajaba (descarga Drive con 5xx transitorio, fallo silencioso). Fix en
+  prod: timeout Gmail 30s + retry descarga 3× (`envio-robusto/put_envio_robusto.py`) + front
+  honesto ante timeout (3 estados ok/incierto/fallo).
+- **Cruce de CO:** borré la fila espuria `4010736181 + AR004A18260002360000` (el cert es de
+  4010746682); 4010736181 quedó con su cert correcto y lista para enviar.
+- **Limpieza docs/** (commit `a917d51`): 5.6M→1.6M; `docs/PENDIENTES.md` consolidado; planes
+  cerrados a `docs/_archivo/`; smoke-dark + mockups borrados (en git).
+- **Permiso nuevo:** Claude ahora corre los `--apply` de los harnesses Iron Law con OK verbal
+  de John (`settings.local.json::autoMode.allow`; path absoluto, sin `cd &&`).
 
-## Aplicado hoy (23-07)
+## PENDIENTE INMEDIATO
 
-- **Corte 2**: PUT F2 al CBL (ea9ce957→70d83ce4) + WF Drive F3 + api/front refactura trade +
-  envs N8N_F3_DRIVE_URL / N8N_BUG_REPORT_URL. Sanación lazy verificada en el 1er control.
-- **Tanda UI**: solapa Despachos (GI+zarpe lote, sugerencia buque roleo) · timeline tarifa +
-  toggle + fix buque-zarpado · trío hermano · pack CBL (sello tiempo-real + reportar bug;
-  zoom REVERTIDO cdc9ddf) · fix rail · fechas DD/MM.
-- **Bloque 2** (GO C→A→B→D): bl_controls_hist + trigger · PUT mailfix (logos SSB+DOW CID,
-  leyenda condicional missing_auth, Nº CO + Nº PE, asunto pt "Order", shipment fallback,
-  X-Mailing-Secret — webhook cerrado; secret en Vercel env + .env local, JAMÁS en repo) ·
-  push front/api (gate 403 jzenteno+jsrojas, cadena 2 preguntas por doc faltante, sección
-  "Reemplazado" en Histórico) · backfill shipment 153/153.
+- **Prueba de humo STO en TEST** (John): mandar una STO a expoarpbb y confirmar que el **ZIP
+  viaja** con el retry aplicado → recién ahí soltar las STO reales. Las 7 STO Dow Brasil siguen
+  PENDIENTES de envío real (4010729150 ya salió; 4010736181 lista tras limpiar el CO).
 
-## Smokes de John PENDIENTES
+## TODO LO DEMÁS PENDIENTE → `docs/PENDIENTES.md`
 
-Bloque 2 (docs/handoff/BLOQUE2_paquete_2026-07-23.md §3): preview logos/CO/PE/shipment ·
-send TEST → Outlook logos sin "descargar imágenes" · doc faltante → leyenda/silencio ·
-reproceso → "Reemplazado" · toggle bloqueado para no autorizados. (Bloque 1 aprobado
-completo salvo zoom.)
+Consolidado: 🔴 seguridad (grants write `bl_controls` · FASE 2 `configuracion`) · F4/Corte 3
+del rediseño CBL (mailing vigentes + despacho ZCB3 + 3 definiciones de John) · mejoras 4.3
+(validador solapa) / 4.6 (peso al mail) / 4.2 (zoom) · fixes de mail (no-silencioso · gap
+Reasignar · desacople async) · deuda técnica (regex amount · toNum · backfill CIP) · diferidos ·
+smokes de John (Bloque 2, Corte 1/2).
 
-## Pendientes (foto completa)
+## Gotchas nuevos
 
-- Lista de errores/mejoras de John (próxima sesión, PRIORIDAD 1).
-- Flip llave-1 TEST_MODE (orden de John; PUT preparable en minutos).
-- Zoom visor CBL: REDISEÑO (caso de uso: precintos; probable render propio del PDF).
-- Conteo DB-vs-fallback días 2-3 (24 y 25-07 — correr a mano si la sesión murió; día 1:
-  1 control post-F2 → 1 asiento control-fallback, 37 gmail-drive).
-- Corte 3 (hold): despacho ZCB3 (put_c3_gd_despacho.py pin GD f5b73506 + migración
-  despacho_shipment_number escrita) + 3 definiciones de John + C3-A mailing
-  (put_c3a_vigentes_mailing.py — correr con --expect-version 5c609ad3, anclas A1-A4 OK).
-- Peso bruto/neto/m³ al mail: John define la fuente del dato.
-- Fix 6C: cableado permanente del shipment en la ingesta GD (propuesto para C3).
-- Decisión shipment canónico si factura≠ZCB1 (hoy rige "más reciente por detected_at").
-- Validador de aduana como solapa: tanda propia post-C3.
-- Colgantes viejos: PS·1 cliente en cuerpo · FASE 2 (grants bl_controls 1º) · smoke bulk
-  Schedule · reclamo IT mails BA.
-
-## Gotchas nuevos de la sesión
-
-- API n8n: WF y credenciales en proyectos distintos → ediciones de nodos credencializados
-  se DESCARTAN en silencio; settings con claves nuevas → 400 (whitelist executionOrder).
-- attachmentsBinary con property vacía explota sin binario → rama IF con/sin adjunto.
-- Task-runner n8n puede timeoutear a 60s (flake) → boundaries F2 con continueErrorOutput
-  degradan a fallback (verificado con test forzado, exec 34592).
-- Branches Supabase nacen vacías → bootstrap desde information_schema de prod.
+- El clasificador de auto-mode bloquea escrituras a prod (los `--apply`) INCLUSO con `python3 *`
+  en `permissions.allow`; hay que autorizarlas en `autoMode.allow`. Y el clasificador NO deja que
+  Claude edite su propio `settings.local.json` (auto-escalación) — lo pega John.
+- Correr los harnesses con PATH ABSOLUTO (empezando con `python3`); con `cd … && python3` el
+  comando empieza con `cd` y no matchea la regla → cae al clasificador.
