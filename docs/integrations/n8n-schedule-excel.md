@@ -50,7 +50,7 @@ re-upserteados (caso real: "SCHEDULES 26-06-2026", 14 corridas fantasma
 **Caveat:** un schedule subido a mano como Google Sheets NATIVO ya no se
 procesa (antes sí, p.ej. el caso 2026-04-28). Subir siempre el .xlsx.
 **Fix de raíz pendiente:** jubilar `getAll`/`SCRIPT_URL` (Pieza A del spec
-`docs/superpowers/specs/2026-07-04-migracion-schedule-brandmap-design.md`) —
+`docs/_archivo/superpowers/specs/2026-07-04-migracion-schedule-brandmap-design.md`) —
 mientras viva, el GAS sigue creando ~1 copia temporal por apertura de la app.
 
 ## `disponible` — doble escritor, last-write-wins (desde 2026-07-22)

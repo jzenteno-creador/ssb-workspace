@@ -65,7 +65,7 @@ Tab (8º) `#tab-vacaciones` / `#panel-vacaciones`. Auth con magic link
 - `vac_balance_adjustments` truncada en migración; recargar manual post-migración con valores en hábiles.
 - Warning de overlap con back-up: lado empleado en preview del form (status incluido en copy, gramática singular/plural). Lado admin en `approveRequest` con `confirm()` previo al UPDATE — Cancel aborta sin tocar nada. Reusa `computeBackupConflicts(req)` existente.
 - Migration files: `migrations/2026-05-08-vacaciones-habiles/` (4 SQLs en orden + `applied.sql` consolidado + `rollback.sql` + `before.sql` snapshot + README).
-- Plan canon: `docs/superpowers/plans/2026-05-08-vacaciones-habiles.md`.
+- Plan canon: `docs/_archivo/superpowers/plans/2026-05-08-vacaciones-habiles.md`.
 
 ---
 

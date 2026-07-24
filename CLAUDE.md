@@ -71,7 +71,7 @@ Cada módulo es un `#tab-<x>` (botón del rail) + `#panel-<x>` (contenido), conm
 | `vacaciones` | Vacaciones (Supabase Auth + RLS) | `docs/modules/vacaciones.md` + `docs/modules/auth-global.md` |
 | `agente` | SSB Copilot — text-to-SQL contra MySQL (orders/shipments) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
 | `workspace-ia` | Workspace IA — text-to-SQL contra Supabase (todas las tablas) | `docs/modules/agentes-text-to-sql.md` · guardrail `api/CLAUDE.md` |
-| `seguimiento` | Seguimiento — torre de control por orden (Supabase vista `v_operacion_estado`; write-actions vía `/api/seguimiento`, auth Bearer JWT + gate `vac_employees`). Agrupada bajo **Documentación**; DOS ítems del rail (Marítimo/Terrestre) vía `segGo(mode)` — terrestre: CRT/MIC en vez de BL, sin Control BL, límite +1 hábil. Anon NO lee la vista (smokes headless = fixtures PostgREST). | `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md` + R2 en `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` |
+| `seguimiento` | Seguimiento — torre de control por orden (Supabase vista `v_operacion_estado`; write-actions vía `/api/seguimiento`, auth Bearer JWT + gate `vac_employees`). Agrupada bajo **Documentación**; DOS ítems del rail (Marítimo/Terrestre) vía `segGo(mode)` — terrestre: CRT/MIC en vez de BL, sin Control BL, límite +1 hábil. Anon NO lee la vista (smokes headless = fixtures PostgREST). | `docs/_archivo/PLAN_TRACKING_reconciliado_2026-07-10.md` + R2 en `docs/_archivo/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` |
 | `control-bl` | Control BL read-only (Supabase `bl_controls`) + **sello humano "Revisado"** (tabla `control_bl_sellos`, actions `sellar_control`/`anular_sello`; regla X keyea por `bl_file_id`) | `docs/modules/control-bl.md` · sello: `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` |
 | `mailing` | Mailing — envío de documentación (Supabase `mailing_*` + `/api/mailing` → webhook n8n) | header de `api/mailing.js` |
 | `cert-origen` | Certificado de Origen — ZIP COD en Drive → PDF pdf-lib + registro (Supabase `certificados_origen`) | `docs/modules/certificado-origen.md` · el ZIP jamás se modifica |
@@ -91,7 +91,7 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **Tarifas Terrestres Dow** o su seed → `docs/modules/tarifas-terrestres-dow.md`
 - tocás **saldos / balance / ajustes / solicitudes / calendario / feriados de Vacaciones** → `docs/modules/vacaciones.md`
 - tocás **login / signup / reset o el gate** → `docs/modules/auth-global.md`
-- tocás **Seguimiento** (solapa `seguimiento`, `api/seguimiento.js`, vista `v_operacion_estado`) → `docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md`
+- tocás **Seguimiento** (solapa `seguimiento`, `api/seguimiento.js`, vista `v_operacion_estado`) → `docs/_archivo/PLAN_TRACKING_reconciliado_2026-07-10.md`
 - tocás **el sello "Revisado" del Control BL** (`control_bl_sellos`, actions `sellar_control`/`anular_sello`, regla X por `bl_file_id`) → `docs/explore/EXPLORE_SELLO_BL_2026-07-11.md` + `migrations/2026-07-11-sello-control-bl/`
 - tocás **Control BL** o su workflow n8n → `docs/modules/control-bl.md`
 - tocás **Certificado de Origen** (solapa `cert-origen`, `api/certificado-origen.js`, `api/_lib/`) → `docs/modules/certificado-origen.md`
@@ -99,8 +99,9 @@ Toda la app está detrás del gate de auth (`#auth-gate`) — ver "Auth global".
 - tocás **los agentes text-to-SQL** (chat IA) → `docs/modules/agentes-text-to-sql.md` (guardrail de seguridad: `api/CLAUDE.md`, se auto-carga bajo `api/**`)
 - tocás **el workflow Schedule Excel→Supabase** → `docs/integrations/n8n-schedule-excel.md`
 - tocás **`scripts/claude-processor/`** → `scripts/claude-processor/README.md`
-- tocás **el plan de pedidos / tandas 0–8 / R2 o la base vertebral** → `docs/plans/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio — **plan CERRADO 17-07**: T0–T8+R2 en prod y verificadas) + `docs/plans/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4 **APLICADO en prod 17-07**, partes a+b). **Backlog Log-In R1–R12 + D4/U1/U2: 🏁 TANDA COMPLETA Y EN PROD 18-07** (master `0ebff73` · pins Mailing `6164fe00` / CBL `c14bec3a` · migración D3+D4 aplicada, rollback en `migrations/2026-07-18-d3d4-etd-contenedores/`). Ledger histórico completo: `docs/plans/LEDGER_backlog-login_2026-07.md`. **Restan:** smokes solo-prod de John + 4 decisiones elevadas (1º seguridad: grants write anon/authenticated en `bl_controls`/`v_bl_controls_latest` · regex `amount` DFDA · `toNum` 3-decimales · backfill 7 CIP) — detalle en `SESSION_HANDOFF.md` 18-07
+- tocás **el plan de pedidos / tandas 0–8 / R2 o la base vertebral** → `docs/_archivo/PLAN-INPUT-FABLE_pedidos_2026-07-16.md` (canónico, changelog obligatorio — **plan CERRADO 17-07**: T0–T8+R2 en prod y verificadas) + `docs/_archivo/TANDA-BASE_vertebral-ordenes_2026-07-16.md` (DDL T4 **APLICADO en prod 17-07**, partes a+b). **Backlog Log-In R1–R12 + D4/U1/U2: 🏁 TANDA COMPLETA Y EN PROD 18-07** (master `0ebff73` · pins Mailing `6164fe00` / CBL `c14bec3a` · migración D3+D4 aplicada, rollback en `migrations/2026-07-18-d3d4-etd-contenedores/`). Ledger histórico completo: `docs/plans/LEDGER_backlog-login_2026-07.md`. **Restan:** smokes solo-prod de John + 4 decisiones elevadas (1º seguridad: grants write anon/authenticated en `bl_controls`/`v_bl_controls_latest` · regex `amount` DFDA · `toNum` 3-decimales · backfill 7 CIP) — detalle en `SESSION_HANDOFF.md` 18-07
 - **antes de commitear cambios de UI** → `docs/dev/smoke-headless.md`
+- **querés saber qué queda pendiente** (features, deuda, seguridad, smokes) → `docs/PENDIENTES.md` (consolidado 24-07; planes cerrados en `docs/_archivo/`)
 
 ## Reglas — NO HACER
 

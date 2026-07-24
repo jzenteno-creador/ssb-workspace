@@ -1,7 +1,7 @@
 // Vercel Serverless Function — Seguimiento: escritura autenticada de la cabecera
 // de órdenes (seguimiento_ordenes) y de la config de requerimiento de CO
 // (seguimiento_co_config). Fase 0.b del plan de trackeo
-// (docs/plans/PLAN_TRACKING_reconciliado_2026-07-10.md §D.2).
+// (docs/_archivo/PLAN_TRACKING_reconciliado_2026-07-10.md §D.2).
 //
 // GUARDRAIL (api/CLAUDE.md): este endpoint NO ejecuta SQL crudo. Sus responsabilidades:
 // (1) validar el Bearer JWT de sesión Supabase SERVER-SIDE (molde 1:1 de api/mailing.js),
